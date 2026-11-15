@@ -16,7 +16,7 @@
             <div class="card h-100 shadow-sm border-0">
                 <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
                     <span class="fw-bold text-primary"><i class="bi bi-file-earmark-spreadsheet me-2"></i>Primary Matching Dataset</span>
-                    <span class="badge bg-primary">7,999 Pairs</span>
+                    <span class="badge bg-primary">7,999 Verified Pairs</span>
                 </div>
                 <div class="card-body p-4">
                     <h5 class="fw-bold text-dark mb-1">cnamuangtoun/resume-job-description-fit</h5>
@@ -24,8 +24,16 @@
 
                     <ul class="list-group list-group-flush small mb-3">
                         <li class="list-group-item d-flex justify-content-between px-0">
-                            <span class="text-muted">Total Verified Records:</span>
+                            <span class="text-muted">Raw Source Records:</span>
+                            <strong>8,000 (6,241 Train / 1,759 Held-Out Test)</strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between px-0">
+                            <span class="text-muted">Verified Records After Deduplication:</span>
                             <strong>7,999 (6,240 Train / 1,759 Held-Out Test)</strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between px-0">
+                            <span class="text-muted">Duplicate Handling:</span>
+                            <strong>1 exact duplicate training row removed; raw source preserved</strong>
                         </li>
                         <li class="list-group-item d-flex justify-content-between px-0">
                             <span class="text-muted">Fields:</span>
@@ -41,7 +49,11 @@
                         </li>
                         <li class="list-group-item d-flex justify-content-between px-0">
                             <span class="text-muted">Unique Job Descriptions:</span>
-                            <strong>280 in Train &bull; 71 in Test (0% Overlap)</strong>
+                            <strong>280 in Train &bull; 71 in Test (0% Job Overlap)</strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between px-0">
+                            <span class="text-muted">Resume Overlap Across Source Splits:</span>
+                            <strong>476 / 477 Test Resumes (99.79%)</strong>
                         </li>
                     </ul>
 
