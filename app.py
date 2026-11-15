@@ -265,6 +265,7 @@ def api_match():
     {
         "resume_text": "...",
         "job_description": "...",
+        "target_role": "Optional explicit role title (max 120 characters)",
         "model_backend": "production" | "challenger_m5",
         "allow_fallback": true | false
     }
