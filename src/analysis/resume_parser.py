@@ -196,7 +196,7 @@ def parse_resume(
     if not ext:
         if payload.startswith(b"%PDF-"):
             ext = ".pdf"
-        elif payload.startswith(b"PK\\x03\\x04"):
+        elif payload.startswith(b"PK\x03\x04"):
             ext = ".docx"
         else:
             ext = ".txt"
@@ -214,7 +214,7 @@ def parse_resume(
         result["error_message"] = "Invalid PDF file: missing the standard %PDF- header."
         return result
     if ext == ".docx":
-        if not payload.startswith(b"PK\\x03\\x04"):
+        if not payload.startswith(b"PK\x03\x04"):
             result["status"] = "error"
             result["error_message"] = "Invalid DOCX file: missing the standard ZIP/OpenXML header."
             return result
@@ -228,7 +228,7 @@ def parse_resume(
             result["status"] = "error"
             result["error_message"] = "Invalid or corrupted DOCX document."
             return result
-    if ext == ".txt" and b"\\x00" in payload:
+    if ext == ".txt" and b"\x00" in payload:
         result["status"] = "error"
         result["error_message"] = "Invalid TXT file: binary null bytes were detected."
         return result
