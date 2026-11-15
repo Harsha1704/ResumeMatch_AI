@@ -70,6 +70,7 @@ export interface LearningResource {
 
 export interface AnalysisResult {
   analysis_id: string;
+  is_demo?: boolean;
   filename?: string;
   job_title?: string;
   detected_job_title?: string;

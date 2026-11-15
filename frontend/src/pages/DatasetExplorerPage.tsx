@@ -3,8 +3,6 @@ import {
   Database,
   ExternalLink,
   Layers,
-  CheckCircle2,
-  AlertTriangle,
   FileSpreadsheet,
   Sliders,
   BarChart2
@@ -28,6 +26,10 @@ export const DatasetExplorerPage: React.FC = () => {
       })
       .finally(() => setLoading(false));
   }, []);
+
+  if (loading && !dataSummary) {
+    return <LoadingSpinner message="Loading dataset provenance and distribution statistics..." />;
+  }
 
   return (
     <div className="space-y-6">

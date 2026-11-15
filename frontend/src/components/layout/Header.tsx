@@ -9,7 +9,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
   const location = useLocation();
-  const { modelBackend, setModelBackend, currentAnalysis } = useAnalysis();
+  const { modelBackend, setModelBackend, currentAnalysis, isDemo } = useAnalysis();
 
   const getPageTitle = (pathname: string) => {
     switch (pathname) {
@@ -64,6 +64,21 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
             </option>
           </select>
         </div>
+
+        {/* Dossier status badge */}
+        {isDemo ? (
+          <div className="flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-xs font-semibold text-amber-400">
+            <span className="h-2 w-2 rounded-full bg-amber-400 animate-pulse"></span>
+            <span>DEMO PREVIEW</span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-1.5 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-2.5 py-1 text-xs font-semibold text-indigo-300">
+            <span className="h-2 w-2 rounded-full bg-emerald-400"></span>
+            <span className="truncate max-w-[120px] sm:max-w-[180px]">
+              {currentAnalysis?.filename || 'Active Candidate'}
+            </span>
+          </div>
+        )}
 
         {/* Live operational badge */}
         <div className="hidden items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-400 sm:flex">

@@ -23,7 +23,7 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
-  const { currentAnalysis } = useAnalysis();
+  const { currentAnalysis, isDemo } = useAnalysis();
 
   const navGroups = [
     {
@@ -133,7 +133,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         {currentAnalysis && (
           <div className="border-t border-slate-800/80 bg-slate-900/60 p-4">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-semibold text-slate-400">ACTIVE DOSSIER</span>
+              <span className={`text-[10px] font-bold tracking-wider px-2 py-0.5 rounded ${
+                isDemo
+                  ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
+                  : 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/30'
+              }`}>
+                {isDemo ? 'DEMO PREVIEW' : 'ACTIVE DOSSIER'}
+              </span>
               <span
                 className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
                   currentAnalysis.predicted_class === 'Good Fit'

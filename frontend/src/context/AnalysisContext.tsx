@@ -5,6 +5,7 @@ import { api } from '../services/api';
 interface AnalysisContextType {
   activeAnalysisId: string | null;
   currentAnalysis: AnalysisResult | null;
+  isDemo: boolean;
   isLoading: boolean;
   error: string | null;
   modelBackend: 'production' | 'challenger_m5';
@@ -40,13 +41,13 @@ export const AnalysisProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       throw new Error('Analysis payload was not found.');
     } catch (err: any) {
       console.warn('Could not load analysis ID:', targetId, err.message);
-      // Fallback to sample preview
+      // Clean invalid or unauthorized stored ID and fall back to sample preview
+      localStorage.removeItem('rm_active_analysis_id');
       try {
         const sampleResp = await api.getAnalysis('sample');
         if (sampleResp.analysis) {
           setCurrentAnalysis(sampleResp.analysis);
-          setActiveAnalysisId(sampleResp.analysis.analysis_id);
-          localStorage.setItem('rm_active_analysis_id', sampleResp.analysis.analysis_id);
+          setActiveAnalysisId('sample-preview');
           return sampleResp.analysis;
         }
       } catch (fallbackErr: any) {
@@ -61,6 +62,13 @@ export const AnalysisProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   useEffect(() => {
     loadAnalysis();
   }, [loadAnalysis]);
+
+  const isDemo = Boolean(
+    currentAnalysis?.is_demo ||
+    activeAnalysisId === 'sample-preview' ||
+    activeAnalysisId === 'sample' ||
+    activeAnalysisId === 'demo'
+  );
 
   const setAnalysisResult = useCallback((result: AnalysisResult) => {
     setCurrentAnalysis(result);
@@ -79,6 +87,7 @@ export const AnalysisProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       value={{
         activeAnalysisId,
         currentAnalysis,
+        isDemo,
         isLoading,
         error,
         modelBackend,

@@ -18,7 +18,7 @@ async function fetchJson<T>(url: string, options: RequestInit = {}): Promise<T> 
       'Accept': 'application/json',
       ...(options.headers || {}),
     },
-    credentials: 'omit', // clean cross-origin handling
+    credentials: 'include', // transmit session cookies for strict session authorization
   });
 
   if (!response.ok) {
@@ -68,6 +68,7 @@ export const api = {
     const response = await fetch(fullUrl, {
       method: 'POST',
       body: formData,
+      credentials: 'include',
     });
     if (!response.ok) {
       let err = `Upload failed (${response.status})`;

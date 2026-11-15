@@ -5,7 +5,7 @@ Connects UI to the trained Supervised ML model and deterministic Skill Gap Engin
 """
 
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 import os
 import json
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, session
@@ -15,6 +15,7 @@ from src.security.upload_validator import validate_file_content, sanitize_filena
 from src.security.rate_limiter import SlidingWindowRateLimiter
 from src.security.csrf import generate_csrf_token, validate_csrf_token
 from src.services.embedding_service import get_embedding_service
+from src.services.analysis_store import get_analysis_store
 from src.mentor import CandidateProgressTracker, CareerMentorEngine
 from src.interview import (
     InterviewSessionManager,
@@ -86,9 +87,44 @@ def inject_security_context():
         "csrf_token": generate_csrf_token()
     }
 
-# In-memory storage for analysis results (keyed by analysis_id)
+# In-memory storage for analysis results (keyed by analysis_id) - L1 Fast Cache
 # Secure: does not write private resumes to public static directories
 ANALYSIS_CACHE: Dict[str, Dict] = {}
+DEMO_ANALYSIS_IDS = {"sample", "demo", "sample-preview", "demo-preview"}
+
+
+def _persist_analysis(analysis_id: str, data: Dict, session_id: Optional[str] = None) -> None:
+    """Stores analysis in L1 memory cache and L2 durable SQLite store."""
+    if not analysis_id or not isinstance(data, dict):
+        return
+    ANALYSIS_CACHE[analysis_id] = data
+    if len(ANALYSIS_CACHE) > 100:
+        oldest_key = next(iter(ANALYSIS_CACHE))
+        del ANALYSIS_CACHE[oldest_key]
+    try:
+        store = get_analysis_store()
+        store.save(analysis_id, data, session_id=session_id)
+    except Exception as e:
+        logger.warning("Failed to persist analysis to SQLite store: %s", e)
+
+
+def _retrieve_analysis(analysis_id: Optional[str]) -> Optional[Dict]:
+    """Retrieves analysis from L1 memory cache or falls back to L2 durable SQLite store."""
+    if not analysis_id:
+        return None
+    aid_str = str(analysis_id).strip()
+    if aid_str in ANALYSIS_CACHE:
+        return ANALYSIS_CACHE[aid_str]
+    try:
+        store = get_analysis_store()
+        data = store.get(aid_str)
+        if data:
+            ANALYSIS_CACHE[aid_str] = data
+            return data
+    except Exception as e:
+        logger.warning("Failed to query analysis from SQLite store: %s", e)
+    return None
+
 
 
 @app.route("/health", methods=["GET"])
@@ -195,21 +231,19 @@ def analyze():
             flash(result.get("error_message", "Failed to process resume."), "danger")
             return redirect(url_for("analyze"))
 
-        # Cache analysis result
+        # Cache and persist analysis result
         analysis_id = result["analysis_id"]
         result["job_description_text"] = job_description
         result["raw_jd"] = job_description
-        ANALYSIS_CACHE[analysis_id] = result
-        if len(ANALYSIS_CACHE) > 100:
-            # Drop oldest entry
-            oldest_key = next(iter(ANALYSIS_CACHE))
-            del ANALYSIS_CACHE[oldest_key]
+        result["is_demo"] = False
+        _persist_analysis(analysis_id, result, session_id=session.get("_id") or session.get("session_id"))
 
-        # Authorize current session to view this analysis
+        # Authorize current session to view this analysis and set active
         allowed = session.get("allowed_analyses", [])
         if analysis_id not in allowed:
             allowed.append(analysis_id)
         session["allowed_analyses"] = allowed
+        session["active_analysis_id"] = analysis_id
 
         return redirect(url_for("results", id=analysis_id))
 
@@ -399,18 +433,19 @@ def api_match():
 def results():
     """Analysis results view."""
     analysis_id = request.args.get("id")
-    if not analysis_id or analysis_id not in ANALYSIS_CACHE:
+    record = _retrieve_analysis(analysis_id)
+    if not analysis_id or record is None:
         flash("No analysis result found or the session has expired.", "warning")
         return redirect(url_for("analyze"))
 
     # Session-bound authorization check
     allowed = session.get("allowed_analyses", [])
-    if not app.config.get("TESTING") and analysis_id not in allowed:
+    active_id = session.get("active_analysis_id")
+    if not app.config.get("TESTING") and analysis_id not in allowed and analysis_id != active_id:
         flash("Access unauthorized or session expired for this analysis ID.", "warning")
         return redirect(url_for("analyze"))
 
-    analysis = ANALYSIS_CACHE[analysis_id]
-    return render_template("results.html", analysis=analysis)
+    return render_template("results.html", analysis=record)
 
 
 @app.route("/skill-gap", methods=["GET"])
@@ -418,21 +453,23 @@ def skill_gap():
     """Interactive skill gap analysis view."""
     analysis_id = request.args.get("id")
     analysis = None
-    if analysis_id and analysis_id in ANALYSIS_CACHE:
-        allowed = session.get("allowed_analyses", [])
-        if not app.config.get("TESTING") and analysis_id not in allowed:
-            flash("Access unauthorized or session expired for this analysis ID.", "warning")
-            return redirect(url_for("analyze"))
-        analysis = ANALYSIS_CACHE[analysis_id]
-    elif ANALYSIS_CACHE:
-        # Use latest analysis if available in current session
-        allowed = session.get("allowed_analyses", [])
-        for aid in reversed(allowed):
-            if aid in ANALYSIS_CACHE:
-                analysis = ANALYSIS_CACHE[aid]
-                break
-        if analysis is None and app.config.get("TESTING"):
-            analysis = list(ANALYSIS_CACHE.values())[-1]
+    if analysis_id:
+        if str(analysis_id).strip().lower() in DEMO_ANALYSIS_IDS:
+            analysis = _get_active_analysis("sample")
+        else:
+            analysis = _retrieve_analysis(analysis_id)
+            if analysis:
+                allowed = session.get("allowed_analyses", [])
+                active_id = session.get("active_analysis_id")
+                if not app.config.get("TESTING") and analysis_id not in allowed and analysis_id != active_id:
+                    flash("Access unauthorized or session expired for this analysis ID.", "warning")
+                    return redirect(url_for("analyze"))
+    else:
+        active_id = session.get("active_analysis_id")
+        if active_id:
+            analysis = _retrieve_analysis(active_id)
+        if analysis is None:
+            analysis = _get_active_analysis()
     return render_template("skill_gap.html", analysis=analysis)
 
 
@@ -505,16 +542,20 @@ def dataset_explorer():
 def _get_active_analysis(analysis_id: Optional[str] = None) -> Dict:
     """Retrieves current authorized analysis or provides an authentic fallback sample."""
     raw_analysis = None
-    if analysis_id and analysis_id in ANALYSIS_CACHE:
-        raw_analysis = ANALYSIS_CACHE[analysis_id]
-    elif analysis_id in ("sample", "demo"):
+    if analysis_id and str(analysis_id).strip().lower() in DEMO_ANALYSIS_IDS:
         raw_analysis = None
+    elif analysis_id:
+        raw_analysis = _retrieve_analysis(analysis_id)
     else:
-        allowed = session.get("allowed_analyses", [])
-        for aid in reversed(allowed):
-            if aid in ANALYSIS_CACHE:
-                raw_analysis = ANALYSIS_CACHE[aid]
-                break
+        active_id = session.get("active_analysis_id")
+        if active_id:
+            raw_analysis = _retrieve_analysis(active_id)
+        if raw_analysis is None:
+            allowed = session.get("allowed_analyses", [])
+            for aid in reversed(allowed):
+                raw_analysis = _retrieve_analysis(aid)
+                if raw_analysis:
+                    break
         if raw_analysis is None and ANALYSIS_CACHE:
             raw_analysis = list(ANALYSIS_CACHE.values())[-1]
     
@@ -522,6 +563,7 @@ def _get_active_analysis(analysis_id: Optional[str] = None) -> Dict:
         # Default sample candidate if no resume has been uploaded yet
         raw_analysis = {
             "analysis_id": "sample-preview",
+            "is_demo": True,
             "filename": "Sample_Senior_ML_Candidate.pdf",
             "job_title": "Machine Learning Engineer / Python Developer",
             "detected_job_title": "Senior Machine Learning Engineer",
@@ -653,6 +695,76 @@ def _get_active_analysis(analysis_id: Optional[str] = None) -> Dict:
     return analysis
 
 
+def get_authorized_analysis(
+    analysis_id: Optional[str] = None,
+    allow_demo_default: bool = False
+) -> Tuple[Optional[Dict], Optional[str], int]:
+    """
+    Retrieves and authorizes analysis dossiers with SQLite fallback.
+    Returns (analysis_dict, error_message, status_code).
+
+    - Explicit demo identifiers (demo, sample, sample-preview) -> 200 with demo candidate.
+    - Explicit analysis_id -> returns 404 if not found (no silent fallback); 403 if unauthorized; 200 if valid.
+    - Omitted analysis_id -> checks active session analysis; falls back to demo only if allow_demo_default=True.
+    """
+    if analysis_id and str(analysis_id).strip().lower() in DEMO_ANALYSIS_IDS:
+        return _get_active_analysis("sample"), None, 200
+
+    if analysis_id:
+        clean_id = str(analysis_id).strip()
+        record = _retrieve_analysis(clean_id)
+        if record is None:
+            return None, f"Analysis dossier '{clean_id}' not found or has expired.", 404
+
+        allowed = session.get("allowed_analyses", [])
+        active_id = session.get("active_analysis_id")
+        if clean_id not in allowed and clean_id != active_id:
+            return None, "Access unauthorized: this analysis dossier belongs to another session.", 403
+
+        customized = dict(record)
+        user_role = session.get("candidate_target_role")
+        if user_role:
+            customized["job_title"] = user_role
+        user_edu = session.get("candidate_confirmations", {}).get("education")
+        if user_edu:
+            customized["education_analysis"] = {"notes": user_edu}
+        return customized, None, 200
+
+    # No ID provided: check session continuity
+    active_id = session.get("active_analysis_id")
+    if active_id:
+        record = _retrieve_analysis(active_id)
+        allowed = session.get("allowed_analyses", [])
+        if record and (active_id in allowed or active_id == session.get("active_analysis_id")):
+            customized = dict(record)
+            user_role = session.get("candidate_target_role")
+            if user_role:
+                customized["job_title"] = user_role
+            user_edu = session.get("candidate_confirmations", {}).get("education")
+            if user_edu:
+                customized["education_analysis"] = {"notes": user_edu}
+            return customized, None, 200
+
+    allowed = session.get("allowed_analyses", [])
+    for aid in reversed(allowed):
+        record = _retrieve_analysis(aid)
+        if record:
+            customized = dict(record)
+            user_role = session.get("candidate_target_role")
+            if user_role:
+                customized["job_title"] = user_role
+            user_edu = session.get("candidate_confirmations", {}).get("education")
+            if user_edu:
+                customized["education_analysis"] = {"notes": user_edu}
+            return customized, None, 200
+
+    if allow_demo_default:
+        return _get_active_analysis("sample"), None, 200
+
+    return None, "No active analysis found. Please submit a resume for analysis.", 404
+
+
+
 @app.route("/interview-studio", methods=["GET"])
 def interview_studio():
     """Main Interview Studio dashboard."""
@@ -763,8 +875,8 @@ def interview_practice():
 
     # If no active practice session, create one automatically
     if not practice_session:
-        analysis = _get_active_analysis()
-        generator = InterviewQuestionGenerator(analysis)
+        analysis, _, _ = get_authorized_analysis(allow_demo_default=True)
+        generator = InterviewQuestionGenerator(analysis or _get_active_analysis())
         questions = generator.generate_questions(category="ALL", difficulty="All", max_questions=10)
         practice_session = InterviewSessionManager.create_session(
             questions=questions,
@@ -1131,15 +1243,14 @@ def api_analyze():
     analysis_id = result["analysis_id"]
     result["job_description_text"] = job_description
     result["raw_jd"] = job_description
-    ANALYSIS_CACHE[analysis_id] = result
-    if len(ANALYSIS_CACHE) > 100:
-        oldest_key = next(iter(ANALYSIS_CACHE))
-        del ANALYSIS_CACHE[oldest_key]
+    result["is_demo"] = False
+    _persist_analysis(analysis_id, result, session_id=session.get("_id") or session.get("session_id"))
 
     allowed = session.get("allowed_analyses", [])
     if analysis_id not in allowed:
         allowed.append(analysis_id)
     session["allowed_analyses"] = allowed
+    session["active_analysis_id"] = analysis_id
 
     return jsonify({
         "status": "success",
@@ -1150,23 +1261,22 @@ def api_analyze():
 
 @app.route("/api/analysis/<analysis_id>", methods=["GET"])
 def api_get_analysis(analysis_id: str):
-    """Retrieves cached analysis result or returns authentic demo sample."""
-    if not analysis_id or analysis_id not in ANALYSIS_CACHE:
-        if analysis_id in ("sample", "demo", "sample-preview"):
-            sample = _get_active_analysis(None)
-            return jsonify({"status": "success", "analysis": sample}), 200
-        # If cache contains any entry, offer it
-        sample = _get_active_analysis(None)
-        return jsonify({"status": "success", "analysis": sample}), 200
+    """Retrieves cached or persisted analysis result, or returns authentic demo sample."""
+    analysis, err_msg, status_code = get_authorized_analysis(analysis_id, allow_demo_default=False)
+    if err_msg or not analysis:
+        return jsonify({"status": "error", "error_message": err_msg or "Analysis not found."}), status_code
 
-    return jsonify({"status": "success", "analysis": ANALYSIS_CACHE[analysis_id]}), 200
+    return jsonify({"status": "success", "analysis": analysis}), 200
 
 
 @app.route("/api/skill-gap", methods=["GET"])
 def api_skill_gap():
     """Returns analysis for skill-gap view."""
     aid = request.args.get("id")
-    analysis = _get_active_analysis(aid)
+    analysis, err_msg, status_code = get_authorized_analysis(aid, allow_demo_default=True)
+    if err_msg or not analysis:
+        return jsonify({"status": "error", "error_message": err_msg or "Analysis not found."}), status_code
+
     return jsonify({"status": "success", "analysis": analysis}), 200
 
 
@@ -1198,7 +1308,10 @@ def api_datasets():
 def api_career_mentor():
     """Returns the Personalized Career Mentor dossier for active analysis."""
     aid = request.args.get("id")
-    analysis = _get_active_analysis(aid)
+    analysis, err_msg, status_code = get_authorized_analysis(aid, allow_demo_default=True)
+    if err_msg or not analysis:
+        return jsonify({"status": "error", "error_message": err_msg or "Analysis not found."}), status_code
+
     user_override_name = session.get("candidate_preferred_name")
 
     timeline_days = int(request.args.get("timeline_days", 14))
@@ -1226,7 +1339,10 @@ def api_career_mentor():
 def api_interview_studio():
     """Returns candidates evidence profile, questions, and technical topics."""
     aid = request.args.get("id")
-    analysis = _get_active_analysis(aid)
+    analysis, err_msg, status_code = get_authorized_analysis(aid, allow_demo_default=True)
+    if err_msg or not analysis:
+        return jsonify({"status": "error", "error_message": err_msg or "Analysis not found."}), status_code
+
     generator = InterviewQuestionGenerator(analysis)
     evidence = generator.evidence
     technical_topics = get_all_technical_topics()
@@ -1262,7 +1378,10 @@ def api_interview_studio_generate():
     """Generates questions dynamically or initiates practice mode."""
     data = request.get_json(silent=True) or request.form.to_dict()
     aid = data.get("id") or request.args.get("id")
-    analysis = _get_active_analysis(aid)
+    analysis, err_msg, status_code = get_authorized_analysis(aid, allow_demo_default=True)
+    if err_msg or not analysis:
+        return jsonify({"status": "error", "error_message": err_msg or "Analysis not found."}), status_code
+
     generator = InterviewQuestionGenerator(analysis)
     evidence = generator.evidence
     technical_topics = get_all_technical_topics()
@@ -1328,8 +1447,8 @@ def api_interview_practice():
     practice_session = InterviewSessionManager.get_session(session_id) if session_id else None
 
     if not practice_session:
-        analysis = _get_active_analysis()
-        generator = InterviewQuestionGenerator(analysis)
+        analysis, _, _ = get_authorized_analysis(allow_demo_default=True)
+        generator = InterviewQuestionGenerator(analysis or _get_active_analysis())
         questions = generator.generate_questions(category="ALL", difficulty="All", max_questions=10)
         practice_session = InterviewSessionManager.create_session(
             questions=questions,
