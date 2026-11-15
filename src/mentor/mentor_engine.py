@@ -607,12 +607,14 @@ class CareerMentorEngine:
                     "step_title": f"{st['name']}: {st.get('curriculum_name') or st['task'][:50]}",
                     "task_key": t_key,
                     "task": st["task"],
+                    "deliverable": st.get("deliverable", ""),
+                    "exercise": st.get("exercise", ""),
+                    "verification_method": st.get("verification_method", ""),
                     "status": st_status,
                     "completed": (st_status == "Completed"),
                     "estimated_hours": 2,
-                    "exercise": st.get("exercise", ""),
-                    "deliverable": st.get("deliverable", ""),
-                    "verification_method": st.get("verification_method", "")
+                    "milestone_description": st["task"],
+                    "key_deliverable": st.get("deliverable", "")
                 })
             rm["milestones"] = milestones
 

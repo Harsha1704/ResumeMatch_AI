@@ -605,10 +605,20 @@ export const CareerMentorPage: React.FC = () => {
                                 ~{m.estimated_hours || 2} hrs
                               </span>
                             </div>
-                            <p className="mt-1 text-xs text-slate-400">{m.milestone_description}</p>
-                            {m.key_deliverable && (
+                            <p className="mt-1 text-xs text-slate-300">{m.task || m.milestone_description}</p>
+                            {(m.deliverable || m.key_deliverable) && (
                               <p className="mt-1 text-[11px] text-emerald-400">
-                                <strong>Deliverable:</strong> {m.key_deliverable}
+                                <strong className="font-semibold text-emerald-300">Deliverable:</strong> {m.deliverable || m.key_deliverable}
+                              </p>
+                            )}
+                            {m.exercise && (
+                              <p className="mt-1 text-[11px] text-slate-400">
+                                <strong className="font-semibold text-slate-400">Exercise:</strong> {m.exercise}
+                              </p>
+                            )}
+                            {m.verification_method && (
+                              <p className="mt-1 text-[10px] text-slate-500">
+                                <strong className="font-semibold text-slate-400">Verification:</strong> {m.verification_method}
                               </p>
                             )}
                           </div>

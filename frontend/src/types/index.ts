@@ -120,12 +120,16 @@ export interface AnalysisResult {
 export interface RoadmapMilestone {
   step_number: number;
   step_title: string;
-  milestone_description: string;
-  key_deliverable: string;
+  task: string;
+  deliverable?: string;
+  exercise?: string;
+  verification_method?: string;
   estimated_hours: number;
-  verification_method: string;
   task_key: string;
+  status?: string;
   completed?: boolean;
+  milestone_description?: string;
+  key_deliverable?: string;
 }
 
 export interface Roadmap {

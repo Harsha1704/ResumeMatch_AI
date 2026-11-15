@@ -233,8 +233,18 @@ def test_05_career_mentor_workflow_and_progress_reset():
     assert res_name.status_code == 200
     assert res_name.get_json()["preferred_name"] == "Harsha"
 
+    # Verify milestone schema contract
+    first_milestone = dossier["roadmaps"][0]["milestones"][0]
+    assert "task" in first_milestone
+    assert "deliverable" in first_milestone
+    assert "step_title" in first_milestone
+    assert "task_key" in first_milestone
+    assert "status" in first_milestone
+    assert "estimated_hours" in first_milestone
+    assert len(first_milestone["task"]) > 0
+
     # 3. Mark milestone as completed
-    first_task = dossier["roadmaps"][0]["milestones"][0]["task_key"]
+    first_task = first_milestone["task_key"]
     res_prog = client.post("/api/mentor/progress",
                            data=json.dumps({"task_key": first_task, "status": "completed"}),
                            content_type="application/json")
@@ -272,21 +282,55 @@ def test_06_strict_demo_preview_distinction():
 
 
 def test_07_csrf_enforcement_and_form_header_parity():
-    """7. Verify CSRF enforcement on state-changing endpoints in enforced mode."""
+    """7. Verify CSRF enforcement on state-changing endpoints in enforced mode.
+    
+    Verifies:
+    1. A state-changing API request without a token is rejected (HTTP 403).
+    2. A valid X-CSRF-Token header is accepted (HTTP 200).
+    3. A legacy Jinja form submission without a token is rejected (HTTP 403).
+    4. A legacy Jinja form submission with a valid form token is accepted (HTTP 200).
+    """
     app.config["ENFORCE_CSRF_IN_TESTS"] = True
     client = app.test_client()
 
-    # Rejection of missing CSRF
-    post_no_csrf = client.post("/api/mentor/reset-progress")
-    assert post_no_csrf.status_code == 403
+    # 1. State-changing API request without a token is rejected
+    post_api_no_csrf = client.post("/api/mentor/reset-progress")
+    assert post_api_no_csrf.status_code == 403
+    api_err = post_api_no_csrf.get_json()
+    assert "CSRF verification failed" in api_err["error_message"]
 
-    # Fetch token
+    # Retrieve valid CSRF token from active session
     token_resp = client.get("/api/csrf-token")
+    assert token_resp.status_code == 200
     token = token_resp.get_json()["csrf_token"]
+    assert len(token) == 64
 
-    # Acceptance of valid header
-    post_with_csrf = client.post(
+    # 2. State-changing API request with valid X-CSRF-Token header is accepted
+    post_api_with_csrf = client.post(
         "/api/mentor/reset-progress",
         headers={"X-CSRF-Token": token}
     )
-    assert post_with_csrf.status_code == 200
+    assert post_api_with_csrf.status_code == 200
+    assert post_api_with_csrf.get_json()["status"] == "success"
+
+    # 3. Legacy Jinja form submission without a token is rejected
+    post_form_no_csrf = client.post("/interview-studio/generate", data={
+        "category": "E",
+        "difficulty": "Easy",
+        "max_questions": "5",
+        "action": "generate"
+    })
+    assert post_form_no_csrf.status_code == 403
+    form_err = post_form_no_csrf.get_json()
+    assert "CSRF verification failed" in form_err["error_message"]
+
+    # 4. Legacy Jinja form submission with a valid form token is accepted
+    post_form_with_csrf = client.post("/interview-studio/generate", data={
+        "category": "E",
+        "difficulty": "Easy",
+        "max_questions": "5",
+        "action": "generate",
+        "csrf_token": token
+    })
+    assert post_form_with_csrf.status_code == 200
+    assert b"Interview Intelligence Studio" in post_form_with_csrf.data
