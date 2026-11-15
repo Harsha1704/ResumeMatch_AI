@@ -16,7 +16,12 @@ from src.security.rate_limiter import SlidingWindowRateLimiter
 from src.security.csrf import generate_csrf_token, validate_csrf_token
 from src.services.embedding_service import get_embedding_service
 from src.mentor import CandidateProgressTracker, CareerMentorEngine
-from src.interview import InterviewSessionManager, InterviewQuestionGenerator
+from src.interview import (
+    InterviewSessionManager,
+    InterviewQuestionGenerator,
+    HeuristicAnswerEvaluator,
+    get_all_technical_topics,
+)
 
 logger = logging.getLogger(__name__)
 
