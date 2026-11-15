@@ -36,6 +36,13 @@ def test_analyze_flow_with_pasted_text(client):
 
     # Follow redirect to results page
     results_url = resp.headers["Location"]
+    analysis_id = results_url.rsplit("=", 1)[-1]
+    cached_analysis = ANALYSIS_CACHE[analysis_id]
+    assert cached_analysis["job_title"] == "Platform Automation Engineer"
+    assert cached_analysis["target_role_source"] == "user_override"
+    assert cached_analysis["detected_job_title"]
+    assert "python" in {skill.lower() for skill in cached_analysis["required_skills"]}
+
     res_resp = client.get(results_url)
     assert res_resp.status_code == 200
     assert b"Compatibility Score" in res_resp.data
