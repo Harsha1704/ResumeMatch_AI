@@ -5,6 +5,7 @@ Provides transparent predictions, calibrated probabilities, and skill gap insigh
 """
 
 from pathlib import Path
+import pathlib
 from typing import Dict, List, Optional, Tuple, Union
 import json
 import joblib
@@ -42,11 +43,22 @@ class ModelInferenceEngine:
         self._load_artifacts()
 
     def _load_artifacts(self) -> None:
-        """Loads serialized model and feature pipeline if available."""
-        if self.model_path.exists():
-            self.model = joblib.load(self.model_path)
-        if self.pipeline_path.exists():
-            self.pipeline = ResumeJobFeaturePipeline.load(self.pipeline_path)
+        """Loads serialized artifacts, including Windows-trained paths, on Linux.
+
+        Joblib artifacts created on Windows can contain pathlib.WindowsPath objects.
+        Linux refuses to instantiate those during unpickling, so temporarily map the
+        pickle reference to PosixPath while loading. Restore the standard pathlib
+        class immediately afterward.
+        """
+        original_windows_path = pathlib.WindowsPath
+        try:
+            pathlib.WindowsPath = pathlib.PosixPath
+            if self.model_path.exists():
+                self.model = joblib.load(self.model_path)
+            if self.pipeline_path.exists():
+                self.pipeline = ResumeJobFeaturePipeline.load(self.pipeline_path)
+        finally:
+            pathlib.WindowsPath = original_windows_path
 
     def predict_match(
         self,
