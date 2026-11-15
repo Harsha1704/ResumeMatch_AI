@@ -119,11 +119,16 @@ class InterviewSession:
         all_improvements: List[str] = []
 
         for idx_str, ev in self.evaluations.items():
-            if ev.get("status") == "evaluated":
-                cov = ev.get("key_point_coverage", {}).get("coverage_pct", 0.0)
-                total_coverage_pct += cov
+            # Count every answered question's framework, even when the answer is
+            # too short to score. Insufficient answers contribute zero coverage.
+            if self.answers.get(idx_str, "").strip():
                 fw_name = ev.get("framework_adherence", {}).get("framework", "STAR")
                 frameworks_used[fw_name] = frameworks_used.get(fw_name, 0) + 1
+
+                if ev.get("status") == "evaluated":
+                    cov = ev.get("key_point_coverage", {}).get("coverage_pct", 0.0)
+                    total_coverage_pct += cov
+
                 for s in ev.get("strengths", []):
                     if s not in all_strengths:
                         all_strengths.append(s)
