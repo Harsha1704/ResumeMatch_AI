@@ -21,12 +21,17 @@ The audit identified these Phase 2 priorities:
 - Preserved the automatically detected job title in `detected_job_title`.
 - Added `target_role_source` metadata (`user_override` or `job_description`).
 - Added integration regression coverage for form propagation and API validation.
+- Hardened the parser to enforce the 16 MB limit for bytes, in-memory streams, and file paths.
+- Added direct file-signature validation for PDF, DOCX, and TXT input, including DOCX ZIP integrity and required document-part checks.
+- Changed DOCX extraction to preserve the original interleaved order of paragraphs and tables.
+- Added parser regression tests for DOCX reading order, invalid signatures, binary TXT content, and oversized in-memory streams.
 
 ## Files changed
 - `templates/analyze.html`
 - `src/analysis/matching_engine.py`
 - `app.py`
 - `tests/test_analysis_integration.py`
+- `tests/test_resume_parser.py`
 
 ## Verification status
 - Code is committed to `deploy/vercel-render-free`.
