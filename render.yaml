@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: resumematch-ai-api
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn -w 2 -b 0.0.0.0:$PORT --timeout 120 app:app
+    envVars:
+      - key: RESUMEMATCH_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: FRONTEND_ORIGINS
+        value: https://resumematch-ai.vercel.app
+      - key: RESUMEMATCH_MODEL_BACKEND
+        value: production
+      - key: MAX_CONTENT_LENGTH
+        value: "16777216"

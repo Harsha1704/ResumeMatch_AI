@@ -37,3 +37,8 @@ results/phase11_experiments/train_cleaned_v1.csv
 Thumbs.db
 .vscode/
 .idea/
+
+# Frontend builds and dependencies
+frontend/node_modules/
+frontend/dist/
+

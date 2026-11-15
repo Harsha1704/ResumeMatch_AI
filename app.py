@@ -54,6 +54,14 @@ frontend_origins = [
     ).split(",")
     if origin.strip()
 ]
+if not frontend_origins and APP_ENV != "production":
+    frontend_origins = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000"
+    ]
+
 if frontend_origins:
     from flask_cors import CORS
     CORS(
@@ -499,6 +507,8 @@ def _get_active_analysis(analysis_id: Optional[str] = None) -> Dict:
     raw_analysis = None
     if analysis_id and analysis_id in ANALYSIS_CACHE:
         raw_analysis = ANALYSIS_CACHE[analysis_id]
+    elif analysis_id in ("sample", "demo"):
+        raw_analysis = None
     else:
         allowed = session.get("allowed_analyses", [])
         for aid in reversed(allowed):
@@ -511,8 +521,41 @@ def _get_active_analysis(analysis_id: Optional[str] = None) -> Dict:
     if raw_analysis is None:
         # Default sample candidate if no resume has been uploaded yet
         raw_analysis = {
-            "filename": "Sample Candidate Profile",
+            "analysis_id": "sample-preview",
+            "filename": "Sample_Senior_ML_Candidate.pdf",
             "job_title": "Machine Learning Engineer / Python Developer",
+            "detected_job_title": "Senior Machine Learning Engineer",
+            "target_role_source": "job_description",
+            "predicted_class": "Good Fit",
+            "model_confidence": 88.2,
+            "compatibility_score": 86.4,
+            "model_used": "Production Baseline (TF-IDF + Logistic Regression)",
+            "model_backend": "production",
+            "is_challenger": False,
+            "inference_latency_ms": 14.8,
+            "cache_status": "hit",
+            "calibration_note": "Production Model: Calibrated probabilities based on TF-IDF baseline.",
+            "class_probabilities": {
+                "Good Fit": 0.882,
+                "Potential Fit": 0.086,
+                "No Fit": 0.032
+            },
+            "skill_gap_summary": {
+                "total_required_count": 4,
+                "matched_required_count": 3,
+                "fully_matched_required_count": 3,
+                "partially_evidenced_required_count": 0,
+                "missing_required_count": 1,
+                "total_preferred_count": 2,
+                "matched_preferred_count": 1,
+                "missing_preferred_count": 1,
+                "total_resume_skills_count": 7,
+                "full_coverage_pct": 75.0,
+                "any_coverage_pct": 87.5,
+                "full_coverage_display": "75.0%",
+                "any_coverage_display": "87.5%",
+                "coverage_status": "Strong Match"
+            },
             "projects": [
                 {
                     "title": "Multimodal Resume Matching & Skill Gap Analysis System",
@@ -534,8 +577,65 @@ def _get_active_analysis(analysis_id: Optional[str] = None) -> Dict:
             "missing_skills": ["Kubernetes", "AWS", "CI/CD"],
             "required_skills": ["Python", "Scikit-Learn", "Docker", "SQL"],
             "preferred_skills": ["Kubernetes", "AWS"],
-            "education_analysis": {"notes": "B.Tech in Computer Science & Engineering"},
-            "experience_summary": {"display_summary": "1 Internship, 1 Key Project verified"},
+            "matched_required_skills": ["Python", "Scikit-Learn", "SQL"],
+            "fully_matched_required_skills": ["Python", "Scikit-Learn", "SQL"],
+            "partially_evidenced_required_skills": [],
+            "missing_required_skills": ["Docker"],
+            "matched_preferred_skills": ["AWS"],
+            "missing_preferred_skills": ["Kubernetes"],
+            "education_analysis": {
+                "notes": "B.Tech in Computer Science & Engineering",
+                "degrees": ["B.Tech"],
+                "institutions": ["Institute of Technology"],
+                "highest_degree": "B.Tech"
+            },
+            "experience_summary": {
+                "total_years": 2.5,
+                "display_summary": "1 Internship, 1 Key Project verified"
+            },
+            "experience_analysis": {
+                "total_years_estimate": 2.5,
+                "meets_requirement": True,
+                "required_years": 2.0,
+                "display_summary": "1 Internship, 1 Key Project verified",
+                "detected_projects": [
+                    {
+                        "title": "Multimodal Resume Matching & Skill Gap Analysis System",
+                        "technologies": ["Python", "Scikit-Learn", "Flask", "PyTorch"],
+                        "description": "End-to-end multimodal matching pipeline with deterministic skill gap analysis."
+                    }
+                ]
+            },
+            "recommendations": [
+                {
+                    "category": "High Priority",
+                    "action": "Acquire containerization fundamentals (Docker)",
+                    "rationale": "Docker is listed as a mandatory core requirement for deployment.",
+                    "severity": "danger"
+                },
+                {
+                    "category": "Medium Priority",
+                    "action": "Familiarize with Kubernetes orchestration",
+                    "rationale": "Preferred competency to support distributed microservices.",
+                    "severity": "warning"
+                }
+            ],
+            "learning_resources": [
+                {
+                    "skill": "Docker",
+                    "title": "Docker Getting Started Guide",
+                    "url": "https://docs.docker.com/get-started/",
+                    "provider": "Official Docker Documentation",
+                    "level": "Beginner to Intermediate"
+                },
+                {
+                    "skill": "Kubernetes",
+                    "title": "Kubernetes Basics & Architecture",
+                    "url": "https://kubernetes.io/docs/tutorials/kubernetes-basics/",
+                    "provider": "Kubernetes Foundation",
+                    "level": "Intermediate"
+                }
+            ],
             "job_description_text": "Seeking a Machine Learning Engineer with strong proficiency in Python, Scikit-Learn, Docker, SQL, Kubernetes, AWS, and CI/CD pipelines.",
             "raw_jd": "Seeking a Machine Learning Engineer with strong proficiency in Python, Scikit-Learn, Docker, SQL, Kubernetes, AWS, and CI/CD pipelines."
         }
@@ -904,6 +1004,393 @@ def api_candidate_confirm_education():
     confs["education"] = edu
     session["candidate_confirmations"] = confs
     return jsonify({"status": "success", "education": edu}), 200
+
+
+# =========================================================================
+# React Frontend Companion API Endpoints
+# =========================================================================
+
+@app.route("/api/dashboard", methods=["GET"])
+def api_dashboard():
+    """Returns dataset summary and evaluation metrics for the dashboard."""
+    summary_path = Path("results/metrics/evaluation_summary.json")
+    model_summary = {}
+    if summary_path.exists():
+        with open(summary_path, "r", encoding="utf-8") as f:
+            model_summary = json.load(f)
+    
+    dataset_summary_path = Path("data/raw/dataset_summary.json")
+    dataset_summary = {}
+    if dataset_summary_path.exists():
+        with open(dataset_summary_path, "r", encoding="utf-8") as f:
+            dataset_summary = json.load(f)
+
+    return jsonify({
+        "status": "success",
+        "summary": model_summary,
+        "dataset_summary": dataset_summary,
+        "active_backend_default": app.config.get("MODEL_BACKEND", "production")
+    }), 200
+
+
+@app.route("/api/sample-jobs", methods=["GET"])
+def api_sample_jobs():
+    """Provides sample job descriptions from dataset for convenience."""
+    sample_jobs = []
+    try:
+        from src.utils.data_loader import load_primary_dataset
+        train_df, _ = load_primary_dataset()
+        for _, row in train_df.head(3).iterrows():
+            sample_jobs.append(row["job_description_text"])
+    except Exception:
+        pass
+
+    if not sample_jobs:
+        sample_jobs = [
+            "Senior Python & Machine Learning Engineer\nRequirements:\n- Python, Scikit-learn, PyTorch, Docker, SQL\n- 4+ years of experience in distributed machine learning pipelines.",
+            "Frontend Web Developer\nQualifications:\n- React, TypeScript, JavaScript, CSS, HTML5\n- Experience building responsive web interfaces.",
+            "Cloud DevOps Engineer\nMandatory Skills:\n- Kubernetes, Docker, AWS, Linux, CI/CD, Terraform\n- 3+ years experience with cloud infrastructure."
+        ]
+    return jsonify({"status": "success", "sample_jobs": sample_jobs}), 200
+
+
+@app.route("/api/analyze", methods=["POST"])
+def api_analyze():
+    """
+    Accepts multipart form data or JSON for resume upload/text analysis.
+    Returns JSON analysis result with analysis_id and complete parsed structures.
+    """
+    # Rate Limiting
+    client_ip = request.remote_addr or "127.0.0.1"
+    allowed, retry_after = upload_rate_limiter.is_allowed(client_ip)
+    if not allowed and not app.config.get("TESTING"):
+        return jsonify({
+            "status": "error",
+            "error_message": f"Upload rate limit exceeded. Please wait {retry_after} seconds before submitting."
+        }), 429
+
+    resume_input = None
+    filename = None
+    job_description = ""
+    target_role = ""
+    model_backend = app.config.get("MODEL_BACKEND", "production")
+
+    if request.is_json:
+        payload = request.get_json(silent=True) or {}
+        job_description = payload.get("job_description", "").strip()
+        target_role = payload.get("target_role", "").strip()
+        pasted_text = payload.get("resume_text", "").strip()
+        if pasted_text:
+            resume_input = pasted_text
+            filename = "pasted_resume.txt"
+        model_backend = payload.get("model_backend", model_backend).strip()
+    else:
+        job_description = request.form.get("job_description", "").strip()
+        target_role = request.form.get("target_role", "").strip()
+        uploaded_file = request.files.get("resume_file")
+        pasted_text = request.form.get("resume_text", "").strip()
+
+        if uploaded_file and uploaded_file.filename:
+            file_bytes = uploaded_file.read()
+            raw_filename = uploaded_file.filename
+            try:
+                validate_file_content(file_bytes, raw_filename)
+                safe_name = sanitize_filename(raw_filename)
+                resume_input = file_bytes
+                filename = safe_name
+            except UploadSecurityError as sec_err:
+                return jsonify({"status": "error", "error_message": f"Upload Security Error: {str(sec_err)}"}), 400
+        elif pasted_text:
+            if len(pasted_text) > 100000:
+                return jsonify({"status": "error", "error_message": "Pasted resume text exceeds maximum limit of 100,000 characters."}), 400
+            resume_input = pasted_text
+            filename = "pasted_resume.txt"
+        model_backend = request.form.get("model_backend", model_backend).strip()
+
+    if len(target_role) > 120:
+        return jsonify({"status": "error", "error_message": "Target role must be 120 characters or fewer."}), 400
+    if not job_description:
+        return jsonify({"status": "error", "error_message": "Target job description is required."}), 400
+    if not resume_input:
+        return jsonify({"status": "error", "error_message": "Please upload a resume file (PDF, DOCX, TXT) or paste resume text."}), 400
+
+    result = analyze_resume_and_job(
+        resume_input=resume_input,
+        job_description_input=job_description,
+        resume_filename=filename,
+        model_backend=model_backend,
+        target_role_input=target_role
+    )
+
+    if result.get("status") != "success":
+        return jsonify({
+            "status": "error",
+            "error_message": result.get("error_message", "Failed to process resume.")
+        }), 400
+
+    analysis_id = result["analysis_id"]
+    result["job_description_text"] = job_description
+    result["raw_jd"] = job_description
+    ANALYSIS_CACHE[analysis_id] = result
+    if len(ANALYSIS_CACHE) > 100:
+        oldest_key = next(iter(ANALYSIS_CACHE))
+        del ANALYSIS_CACHE[oldest_key]
+
+    allowed = session.get("allowed_analyses", [])
+    if analysis_id not in allowed:
+        allowed.append(analysis_id)
+    session["allowed_analyses"] = allowed
+
+    return jsonify({
+        "status": "success",
+        "analysis_id": analysis_id,
+        "data": result
+    }), 200
+
+
+@app.route("/api/analysis/<analysis_id>", methods=["GET"])
+def api_get_analysis(analysis_id: str):
+    """Retrieves cached analysis result or returns authentic demo sample."""
+    if not analysis_id or analysis_id not in ANALYSIS_CACHE:
+        if analysis_id in ("sample", "demo", "sample-preview"):
+            sample = _get_active_analysis(None)
+            return jsonify({"status": "success", "analysis": sample}), 200
+        # If cache contains any entry, offer it
+        sample = _get_active_analysis(None)
+        return jsonify({"status": "success", "analysis": sample}), 200
+
+    return jsonify({"status": "success", "analysis": ANALYSIS_CACHE[analysis_id]}), 200
+
+
+@app.route("/api/skill-gap", methods=["GET"])
+def api_skill_gap():
+    """Returns analysis for skill-gap view."""
+    aid = request.args.get("id")
+    analysis = _get_active_analysis(aid)
+    return jsonify({"status": "success", "analysis": analysis}), 200
+
+
+@app.route("/api/model-performance", methods=["GET"])
+def api_model_performance():
+    """Returns supervised ML model metrics and benchmark comparison data."""
+    summary_path = Path("results/metrics/evaluation_summary.json")
+    model_data = {}
+    if summary_path.exists():
+        with open(summary_path, "r", encoding="utf-8") as f:
+            model_data = json.load(f)
+    from src.services.model_performance_adapter import get_model_performance_dashboard_data
+    dashboard_data = get_model_performance_dashboard_data()
+    return jsonify({"status": "success", "data": model_data, "dashboard": dashboard_data}), 200
+
+
+@app.route("/api/datasets", methods=["GET"])
+def api_datasets():
+    """Returns dataset provenance, distribution, and split metadata."""
+    summary_path = Path("data/raw/dataset_summary.json")
+    data_summary = {}
+    if summary_path.exists():
+        with open(summary_path, "r", encoding="utf-8") as f:
+            data_summary = json.load(f)
+    return jsonify({"status": "success", "summary": data_summary}), 200
+
+
+@app.route("/api/career-mentor", methods=["GET"])
+def api_career_mentor():
+    """Returns the Personalized Career Mentor dossier for active analysis."""
+    aid = request.args.get("id")
+    analysis = _get_active_analysis(aid)
+    user_override_name = session.get("candidate_preferred_name")
+
+    timeline_days = int(request.args.get("timeline_days", 14))
+    daily_hours = float(request.args.get("daily_hours", 2.0))
+
+    progress_tracker = _get_or_create_progress_tracker()
+    engine = CareerMentorEngine(analysis, user_override_name=user_override_name)
+    dossier = engine.build_mentor_dossier(
+        timeline_days=timeline_days,
+        daily_hours=daily_hours,
+        progress_tracker=progress_tracker
+    )
+
+    session["mentor_priority_skills"] = [rm["skill_name"] for rm in dossier.get("roadmaps", [])]
+    struggled = session.get("struggled_topics", [])
+    if struggled:
+        for rm in dossier.get("roadmaps", []):
+            if any(st.lower() in rm["skill_name"].lower() for st in struggled):
+                rm["needs_reinforcement"] = True
+
+    return jsonify({"status": "success", "dossier": dossier}), 200
+
+
+@app.route("/api/interview-studio", methods=["GET"])
+def api_interview_studio():
+    """Returns candidates evidence profile, questions, and technical topics."""
+    aid = request.args.get("id")
+    analysis = _get_active_analysis(aid)
+    generator = InterviewQuestionGenerator(analysis)
+    evidence = generator.evidence
+    technical_topics = get_all_technical_topics()
+
+    mentor_skills = session.get("mentor_priority_skills", [])
+    category = request.args.get("category", "ALL")
+    difficulty = request.args.get("difficulty", "All")
+    max_questions = int(request.args.get("max_questions", 10))
+
+    questions = generator.generate_questions(
+        category=category,
+        difficulty=difficulty,
+        max_questions=max_questions,
+        priority_skills=mentor_skills,
+        candidate_confirmations=session.get("candidate_confirmations", {})
+    )
+
+    active_session_id = session.get("active_interview_session_id")
+    if active_session_id and not InterviewSessionManager.get_session(active_session_id):
+        active_session_id = None
+
+    return jsonify({
+        "status": "success",
+        "evidence": evidence,
+        "questions": questions,
+        "technical_topics": technical_topics,
+        "active_session_id": active_session_id
+    }), 200
+
+
+@app.route("/api/interview-studio/generate", methods=["POST"])
+def api_interview_studio_generate():
+    """Generates questions dynamically or initiates practice mode."""
+    data = request.get_json(silent=True) or request.form.to_dict()
+    aid = data.get("id") or request.args.get("id")
+    analysis = _get_active_analysis(aid)
+    generator = InterviewQuestionGenerator(analysis)
+    evidence = generator.evidence
+    technical_topics = get_all_technical_topics()
+
+    category = data.get("category", "ALL")
+    difficulty = data.get("difficulty", "All")
+    max_questions = int(data.get("max_questions", 15))
+    technical_topic = data.get("technical_topic", "All")
+    framework = (data.get("framework") or "").strip() or None
+    action = data.get("action", "generate")
+
+    mentor_skills = session.get("mentor_priority_skills", [])
+    questions = generator.generate_questions(
+        category=category,
+        difficulty=difficulty,
+        max_questions=max_questions,
+        preferred_framework=framework,
+        technical_topic=technical_topic,
+        priority_skills=mentor_skills,
+        candidate_confirmations=session.get("candidate_confirmations", {})
+    )
+
+    new_session_id = None
+    if action == "practice":
+        new_session = InterviewSessionManager.create_session(
+            questions=questions,
+            analysis_id=analysis.get("analysis_id"),
+            candidate_filename=evidence.get("filename"),
+            job_title=evidence.get("job_title")
+        )
+        session["active_interview_session_id"] = new_session.session_id
+        new_session_id = new_session.session_id
+
+    elif action == "practice_single":
+        target_qid = data.get("question_id")
+        single_q = [q for q in questions if q["question_id"] == target_qid]
+        if not single_q:
+            all_qs = generator.generate_questions(category="ALL", difficulty="All", max_questions=50)
+            single_q = [q for q in all_qs if q["question_id"] == target_qid]
+        practice_qs = single_q if single_q else questions[:1]
+        new_session = InterviewSessionManager.create_session(
+            questions=practice_qs,
+            analysis_id=analysis.get("analysis_id"),
+            candidate_filename=evidence.get("filename"),
+            job_title=evidence.get("job_title")
+        )
+        session["active_interview_session_id"] = new_session.session_id
+        new_session_id = new_session.session_id
+
+    return jsonify({
+        "status": "success",
+        "evidence": evidence,
+        "questions": questions,
+        "technical_topics": technical_topics,
+        "active_session_id": new_session_id or session.get("active_interview_session_id")
+    }), 200
+
+
+@app.route("/api/interview-practice", methods=["GET"])
+def api_interview_practice():
+    """Retrieves current practice question and progress."""
+    session_id = request.args.get("session_id") or session.get("active_interview_session_id")
+    practice_session = InterviewSessionManager.get_session(session_id) if session_id else None
+
+    if not practice_session:
+        analysis = _get_active_analysis()
+        generator = InterviewQuestionGenerator(analysis)
+        questions = generator.generate_questions(category="ALL", difficulty="All", max_questions=10)
+        practice_session = InterviewSessionManager.create_session(
+            questions=questions,
+            analysis_id=analysis.get("analysis_id"),
+            candidate_filename=generator.evidence.get("filename"),
+            job_title=generator.evidence.get("job_title")
+        )
+        session["active_interview_session_id"] = practice_session.session_id
+
+    question = practice_session.get_current_question()
+    return jsonify({
+        "status": "success",
+        "session_id": practice_session.session_id,
+        "question": question,
+        "current_index": practice_session.current_index,
+        "total_questions": len(practice_session.questions)
+    }), 200
+
+
+@app.route("/api/interview-practice/submit", methods=["POST"])
+def api_interview_practice_submit():
+    """Saves practice answer and navigates next, prev, or finish."""
+    data = request.get_json(silent=True) or request.form.to_dict()
+    session_id = data.get("session_id")
+    practice_session = InterviewSessionManager.get_session(session_id)
+    if not practice_session:
+        return jsonify({"status": "error", "message": "Practice session expired or not found."}), 404
+
+    q_idx = int(data.get("question_index", 0))
+    user_answer = data.get("user_answer", "")
+    direction = data.get("direction", "next")
+
+    practice_session.submit_answer(q_idx, user_answer)
+
+    if direction == "prev":
+        practice_session.prev_question()
+    elif direction == "finish":
+        pass
+    else:
+        practice_session.next_question()
+
+    return jsonify({
+        "status": "success",
+        "session_id": session_id,
+        "current_index": practice_session.current_index,
+        "total_questions": len(practice_session.questions),
+        "is_finished": direction == "finish" or (practice_session.current_index >= len(practice_session.questions))
+    }), 200
+
+
+@app.route("/api/interview-results", methods=["GET"])
+def api_interview_results():
+    """Retrieves practice session results and feedback summary."""
+    session_id = request.args.get("session_id") or session.get("active_interview_session_id")
+    practice_session = InterviewSessionManager.get_session(session_id) if session_id else None
+
+    if not practice_session:
+        return jsonify({"status": "error", "message": "No practice results found for this session."}), 404
+
+    results = practice_session.complete_session()
+    return jsonify({"status": "success", "results": results}), 200
 
 
 if __name__ == "__main__":
