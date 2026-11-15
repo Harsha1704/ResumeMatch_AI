@@ -3,7 +3,7 @@ services:
     name: resumematch-ai-api
     runtime: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn -w 2 -b 0.0.0.0:$PORT --timeout 120 app:app
+    startCommand: gunicorn --workers 1 --threads 4 --timeout 120 --bind 0.0.0.0:$PORT wsgi:app
     envVars:
       - key: RESUMEMATCH_ENV
         value: production

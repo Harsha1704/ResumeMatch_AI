@@ -28,7 +28,17 @@ class CandidateProgressTracker:
         self.practiced_question_ids: List[str] = []
 
     def set_task_status(self, task_key: str, status: str):
-        if status in VALID_STATUSES:
+        norm = (status or "").strip().lower()
+        mapping = {
+            "completed": "Completed",
+            "learning": "Learning",
+            "practicing": "Practicing",
+            "not started": "Not started",
+            "pending": "Not started"
+        }
+        if norm in mapping:
+            self.task_states[task_key] = mapping[norm]
+        elif status in VALID_STATUSES:
             self.task_states[task_key] = status
 
     def get_task_status(self, task_key: str) -> str:

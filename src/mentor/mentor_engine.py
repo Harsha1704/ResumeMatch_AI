@@ -586,16 +586,35 @@ class CareerMentorEngine:
         job_title = self.analysis_data.get("job_title") or "Target Technical Role"
         study_plan = generate_realistic_study_plan(self.roadmaps, timeline_days, daily_hours)
 
-        # Collect all scheduled task keys
-        all_task_keys = []
-        for rm in self.roadmaps:
-            s_name_slug = rm["skill_name"].lower().replace(" ", "_").replace("/", "_")
-            for st in rm["stages"]:
-                all_task_keys.append(f"{s_name_slug}_stage_{st['stage_num']}")
-
         # Progress summary
         if progress_tracker is None:
             progress_tracker = CandidateProgressTracker()
+
+        # Collect all scheduled task keys and populate roadmap milestones
+        all_task_keys = []
+        for rm in self.roadmaps:
+            s_name_slug = rm["skill_name"].lower().replace(" ", "_").replace("/", "_")
+            milestones = []
+            for st in rm["stages"]:
+                t_key = f"{s_name_slug}_stage_{st['stage_num']}"
+                all_task_keys.append(t_key)
+                st_status = progress_tracker.get_task_status(t_key)
+                st["task_key"] = t_key
+                st["status"] = st_status
+                st["completed"] = (st_status == "Completed")
+                milestones.append({
+                    "step_number": st["stage_num"],
+                    "step_title": f"{st['name']}: {st.get('curriculum_name') or st['task'][:50]}",
+                    "task_key": t_key,
+                    "task": st["task"],
+                    "status": st_status,
+                    "completed": (st_status == "Completed"),
+                    "estimated_hours": 2,
+                    "exercise": st.get("exercise", ""),
+                    "deliverable": st.get("deliverable", ""),
+                    "verification_method": st.get("verification_method", "")
+                })
+            rm["milestones"] = milestones
 
         progress_summary = progress_tracker.calculate_progress_summary(all_task_keys)
         encouragement = build_progress_encouragement(

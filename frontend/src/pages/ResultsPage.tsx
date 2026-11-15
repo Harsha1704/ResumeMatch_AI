@@ -21,7 +21,8 @@ import {
   Cpu,
   ShieldCheck,
   Zap,
-  Info
+  Info,
+  Sparkles
 } from 'lucide-react';
 import { Card } from '../components/common/Card';
 import { Badge } from '../components/common/Badge';
@@ -121,6 +122,24 @@ export const ResultsPage: React.FC = () => {
           </Link>
         </div>
       </div>
+
+      {analysis.is_demo && (
+        <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300">
+          <div className="flex items-center gap-3">
+            <Sparkles className="h-5 w-5 text-amber-400 shrink-0" />
+            <div>
+              <p className="text-sm font-semibold">Demo Preview Candidate Dossier</p>
+              <p className="text-xs text-amber-400/80">You are viewing a demonstration profile. Submit your own resume in the Analyzer to evaluate actual compatibility.</p>
+            </div>
+          </div>
+          <Link
+            to="/analyze"
+            className="px-3 py-1.5 rounded-lg bg-amber-500 text-slate-950 font-semibold text-xs hover:bg-amber-400 whitespace-nowrap"
+          >
+            Upload Real Resume
+          </Link>
+        </div>
+      )}
 
       {/* Header Summary Card */}
       <Card className="border-slate-800 bg-[#0F172A]/90 p-6">

@@ -122,6 +122,15 @@ export const CareerMentorPage: React.FC = () => {
     }
   };
 
+  const handleResetProgress = async () => {
+    try {
+      await api.resetMentorProgress();
+      fetchDossier();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const toggleCounseling = (idx: string) => {
     setExpandedCounseling(prev => ({ ...prev, [idx]: !prev[idx] }));
   };
@@ -309,9 +318,18 @@ export const CareerMentorPage: React.FC = () => {
         subtitle="Track deliberate study milestones across prioritized technical topics"
         icon={ListTodo}
         badge={
-          <Badge variant="indigo" size="sm">
-            {progressSummary.completion_percentage}% Done
-          </Badge>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleResetProgress}
+              className="rounded border border-slate-700 bg-slate-800/80 px-2 py-0.5 text-[11px] font-medium text-slate-400 hover:border-rose-500/40 hover:text-rose-300 transition-colors"
+              title="Reset all milestone progress"
+            >
+              Reset Progress
+            </button>
+            <Badge variant="indigo" size="sm">
+              {progressSummary.completion_percentage}% Done
+            </Badge>
+          </div>
         }
       >
         <div className="space-y-3">
