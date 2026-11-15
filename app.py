@@ -53,7 +53,10 @@ if frontend_origins:
     from flask_cors import CORS
     CORS(
         app,
-        resources={r"/api/*": {"origins": frontend_origins}},
+        resources={
+            r"/api/*": {"origins": frontend_origins},
+            r"/health": {"origins": frontend_origins}
+        },
         supports_credentials=True,
         allow_headers=["Content-Type", "X-CSRF-Token"],
         methods=["GET", "POST", "OPTIONS"]
