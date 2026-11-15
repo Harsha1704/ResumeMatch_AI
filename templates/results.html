@@ -65,6 +65,14 @@
                         Target Position
                     </span>
                     <h3 class="fw-bold text-dark mb-1">{{ analysis.job_title }}</h3>
+                    {% if analysis.get('target_role_source') == 'user_override' %}
+                        <div class="small text-muted mb-2">
+                            Target role entered by user. Skill requirements and ML prediction remain based on the supplied job description.
+                            {% if analysis.get('detected_job_title') %}
+                                <span class="d-block">Title detected from job description: {{ analysis.detected_job_title }}</span>
+                            {% endif %}
+                        </div>
+                    {% endif %}
                     <p class="text-muted small mb-3">
                         <i class="bi bi-file-earmark-text me-1"></i>Parsed Document: <strong>{{ analysis.filename }}</strong>
                         &bull; Words: <strong>{{ analysis.structural_metadata.word_count|int }}</strong>
