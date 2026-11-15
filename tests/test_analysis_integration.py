@@ -26,7 +26,8 @@ def test_analyze_flow_with_pasted_text(client):
     """Verify POST /analyze with pasted text processes and redirects to /results."""
     form_data = {
         "resume_text": "Senior Developer with 6 years experience in Python, Django, SQL, and Docker.",
-        "job_description": "Wanted: Senior Python Engineer with Python, Django, Docker, and Kubernetes. Minimum 5 years exp."
+        "job_description": "Wanted: Senior Python Engineer with Python, Django, Docker, and Kubernetes. Minimum 5 years exp.",
+        "target_role": "Platform Automation Engineer"
     }
 
     resp = client.post("/analyze", data=form_data, follow_redirects=False)
@@ -40,6 +41,7 @@ def test_analyze_flow_with_pasted_text(client):
     assert b"Compatibility Score" in res_resp.data
     assert b"Matched Skills" in res_resp.data
     assert b"Resume Improvement Recommendations" in res_resp.data
+    assert b"Platform Automation Engineer" in res_resp.data
 
 
 def test_analyze_flow_with_uploaded_file(client):
