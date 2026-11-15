@@ -135,6 +135,10 @@ def analyze():
             return redirect(url_for("analyze"))
 
         job_description = request.form.get("job_description", "").strip()
+        target_role = request.form.get("target_role", "").strip()
+        if len(target_role) > 120:
+            flash("Target role must be 120 characters or fewer.", "danger")
+            return redirect(url_for("analyze"))
         if not job_description:
             flash("Target job description is required.", "danger")
             return redirect(url_for("analyze"))
@@ -175,7 +179,8 @@ def analyze():
             resume_input=resume_input,
             job_description_input=job_description,
             resume_filename=filename,
-            model_backend=model_backend
+            model_backend=model_backend,
+            target_role_input=target_role
         )
 
         if result.get("status") != "success":
@@ -278,6 +283,7 @@ def api_match():
     payload = request.get_json(silent=True) or {}
     resume_text = payload.get("resume_text")
     job_description = payload.get("job_description")
+    target_role = payload.get("target_role", "")
     model_backend = payload.get("model_backend", app.config.get("MODEL_BACKEND", "production"))
     allow_fallback = payload.get("allow_fallback", True)
 
@@ -290,6 +296,11 @@ def api_match():
 
     resume_text = resume_text.strip()
     job_description = job_description.strip()
+    if not isinstance(target_role, str):
+        return jsonify({"status": "error", "error_message": "'target_role' must be a string when provided."}), 400
+    target_role = target_role.strip()
+    if len(target_role) > 120:
+        return jsonify({"status": "error", "error_message": "'target_role' must be 120 characters or fewer."}), 400
 
     if len(resume_text) < 10 or len(job_description) < 10:
         return jsonify({
@@ -341,12 +352,16 @@ def api_match():
             resume_input=resume_text,
             job_description_input=job_description,
             resume_filename="api_request.txt",
-            model_backend=model_backend
+            model_backend=model_backend,
+            target_role_input=target_role
         )
 
         return jsonify({
             "status": "success",
             "analysis_id": result["analysis_id"],
+            "job_title": result.get("job_title"),
+            "detected_job_title": result.get("detected_job_title"),
+            "target_role_source": result.get("target_role_source", "job_description"),
             "predicted_class": result["predicted_class"],
             "probabilities": result["class_probabilities"],
             "model_confidence": result["model_confidence"],
