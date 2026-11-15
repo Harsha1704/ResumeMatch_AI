@@ -46,12 +46,26 @@ def load_primary_dataset(
     train_df = pd.read_csv(train_path)
     test_df = pd.read_csv(test_path)
 
-    # Validate schema
+    # Validate schema before any cleaning or deduplication.
     for col in EXPECTED_PRIMARY_COLUMNS:
         if col not in train_df.columns:
             raise ValueError(f"Missing expected column '{col}' in train dataset.")
         if col not in test_df.columns:
             raise ValueError(f"Missing expected column '{col}' in test dataset.")
+
+    # Missing/blank source values must never be silently converted into text or
+    # hidden by duplicate removal. Fail with an actionable column-level report.
+    for split_name, frame in (("train", train_df), ("test", test_df)):
+        null_counts = frame[EXPECTED_PRIMARY_COLUMNS].isna().sum()
+        blank_counts = frame[["resume_text", "job_description_text"]].apply(
+            lambda column: column.astype(str).str.strip().eq("").sum()
+        )
+        invalid = {
+            **{f"{name}_nulls": int(count) for name, count in null_counts.items() if count},
+            **{f"{name}_blank_text": int(count) for name, count in blank_counts.items() if count},
+        }
+        if invalid:
+            raise ValueError(f"Primary {split_name} dataset contains missing/blank required values: {invalid}")
 
     # Validate labels
     invalid_train_labels = set(train_df["label"]) - set(VALID_LABELS)
@@ -140,13 +154,27 @@ def compute_dataset_summary(raw_dir: Optional[Union[str, Path]] = None) -> Dict:
     """
     Computes a comprehensive statistical summary of the raw datasets.
     """
-    train_df, test_df = load_primary_dataset(raw_dir=raw_dir)
-    skills_df = load_skills_dataset(raw_dir=raw_dir)
+    raw_path = Path(raw_dir) if raw_dir else DEFAULT_RAW_DIR
+    raw_train = pd.read_csv(raw_path / PRIMARY_TRAIN_FILE)
+    raw_test = pd.read_csv(raw_path / PRIMARY_TEST_FILE)
+    train_df, test_df = load_primary_dataset(raw_dir=raw_path)
+    skills_df = load_skills_dataset(raw_dir=raw_path)
     unique_skills = extract_skill_lexicon(skills_df)
 
+    raw_train_rows = int(len(raw_train))
+    raw_test_rows = int(len(raw_test))
+    duplicate_train_rows_removed = int(len(raw_train) - len(train_df))
+    duplicate_test_rows_removed = int(len(raw_test) - len(test_df))
     summary = {
         "primary_dataset": {
             "source": "cnamuangtoun/resume-job-description-fit",
+            "raw_train_row_count": raw_train_rows,
+            "raw_test_row_count": raw_test_rows,
+            "raw_total_pairs": raw_train_rows + raw_test_rows,
+            "duplicate_train_rows_removed": duplicate_train_rows_removed,
+            "duplicate_test_rows_removed": duplicate_test_rows_removed,
+            "train_null_cells": int(raw_train[EXPECTED_PRIMARY_COLUMNS].isna().sum().sum()),
+            "test_null_cells": int(raw_test[EXPECTED_PRIMARY_COLUMNS].isna().sum().sum()),
             "train_row_count": int(len(train_df)),
             "test_row_count": int(len(test_df)),
             "total_pairs": int(len(train_df) + len(test_df)),
@@ -173,6 +201,7 @@ def compute_dataset_summary(raw_dir: Optional[Union[str, Path]] = None) -> Dict:
         },
         "secondary_skills_dataset": {
             "source": "batuhanmtl/job-skill-set",
+            "null_cells": int(skills_df.isna().sum().sum()),
             "total_records": int(len(skills_df)),
             "unique_job_ids": int(skills_df["job_id"].nunique()),
             "categories": skills_df["category"].value_counts().to_dict(),
