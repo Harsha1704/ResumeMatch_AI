@@ -25,6 +25,7 @@ The audit identified these Phase 2 priorities:
 - Added direct file-signature validation for PDF, DOCX, and TXT input, including DOCX ZIP integrity and required document-part checks.
 - Changed DOCX extraction to preserve the original interleaved order of paragraphs and tables.
 - Added parser regression tests for DOCX reading order, invalid signatures, binary TXT content, and oversized in-memory streams.
+- Added a negative-control test ensuring generic corporate wording (for example travel, Zoom, LinkedIn, reporting, and cloud environments) is not surfaced as technical skills.
 
 ## Files changed
 - `templates/analyze.html`
@@ -35,9 +36,10 @@ The audit identified these Phase 2 priorities:
 
 ## Verification status
 - Code is committed to `deploy/vercel-render-free`.
-- Local execution of the new Phase 2 tests is pending.
-- Render deployment verification is pending.
-- The full skill-extraction false-positive audit and parser hardening are still outstanding.
+- GitHub Actions passed the focused Resume Analyzer suite on commit `697c1af`: **45 passed, 1 skipped**.
+- A further generic-jargon negative-control test was added in commit `f1de282`; its CI run is still pending.
+- Render deployment of the newest commit is still in progress.
+- The broader skill-extraction false-positive audit, live UI verification, and complete regression suite are still outstanding.
 - Phase 2 is **not complete** and must not be marked complete until all remaining work, tests, and deployment checks pass.
 
 ## Safety and compatibility constraints
