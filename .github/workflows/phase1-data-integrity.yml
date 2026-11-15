@@ -1,0 +1,40 @@
+name: Phase 1 Data Integrity
+
+on:
+  push:
+    branches:
+      - deploy/vercel-render-free
+    paths:
+      - "src/evaluation/split_validator.py"
+      - "src/utils/data_loader.py"
+      - "data/raw/dataset_summary.json"
+      - "templates/dataset_explorer.html"
+      - "tests/test_data_integrity_phase1.py"
+      - "tests/test_split_leakage_guards.py"
+      - ".github/workflows/phase1-data-integrity.yml"
+  pull_request:
+    branches:
+      - deploy/vercel-render-free
+
+permissions:
+  contents: read
+
+jobs:
+  data-integrity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - name: Install project dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pyarrow
+      - name: Run Phase 1 integrity regression tests
+        run: |
+          pytest -q tests/test_data_integrity_phase1.py tests/test_split_leakage_guards.py
