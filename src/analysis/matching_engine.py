@@ -58,7 +58,8 @@ class ResumeMatchingEngine:
         resume_input: Union[str, bytes],
         job_description_input: str,
         resume_filename: Optional[str] = None,
-        model_backend: Optional[str] = None
+        model_backend: Optional[str] = None,
+        target_role_input: Optional[str] = None
     ) -> Dict:
         """
         Runs the full analysis pipeline on a resume and job description.
@@ -148,7 +149,12 @@ class ResumeMatchingEngine:
                 "predicted_class": "No Fit"
             }
 
-        job_title = job_res["job_title"]
+        detected_job_title = job_res["job_title"]
+        target_role = ""
+        if isinstance(target_role_input, str):
+            target_role = re.sub(r"\s+", " ", target_role_input).strip()
+            target_role = re.sub(r"[\x00-\x1f\x7f]", "", target_role)[:120].strip()
+        job_title = target_role or detected_job_title
         job_required_skills = job_res["required_skills"]
         job_preferred_skills = job_res["preferred_skills"]
         job_unspecified_skills = job_res.get("unspecified_skills", [])
@@ -313,6 +319,8 @@ class ResumeMatchingEngine:
             "status": "success",
             "filename": parsed_resume["filename"],
             "job_title": job_title,
+            "detected_job_title": detected_job_title,
+            "target_role_source": "user_override" if target_role else "job_description",
             "job_description_text": str(job_description_input),
             "raw_jd": str(job_description_input),
             "predicted_class": predicted_class,
@@ -396,11 +404,13 @@ def analyze_resume_and_job(
     resume_input: Union[str, bytes],
     job_description_input: str,
     resume_filename: Optional[str] = None,
-    model_backend: Optional[str] = None
+    model_backend: Optional[str] = None,
+    target_role_input: Optional[str] = None
 ) -> Dict:
     return get_matching_engine().analyze(
         resume_input,
         job_description_input,
         resume_filename=resume_filename,
-        model_backend=model_backend
+        model_backend=model_backend,
+        target_role_input=target_role_input
     )
