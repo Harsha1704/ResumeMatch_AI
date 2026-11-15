@@ -158,37 +158,110 @@ def compute_file_sha256(filepath: str) -> str:
 
 def validate_manifest_integrity(manifest_path: str) -> Dict[str, Any]:
     """
-    Validates cryptographic and structural integrity of a split manifest against files on disk.
+    Validates a versioned split manifest and every referenced artifact.
+
+    The manifest may reference split files relative to its own directory and
+    the primary source dataset relative to the repository root. Paths are
+    resolved and constrained to the repository/manifest directory to prevent
+    path traversal. When record_count is declared, Parquet row counts are
+    checked as well as SHA-256 checksums.
     """
-    if not os.path.exists(manifest_path):
+    if not os.path.isfile(manifest_path):
         raise FileNotFoundError(f"Manifest not found: {manifest_path}")
 
-    with open(manifest_path, "r") as f:
+    with open(manifest_path, "r", encoding="utf-8") as f:
         manifest = json.load(f)
 
+    if not isinstance(manifest, dict):
+        raise ValueError("Manifest must contain a JSON object.")
+
     manifest_dir = os.path.dirname(os.path.abspath(manifest_path))
-    results = {"manifest_version": manifest.get("version", "unknown"), "files_verified": []}
+    repo_root = os.path.dirname(os.path.dirname(manifest_dir))
+    version = manifest.get("manifest_version", manifest.get("version"))
+    files = manifest.get("files")
 
-    for file_info in manifest.get("files", []):
-        rel_path = file_info["relative_path"]
-        expected_sha256 = file_info["sha256"]
-        full_path = os.path.normpath(os.path.join(manifest_dir, rel_path))
+    if not isinstance(version, str) or not version.strip():
+        raise ValueError("Manifest is missing a valid manifest_version.")
+    if not isinstance(files, list) or not files:
+        raise ValueError("Manifest must declare a non-empty files list.")
 
-        if not os.path.exists(full_path):
+    def resolve_contained(base_dir: str, relative_path: str, description: str) -> str:
+        if not isinstance(relative_path, str) or not relative_path.strip():
+            raise ValueError(f"{description} path must be a non-empty string.")
+        if os.path.isabs(relative_path):
+            raise SplitLeakageError(f"Absolute {description} paths are not permitted: {relative_path}")
+        resolved = os.path.realpath(os.path.join(base_dir, relative_path))
+        base = os.path.realpath(base_dir)
+        if os.path.commonpath([base, resolved]) != base:
+            raise SplitLeakageError(f"{description} path escapes its allowed directory: {relative_path}")
+        return resolved
+
+    results = {
+        "manifest_version": version,
+        "files_verified": [],
+        "primary_dataset_verified": None
+    }
+
+    for index, file_info in enumerate(files):
+        if not isinstance(file_info, dict):
+            raise ValueError(f"Manifest file entry at index {index} must be an object.")
+
+        rel_path = file_info.get("relative_path")
+        expected_sha256 = file_info.get("sha256")
+        if not isinstance(expected_sha256, str) or not re.fullmatch(r"[0-9a-fA-F]{64}", expected_sha256):
+            raise ValueError(f"Invalid SHA-256 value for manifest entry {rel_path!r}.")
+
+        full_path = resolve_contained(manifest_dir, rel_path, "Split artifact")
+        if not os.path.isfile(full_path):
             raise FileNotFoundError(f"Split file referenced in manifest does not exist: {full_path}")
 
         actual_sha256 = compute_file_sha256(full_path)
-        if actual_sha256 != expected_sha256:
+        if actual_sha256.lower() != expected_sha256.lower():
             raise SplitLeakageError(
                 f"MANIFEST CORRUPTION: SHA-256 mismatch for {rel_path}! "
                 f"Expected: {expected_sha256}, Actual: {actual_sha256}"
             )
 
+        expected_count = file_info.get("record_count")
+        if expected_count is not None:
+            if not isinstance(expected_count, int) or expected_count < 0:
+                raise ValueError(f"Invalid record_count for manifest entry {rel_path!r}.")
+            try:
+                actual_count = len(pd.read_parquet(full_path))
+            except Exception as exc:
+                raise ValueError(f"Unable to read Parquet artifact {rel_path!r}: {exc}") from exc
+            if actual_count != expected_count:
+                raise SplitLeakageError(
+                    f"MANIFEST ROW-COUNT MISMATCH for {rel_path}: "
+                    f"expected {expected_count}, found {actual_count}."
+                )
+
         results["files_verified"].append({
             "path": rel_path,
             "sha256": actual_sha256,
+            "record_count": expected_count,
             "status": "VERIFIED"
         })
+
+    source_path = manifest.get("primary_dataset_path")
+    source_sha256 = manifest.get("primary_dataset_sha256")
+    if source_path is not None or source_sha256 is not None:
+        if not source_path or not isinstance(source_sha256, str) or not re.fullmatch(r"[0-9a-fA-F]{64}", source_sha256):
+            raise ValueError("Manifest primary dataset path/checksum metadata is incomplete or invalid.")
+        source_full_path = resolve_contained(repo_root, source_path, "Primary source dataset")
+        if not os.path.isfile(source_full_path):
+            raise FileNotFoundError(f"Primary source dataset referenced in manifest does not exist: {source_full_path}")
+        actual_source_sha256 = compute_file_sha256(source_full_path)
+        if actual_source_sha256.lower() != source_sha256.lower():
+            raise SplitLeakageError(
+                "PRIMARY DATASET CHECKSUM MISMATCH: "
+                f"expected {source_sha256}, found {actual_source_sha256}."
+            )
+        results["primary_dataset_verified"] = {
+            "path": source_path,
+            "sha256": actual_source_sha256,
+            "status": "VERIFIED"
+        }
 
     return results
 
