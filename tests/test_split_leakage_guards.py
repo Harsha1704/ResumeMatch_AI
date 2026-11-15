@@ -155,7 +155,7 @@ def test_manifest_cryptographic_verification(tmp_path):
     pd.DataFrame({"a": [1, 2, 3]}).to_parquet(dummy_file)
 
     dummy_manifest = tmp_path / "manifest.json"
-    actual_hash = "fake_sha256_hash_that_does_not_match"
+    actual_hash = "0" * 64
     manifest_data = {
         "version": "1.0.0",
         "files": [{
@@ -206,3 +206,54 @@ def test_cache_integrity_guard():
         assert res["status"] == "VALID"
         assert res["label_leakage_detected"] is False
         assert res["embedding_dim"] == 384
+
+
+def test_manifest_reports_declared_version_and_verifies_source_dataset(tmp_path):
+    """Verifies manifest_version, split artifact, and primary source checksum."""
+    manifest_dir = tmp_path / "manifests" / "v1"
+    manifest_dir.mkdir(parents=True)
+    source_dir = tmp_path / "data" / "raw"
+    source_dir.mkdir(parents=True)
+    split_file = manifest_dir / "split.bin"
+    source_file = source_dir / "train.csv"
+    split_file.write_bytes(b"sealed split")
+    source_file.write_bytes(b"source dataset")
+
+    import hashlib
+    manifest = {
+        "manifest_version": "1.0.0",
+        "primary_dataset_path": "data/raw/train.csv",
+        "primary_dataset_sha256": hashlib.sha256(source_file.read_bytes()).hexdigest(),
+        "files": [{
+            "relative_path": "split.bin",
+            "sha256": hashlib.sha256(split_file.read_bytes()).hexdigest()
+        }]
+    }
+    manifest_path = manifest_dir / "manifest.json"
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    result = validate_manifest_integrity(str(manifest_path))
+    assert result["manifest_version"] == "1.0.0"
+    assert len(result["files_verified"]) == 1
+    assert result["primary_dataset_verified"]["status"] == "VERIFIED"
+
+
+def test_manifest_rejects_path_traversal(tmp_path):
+    """A manifest cannot make the verifier read files outside its manifest directory."""
+    manifest_dir = tmp_path / "manifests" / "v1"
+    manifest_dir.mkdir(parents=True)
+    outside = tmp_path / "outside.bin"
+    outside.write_bytes(b"outside")
+    import hashlib
+    manifest = {
+        "manifest_version": "1.0.0",
+        "files": [{
+            "relative_path": "../../outside.bin",
+            "sha256": hashlib.sha256(outside.read_bytes()).hexdigest()
+        }]
+    }
+    manifest_path = manifest_dir / "manifest.json"
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    with pytest.raises(SplitLeakageError, match="escapes its allowed directory"):
+        validate_manifest_integrity(str(manifest_path))
