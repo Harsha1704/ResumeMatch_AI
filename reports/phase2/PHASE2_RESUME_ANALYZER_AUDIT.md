@@ -37,8 +37,9 @@ The audit identified these Phase 2 priorities:
 ## Verification status
 - Code is committed to `deploy/vercel-render-free`.
 - GitHub Actions passed the focused Resume Analyzer suite on commit `697c1af`: **45 passed, 1 skipped**.
-- A further generic-jargon negative-control test was added in commit `f1de282`; its CI run is still pending.
-- Render deployment of the newest commit is still in progress.
+- The expanded Phase 2 regression suite passed on commit `4a75928`: **73 passed, 1 skipped in 6.24 seconds**.
+- The new generic-jargon negative-control test passed as part of that suite.
+- Render deployment of the newest branch revision and laptop-side verification are still pending.
 - The broader skill-extraction false-positive audit, live UI verification, and complete regression suite are still outstanding.
 - Phase 2 is **not complete** and must not be marked complete until all remaining work, tests, and deployment checks pass.
 
