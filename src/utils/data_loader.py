@@ -178,6 +178,7 @@ def compute_dataset_summary(raw_dir: Optional[Union[str, Path]] = None) -> Dict:
             "train_row_count": int(len(train_df)),
             "test_row_count": int(len(test_df)),
             "total_pairs": int(len(train_df) + len(test_df)),
+            "verified_total_pairs": int(len(train_df) + len(test_df)),
             "columns": list(train_df.columns),
             "train_label_distribution": train_df["label"].value_counts().to_dict(),
             "test_label_distribution": test_df["label"].value_counts().to_dict(),
@@ -186,8 +187,19 @@ def compute_dataset_summary(raw_dir: Optional[Union[str, Path]] = None) -> Dict:
             "test_unique_resumes": int(test_df["resume_text"].nunique()),
             "test_unique_jobs": int(test_df["job_description_text"].nunique()),
             "job_overlap_count": int(len(set(train_df["job_description_text"]).intersection(set(test_df["job_description_text"])))),
+            "job_overlap_pct": float(round(
+                len(set(train_df["job_description_text"]).intersection(set(test_df["job_description_text"])))
+                / max(test_df["job_description_text"].nunique(), 1) * 100, 2
+            )),
             "resume_overlap_count": int(len(set(train_df["resume_text"]).intersection(set(test_df["resume_text"])))),
-            "exact_pair_overlap": 0,
+            "resume_overlap_pct": float(round(
+                len(set(train_df["resume_text"]).intersection(set(test_df["resume_text"])))
+                / max(test_df["resume_text"].nunique(), 1) * 100, 2
+            )),
+            "exact_pair_overlap": int(len(
+                set(zip(train_df["resume_text"], train_df["job_description_text"]))
+                .intersection(set(zip(test_df["resume_text"], test_df["job_description_text"])))
+            )),
             "train_resume_char_length": {
                 "mean": float(round(train_df["resume_text"].str.len().mean(), 1)),
                 "min": int(train_df["resume_text"].str.len().min()),
