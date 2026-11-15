@@ -26,9 +26,38 @@ def analyze_resume_and_job(*args, **kwargs):
     return _engine_analyze(*args, **kwargs)
 
 app = Flask(__name__)
-app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "skillsync-dev-key-2026")
-app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # 16 MB maximum upload limit
+
+# Runtime configuration: keep local development convenient, but fail closed in production.
+APP_ENV = os.environ.get("RESUMEMATCH_ENV", "development").strip().lower()
+secret_key = os.environ.get("SECRET_KEY")
+if APP_ENV == "production" and not secret_key:
+    raise RuntimeError("SECRET_KEY must be configured for production deployments.")
+
+app.config["SECRET_KEY"] = secret_key or "skillsync-dev-key-2026"
+app.config["MAX_CONTENT_LENGTH"] = int(os.environ.get("MAX_CONTENT_LENGTH", 16 * 1024 * 1024))
 app.config["MODEL_BACKEND"] = os.environ.get("RESUMEMATCH_MODEL_BACKEND", "production")
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SECURE"] = APP_ENV == "production"
+app.config["SESSION_COOKIE_SAMESITE"] = "None" if APP_ENV == "production" else "Lax"
+
+# Vercel and Render are different origins. Credentialed API requests are limited
+# to explicitly configured frontend origins; no wildcard origin is permitted.
+frontend_origins = [
+    origin.strip().rstrip("/")
+    for origin in os.environ.get(
+        "FRONTEND_ORIGINS", os.environ.get("FRONTEND_ORIGIN", "")
+    ).split(",")
+    if origin.strip()
+]
+if frontend_origins:
+    from flask_cors import CORS
+    CORS(
+        app,
+        resources={r"/api/*": {"origins": frontend_origins}},
+        supports_credentials=True,
+        allow_headers=["Content-Type", "X-CSRF-Token"],
+        methods=["GET", "POST", "OPTIONS"]
+    )
 
 # Security rate limiters
 api_rate_limiter = SlidingWindowRateLimiter(max_requests=60, window_seconds=60.0)
