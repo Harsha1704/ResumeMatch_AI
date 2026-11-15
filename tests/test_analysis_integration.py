@@ -99,3 +99,44 @@ def test_unauthorized_session_access_protection():
         assert "/analyze" in res_intruder.headers["Location"]
 
     app.config["TESTING"] = True
+
+
+
+def test_target_role_length_validation(client):
+    """Reject overly long role overrides before running model inference."""
+    form_data = {
+        "resume_text": "Senior Developer with Python and Docker experience.",
+        "job_description": "Python developer required with Python and Docker.",
+        "target_role": "A" * 121,
+    }
+    response = client.post("/analyze", data=form_data, follow_redirects=True)
+    assert response.status_code == 200
+    assert b"Target role must be 120 characters or fewer." in response.data
+
+
+def test_api_rejects_non_string_target_role(client):
+    """The JSON API accepts only string target-role overrides."""
+    response = client.post(
+        "/api/match",
+        json={
+            "resume_text": "Senior Developer with Python and Docker experience.",
+            "job_description": "Python developer required with Python and Docker.",
+            "target_role": ["not", "a", "string"],
+        },
+    )
+    assert response.status_code == 400
+    assert b"'target_role' must be a string" in response.data
+
+
+def test_api_rejects_overlong_target_role(client):
+    """The JSON API enforces the same 120-character role-title limit."""
+    response = client.post(
+        "/api/match",
+        json={
+            "resume_text": "Senior Developer with Python and Docker experience.",
+            "job_description": "Python developer required with Python and Docker.",
+            "target_role": "A" * 121,
+        },
+    )
+    assert response.status_code == 400
+    assert b"120 characters or fewer" in response.data
