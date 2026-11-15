@@ -15,6 +15,9 @@ on:
       - "tests/test_experience_and_projects.py"
       - "tests/test_real_resume_cases.py"
       - "tests/test_skill_extraction_eval.py"
+      - "tests/test_matching_engine.py"
+      - "tests/test_targeted_fixes.py"
+      - "tests/test_regression_bugs.py"
       - ".github/workflows/phase2-resume-analyzer.yml"
   pull_request:
     branches:
@@ -41,4 +44,4 @@ jobs:
           pip install -r requirements.txt pyarrow
       - name: Run Resume Analyzer regression suite
         run: |
-          pytest -q tests/test_analysis_integration.py tests/test_resume_parser.py tests/test_experience_and_projects.py tests/test_real_resume_cases.py tests/test_skill_extraction_eval.py
+          pytest -q tests/test_analysis_integration.py tests/test_resume_parser.py tests/test_experience_and_projects.py tests/test_real_resume_cases.py tests/test_skill_extraction_eval.py tests/test_matching_engine.py tests/test_targeted_fixes.py tests/test_regression_bugs.py
