@@ -85,6 +85,10 @@ def test_dataset_explorer_page_rendering(client):
     assert "cnamuangtoun/resume-job-description-fit" in html
     assert "batuhanmtl/job-skill-set" in html
     assert "4,476" in html
+    assert "8,000 (6,241 Train / 1,759 Held-Out Test)" in html
+    assert "7,999 (6,240 Train / 1,759 Held-Out Test)" in html
+    assert "1 exact duplicate training row removed" in html
+    assert "476 / 477 Test Resumes (99.79%)" in html
     assert "top_skills_distribution.png" in html
     assert "text_length_distributions.png" in html
 
