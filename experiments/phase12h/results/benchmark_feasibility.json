@@ -1,0 +1,51 @@
+{
+  "phase": "12H",
+  "audit_date": "2026-11-13",
+  "external_benchmarks_surveyed": [
+    {
+      "benchmark_name": "RecruitBench (Stanford / arXiv 2024)",
+      "target_task": "Interview advancement prediction & resume-to-job recommendation",
+      "labels": ["Interview Offered", "Interview Advanced", "Rejected"],
+      "license": "Research Only / Academic",
+      "compatibility_with_three_class": "PARTIAL / CONDITIONAL. Maps 'Rejected' -> 'No Fit', 'Interview Offered' -> 'Potential Fit', 'Interview Advanced / Hired' -> 'Good Fit'.",
+      "data_availability": "Full resume texts restricted due to candidate PII; requires institutional data access agreement.",
+      "feasibility_for_immediate_use": "LOW (Access gating & legal PII restrictions)"
+    },
+    {
+      "benchmark_name": "nonameee12233/job-resume-matching (Hugging Face)",
+      "target_task": "Resume-Job Compatibility Scoring",
+      "labels": ["weak_positive", "medium_positive", "strong_positive"],
+      "license": "Unspecified / Open Community",
+      "compatibility_with_three_class": "HIGH. Direct 1-to-1 ordinal mapping: 'weak_positive' -> 'No Fit', 'medium_positive' -> 'Potential Fit', 'strong_positive' -> 'Good Fit'.",
+      "data_availability": "Publicly downloadable on Hugging Face.",
+      "limitation": "Labels were generated via heuristic keyword overlap and LLM prompt scoring, NOT verified human recruiter hiring outcomes."
+    },
+    {
+      "benchmark_name": "Djinni-CB (Google Research / ACL 2024)",
+      "target_task": "Candidate-Job Fit & Multi-Tier Reasoning Audit",
+      "labels": ["Literal Gatekeeper Match", "Holistic Semantic Match", "Mismatch"],
+      "license": "Open Access / Research",
+      "compatibility_with_three_class": "MODERATE. Focuses on capability rubrics rather than strict ternary fit.",
+      "feasibility_for_immediate_use": "MODERATE (Requires rubric re-annotation)"
+    }
+  ],
+  "sample_size_power_calculation": {
+    "target_test": "McNemar Exact Binomial Test for Discordant Pairs (Alpha = 0.05, Two-Sided)",
+    "power_target": 0.80,
+    "hypothesized_effect_size_delta": 0.04,
+    "expected_discordance_rate_PD": 0.28,
+    "formula": "N >= (z_{1-alpha/2} + z_{1-beta})^2 * PD / (Delta^2)",
+    "z_alpha_two_sided_0_05": 1.96,
+    "z_beta_power_0_80": 0.8416,
+    "calculated_minimum_sample_size_N": 1372,
+    "recommended_benchmark_size": 1500,
+    "entity_disjointness_requirement": {
+      "minimum_unique_resumes": 500,
+      "minimum_unique_jobs": 200,
+      "maximum_pairs_per_candidate": 5,
+      "maximum_pairs_per_job": 10,
+      "justification": "Restricting entity reuse bounds candidate and job clustering variance, ensuring the effective sample size N_eff is close to nominal N."
+    }
+  },
+  "overall_feasibility_verdict": "EXTERNAL BENCHMARK PENDING. No currently available public dataset combines verified recruiter decisions, unrestricted commercial/open licenses, unredacted full texts, and ternary fit labels. Immediate priority is to preserve internal frozen Dual-Unseen validation as the reference test and execute the 200-pair human recruiter pilot under Cohen's kappa >= 0.70."
+}

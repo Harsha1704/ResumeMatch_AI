@@ -1,0 +1,31 @@
+{
+  "phase": "12I.9",
+  "audit_name": "Decision Threshold Calibration & Test Quarantine Leakage Audit",
+  "timestamp": "2026-11-14T21:12:30Z",
+  "audited_threshold_workflows": [
+    {
+      "workflow_name": "Nested Candidate-Cluster Out-of-Fold Threshold Calibration",
+      "target_split": "Clean Dual-Unseen Validation (N=296)",
+      "script_reference": "scripts/phase12g/run_phase12g_research.py (lines 171-235)",
+      "artifact_reference": "experiments/phase12g/results/threshold_calibration_quality_audit.json",
+      "tuning_methodology": "5-fold stratified candidate-cluster cross-validation. For each fold, candidate resumes in the validation fold were masked, optimal threshold tau was selected strictly on the inner training folds, and evaluated on the held-out candidate cluster.",
+      "selected_thresholds": [0.15, 0.15, 0.15, 0.15, 0.15],
+      "mean_tau": 0.15,
+      "test_label_leakage_detected": false,
+      "status": "VALIDATED_NESTED_CALIBRATION",
+      "scientific_verdict": "Methodologically sound out-of-fold calibration. Achieved 47.64% accuracy (+1.69 pp gain over argmax) and recovered Good Fit recall from 5.38% to 11.83% without data leakage."
+    },
+    {
+      "workflow_name": "Phase 12I.8 Official Held-Out Test 50.26% Claim",
+      "target_split": "Official Held-Out Test (N=1,759)",
+      "script_reference": "experiments/phase12i8/run_phase12i8_automated_pipeline.py",
+      "artifact_reference": "experiments/phase12i8/results/model_comparison.json",
+      "reported_label": "threshold_calibrated_decision_rule",
+      "audit_finding": "The 50.26% held-out test score was an attribution error. It originated from Phase 12F EXP-12F-PSEUDO (Hybrid Stacking augmented with confidence-gated pseudo-labels), where the standard argmax decision rule was evaluated on held-out test features. No threshold tuning was conducted against official held-out test labels.",
+      "test_label_leakage_detected": false,
+      "status": "LABEL_MISATTRIBUTED_BUT_TEST_LABELS_QUARANTINED",
+      "scientific_verdict": "Test set labels were not accessed or tuned upon. However, because 50.26% represents EXP-12F-PSEUDO rather than a validated frozen threshold rule, it is classified as EXPLORATORY PSEUDO-LABELING RESEARCH and excluded from production promotion decisions."
+    }
+  ],
+  "governance_mandate": "Strict quarantine is maintained. Threshold tuning directly on official held-out test labels is permanently forbidden."
+}

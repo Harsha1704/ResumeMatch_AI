@@ -1,0 +1,63 @@
+{
+  "phase": "12I.7",
+  "audit_name": "Recruiter Pilot Inter-Annotator Reliability & Adjudication Trigger Audit",
+  "timestamp": "2026-11-14T20:47:45Z",
+  "status": "PENDING_RECRUITER_RATINGS",
+  "policy_declaration": "In accordance with scientific integrity guidelines, no empirical reliability metrics are reported prior to genuine independent recruiter annotation. All metric slots remain null-initialized until both evaluators have completed all 200 pairs.",
+  "intake_progress": {
+    "target_pairs": 200,
+    "target_evaluations_per_pair": 2,
+    "target_total_ratings": 400,
+    "rec_a_892_submitted": 0,
+    "rec_b_314_submitted": 0,
+    "total_ratings_received": 0,
+    "pairs_completed_by_both": 0,
+    "readiness_for_metric_computation": false
+  },
+  "measured_reliability_metrics": {
+    "raw_percentage_agreement": null,
+    "cohen_kappa_unweighted": null,
+    "quadratic_weighted_kappa": null,
+    "gwet_ac1": null,
+    "specific_agreement": {
+      "0_no_fit": null,
+      "1_potential_fit": null,
+      "2_good_fit": null
+    },
+    "adjudication_required_rate": null,
+    "adjudication_required_count": null,
+    "severe_discordance_count": null,
+    "severe_discordance_rate": null,
+    "confusion_matrix_3x3": null
+  },
+  "mathematical_definitions_and_formula_specifications": {
+    "raw_agreement_formula": "p_o = (1 / N) * sum(I(r_{A,i} == r_{B,i}))",
+    "cohen_kappa_unweighted_formula": "kappa = (p_o - p_e) / (1 - p_e), where p_e = sum_{k=0}^2 (p_{A,k} * p_{B,k})",
+    "quadratic_weighted_kappa_formula": "kappa_w = (p_{o,w} - p_{e,w}) / (1 - p_{e,w}), with quadratic weights w_{ij} = 1 - (i - j)^2 / (K - 1)^2 = 1 - (i - j)^2 / 4",
+    "gwet_ac1_formula": "AC1 = (p_o - p_{e,gamma}) / (1 - p_{e,gamma}), where p_{e,gamma} = (1 / (K - 1)) * sum_{k=0}^2 [p_bar_k * (1 - p_bar_k)] and p_bar_k = (p_{A,k} + p_{B,k}) / 2",
+    "specific_agreement_formula": "S_k = (2 * n_{kk}) / (n_{A,k} + n_{B,k}) for each category k in {0, 1, 2}",
+    "severe_discordance_definition": "Count and proportion of pairs where |r_A - r_B| == 2 (e.g. 0 vs 2, complete contradiction)"
+  },
+  "pre_specified_quality_acceptance_gates": {
+    "primary_reliability_gate": {
+      "metric": "quadratic_weighted_kappa",
+      "target_threshold": ">= 0.70",
+      "minimum_acceptable": ">= 0.60",
+      "remediation_if_failed": "Mandatory rubric recalibration and secondary pilot annotation batch before main benchmark launch."
+    },
+    "severe_discordance_gate": {
+      "metric": "severe_discordance_rate",
+      "maximum_tolerated": "<= 5.0% (<= 10 pairs out of 200)",
+      "remediation_if_failed": "Formal review of rubric edge cases and reconciliation interview with both evaluators."
+    },
+    "raw_agreement_gate": {
+      "metric": "raw_percentage_agreement",
+      "target_threshold": ">= 70.0%"
+    }
+  },
+  "adjudication_protocol_trigger": {
+    "rule": "Every pair where REC_A_892 != REC_B_314 will be routed to LEAD_ADJ_001 for independent consensus adjudication.",
+    "current_pairs_queued_for_adjudication": 0,
+    "status": "STANDBY"
+  }
+}

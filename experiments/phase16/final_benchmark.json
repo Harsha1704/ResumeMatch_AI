@@ -1,0 +1,84 @@
+{
+  "timestamp": "2026-11-15T07:08:52Z",
+  "cached_api_benchmark_1000_requests": {
+    "concurrency_1": {
+      "requests": 250,
+      "concurrency": 1,
+      "elapsed_seconds": 7.408,
+      "throughput_req_per_sec": 33.75,
+      "error_rate": 0.0,
+      "latency_mean_ms": 29.03,
+      "latency_p50_ms": 9.9,
+      "latency_p95_ms": 32.11,
+      "latency_p99_ms": 38.03,
+      "latency_min_ms": 5.06,
+      "latency_max_ms": 4377.54
+    },
+    "concurrency_5": {
+      "requests": 250,
+      "concurrency": 5,
+      "elapsed_seconds": 2.178,
+      "throughput_req_per_sec": 114.81,
+      "error_rate": 0.0,
+      "latency_mean_ms": 41.75,
+      "latency_p50_ms": 34.32,
+      "latency_p95_ms": 100.73,
+      "latency_p99_ms": 134.54,
+      "latency_min_ms": 5.13,
+      "latency_max_ms": 174.4
+    },
+    "concurrency_10": {
+      "requests": 250,
+      "concurrency": 10,
+      "elapsed_seconds": 2.25,
+      "throughput_req_per_sec": 111.1,
+      "error_rate": 0.0,
+      "latency_mean_ms": 83.61,
+      "latency_p50_ms": 72.38,
+      "latency_p95_ms": 204.42,
+      "latency_p99_ms": 331.99,
+      "latency_min_ms": 5.17,
+      "latency_max_ms": 373.18
+    },
+    "concurrency_25": {
+      "requests": 250,
+      "concurrency": 25,
+      "elapsed_seconds": 2.807,
+      "throughput_req_per_sec": 89.05,
+      "error_rate": 0.0,
+      "latency_mean_ms": 205.14,
+      "latency_p50_ms": 158.95,
+      "latency_p95_ms": 508.88,
+      "latency_p99_ms": 756.91,
+      "latency_min_ms": 8.71,
+      "latency_max_ms": 1424.49
+    },
+    "overall_aggregate": {
+      "total_requests": 1000,
+      "total_errors": 0,
+      "overall_error_rate": 0.0,
+      "latency_mean_ms": 89.88,
+      "latency_p50_ms": 42.39,
+      "latency_p95_ms": 318.54,
+      "latency_p99_ms": 544.63
+    }
+  },
+  "background_queue_100_jobs": {
+    "num_jobs": 100,
+    "total_enqueue_time_sec": 1.924,
+    "total_process_time_sec": 16.803,
+    "worker_throughput_jobs_per_sec": 5.95,
+    "job_latency_mean_ms": 168.03,
+    "job_latency_p50_ms": 36.34,
+    "job_latency_p95_ms": 48.36,
+    "job_latency_p99_ms": 181.64
+  },
+  "memory_profiles_rss": {
+    "flask_startup_rss_mb": 53.1,
+    "flask_serving_rss_steady_state_mb": 78.45,
+    "worker_daemon_rss_mb": 412.3,
+    "total_system_rss_mb": 490.75,
+    "flask_rss_threshold_met": true,
+    "flask_rss_target_mb": 200.0
+  }
+}

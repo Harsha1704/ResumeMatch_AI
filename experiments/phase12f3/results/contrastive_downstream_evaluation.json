@@ -1,0 +1,99 @@
+{
+  "raw_sbert_downstream_baseline": {
+    "accuracy": 0.3682,
+    "balanced_accuracy": 0.3368,
+    "macro_precision": 0.3222,
+    "macro_recall": 0.3368,
+    "macro_f1": 0.3229,
+    "weighted_f1": 0.3469,
+    "brier_score": 1.3146,
+    "per_class": {
+      "No Fit": {
+        "precision": 0.4688,
+        "recall": 0.6098,
+        "f1": 0.53,
+        "support": 123
+      },
+      "Potential Fit": {
+        "precision": 0.2564,
+        "recall": 0.25,
+        "f1": 0.2532,
+        "support": 80
+      },
+      "Good Fit": {
+        "precision": 0.2414,
+        "recall": 0.1505,
+        "f1": 0.1854,
+        "support": 93
+      }
+    },
+    "confusion_matrix": [
+      [
+        75,
+        27,
+        21
+      ],
+      [
+        37,
+        20,
+        23
+      ],
+      [
+        48,
+        31,
+        14
+      ]
+    ]
+  },
+  "projected_downstream_classifier": {
+    "accuracy": 0.4257,
+    "balanced_accuracy": 0.4076,
+    "macro_precision": 0.4136,
+    "macro_recall": 0.4076,
+    "macro_f1": 0.3957,
+    "weighted_f1": 0.4143,
+    "brier_score": 1.1964,
+    "per_class": {
+      "No Fit": {
+        "precision": 0.5328,
+        "recall": 0.5935,
+        "f1": 0.5615,
+        "support": 123
+      },
+      "Potential Fit": {
+        "precision": 0.3036,
+        "recall": 0.425,
+        "f1": 0.3542,
+        "support": 80
+      },
+      "Good Fit": {
+        "precision": 0.4043,
+        "recall": 0.2043,
+        "f1": 0.2714,
+        "support": 93
+      }
+    },
+    "confusion_matrix": [
+      [
+        73,
+        33,
+        17
+      ],
+      [
+        35,
+        34,
+        11
+      ],
+      [
+        29,
+        45,
+        19
+      ]
+    ]
+  },
+  "delta": {
+    "accuracy_delta": 0.0575,
+    "macro_f1_delta": 0.0728,
+    "balanced_accuracy_delta": 0.0708
+  }
+}

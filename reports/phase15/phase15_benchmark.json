@@ -1,0 +1,80 @@
+{
+  "benchmark_metadata": {
+    "phase": "Phase 15: Production Flask Integration",
+    "eval_workload": "Representative Diverse Workload (10 Technical Roles, 100 API Requests)",
+    "hardware": {
+      "cpu_cores": 16,
+      "platform": "win32",
+      "python_version": "3.14.8"
+    }
+  },
+  "flask_application_metrics": {
+    "cold_start_to_health_ms": 89.77,
+    "process_rss_on_boot_mb": 204.73,
+    "process_rss_after_cache_hits_mb": 629.86,
+    "process_rss_full_encoder_mb": 629.63,
+    "concurrent_throughput_rps": 33.95,
+    "concurrency_success_rate_pct": 100.0
+  },
+  "latency_comparison": {
+    "model_1_production_baseline": {
+      "mean_ms": 37.786,
+      "p50_ms": 36.396,
+      "p95_ms": 50.65,
+      "p99_ms": 69.26
+    },
+    "model_5_cache_hit_serving": {
+      "mean_ms": 26.663,
+      "p50_ms": 24.559,
+      "p95_ms": 39.689,
+      "p99_ms": 46.542,
+      "speedup_vs_production_baseline": 1.4
+    },
+    "model_5_cache_miss_with_encoding": {
+      "mean_ms": 5791.744,
+      "p50_ms": 274.029,
+      "p95_ms": 30604.088,
+      "p99_ms": 50416.164
+    }
+  },
+  "artifact_and_cache_footprint": {
+    "pure_serving_bundle_mb": 2.06,
+    "full_offline_bundle_mb": 176.06,
+    "sqlite_cache_db_kb": 72.0,
+    "sqlite_cache_growth_kb": 40.0,
+    "production_baseline_artifact_kb": 323.82,
+    "challenger_head_kb": 76.36
+  },
+  "release_gate_assessment": {
+    "cached_hit_p95_latency": {
+      "target": "<= 50.0 ms",
+      "observed": "39.689 ms",
+      "status": "PASS"
+    },
+    "serving_rss_memory": {
+      "target": "<= 200.0 MB for serving mode",
+      "observed": "204.73 MB on boot, 629.86 MB during cache-hit serving",
+      "status": "FAIL"
+    },
+    "production_checkpoint_preservation": {
+      "target": "Exact hash and byte matches",
+      "observed": "Verified across best_model, feature_pipeline, and challenger_phase12f",
+      "status": "PASS"
+    },
+    "default_model_safety": {
+      "target": "Production Baseline default, Challenger explicit opt-in only",
+      "observed": "Verified: app.config['MODEL_BACKEND'] defaults to 'production'",
+      "status": "PASS"
+    },
+    "concurrency_reliability": {
+      "target": "100% success rate on concurrent requests",
+      "observed": "25/25 requests succeeded (33.95 rps)",
+      "status": "PASS"
+    },
+    "automated_test_suite": {
+      "target": "100% test pass rate",
+      "observed": "10/10 tests passed in test_flask_integration.py",
+      "status": "PASS"
+    }
+  }
+}

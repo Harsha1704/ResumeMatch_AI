@@ -1,0 +1,247 @@
+{
+  "audit_phase": "Phase 12I.12",
+  "timestamp": "2026-11-14T21:46:00Z",
+  "method_1_name": "Pigeonhole Bootstrap (Owen 2007 non-parametric resample)",
+  "method_2_name": "Cameron-Gelbach-Miller (2011) Analytical Two-Way CRVE Sandwich",
+  "evaluation_sample": {
+    "N": 296,
+    "C": 91,
+    "J": 52
+  },
+  "comparisons": {
+    "comparator_a_production_baseline": {
+      "42": {
+        "seed": 42,
+        "point_estimate_pp": 9.12,
+        "pigeonhole_boot": {
+          "se_pp": 5.51,
+          "ci_95_pp": [
+            -1.95,
+            20.14
+          ],
+          "ci_crosses_zero": true
+        },
+        "cgm_analytical_sandwich": {
+          "se_pp": 3.47,
+          "ci_95_pp": [
+            2.31,
+            0,
+            15.93
+          ],
+          "ci_crosses_zero": false,
+          "design_effect": 1.28,
+          "effective_sample_size_neff": 231.8
+        }
+      },
+      "43": {
+        "seed": 43,
+        "point_estimate_pp": 8.78,
+        "pigeonhole_boot": {
+          "se_pp": 5.77,
+          "ci_95_pp": [
+            -2.33,
+            20.33
+          ],
+          "ci_crosses_zero": true
+        },
+        "cgm_analytical_sandwich": {
+          "se_pp": 3.9,
+          "ci_95_pp": [
+            1.14,
+            0,
+            16.43
+          ],
+          "ci_crosses_zero": false,
+          "design_effect": 1.59,
+          "effective_sample_size_neff": 186.4
+        }
+      },
+      "44": {
+        "seed": 44,
+        "point_estimate_pp": 2.36,
+        "pigeonhole_boot": {
+          "se_pp": 5.9,
+          "ci_95_pp": [
+            -9.61,
+            13.83
+          ],
+          "ci_crosses_zero": true
+        },
+        "cgm_analytical_sandwich": {
+          "se_pp": 3.66,
+          "ci_95_pp": [
+            -4.82,
+            0,
+            9.55
+          ],
+          "ci_crosses_zero": true,
+          "design_effect": 1.26,
+          "effective_sample_size_neff": 234.5
+        }
+      },
+      "45": {
+        "seed": 45,
+        "point_estimate_pp": 9.12,
+        "pigeonhole_boot": {
+          "se_pp": 6.1,
+          "ci_95_pp": [
+            -2.75,
+            21.11
+          ],
+          "ci_crosses_zero": true
+        },
+        "cgm_analytical_sandwich": {
+          "se_pp": 3.98,
+          "ci_95_pp": [
+            1.31,
+            0,
+            16.93
+          ],
+          "ci_crosses_zero": false,
+          "design_effect": 1.44,
+          "effective_sample_size_neff": 206.2
+        }
+      },
+      "46": {
+        "seed": 46,
+        "point_estimate_pp": 9.46,
+        "pigeonhole_boot": {
+          "se_pp": 6.12,
+          "ci_95_pp": [
+            -2.58,
+            21.48
+          ],
+          "ci_crosses_zero": true
+        },
+        "cgm_analytical_sandwich": {
+          "se_pp": 4.25,
+          "ci_95_pp": [
+            1.13,
+            0,
+            17.79
+          ],
+          "ci_crosses_zero": false,
+          "design_effect": 1.77,
+          "effective_sample_size_neff": 167.6
+        }
+      }
+    },
+    "comparator_b_raw_sbert": {
+      "42": {
+        "seed": 42,
+        "point_estimate_pp": 7.77,
+        "pigeonhole_boot": {
+          "se_pp": 5.26,
+          "ci_95_pp": [
+            -2.6,
+            18.39
+          ],
+          "ci_crosses_zero": true
+        },
+        "cgm_analytical_sandwich": {
+          "se_pp": 3.11,
+          "ci_95_pp": [
+            1.68,
+            0,
+            13.86
+          ],
+          "ci_crosses_zero": false,
+          "design_effect": 1.04,
+          "effective_sample_size_neff": 284.8
+        }
+      },
+      "43": {
+        "seed": 43,
+        "point_estimate_pp": 7.43,
+        "pigeonhole_boot": {
+          "se_pp": 5.66,
+          "ci_95_pp": [
+            -3.49,
+            18.68
+          ],
+          "ci_crosses_zero": true
+        },
+        "cgm_analytical_sandwich": {
+          "se_pp": 3.68,
+          "ci_95_pp": [
+            0.21,
+            0,
+            14.65
+          ],
+          "ci_crosses_zero": false,
+          "design_effect": 1.4,
+          "effective_sample_size_neff": 210.8
+        }
+      },
+      "44": {
+        "seed": 44,
+        "point_estimate_pp": 1.01,
+        "pigeonhole_boot": {
+          "se_pp": 5.6,
+          "ci_95_pp": [
+            -10.15,
+            12.13
+          ],
+          "ci_crosses_zero": true
+        },
+        "cgm_analytical_sandwich": {
+          "se_pp": 3.28,
+          "ci_95_pp": [
+            -5.41,
+            0,
+            7.44
+          ],
+          "ci_crosses_zero": true,
+          "design_effect": 1.05,
+          "effective_sample_size_neff": 280.7
+        }
+      },
+      "45": {
+        "seed": 45,
+        "point_estimate_pp": 7.77,
+        "pigeonhole_boot": {
+          "se_pp": 5.9,
+          "ci_95_pp": [
+            -3.58,
+            19.56
+          ],
+          "ci_crosses_zero": true
+        },
+        "cgm_analytical_sandwich": {
+          "se_pp": 3.69,
+          "ci_95_pp": [
+            0.53,
+            0,
+            15.01
+          ],
+          "ci_crosses_zero": false,
+          "design_effect": 1.25,
+          "effective_sample_size_neff": 236.6
+        }
+      },
+      "46": {
+        "seed": 46,
+        "point_estimate_pp": 8.11,
+        "pigeonhole_boot": {
+          "se_pp": 5.73,
+          "ci_95_pp": [
+            -2.96,
+            19.72
+          ],
+          "ci_crosses_zero": true
+        },
+        "cgm_analytical_sandwich": {
+          "se_pp": 3.7,
+          "ci_95_pp": [
+            0.86,
+            0,
+            15.36
+          ],
+          "ci_crosses_zero": false,
+          "design_effect": 1.36,
+          "effective_sample_size_neff": 218.3
+        }
+      }
+    }
+  }
+}

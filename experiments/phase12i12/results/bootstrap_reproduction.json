@@ -1,0 +1,118 @@
+{
+  "audit_phase": "Phase 12I.12",
+  "timestamp": "2026-11-14T21:46:00Z",
+  "resampling_method": "Pigeonhole Bootstrap (Owen 2007) for two-factor crossed sparse bipartite networks",
+  "replicate_count_B": 10000,
+  "fixed_random_seed": 42,
+  "evaluation_sample": {
+    "total_pairs_N": 296,
+    "candidate_clusters_C": 91,
+    "job_clusters_J": 52
+  },
+  "comparisons": {
+    "comparator_a_production_baseline": {
+      "42": {
+        "seed": 42,
+        "point_estimate_difference_pp": 9.12,
+        "bootstrap_se_pp": 5.51,
+        "bootstrap_95_ci_pp": [
+          -1.95,
+          20.14
+        ],
+        "ci_crosses_zero": true
+      },
+      "43": {
+        "seed": 43,
+        "point_estimate_difference_pp": 8.78,
+        "bootstrap_se_pp": 5.77,
+        "bootstrap_95_ci_pp": [
+          -2.33,
+          20.33
+        ],
+        "ci_crosses_zero": true
+      },
+      "44": {
+        "seed": 44,
+        "point_estimate_difference_pp": 2.36,
+        "bootstrap_se_pp": 5.9,
+        "bootstrap_95_ci_pp": [
+          -9.61,
+          13.83
+        ],
+        "ci_crosses_zero": true
+      },
+      "45": {
+        "seed": 45,
+        "point_estimate_difference_pp": 9.12,
+        "bootstrap_se_pp": 6.1,
+        "bootstrap_95_ci_pp": [
+          -2.75,
+          21.11
+        ],
+        "ci_crosses_zero": true
+      },
+      "46": {
+        "seed": 46,
+        "point_estimate_difference_pp": 9.46,
+        "bootstrap_se_pp": 6.12,
+        "bootstrap_95_ci_pp": [
+          -2.58,
+          21.48
+        ],
+        "ci_crosses_zero": true
+      }
+    },
+    "comparator_b_raw_sbert": {
+      "42": {
+        "seed": 42,
+        "point_estimate_difference_pp": 7.77,
+        "bootstrap_se_pp": 5.26,
+        "bootstrap_95_ci_pp": [
+          -2.6,
+          18.39
+        ],
+        "ci_crosses_zero": true
+      },
+      "43": {
+        "seed": 43,
+        "point_estimate_difference_pp": 7.43,
+        "bootstrap_se_pp": 5.66,
+        "bootstrap_95_ci_pp": [
+          -3.49,
+          18.68
+        ],
+        "ci_crosses_zero": true
+      },
+      "44": {
+        "seed": 44,
+        "point_estimate_difference_pp": 1.01,
+        "bootstrap_se_pp": 5.6,
+        "bootstrap_95_ci_pp": [
+          -10.15,
+          12.13
+        ],
+        "ci_crosses_zero": true
+      },
+      "45": {
+        "seed": 45,
+        "point_estimate_difference_pp": 7.77,
+        "bootstrap_se_pp": 5.9,
+        "bootstrap_95_ci_pp": [
+          -3.58,
+          19.56
+        ],
+        "ci_crosses_zero": true
+      },
+      "46": {
+        "seed": 46,
+        "point_estimate_difference_pp": 8.11,
+        "bootstrap_se_pp": 5.73,
+        "bootstrap_95_ci_pp": [
+          -2.96,
+          19.72
+        ],
+        "ci_crosses_zero": true
+      }
+    }
+  }
+}

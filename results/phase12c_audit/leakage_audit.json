@@ -1,0 +1,68 @@
+{
+  "train_sub_job_vs_val_sub_job": {
+    "eval_total_resumes": 373,
+    "eval_total_jobs": 42,
+    "eval_total_pairs": 778,
+    "leaked_resumes": 364,
+    "leaked_resume_pct": 97.59,
+    "leaked_jobs": 0,
+    "leaked_jobs_pct": 0.0,
+    "leaked_pairs": 0,
+    "leaked_pairs_pct": 0.0
+  },
+  "train_sub_job_vs_val_sub_res": {
+    "eval_total_resumes": 97,
+    "eval_total_jobs": 219,
+    "eval_total_pairs": 1021,
+    "leaked_resumes": 96,
+    "leaked_resume_pct": 98.97,
+    "leaked_jobs": 185,
+    "leaked_jobs_pct": 84.47,
+    "leaked_pairs": 906,
+    "leaked_pairs_pct": 88.74
+  },
+  "train_sub_job_vs_dual_val": {
+    "eval_total_resumes": 92,
+    "eval_total_jobs": 52,
+    "eval_total_pairs": 296,
+    "leaked_resumes": 92,
+    "leaked_resume_pct": 100.0,
+    "leaked_jobs": 41,
+    "leaked_jobs_pct": 78.85,
+    "leaked_pairs": 249,
+    "leaked_pairs_pct": 84.12
+  },
+  "train_sub_job_vs_held_out_test": {
+    "eval_total_resumes": 477,
+    "eval_total_jobs": 71,
+    "eval_total_pairs": 1759,
+    "leaked_resumes": 475,
+    "leaked_resume_pct": 99.58,
+    "leaked_jobs": 0,
+    "leaked_jobs_pct": 0.0,
+    "leaked_pairs": 0,
+    "leaked_pairs_pct": 0.0
+  },
+  "train_sub_res_vs_val_sub_res": {
+    "eval_total_resumes": 97,
+    "eval_total_jobs": 219,
+    "eval_total_pairs": 1021,
+    "leaked_resumes": 0,
+    "leaked_resume_pct": 0.0,
+    "leaked_jobs": 219,
+    "leaked_jobs_pct": 100.0,
+    "leaked_pairs": 0,
+    "leaked_pairs_pct": 0.0
+  },
+  "dual_train_vs_dual_val": {
+    "eval_total_resumes": 92,
+    "eval_total_jobs": 52,
+    "eval_total_pairs": 296,
+    "leaked_resumes": 0,
+    "leaked_resume_pct": 0.0,
+    "leaked_jobs": 0,
+    "leaked_jobs_pct": 0.0,
+    "leaked_pairs": 0,
+    "leaked_pairs_pct": 0.0
+  }
+}

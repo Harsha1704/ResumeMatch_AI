@@ -1,0 +1,73 @@
+{
+  "phase": "12I.4",
+  "audit_name": "Pilot-to-Benchmark Transportability Architecture & Sensitivity Envelope",
+  "timestamp": "2026-11-14T20:27:30Z",
+  "methodological_boundary": {
+    "fundamental_distinction": "Recruiter-rating clustering in the pilot reflects human subjective evaluation variation. It does NOT automatically equal paired correctness-difference clustering (ICC_D), which depends on the joint error topology of Model 0 and Model 1.",
+    "pilot_quarantine_constraint": "Pilot pairs are quarantined to preserve the evaluation vault. Therefore, model predictions are NOT evaluated on pilot ground-truth to manufacture an empirical ICC_D.",
+    "analytical_solution": "Preserve a multi-scenario conservative sensitivity analysis bounding ICC_c and ICC_j, scaled to the main benchmark's cluster topology."
+  },
+  "cluster_dimension_scaling": {
+    "pilot_topology": {
+      "N": 200,
+      "C": 120,
+      "J": 60,
+      "mc_mean": 1.6667,
+      "mj_mean": 3.3333,
+      "mc_star": 1.7000,
+      "mj_star": 3.4000
+    },
+    "main_benchmark_topology": {
+      "N": 2850,
+      "C": 950,
+      "J": 380,
+      "mc_mean": 3.0000,
+      "mj_mean": 7.5000,
+      "mc_star": 3.0000,
+      "mj_star": 7.9958
+    }
+  },
+  "conservative_transport_matrix": [
+    {
+      "scenario": "Optimistic Transport Bound",
+      "candidate_icc_assumed": 0.10,
+      "job_icc_assumed": 0.05,
+      "pilot_deff": 1.190,
+      "projected_benchmark_deff": 1.550,
+      "projected_power_N2850": 0.906,
+      "required_N_for_80_power": 2117
+    },
+    {
+      "scenario": "Central Baseline Transport Bound",
+      "candidate_icc_assumed": 0.20,
+      "job_icc_assumed": 0.10,
+      "pilot_deff": 1.380,
+      "projected_benchmark_deff": 2.100,
+      "projected_power_N2850": 0.806,
+      "required_N_for_80_power": 2868
+    },
+    {
+      "scenario": "Conservative Upper Transport Bound",
+      "candidate_icc_assumed": 0.25,
+      "job_icc_assumed": 0.125,
+      "pilot_deff": 1.475,
+      "projected_benchmark_deff": 2.374,
+      "projected_power_N2850": 0.751,
+      "required_N_for_80_power": 3243
+    },
+    {
+      "scenario": "Pessimistic Stress Transport Bound",
+      "candidate_icc_assumed": 0.30,
+      "job_icc_assumed": 0.15,
+      "pilot_deff": 1.570,
+      "projected_benchmark_deff": 2.649,
+      "projected_power_N2850": 0.702,
+      "required_N_for_80_power": 3619
+    }
+  ],
+  "transport_decision_rules": {
+    "rule_1": "Estimate pilot recruiter-rating ICC with 80% bootstrap confidence intervals once human ratings exist.",
+    "rule_2": "If upper bound of rating ICC exceeds 0.25 for candidates or 0.125 for jobs, trigger Tier 2 sample expansion (N=3,800 pairs).",
+    "rule_3": "Do NOT assume pilot DEFF (1.37) applies to the benchmark. Always scale up via mc* and mj*."
+  }
+}

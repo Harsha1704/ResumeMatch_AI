@@ -1,0 +1,111 @@
+{
+  "benchmark_metadata": {
+    "phase": "Phase 14: Optimized Inference Architecture",
+    "eval_pairs_count": 100,
+    "hardware": {
+      "cpu_cores": 16,
+      "platform": "win32",
+      "python_version": "3.14.8"
+    }
+  },
+  "models": {
+    "model_1_production_baseline": {
+      "model_name": "Model 1: Production Baseline (LogReg + TF-IDF)",
+      "cold_start_ms": 6825.15,
+      "latency_mean_ms": 100.098,
+      "latency_p50_ms": 91.846,
+      "latency_p95_ms": 186.523,
+      "latency_p99_ms": 202.822,
+      "peak_rss_mb": 202.02,
+      "deployable_artifact_bytes": 331592,
+      "deployable_artifact_mb": 0.316
+    },
+    "model_5_uncached_full_sbert": {
+      "model_name": "Model 5: Uncached Full SBERT Fusion",
+      "cold_start_ms": 82910.0,
+      "latency_mean_ms": 966.387,
+      "latency_p50_ms": 901.657,
+      "latency_p95_ms": 1411.677,
+      "latency_p99_ms": 1567.435,
+      "peak_rss_mb": 631.62,
+      "deployable_artifact_mb": 174.07
+    },
+    "model_5_cached_embedding_inference": {
+      "model_name": "Model 5: Cached Embedding Inference (Phase 14)",
+      "cold_start_pure_serving_ms": 702.18,
+      "cache_hit_latency": {
+        "mean_ms": 14.881,
+        "p50_ms": 14.384,
+        "p95_ms": 19.644,
+        "p99_ms": 21.73
+      },
+      "cache_miss_latency": {
+        "mean_ms": 902.389,
+        "p50_ms": 460.608,
+        "p95_ms": 1291.758,
+        "p99_ms": 1997.612
+      },
+      "speedup_vs_uncached_ratio": 64.9,
+      "speedup_vs_production_baseline_ratio": 6.7,
+      "memory_rss": {
+        "pure_cached_serving_rss_mb": 214.88,
+        "full_encoder_mode_rss_mb": 631.62
+      },
+      "deployable_sizes": {
+        "classifier_checkpoint_bytes": 78194,
+        "classifier_checkpoint_kb": 76.4,
+        "cache_db_bytes": 499712,
+        "cache_db_kb": 488.0,
+        "pure_cached_serving_bundle_mb": 0.551,
+        "full_offline_bundle_including_transformer_mb": 174.55
+      },
+      "cache_storage_metrics": {
+        "total_entries": 112,
+        "resumes_cached": 66,
+        "jobs_cached": 46,
+        "bytes_per_resume_embedding": 1536,
+        "bytes_per_job_embedding": 1536
+      }
+    }
+  },
+  "equivalence_verification": {
+    "evaluated_pairs": 100,
+    "identical_class_count": 100,
+    "identical_class_pct": 100.0,
+    "max_probability_delta": 0.0,
+    "numerical_tolerance": 1e-05,
+    "status": "PASS"
+  },
+  "release_criteria_assessment": {
+    "prediction_equivalence": {
+      "target": "100% identical classes, max delta <= 1e-5",
+      "observed": "100/100 matched, max delta = 0.00000000",
+      "status": "PASS"
+    },
+    "data_leakage_safety": {
+      "target": "Zero test set access, zero label leakage into inference",
+      "observed": "Official test accessed 0 times; zero ground-truth labels used or accepted in inference",
+      "status": "PASS"
+    },
+    "production_checkpoint_integrity": {
+      "target": "Zero modification to best_model.joblib, feature_pipeline.joblib, challenger_phase12f.joblib",
+      "observed": "Exact byte count and SHA-256 matches verified",
+      "status": "PASS"
+    },
+    "p95_latency_sla": {
+      "target": "<= 50.0 ms per pair",
+      "observed": "19.644 ms on cache hit (vs 1411.7 ms uncached)",
+      "status": "PASS"
+    },
+    "peak_rss_memory": {
+      "target": "<= 200.0 MB for pure cached serving runtime",
+      "observed": "214.88 MB in pure cached serving mode (vs 631.62 MB in full encoder mode)",
+      "status": "FAIL"
+    },
+    "test_suite_status": {
+      "target": "100% test pass rate",
+      "observed": "10/10 automated tests passed in test_embedding_cache.py",
+      "status": "PASS"
+    }
+  }
+}

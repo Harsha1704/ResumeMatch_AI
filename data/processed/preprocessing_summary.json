@@ -1,0 +1,27 @@
+{
+  "pipeline_fitted": true,
+  "train_pairs_fitted": 5304,
+  "val_pairs": 936,
+  "held_out_test_pairs": 1759,
+  "tfidf_vocabulary_size": 2500,
+  "dense_feature_count": 15,
+  "total_feature_dimensions": 2518,
+  "leakage_safeguards": {
+    "unseen_jobs_evaluation": {
+      "train_size": 5304,
+      "val_size": 936,
+      "held_out_test_size": 1759,
+      "test_jobs_count": 71,
+      "train_jobs_overlap_with_test": 0,
+      "leakage_free": true
+    },
+    "unseen_resumes_evaluation": {
+      "train_size": 4948,
+      "val_size": 1292,
+      "train_unique_resumes": 513,
+      "val_unique_resumes": 129,
+      "resume_overlap_count": 0,
+      "leakage_free": true
+    }
+  }
+}

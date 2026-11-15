@@ -1,0 +1,24 @@
+{
+  "audit_phase": "Phase 13.1",
+  "task": "Task 1 \u2014 Verify Exact Row Alignment",
+  "train_manifest_rows": 3857,
+  "val_manifest_rows_raw": 297,
+  "val_quarantined_index": [
+    46
+  ],
+  "val_manifest_rows_clean": 296,
+  "train_domain_features_shape": [
+    3857,
+    32
+  ],
+  "val_domain_features_shape": [
+    296,
+    32
+  ],
+  "train_pair_id_duplicates_detected": 12,
+  "val_pair_id_duplicates_detected": 2,
+  "contradictory_val_duplicate_pair": "R_9ec670d617d35247__J_78a2a1e24cb08975 (rows 0 and 224: No Fit vs Good Fit)",
+  "sbert_cache_complete_coverage": true,
+  "historical_p_df_alignment_verified": true,
+  "verdict": "ROW_ALIGNMENT_VERIFIED_AND_EXPLICITLY_KEYED"
+}

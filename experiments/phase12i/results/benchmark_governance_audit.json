@@ -1,0 +1,85 @@
+{
+  "phase": "12I.1",
+  "audit_name": "Benchmark Sampling, Privacy, Deduplication, and Quarantine Governance Architecture",
+  "version": "1.0.0",
+  "timestamp": "2026-11-14T08:10:45Z",
+  "domain_stratification": {
+    "total_target_sample_size": 2850,
+    "pilot_sample_size": 200,
+    "strata_breakdown": [
+      {
+        "stratum": "Software Engineering / Full-Stack / Backend",
+        "proportion": 0.40,
+        "target_pairs": 1140,
+        "pilot_pairs": 80,
+        "rationale": "Represents the core market volume and the primary production use case of ResumeMatch AI."
+      },
+      {
+        "stratum": "DevOps / SRE / Cloud Infrastructure",
+        "proportion": 0.20,
+        "target_pairs": 570,
+        "pilot_pairs": 40,
+        "rationale": "High toolchain specificity and complex transferable skill equivalencies (AWS/GCP/Azure/K8s)."
+      },
+      {
+        "stratum": "Data Science / Machine Learning / Data Engineering",
+        "proportion": 0.20,
+        "target_pairs": 570,
+        "pilot_pairs": 40,
+        "rationale": "Evaluates nuanced technical depth, theoretical foundations vs engineering execution, and domain jargon."
+      },
+      {
+        "stratum": "Quality Assurance / Test Automation",
+        "proportion": 0.10,
+        "target_pairs": 285,
+        "pilot_pairs": 20,
+        "rationale": "Specialized testing frameworks (Selenium, Playwright, Cypress) with clear boundary verification."
+      },
+      {
+        "stratum": "Technical Product / Project Management",
+        "proportion": 0.10,
+        "target_pairs": 285,
+        "pilot_pairs": 20,
+        "rationale": "Assesses non-code technical competencies, agile governance, and system-level requirement mapping."
+      }
+    ]
+  },
+  "reporting_methodology": {
+    "unweighted_reporting": "Raw empirical sample performance across all pairs (descriptive diagnostic).",
+    "post_stratification_weighting": "Evaluates Macro F1 and accuracy re-weighted to match industry market hiring distributions (w_h = N_h / n_h).",
+    "cluster_aware_variance_estimation": "Two-way crossed candidate-job clustered standard errors and GEE / cluster-bootstrapping for all reported confidence intervals."
+  },
+  "deduplication_and_leakage_controls": {
+    "near_duplicate_algorithm": "MinHash LSH with 128 permutations, 5-gram shingles, Jaccard threshold = 0.85",
+    "exact_duplicate_algorithm": "SHA-256 hash on normalized whitespace and lowercase text",
+    "cross_corpus_quarantine_verification": {
+      "reference_manifests": [
+        "manifests/v1/frozen_train_v1.parquet",
+        "manifests/v1/frozen_val_v1.parquet",
+        "manifests/v1/held_out_test_v1.parquet",
+        "manifests/v1/dual_unseen_val_v1.parquet"
+      ],
+      "quarantine_rule": "Any candidate or job description exhibiting >= 0.85 Jaccard similarity or identical normalized text with ANY historical training/val/test artifact is permanently disqualified from the Phase 12I benchmark.",
+      "contamination_tolerance": 0
+    }
+  },
+  "privacy_and_licensing_compliance": {
+    "pii_stripping_pipeline": [
+      "Named Entity Recognition (NER) regex scrubbing for candidate full names, personal phone numbers, and personal email addresses.",
+      "Postal street addresses and zip codes redacted to generic metropolitan/state level.",
+      "Direct personal URLs (LinkedIn profile handles, personal portfolio sites) anonymized to synthetic placeholders.",
+      "Internal company proprietary project code names sanitized."
+    ],
+    "licensing_verification": {
+      "recruitbench": "Audited as research academic release; non-commercial evaluation permissible.",
+      "djinni_cb": "Verified Drushchak & Romanyshyn (2024), UNLP @ LREC-COLING 2024; research open access.",
+      "final_benchmark_license": "Strictly Internal Evaluation / Research Only (Not redistributed; held in secure evaluation vault)."
+    }
+  },
+  "quarantine_governance_rules": {
+    "rule_1": "Benchmark labels must be physically stored outside the training search paths (e.g. data/benchmark_vault/quarantine_phase12i/).",
+    "rule_2": "Zero access by feature extraction, vocabulary building, tokenizer training, or prompt engineering pipelines.",
+    "rule_3": "Evaluation scripts must run in one-way verification mode where model predictions are produced blindly on features, and scoring occurs in an isolated evaluation harness.",
+    "rule_4": "Quarantined official test labels (from Phase 12F) remain untouched and separate from Phase 12I benchmark."
+  }
+}

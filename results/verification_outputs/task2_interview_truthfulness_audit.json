@@ -1,0 +1,202 @@
+[
+  {
+    "index": 1,
+    "question_id": "tb_py_01",
+    "category": "E",
+    "category_name": "Core Technical Knowledge Bank",
+    "question_text": "What is the difference between mutable and immutable types in Python, and how does it affect function arguments?",
+    "short_answer": "In Python, immutable objects (integers, strings, tuples) cannot be altered after creation, whereas mutable objects (lists, dictionaries, sets) can be modified in-place. Because Python uses pass-by-assignment, mutating a mutable argument inside a function modifies the original caller object.",
+    "detailed_answer": "In Python, mutability defines whether an object's state can be altered after allocation. Immutable types include int, float, str, tuple, and frozenset; attempting to modify them results in creating a new object at a distinct memory address. Mutable types include list, dict, and set, which support in-place item insertion, deletion, and reassignment. Python uses 'call-by-object-reference' (pass-by-assignment). When an argument is passed into a function, the function parameter receives a reference to the existing object. If the object is mutable and modified in-place (such as calling `.append()` or assigning a key), the modification immediately reflects in the caller scope. Conversely, rebinding the parameter to a new object (`x = [1, 2]`) does not affect the caller.",
+    "why_this_works": "The interviewer is evaluating whether you understand Python's underlying memory model and parameter passing semantics rather than reciting superficial definitions. This answer is convincing because it explains pass-by-assignment clearly and explicitly differentiates in-place mutation from variable rebinding.",
+    "validation_passed": true,
+    "validation_score": 100.0,
+    "violations": [],
+    "truthfulness_checks": {
+      "no_invented_metrics": true,
+      "no_unsupported_first_person_claims": true,
+      "has_candidate_specification_slots": false,
+      "has_labeled_illustrative_scenario": false,
+      "is_truthful_and_grounded": true
+    }
+  },
+  {
+    "index": 2,
+    "question_id": "tb_py_02",
+    "category": "E",
+    "category_name": "Core Technical Knowledge Bank",
+    "question_text": "How do Python generators work, and what is the difference between `yield` and `return`?",
+    "short_answer": "Generators are lazy iterators that produce values on-demand using the `yield` statement. Unlike `return`, which terminates a function and clears its stack frame, `yield` suspends the function's execution state, returning a value and allowing it to resume on subsequent `next()` calls.",
+    "detailed_answer": "A Python generator is a special function that implements the Iterator Protocol (`__iter__` and `__next__`) automatically. When a function body contains the `yield` keyword, calling the function does not execute its body; instead, it immediately returns a generator object. When `next()` is called on this generator, code executes until it reaches `yield`. At that point, the generator yields the evaluated expression and suspends its execution frame, preserving local variables and instruction pointers. Subsequent `next()` calls resume execution right after the `yield`. When the function finishes or encounters a `return`, it raises a `StopIteration` exception. This lazy evaluation mechanism achieves O(1) auxiliary memory consumption when streaming large datasets, files, or infinite sequences.",
+    "why_this_works": "The interviewer is assessing whether you understand lazy evaluation, iterator protocols, and memory optimization in Python. This answer is effective because it clearly explains the suspension and resumption of stack frames and connects the concept directly to processing large data streams.",
+    "validation_passed": true,
+    "validation_score": 100.0,
+    "violations": [],
+    "truthfulness_checks": {
+      "no_invented_metrics": true,
+      "no_unsupported_first_person_claims": true,
+      "has_candidate_specification_slots": false,
+      "has_labeled_illustrative_scenario": false,
+      "is_truthful_and_grounded": true
+    }
+  },
+  {
+    "index": 3,
+    "question_id": "tb_py_03",
+    "category": "E",
+    "category_name": "Core Technical Knowledge Bank",
+    "question_text": "Explain the Python Global Interpreter Lock (GIL) and its implications for CPU-bound vs I/O-bound concurrency.",
+    "short_answer": "The GIL is a mutex in CPython that ensures only one native OS thread executes Python bytecode at any given moment. Consequently, multi-threading provides no parallel acceleration for CPU-bound tasks, but remains highly effective for I/O-bound operations because the GIL is released during system calls.",
+    "detailed_answer": "The Global Interpreter Lock (GIL) is a synchronization mutex utilized by CPython to protect memory management structures and prevent race conditions in its reference-counting garbage collector. Because CPython's internal memory allocator is not thread-safe, the GIL guarantees that only one thread executes Python bytecode at a time, even on multi-core processors. For CPU-bound tasks (e.g. image processing, numerical matrix operations), multiple Python threads contend for the GIL, resulting in context-switching overhead without genuine parallel speedup; parallel execution requires the `multiprocessing` module, process pools, or C/Rust extensions that explicitly release the GIL. Conversely, for I/O-bound tasks (network requests, database queries, file reads), threads release the GIL while waiting for the OS system call to complete, making `threading` or `asyncio` highly concurrent and performant.",
+    "why_this_works": "The interviewer is probing your knowledge of low-level concurrency limits and architectural design decisions in CPython. This explanation succeeds because it clearly explains the root cause (reference-counting thread safety) and gives the correct engineering solutions for both CPU-bound and I/O-bound workloads.",
+    "validation_passed": true,
+    "validation_score": 100.0,
+    "violations": [],
+    "truthfulness_checks": {
+      "no_invented_metrics": true,
+      "no_unsupported_first_person_claims": true,
+      "has_candidate_specification_slots": false,
+      "has_labeled_illustrative_scenario": false,
+      "is_truthful_and_grounded": true
+    }
+  },
+  {
+    "index": 4,
+    "question_id": "qb_arch_0_dc7c99e9",
+    "category": "B",
+    "category_name": "Extracted Project Deep-Dives",
+    "question_text": "In your project 'Distributed Payment Gateway Service | Python, Flask, PostgreSQL, Redis', what motivated your architectural design and technology choices (specified frameworks)?",
+    "short_answer": "In 'Distributed Payment Gateway Service | Python, Flask, PostgreSQL, Redis', I designed a modular layered architecture to solve the implementation of a idempotent payment reconciliation service handling high concurrency transaction webhooks. Implemented strict database transaction boundaries with ACID guarantees using SQLAlchemy.. I structured the system so that each technology handled a distinct responsibility: standard software engineering components. This strict separation of concerns ensured that data flowed through predictable interfaces and allowed each module to be tested in isolation.",
+    "detailed_answer": "In 'Distributed Payment Gateway Service | Python, Flask, PostgreSQL, Redis', my primary engineering objective centered on the implementation of a idempotent payment reconciliation service handling high concurrency transaction webhooks. Implemented strict database transaction boundaries with ACID guarantees using SQLAlchemy.. When planning the architecture, I structured the system into distinct operational layers rather than building a tightly coupled monolithic script. I separated Python core business logic from Flask routing and PostgreSQL persistence. A core architectural consideration was ensuring that data flowed predictably between components, with clear contract interfaces and automated input validation. One trade-off I evaluated was keeping the service lightweight and fast to iterate on rather than introducing unnecessary distributed infrastructure early. The completed implementation met our functional design criteria, allowing each pipeline stage to be tested in isolation with consistent execution and predictable throughput.",
+    "why_this_works": "The interviewer is evaluating whether you can articulate architectural intent rather than treating tools as black boxes. This answer works because it clearly decouples responsibilities across your stack, demonstrates awareness of engineering trade-offs, and focuses on maintainability without resorting to vague buzzwords.",
+    "validation_passed": true,
+    "validation_score": 100.0,
+    "violations": [],
+    "truthfulness_checks": {
+      "no_invented_metrics": true,
+      "no_unsupported_first_person_claims": true,
+      "has_candidate_specification_slots": false,
+      "has_labeled_illustrative_scenario": false,
+      "is_truthful_and_grounded": true
+    }
+  },
+  {
+    "index": 5,
+    "question_id": "qb_arch_1_dfe86839",
+    "category": "B",
+    "category_name": "Extracted Project Deep-Dives",
+    "question_text": "In your project 'High-Throughput Order Ingestion Engine | Python, Flask, PostgreSQL, Celery', what motivated your architectural design and technology choices (specified frameworks)?",
+    "short_answer": "In 'High-Throughput Order Ingestion Engine | Python, Flask, PostgreSQL, Celery', I designed a modular layered architecture to solve the implementation of a asynchronous order processing pipeline using Celery and Redis message queues. Optimized database indexing to reduce lock contention during peak batch write events.. I structured the system so that each technology handled a distinct responsibility: standard software engineering components. This strict separation of concerns ensured that data flowed through predictable interfaces and allowed each module to be tested in isolation.",
+    "detailed_answer": "In 'High-Throughput Order Ingestion Engine | Python, Flask, PostgreSQL, Celery', my primary engineering objective centered on the implementation of a asynchronous order processing pipeline using Celery and Redis message queues. Optimized database indexing to reduce lock contention during peak batch write events.. When planning the architecture, I structured the system into distinct operational layers rather than building a tightly coupled monolithic script. I separated Python core business logic from Flask routing and PostgreSQL persistence. A core architectural consideration was ensuring that data flowed predictably between components, with clear contract interfaces and automated input validation. One trade-off I evaluated was keeping the service lightweight and fast to iterate on rather than introducing unnecessary distributed infrastructure early. The completed implementation met our functional design criteria, allowing each pipeline stage to be tested in isolation with consistent execution and predictable throughput.",
+    "why_this_works": "The interviewer is evaluating whether you can articulate architectural intent rather than treating tools as black boxes. This answer works because it clearly decouples responsibilities across your stack, demonstrates awareness of engineering trade-offs, and focuses on maintainability without resorting to vague buzzwords.",
+    "validation_passed": true,
+    "validation_score": 100.0,
+    "violations": [],
+    "truthfulness_checks": {
+      "no_invented_metrics": true,
+      "no_unsupported_first_person_claims": true,
+      "has_candidate_specification_slots": false,
+      "has_labeled_illustrative_scenario": false,
+      "is_truthful_and_grounded": true
+    }
+  },
+  {
+    "index": 6,
+    "question_id": "qb_roadblock_0_67f20074",
+    "category": "B",
+    "category_name": "Extracted Project Deep-Dives",
+    "question_text": "What was the most challenging technical roadblock or bug you encountered while developing 'Distributed Payment Gateway Service | Python, Flask, PostgreSQL, Redis', and how did you resolve it?",
+    "short_answer": "When discussing an engineering roadblock in 'Distributed Payment Gateway Service | Python, Flask, PostgreSQL, Redis', state the concrete symptom, the systematic debugging technique used, and the permanent resolution. Structure: [Candidate to specify: Exact runtime exception or latency bottleneck observed] -> Diagnose using reproducible tests and execution logs across the stack -> [Candidate to specify: Defensive validation or architectural refactoring applied] -> Add regression tests to guarantee the failure cannot recur.",
+    "detailed_answer": "To present a compelling troubleshooting narrative for 'Distributed Payment Gateway Service | Python, Flask, PostgreSQL, Redis' (built with the project stack), follow a structured root-cause methodology:\n1. Symptom & Operational Impact: [Candidate to specify: What failure manifested during development, e.g. unhandled malformed payloads or resource exhaustion].\n2. Deterministic Reproduction: Explain how you isolated the issue\u2014constructing a minimal reproduction script rather than attempting speculative hotfixes.\n3. Root-Cause Diagnosis: Detail the diagnostic tools used (such as profilers, stack traces, or debug logs in Python) to pinpoint the exact failure mechanism [Candidate to specify: Root defect].\n4. Code Refactoring: [Candidate to specify: Specific defensive validation, schema enforcement, or boundary checks implemented].\n5. Regression Prevention: Author automated unit and integration tests asserting expected behavior across boundary cases to ensure the issue is permanently resolved.\n\n[Illustrative Model Scenario \u2014 Not candidate resume data]: During payload processing, unhandled Unicode characters in input strings caused 500 exceptions in downstream parsers. The engineer reproduced the exception with a targeted Pytest fixture, refactored the ingestion boundary to sanitize encodings using explicit UTF-8 validation, and committed the test case to the CI pipeline to permanently prevent regressions.",
+    "why_this_works": "Interviewers ask this question to evaluate your debugging methodology, emotional resilience, and ownership when systems fail. This answer succeeds because it follows a systematic engineering troubleshooting process (reproduce -> profile -> isolate -> patch -> regression test) without blaming external libraries or team members.",
+    "validation_passed": true,
+    "validation_score": 100.0,
+    "violations": [],
+    "truthfulness_checks": {
+      "no_invented_metrics": true,
+      "no_unsupported_first_person_claims": true,
+      "has_candidate_specification_slots": true,
+      "has_labeled_illustrative_scenario": true,
+      "is_truthful_and_grounded": true
+    }
+  },
+  {
+    "index": 7,
+    "question_id": "qb_roadblock_1_50d185ff",
+    "category": "B",
+    "category_name": "Extracted Project Deep-Dives",
+    "question_text": "What was the most challenging technical roadblock or bug you encountered while developing 'High-Throughput Order Ingestion Engine | Python, Flask, PostgreSQL, Celery', and how did you resolve it?",
+    "short_answer": "When discussing an engineering roadblock in 'High-Throughput Order Ingestion Engine | Python, Flask, PostgreSQL, Celery', state the concrete symptom, the systematic debugging technique used, and the permanent resolution. Structure: [Candidate to specify: Exact runtime exception or latency bottleneck observed] -> Diagnose using reproducible tests and execution logs across the stack -> [Candidate to specify: Defensive validation or architectural refactoring applied] -> Add regression tests to guarantee the failure cannot recur.",
+    "detailed_answer": "To present a compelling troubleshooting narrative for 'High-Throughput Order Ingestion Engine | Python, Flask, PostgreSQL, Celery' (built with the project stack), follow a structured root-cause methodology:\n1. Symptom & Operational Impact: [Candidate to specify: What failure manifested during development, e.g. unhandled malformed payloads or resource exhaustion].\n2. Deterministic Reproduction: Explain how you isolated the issue\u2014constructing a minimal reproduction script rather than attempting speculative hotfixes.\n3. Root-Cause Diagnosis: Detail the diagnostic tools used (such as profilers, stack traces, or debug logs in Python) to pinpoint the exact failure mechanism [Candidate to specify: Root defect].\n4. Code Refactoring: [Candidate to specify: Specific defensive validation, schema enforcement, or boundary checks implemented].\n5. Regression Prevention: Author automated unit and integration tests asserting expected behavior across boundary cases to ensure the issue is permanently resolved.\n\n[Illustrative Model Scenario \u2014 Not candidate resume data]: During payload processing, unhandled Unicode characters in input strings caused 500 exceptions in downstream parsers. The engineer reproduced the exception with a targeted Pytest fixture, refactored the ingestion boundary to sanitize encodings using explicit UTF-8 validation, and committed the test case to the CI pipeline to permanently prevent regressions.",
+    "why_this_works": "Interviewers ask this question to evaluate your debugging methodology, emotional resilience, and ownership when systems fail. This answer succeeds because it follows a systematic engineering troubleshooting process (reproduce -> profile -> isolate -> patch -> regression test) without blaming external libraries or team members.",
+    "validation_passed": true,
+    "validation_score": 100.0,
+    "violations": [],
+    "truthfulness_checks": {
+      "no_invented_metrics": true,
+      "no_unsupported_first_person_claims": true,
+      "has_candidate_specification_slots": true,
+      "has_labeled_illustrative_scenario": true,
+      "is_truthful_and_grounded": true
+    }
+  },
+  {
+    "index": 8,
+    "question_id": "hr_01",
+    "category": "F",
+    "category_name": "HR & Behavioral Competencies",
+    "question_text": "Tell me about yourself and walk me through your technical background.",
+    "short_answer": "I am a software and machine learning engineer with a strong foundation in Computer Science, experienced in developing end-to-end data pipelines, web services, and machine learning models, and eager to deliver immediate engineering impact on your team.",
+    "detailed_answer": "I am a software engineer with a strong academic foundation in Computer Science and hands-on experience developing end-to-end applications. My technical toolkit centers on [Core Technologies, e.g. Python, SQL, Flask, and Machine Learning], which I have applied to build real-world systems such as [Mention Key Project or Internship, e.g. a modular web service or data processing pipeline and containerized microservices]. Through my academic coursework and practical project engineering, I have developed disciplined habits around clean code, modular architecture, and automated testing. I am particularly excited about this role because it aligns directly with my passion for [Specific Engineering Area, e.g. building reliable data-driven backend systems], and I am looking forward to contributing to your team's mission.",
+    "why_this_works": "The interviewer is evaluating your professional communication, career trajectory, and whether you can summarize your technical value proposition in 90 seconds without reciting your resume chronologically.",
+    "validation_passed": true,
+    "validation_score": 100.0,
+    "violations": [],
+    "truthfulness_checks": {
+      "no_invented_metrics": true,
+      "no_unsupported_first_person_claims": true,
+      "has_candidate_specification_slots": false,
+      "has_labeled_illustrative_scenario": false,
+      "is_truthful_and_grounded": true
+    }
+  },
+  {
+    "index": 9,
+    "question_id": "hr_02",
+    "category": "F",
+    "category_name": "HR & Behavioral Competencies",
+    "question_text": "What are your greatest technical strengths, and how have they contributed to project success?",
+    "short_answer": "My greatest strengths are rapid technical adaptability, a disciplined approach to systematic debugging, and building clean, modular software that bridges theoretical algorithms with reliable implementation.",
+    "detailed_answer": "My primary technical strengths are rapid learning agility and systematic engineering rigor. When approaching unfamiliar technologies or complex requirements, I break systems down to first principles, consult official documentation, and rapidly build working prototypes. For example, while developing [Project Title], our pipeline encountered [Technical Challenge, e.g. memory bottlenecks during large dataset processing]. Rather than guessing, I systematically profiled execution times and memory allocations, identified that [Root Cause, e.g. redundant in-memory copies were occurring], and refactored the pipeline to use [Solution, e.g. lazy generator streams]. This resolved the bottleneck and reinforced my commitment to building maintainable, evidence-backed software.",
+    "why_this_works": "Interviewers evaluate self-awareness and whether your strengths match the technical challenges their team faces daily.",
+    "validation_passed": true,
+    "validation_score": 100.0,
+    "violations": [],
+    "truthfulness_checks": {
+      "no_invented_metrics": true,
+      "no_unsupported_first_person_claims": true,
+      "has_candidate_specification_slots": false,
+      "has_labeled_illustrative_scenario": false,
+      "is_truthful_and_grounded": true
+    }
+  },
+  {
+    "index": 10,
+    "question_id": "tb_sys_01",
+    "category": "E",
+    "category_name": "Core Technical Knowledge Bank",
+    "question_text": "How do you design a high-throughput, low-latency caching layer for a web application using Redis, and what cache invalidation strategies (Cache-Aside, Write-Through, Write-Behind) do you apply?",
+    "short_answer": "A caching layer places an in-memory datastore (like Redis) between the application backend and relational database to serve hot read traffic in sub-milliseconds. Common invalidation patterns include Cache-Aside (lazy loading on misses), Write-Through (synchronously updating DB and cache), and Write-Behind (asynchronously batching DB writes).",
+    "detailed_answer": "Designing a high-throughput caching layer with Redis optimizes read-heavy web applications by avoiding expensive database disk I/O and query compilation. Architecture patterns include: 1) Cache-Aside (Lazy Loading): The application queries Redis first; on a cache miss, it reads from the primary database, populates Redis with an explicit Time-To-Live (TTL), and returns data to the client. This handles read spikes cleanly without caching unused records; 2) Write-Through: The application writes updates synchronously to the cache and the primary database simultaneously, guaranteeing cache freshness at the cost of higher write latency; 3) Write-Behind (Write-Back): Updates are written immediately to Redis RAM and acknowledged, while an asynchronous background worker batches updates into the relational database, providing maximum write throughput but risking data loss if Redis crashes before flushing. Critical failure mitigations include: Eviction Policies (e.g. volatile-lru to prevent out-of-memory errors), Cache Stampede Protection (using mutex locks or probabilistic early expiration to prevent thousands of concurrent requests from hammering the database when a popular key expires), and Defensive TTL Expiration on all keys.",
+    "why_this_works": "System design interviewers look for trade-off awareness rather than just mentioning Redis. This answer succeeds by clearly comparing Cache-Aside, Write-Through, and Write-Behind, and explicitly addressing operational hazards like Cache Stampedes and memory eviction.",
+    "validation_passed": true,
+    "validation_score": 100.0,
+    "violations": [],
+    "truthfulness_checks": {
+      "no_invented_metrics": true,
+      "no_unsupported_first_person_claims": true,
+      "has_candidate_specification_slots": false,
+      "has_labeled_illustrative_scenario": false,
+      "is_truthful_and_grounded": true
+    }
+  }
+]

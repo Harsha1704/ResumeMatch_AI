@@ -1,0 +1,686 @@
+{
+  "job_disjoint_val": {
+    "protocol_type": "job_disjoint",
+    "train_record_count": 5462,
+    "eval_record_count": 778,
+    "isolation_audit": {
+      "train_resumes": 633,
+      "train_jobs": 238,
+      "train_pairs": 5456,
+      "eval_resumes": 373,
+      "eval_jobs": 42,
+      "eval_pairs": 778,
+      "resume_overlap_count": 364,
+      "resume_overlap_pct": 97.59,
+      "job_overlap_count": 0,
+      "job_overlap_pct": 0.0,
+      "pair_overlap_count": 0,
+      "pair_overlap_pct": 0.0,
+      "sample_overlapping_resumes": [
+        "ac638c262673671ac90e6c30b940be70",
+        "2663bbeee1620644481cafa9e8065b84",
+        "64e9abc3194a575d55272796650c5843"
+      ],
+      "sample_overlapping_jobs": [],
+      "sample_overlapping_pairs": []
+    },
+    "models": {
+      "classical_baseline": {
+        "accuracy": 0.4846,
+        "balanced_accuracy": 0.433,
+        "macro_precision": 0.4356,
+        "macro_recall": 0.433,
+        "macro_f1": 0.4292,
+        "weighted_f1": 0.5018,
+        "brier_score": 0.877,
+        "confusion_matrix": [
+          [
+            241,
+            108,
+            66
+          ],
+          [
+            52,
+            96,
+            82
+          ],
+          [
+            45,
+            48,
+            40
+          ]
+        ],
+        "per_class": {
+          "No Fit": {
+            "precision": 0.713,
+            "recall": 0.5807,
+            "f1": 0.6401,
+            "support": 415
+          },
+          "Potential Fit": {
+            "precision": 0.381,
+            "recall": 0.4174,
+            "f1": 0.3983,
+            "support": 230
+          },
+          "Good Fit": {
+            "precision": 0.2128,
+            "recall": 0.3008,
+            "f1": 0.2492,
+            "support": 133
+          }
+        },
+        "train_time_sec": 87.19,
+        "feature_dim": 2515
+      },
+      "sbert_config_b": {
+        "accuracy": 0.5116,
+        "balanced_accuracy": 0.4795,
+        "macro_precision": 0.4735,
+        "macro_recall": 0.4795,
+        "macro_f1": 0.4759,
+        "weighted_f1": 0.5146,
+        "brier_score": 1.4783,
+        "confusion_matrix": [
+          [
+            239,
+            123,
+            53
+          ],
+          [
+            91,
+            105,
+            34
+          ],
+          [
+            57,
+            22,
+            54
+          ]
+        ],
+        "per_class": {
+          "No Fit": {
+            "precision": 0.6176,
+            "recall": 0.5759,
+            "f1": 0.596,
+            "support": 415
+          },
+          "Potential Fit": {
+            "precision": 0.42,
+            "recall": 0.4565,
+            "f1": 0.4375,
+            "support": 230
+          },
+          "Good Fit": {
+            "precision": 0.383,
+            "recall": 0.406,
+            "f1": 0.3942,
+            "support": 133
+          }
+        },
+        "train_time_sec": 9.13,
+        "feature_dim": 1537
+      },
+      "hybrid_config_d": {
+        "accuracy": 0.518,
+        "balanced_accuracy": 0.4792,
+        "macro_precision": 0.4771,
+        "macro_recall": 0.4792,
+        "macro_f1": 0.4781,
+        "weighted_f1": 0.519,
+        "brier_score": 1.4759,
+        "confusion_matrix": [
+          [
+            249,
+            115,
+            51
+          ],
+          [
+            97,
+            101,
+            32
+          ],
+          [
+            61,
+            19,
+            53
+          ]
+        ],
+        "per_class": {
+          "No Fit": {
+            "precision": 0.6118,
+            "recall": 0.6,
+            "f1": 0.6058,
+            "support": 415
+          },
+          "Potential Fit": {
+            "precision": 0.4298,
+            "recall": 0.4391,
+            "f1": 0.4344,
+            "support": 230
+          },
+          "Good Fit": {
+            "precision": 0.3897,
+            "recall": 0.3985,
+            "f1": 0.3941,
+            "support": 133
+          }
+        },
+        "train_time_sec": 13.03,
+        "feature_dim": 1562
+      }
+    }
+  },
+  "resume_disjoint_val": {
+    "protocol_type": "resume_disjoint",
+    "train_record_count": 5217,
+    "eval_record_count": 1023,
+    "isolation_audit": {
+      "train_resumes": 545,
+      "train_jobs": 280,
+      "train_pairs": 5213,
+      "eval_resumes": 97,
+      "eval_jobs": 219,
+      "eval_pairs": 1021,
+      "resume_overlap_count": 0,
+      "resume_overlap_pct": 0.0,
+      "job_overlap_count": 219,
+      "job_overlap_pct": 100.0,
+      "pair_overlap_count": 0,
+      "pair_overlap_pct": 0.0,
+      "sample_overlapping_resumes": [],
+      "sample_overlapping_jobs": [
+        "f8ad54597baf91372d5cb86d5f03db00",
+        "90498a9a0b56843b83eddb026df66299",
+        "cf31f98d8f06992e6b29df36b239e064"
+      ],
+      "sample_overlapping_pairs": []
+    },
+    "models": {
+      "classical_baseline": {
+        "accuracy": 0.478,
+        "balanced_accuracy": 0.4439,
+        "macro_precision": 0.4442,
+        "macro_recall": 0.4439,
+        "macro_f1": 0.444,
+        "weighted_f1": 0.4772,
+        "brier_score": 0.8115,
+        "confusion_matrix": [
+          [
+            288,
+            97,
+            101
+          ],
+          [
+            112,
+            76,
+            60
+          ],
+          [
+            93,
+            71,
+            125
+          ]
+        ],
+        "per_class": {
+          "No Fit": {
+            "precision": 0.5842,
+            "recall": 0.5926,
+            "f1": 0.5884,
+            "support": 486
+          },
+          "Potential Fit": {
+            "precision": 0.3115,
+            "recall": 0.3065,
+            "f1": 0.3089,
+            "support": 248
+          },
+          "Good Fit": {
+            "precision": 0.4371,
+            "recall": 0.4325,
+            "f1": 0.4348,
+            "support": 289
+          }
+        },
+        "train_time_sec": 34.79,
+        "feature_dim": 2515
+      },
+      "sbert_config_b": {
+        "accuracy": 0.5445,
+        "balanced_accuracy": 0.5456,
+        "macro_precision": 0.5369,
+        "macro_recall": 0.5456,
+        "macro_f1": 0.5376,
+        "weighted_f1": 0.5484,
+        "brier_score": 1.4703,
+        "confusion_matrix": [
+          [
+            261,
+            134,
+            91
+          ],
+          [
+            83,
+            132,
+            33
+          ],
+          [
+            72,
+            53,
+            164
+          ]
+        ],
+        "per_class": {
+          "No Fit": {
+            "precision": 0.6274,
+            "recall": 0.537,
+            "f1": 0.5787,
+            "support": 486
+          },
+          "Potential Fit": {
+            "precision": 0.4138,
+            "recall": 0.5323,
+            "f1": 0.4656,
+            "support": 248
+          },
+          "Good Fit": {
+            "precision": 0.5694,
+            "recall": 0.5675,
+            "f1": 0.5685,
+            "support": 289
+          }
+        },
+        "train_time_sec": 9.75,
+        "feature_dim": 1537
+      },
+      "hybrid_config_d": {
+        "accuracy": 0.5523,
+        "balanced_accuracy": 0.5563,
+        "macro_precision": 0.5464,
+        "macro_recall": 0.5563,
+        "macro_f1": 0.546,
+        "weighted_f1": 0.5566,
+        "brier_score": 1.4786,
+        "confusion_matrix": [
+          [
+            262,
+            135,
+            89
+          ],
+          [
+            72,
+            142,
+            34
+          ],
+          [
+            70,
+            58,
+            161
+          ]
+        ],
+        "per_class": {
+          "No Fit": {
+            "precision": 0.6485,
+            "recall": 0.5391,
+            "f1": 0.5888,
+            "support": 486
+          },
+          "Potential Fit": {
+            "precision": 0.4239,
+            "recall": 0.5726,
+            "f1": 0.4871,
+            "support": 248
+          },
+          "Good Fit": {
+            "precision": 0.5669,
+            "recall": 0.5571,
+            "f1": 0.562,
+            "support": 289
+          }
+        },
+        "train_time_sec": 11.84,
+        "feature_dim": 1562
+      }
+    }
+  },
+  "dual_unseen_val": {
+    "protocol_type": "dual_unseen",
+    "train_record_count": 3857,
+    "eval_record_count": 297,
+    "isolation_audit": {
+      "train_resumes": 500,
+      "train_jobs": 221,
+      "train_pairs": 3851,
+      "eval_resumes": 92,
+      "eval_jobs": 52,
+      "eval_pairs": 296,
+      "resume_overlap_count": 0,
+      "resume_overlap_pct": 0.0,
+      "job_overlap_count": 0,
+      "job_overlap_pct": 0.0,
+      "pair_overlap_count": 0,
+      "pair_overlap_pct": 0.0,
+      "sample_overlapping_resumes": [],
+      "sample_overlapping_jobs": [],
+      "sample_overlapping_pairs": []
+    },
+    "models": {
+      "classical_baseline": {
+        "accuracy": 0.3939,
+        "balanced_accuracy": 0.3684,
+        "macro_precision": 0.3619,
+        "macro_recall": 0.3684,
+        "macro_f1": 0.3633,
+        "weighted_f1": 0.3866,
+        "brier_score": 0.7779,
+        "confusion_matrix": [
+          [
+            66,
+            21,
+            37
+          ],
+          [
+            35,
+            14,
+            31
+          ],
+          [
+            30,
+            26,
+            37
+          ]
+        ],
+        "per_class": {
+          "No Fit": {
+            "precision": 0.5038,
+            "recall": 0.5323,
+            "f1": 0.5176,
+            "support": 124
+          },
+          "Potential Fit": {
+            "precision": 0.2295,
+            "recall": 0.175,
+            "f1": 0.1986,
+            "support": 80
+          },
+          "Good Fit": {
+            "precision": 0.3524,
+            "recall": 0.3978,
+            "f1": 0.3737,
+            "support": 93
+          }
+        },
+        "train_time_sec": 23.09,
+        "feature_dim": 2515
+      },
+      "sbert_config_b": {
+        "accuracy": 0.3872,
+        "balanced_accuracy": 0.3513,
+        "macro_precision": 0.338,
+        "macro_recall": 0.3513,
+        "macro_f1": 0.3339,
+        "weighted_f1": 0.3594,
+        "brier_score": 1.3012,
+        "confusion_matrix": [
+          [
+            81,
+            23,
+            20
+          ],
+          [
+            42,
+            20,
+            18
+          ],
+          [
+            49,
+            30,
+            14
+          ]
+        ],
+        "per_class": {
+          "No Fit": {
+            "precision": 0.4709,
+            "recall": 0.6532,
+            "f1": 0.5473,
+            "support": 124
+          },
+          "Potential Fit": {
+            "precision": 0.274,
+            "recall": 0.25,
+            "f1": 0.2614,
+            "support": 80
+          },
+          "Good Fit": {
+            "precision": 0.2692,
+            "recall": 0.1505,
+            "f1": 0.1931,
+            "support": 93
+          }
+        },
+        "train_time_sec": 6.28,
+        "feature_dim": 1537
+      },
+      "hybrid_config_d": {
+        "accuracy": 0.367,
+        "balanced_accuracy": 0.3322,
+        "macro_precision": 0.3185,
+        "macro_recall": 0.3322,
+        "macro_f1": 0.3169,
+        "weighted_f1": 0.3428,
+        "brier_score": 1.2819,
+        "confusion_matrix": [
+          [
+            77,
+            25,
+            22
+          ],
+          [
+            43,
+            18,
+            19
+          ],
+          [
+            47,
+            32,
+            14
+          ]
+        ],
+        "per_class": {
+          "No Fit": {
+            "precision": 0.4611,
+            "recall": 0.621,
+            "f1": 0.5292,
+            "support": 124
+          },
+          "Potential Fit": {
+            "precision": 0.24,
+            "recall": 0.225,
+            "f1": 0.2323,
+            "support": 80
+          },
+          "Good Fit": {
+            "precision": 0.2545,
+            "recall": 0.1505,
+            "f1": 0.1892,
+            "support": 93
+          }
+        },
+        "train_time_sec": 6.31,
+        "feature_dim": 1562
+      }
+    }
+  },
+  "held_out_test": {
+    "protocol_type": "held_out_test",
+    "train_record_count": 5462,
+    "eval_record_count": 1759,
+    "isolation_audit": {
+      "train_resumes": 633,
+      "train_jobs": 238,
+      "train_pairs": 5456,
+      "eval_resumes": 477,
+      "eval_jobs": 71,
+      "eval_pairs": 1759,
+      "resume_overlap_count": 475,
+      "resume_overlap_pct": 99.58,
+      "job_overlap_count": 0,
+      "job_overlap_pct": 0.0,
+      "pair_overlap_count": 0,
+      "pair_overlap_pct": 0.0,
+      "sample_overlapping_resumes": [
+        "ac638c262673671ac90e6c30b940be70",
+        "2663bbeee1620644481cafa9e8065b84",
+        "40ee91e563b8e5f6c4344496958788f2"
+      ],
+      "sample_overlapping_jobs": [],
+      "sample_overlapping_pairs": []
+    },
+    "models": {
+      "classical_baseline": {
+        "accuracy": 0.4849,
+        "balanced_accuracy": 0.4802,
+        "macro_precision": 0.4822,
+        "macro_recall": 0.4802,
+        "macro_f1": 0.4707,
+        "weighted_f1": 0.4979,
+        "brier_score": 0.8557,
+        "confusion_matrix": [
+          [
+            429,
+            235,
+            193
+          ],
+          [
+            85,
+            206,
+            153
+          ],
+          [
+            88,
+            152,
+            218
+          ]
+        ],
+        "per_class": {
+          "No Fit": {
+            "precision": 0.7126,
+            "recall": 0.5006,
+            "f1": 0.5881,
+            "support": 857
+          },
+          "Potential Fit": {
+            "precision": 0.3474,
+            "recall": 0.464,
+            "f1": 0.3973,
+            "support": 444
+          },
+          "Good Fit": {
+            "precision": 0.3865,
+            "recall": 0.476,
+            "f1": 0.4266,
+            "support": 458
+          }
+        },
+        "train_time_sec": 52.47,
+        "feature_dim": 2515
+      },
+      "sbert_config_b": {
+        "accuracy": 0.473,
+        "balanced_accuracy": 0.4437,
+        "macro_precision": 0.4412,
+        "macro_recall": 0.4437,
+        "macro_f1": 0.4422,
+        "weighted_f1": 0.4747,
+        "brier_score": 1.3912,
+        "confusion_matrix": [
+          [
+            487,
+            206,
+            164
+          ],
+          [
+            180,
+            140,
+            124
+          ],
+          [
+            152,
+            101,
+            205
+          ]
+        ],
+        "per_class": {
+          "No Fit": {
+            "precision": 0.5946,
+            "recall": 0.5683,
+            "f1": 0.5811,
+            "support": 857
+          },
+          "Potential Fit": {
+            "precision": 0.3132,
+            "recall": 0.3153,
+            "f1": 0.3143,
+            "support": 444
+          },
+          "Good Fit": {
+            "precision": 0.4158,
+            "recall": 0.4476,
+            "f1": 0.4311,
+            "support": 458
+          }
+        },
+        "train_time_sec": 9.95,
+        "feature_dim": 1537
+      },
+      "hybrid_config_d": {
+        "accuracy": 0.4673,
+        "balanced_accuracy": 0.4385,
+        "macro_precision": 0.4359,
+        "macro_recall": 0.4385,
+        "macro_f1": 0.4368,
+        "weighted_f1": 0.4695,
+        "brier_score": 1.3864,
+        "confusion_matrix": [
+          [
+            481,
+            203,
+            173
+          ],
+          [
+            179,
+            140,
+            125
+          ],
+          [
+            151,
+            106,
+            201
+          ]
+        ],
+        "per_class": {
+          "No Fit": {
+            "precision": 0.5931,
+            "recall": 0.5613,
+            "f1": 0.5767,
+            "support": 857
+          },
+          "Potential Fit": {
+            "precision": 0.3118,
+            "recall": 0.3153,
+            "f1": 0.3135,
+            "support": 444
+          },
+          "Good Fit": {
+            "precision": 0.4028,
+            "recall": 0.4389,
+            "f1": 0.4201,
+            "support": 458
+          }
+        },
+        "train_time_sec": 11.72,
+        "feature_dim": 1562
+      }
+    }
+  }
+}

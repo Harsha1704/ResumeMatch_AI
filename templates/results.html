@@ -1,0 +1,562 @@
+{% extends 'base.html' %}
+{% block title %}Compatibility Results — ResumeMatch AI{% endblock %}
+
+{% block extra_head %}
+<style>
+.projects-scroll-container,
+.internships-scroll-container {
+    max-height: 420px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+    padding-right: 6px;
+}
+.projects-scroll-container::-webkit-scrollbar,
+.internships-scroll-container::-webkit-scrollbar {
+    width: 6px;
+}
+.projects-scroll-container::-webkit-scrollbar-track,
+.internships-scroll-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+.projects-scroll-container::-webkit-scrollbar-thumb,
+.internships-scroll-container::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 4px;
+}
+.projects-scroll-container::-webkit-scrollbar-thumb:hover,
+.internships-scroll-container::-webkit-scrollbar-thumb:hover {
+    background-color: #94a3b8;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <!-- Top Action Bar -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 no-print">
+        <div>
+            <a href="{{ url_for('analyze') }}" class="btn btn-sm btn-outline-secondary me-2">
+                <i class="bi bi-arrow-left me-1"></i>Back to Analyzer
+            </a>
+            <span class="badge bg-light text-muted border">Analysis ID: {{ analysis.analysis_id[:8] }}...</span>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-outline-secondary" id="copyAnalysisIdBtn" data-id="{{ analysis.analysis_id }}">
+                <i class="bi bi-clipboard me-1"></i>Copy ID
+            </button>
+            <button class="btn btn-sm btn-outline-primary" id="printResultsBtn">
+                <i class="bi bi-printer me-1"></i>Print Report
+            </button>
+            <a href="{{ url_for('skill_gap', id=analysis.analysis_id) }}" class="btn btn-sm btn-primary fw-semibold">
+                <i class="bi bi-bullseye me-1"></i>Skill Gap Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Header Summary Card -->
+    <div class="card shadow-sm border-0 mb-4 print-card">
+        <div class="card-body p-4">
+            <div class="row align-items-center">
+                <div class="col-lg-7">
+                    <span class="badge bg-primary-subtle text-primary border border-primary px-3 py-1 mb-2 text-uppercase fw-semibold" style="font-size: 0.72rem;">
+                        Target Position
+                    </span>
+                    <h3 class="fw-bold text-dark mb-1">{{ analysis.job_title }}</h3>
+                    <p class="text-muted small mb-3">
+                        <i class="bi bi-file-earmark-text me-1"></i>Parsed Document: <strong>{{ analysis.filename }}</strong>
+                        &bull; Words: <strong>{{ analysis.structural_metadata.word_count|int }}</strong>
+                        &bull; Experience: <strong>{{ analysis.experience_analysis.resume_exp_display }}</strong>
+                    </p>
+                </div>
+
+                <!-- Predicted Compatibility Category -->
+                <div class="col-lg-5 text-lg-end text-start mt-3 mt-lg-0">
+                    <div class="d-inline-block text-center p-3 rounded border bg-light">
+                        <small class="text-muted text-uppercase fw-bold d-block mb-1" style="font-size: 0.72rem;">Supervised ML Prediction</small>
+                        {% if analysis.predicted_class == 'Good Fit' %}
+                            <span class="badge bg-success fs-4 px-4 py-2"><i class="bi bi-check-circle-fill me-2"></i>Good Fit</span>
+                        {% elif analysis.predicted_class == 'Potential Fit' %}
+                            <span class="badge bg-warning text-dark fs-4 px-4 py-2"><i class="bi bi-dash-circle-fill me-2"></i>Potential Fit</span>
+                        {% else %}
+                            <span class="badge bg-danger fs-4 px-4 py-2"><i class="bi bi-x-circle-fill me-2"></i>No Fit</span>
+                        {% endif %}
+                        <div class="mt-2 text-muted small">
+                            Estimated Probability: <strong>{{ (analysis.model_confidence * 100)|round(1) }}%</strong> (Softmax)
+                        </div>
+                        <div class="mt-2 d-flex flex-wrap justify-content-center gap-1">
+                            {% if analysis.get('fallback_triggered') %}
+                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning" title="Fallback reason: {{ analysis.get('fallback_reason') }}"><i class="bi bi-arrow-repeat me-1"></i>Fallback to Baseline</span>
+                            {% elif analysis.get('is_challenger') %}
+                                <span class="badge bg-warning text-dark border"><i class="bi bi-cpu me-1"></i>Challenger Model 5 (Experimental)</span>
+                                {% if analysis.get('cache_status') and analysis.cache_status.get('resume_hit') and analysis.cache_status.get('job_hit') %}
+                                    <span class="badge bg-success-subtle text-success border border-success" title="Retrieved in {{ analysis.get('inference_latency_ms', 0) }} ms"><i class="bi bi-lightning-charge-fill me-1"></i>Cache Hit ({{ analysis.get('inference_latency_ms', 0)|round(1) }} ms)</span>
+                                {% else %}
+                                    <span class="badge bg-info-subtle text-info border border-info"><i class="bi bi-gear-wide-connected me-1"></i>Live Computation</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="badge bg-secondary-subtle text-secondary border"><i class="bi bi-shield-check me-1"></i>Production Baseline</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quantitative Overview Stats Row -->
+            <div class="row g-3 text-center mt-3 pt-3 border-top">
+                <div class="col-md-3 col-6">
+                    <div class="p-3 bg-light rounded border h-100">
+                        <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Model Compatibility Score</small>
+                        <h2 class="fw-bold text-primary mb-0">{{ analysis.compatibility_score }}%</h2>
+                        <small class="text-muted d-block" style="font-size: 0.72rem;">Model match indicator (not hiring odds)</small>
+                    </div>
+                </div>
+
+                <div class="col-md-3 col-6">
+                    <div class="p-3 bg-light rounded border h-100">
+                        <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Full Skill Coverage</small>
+                        <h2 class="fw-bold text-success mb-0">{{ analysis.get('full_coverage_display') if analysis.get('full_coverage_display') else analysis.get('skill_coverage_display', (analysis.get('skill_coverage', 0)|string) ~ '%') }}</h2>
+                        <small class="text-muted d-block" style="font-size: 0.72rem;">
+                            {% if analysis.get('skill_gap_summary') and analysis.skill_gap_summary.get('total_required_count', 0) > 0 %}
+                                {{ analysis.skill_gap_summary.fully_matched_required_count }} / {{ analysis.skill_gap_summary.total_required_count }} fully satisfied
+                            {% else %}
+                                No explicit mandatory skills
+                            {% endif %}
+                        </small>
+                    </div>
+                </div>
+
+                <div class="col-md-3 col-6">
+                    <div class="p-3 bg-light rounded border h-100">
+                        <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Any-Evidence Coverage</small>
+                        <h2 class="fw-bold text-dark mb-0">{{ analysis.skill_gap_summary.any_coverage_display if (analysis.get('skill_gap_summary') and analysis.skill_gap_summary.get('any_coverage_display')) else (analysis.get('skill_coverage_display', (analysis.get('skill_coverage', 0)|string) ~ '%')) }}</h2>
+                        <small class="text-muted d-block" style="font-size: 0.72rem;">
+                            {% if analysis.get('skill_gap_summary') %}
+                                {{ analysis.skill_gap_summary.matched_required_count }} / {{ analysis.skill_gap_summary.total_required_count }} evidenced ({{ analysis.skill_gap_summary.missing_required_count }} unevidenced)
+                            {% else %}
+                                Fully Evidenced
+                            {% endif %}
+                        </small>
+                    </div>
+                </div>
+
+                <div class="col-md-3 col-6">
+                    <div class="p-3 bg-light rounded border h-100">
+                        <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Experience Alignment</small>
+                        <h5 class="fw-bold text-dark mt-1 mb-0">{{ analysis.experience_analysis.resume_exp_display }}</h5>
+                        <small class="text-muted d-block" style="font-size: 0.72rem;">Job: {{ analysis.experience_analysis.job_req_display }} &bull; {{ analysis.experience_analysis.alignment_status }}</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Model Probabilities Breakdown -->
+            <div class="mt-4">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <small class="fw-bold text-muted text-uppercase" style="font-size: 0.72rem;">Supervised Model-Estimated Class Probabilities:</small>
+                    <small class="text-muted" style="font-size: 0.72rem;">Softmax Cross-Entropy</small>
+                </div>
+                <div class="progress" style="height: 24px; border-radius: 8px;">
+                    <div class="progress-bar bg-danger" style="width: {{ analysis.class_probabilities['No Fit'] * 100 }}%">
+                        No Fit: {{ (analysis.class_probabilities['No Fit'] * 100)|round(1) }}%
+                    </div>
+                    <div class="progress-bar bg-warning text-dark fw-semibold" style="width: {{ analysis.class_probabilities['Potential Fit'] * 100 }}%">
+                        Potential Fit: {{ (analysis.class_probabilities['Potential Fit'] * 100)|round(1) }}%
+                    </div>
+                    <div class="progress-bar bg-success" style="width: {{ analysis.class_probabilities['Good Fit'] * 100 }}%">
+                        Good Fit: {{ (analysis.class_probabilities['Good Fit'] * 100)|round(1) }}%
+                    </div>
+                </div>
+            </div>
+
+            <!-- Methodology Transparency Notice -->
+            {% if analysis.get('fallback_triggered') %}
+            <div class="alert alert-warning py-2 px-3 small mt-3 mb-0 border-start border-4 border-warning d-flex align-items-center">
+                <i class="bi bi-exclamation-triangle-fill text-warning me-2 fs-5"></i>
+                <div>
+                    <strong>Model Fallback Notice:</strong> Requested backend was <code>{{ analysis.get('model_requested') }}</code>, but system safely defaulted to <strong>{{ analysis.get('model_used') }}</strong>. Reason: <em>{{ analysis.get('fallback_reason') }}</em>.
+                </div>
+            </div>
+            {% endif %}
+            <div class="mt-3 p-3 bg-light rounded border-start border-4 {% if analysis.get('is_challenger') %}border-warning{% elif analysis.get('fallback_triggered') %}border-warning{% else %}border-info{% endif %}">
+                <div class="d-flex align-items-center mb-1">
+                    <i class="bi bi-shield-check {% if analysis.get('is_challenger') %}text-warning{% else %}text-info{% endif %} me-2 fs-5"></i>
+                    <strong class="text-dark small text-uppercase">Model Architecture: {{ analysis.get('model_used', 'Production Model') }}</strong>
+                </div>
+                <p class="text-muted small mb-0" style="font-size: 0.8rem; line-height: 1.4;">
+                    {{ analysis.get('calibration_note', 'Probabilities reflect trained scikit-learn classifier based on dual text and structured feature embeddings.') }}<br>
+                    <strong>Note on Probability Interpretation:</strong> Model probabilities represent softmax cross-entropy outputs indicating directional algorithmic affinity, not verified real-world hiring guarantees. Deterministic NLP governs skill gaps and verified curricula without generative AI hallucination.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Skills Breakdown Section -->
+    <div class="row g-4 mb-4">
+        <!-- Matched Skills -->
+        <div class="col-lg-6">
+            <div class="card h-100 shadow-sm print-card">
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <span class="fw-bold text-success"><i class="bi bi-check2-circle me-2"></i>Matched Competencies ({{ analysis.matched_skills|length }})</span>
+                    <span class="badge bg-success-subtle text-success border border-success">{{ analysis.skill_gap_summary.matched_required_count }} Required Met</span>
+                </div>
+                <div class="card-body">
+                    {% if analysis.matched_skills %}
+                        <div class="mb-3">
+                            <h6 class="text-muted small fw-bold text-uppercase mb-2">Mandatory Skills Evidenced ({{ analysis.matched_required_skills|length }}):</h6>
+                            <div class="d-flex flex-wrap gap-1 mb-2">
+                                {% for skill in analysis.matched_required_skills %}
+                                    {% if skill and skill|trim %}
+                                        {% if skill in analysis.partially_evidenced_required_skills %}
+                                            <span class="badge badge-subtle-warning m-1" title="Mentioned in resume list; lacks active project verbs">
+                                                {{ skill|title }} <i class="bi bi-question-circle ms-1" style="font-size: 0.72rem;"></i>
+                                            </span>
+                                        {% else %}
+                                            <span class="badge badge-subtle-success m-1">
+                                                {{ skill|title }} <i class="bi bi-check-lg ms-1"></i>
+                                            </span>
+                                        {% endif %}
+                                    {% endif %}
+                                {% endfor %}
+                                {% if not analysis.matched_required_skills %}
+                                    <span class="text-muted small">None identified</span>
+                                {% endif %}
+                            </div>
+
+                            {% if analysis.matched_preferred_skills %}
+                                <h6 class="text-muted small fw-bold text-uppercase mt-3 mb-2">Preferred / Bonus Skills Evidenced ({{ analysis.matched_preferred_skills|length }}):</h6>
+                                <div class="d-flex flex-wrap gap-1 mb-2">
+                                    {% for skill in analysis.matched_preferred_skills %}
+                                        {% if skill and skill|trim %}
+                                            <span class="badge badge-subtle-info m-1">
+                                                {{ skill|title }} <span class="badge bg-info text-dark ms-1" style="font-size: 0.65rem;">Bonus</span>
+                                            </span>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        {% if analysis.partially_evidenced_skills %}
+                            <div class="alert alert-warning py-2 px-3 small mb-0 border-0 bg-warning-subtle text-dark">
+                                <i class="bi bi-info-circle-fill text-warning me-1"></i>
+                                <strong>Partially Evidenced Skills ({{ analysis.partially_evidenced_skills|length }}):</strong>
+                                Skills with amber indicators appear in keyword lists but lack demonstrable project action verbs.
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <p class="text-muted mb-0">No matching skills identified between the resume and job requirements.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Missing Skills -->
+        <div class="col-lg-6">
+            <div class="card h-100 shadow-sm print-card">
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <span class="fw-bold text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Missing Skill Evidence ({{ analysis.missing_skills|length }})</span>
+                    <span class="badge bg-danger-subtle text-danger border border-danger">{{ analysis.skill_gap_summary.missing_required_count }} Required</span>
+                </div>
+                <div class="card-body">
+                    {% if analysis.missing_skills %}
+                        <div class="mb-3">
+                            <h6 class="text-muted small fw-bold text-uppercase mb-2">Mandatory Gaps ({{ analysis.missing_required_skills|length }}):</h6>
+                            <div class="d-flex flex-wrap gap-1 mb-2">
+                                {% for skill in analysis.missing_required_skills %}
+                                    {% if skill and skill|trim %}
+                                        <span class="badge badge-subtle-danger m-1">
+                                            {{ skill|title }} <span class="badge bg-danger text-white ms-1" style="font-size: 0.65rem;">Required</span>
+                                        </span>
+                                    {% endif %}
+                                {% endfor %}
+                                {% if not analysis.missing_required_skills %}
+                                    <span class="text-success small fw-semibold">No mandatory skill gaps!</span>
+                                {% endif %}
+                            </div>
+
+                            {% if analysis.missing_preferred_skills %}
+                                <h6 class="text-muted small fw-bold text-uppercase mt-3 mb-2">Preferred / Nice-to-Have Gaps ({{ analysis.missing_preferred_skills|length }}):</h6>
+                                <div class="d-flex flex-wrap gap-1 mb-2">
+                                    {% for skill in analysis.missing_preferred_skills %}
+                                        {% if skill and skill|trim %}
+                                            <span class="badge badge-subtle-warning m-1">
+                                                {{ skill|title }} <span class="badge bg-secondary text-white ms-1" style="font-size: 0.65rem;">Preferred</span>
+                                            </span>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <small class="text-muted d-block">
+                            <em>Note: Missing evidence indicates these skills were not detected in the document text; it is not proof that the candidate cannot perform them.</em>
+                        </small>
+                    {% else %}
+                        <div class="p-3 text-center text-success">
+                            <i class="bi bi-patch-check-fill fs-2 d-block mb-1"></i>
+                            All target job competencies are evidenced in the candidate resume!
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Experience & Education Alignment Row -->
+    <div class="row g-4 mb-4">
+        <!-- Experience Analysis Details -->
+        <div class="col-lg-6">
+            <div class="card h-100 shadow-sm print-card">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-briefcase-fill text-primary me-2"></i>Experience &amp; Qualification Alignment</h5>
+                </div>
+                <div class="card-body p-4">
+                    <ul class="list-group list-group-flush mb-3">
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span class="text-muted">Candidate Explicit Experience:</span>
+                            <span class="fw-bold text-dark text-end" style="max-width: 60%;">{{ analysis.experience_analysis.resume_exp_display }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span class="text-muted">Job Stated Experience Requirement:</span>
+                            <span class="fw-bold text-dark">{{ analysis.experience_analysis.job_req_display }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span class="text-muted">Tenure Status:</span>
+                            <span class="fw-bold {% if analysis.experience_analysis.meets_experience_requirement %}text-success{% else %}text-danger{% endif %}">
+                                {{ analysis.experience_analysis.alignment_status }}
+                            </span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span class="text-muted">Detected Education Requirements:</span>
+                            <span class="fw-semibold text-dark text-end" style="max-width: 60%;">
+                                {{ analysis.education_analysis.detected_job_requirements|join('; ') }}
+                            </span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Experience Summary Profile -->
+        <div class="col-lg-6">
+            <div class="card h-100 shadow-sm print-card">
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-person-badge-fill text-success me-2"></i>Candidate Profile Summary</h5>
+                    <span class="badge bg-light text-muted border">{{ analysis.experience_analysis.experience_summary.primary_classification if analysis.experience_analysis and analysis.experience_analysis.get('experience_summary') else 'Profile' }}</span>
+                </div>
+                <div class="card-body p-4">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span class="text-muted">Experience Classification:</span>
+                            <span class="fw-semibold text-dark">{{ analysis.experience_analysis.experience_summary.primary_classification if analysis.experience_analysis and analysis.experience_analysis.get('experience_summary') else 'Early Career' }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span class="text-muted">Documented Projects:</span>
+                            <span class="badge bg-info-subtle text-info fw-bold">{{ analysis.projects|length if analysis.projects else (analysis.relevant_projects|length if analysis.relevant_projects else 0) }} Technical Projects</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span class="text-muted">Documented Internships:</span>
+                            <span class="badge bg-primary-subtle text-primary fw-bold">{{ analysis.internships|length if analysis.internships else 0 }} Industry Internships</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span class="text-muted">Career Stage:</span>
+                            <span class="fw-semibold text-secondary">{% if analysis.experience_analysis.is_student_or_early_career %}Student / Early Career{% else %}Experienced Professional{% endif %}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Practical Evidence: Projects & Internships Row -->
+    <div class="row g-4 mb-4">
+        <!-- Identified Projects (Scrollable) -->
+        <div class="col-lg-6">
+            <div class="card h-100 shadow-sm print-card">
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-kanban-fill text-info me-2"></i>Identified Projects ({{ analysis.projects|length if analysis.projects else (analysis.relevant_projects|length if analysis.relevant_projects else 0) }})</h5>
+                    <span class="badge bg-light text-muted border">Technical Evidence</span>
+                </div>
+                <div class="card-body p-4">
+                    {% set proj_list = analysis.projects if analysis.projects is defined and analysis.projects else (analysis.relevant_projects if analysis.relevant_projects is defined and analysis.relevant_projects else []) %}
+                    {% if proj_list and proj_list|length > 0 %}
+                        <div class="projects-scroll-container">
+                            <div class="list-group list-group-flush">
+                                {% for proj in proj_list %}
+                                    <div class="list-group-item px-0 py-3 border-bottom">
+                                        <div class="d-flex justify-content-between align-items-start mb-1">
+                                            <div>
+                                                <span class="fw-bold text-dark fs-6">{{ proj.title if proj.title else proj.project_title }}</span>
+                                                {% if proj.dates %}
+                                                    <span class="badge bg-light text-muted border ms-2"><i class="bi bi-calendar3 me-1"></i>{{ proj.dates }}</span>
+                                                {% endif %}
+                                            </div>
+                                            <span class="badge bg-secondary-subtle text-secondary">{{ proj.type if proj.type else 'Technical Project' }}</span>
+                                        </div>
+                                        {% if proj.github_url or proj.links %}
+                                            <div class="mt-1">
+                                                {% for link in (proj.links if proj.links else [proj.github_url]) %}
+                                                    {% if link %}
+                                                        <a href="{{ link }}" target="_blank" rel="noopener noreferrer" class="small text-decoration-none me-3">
+                                                            <i class="bi bi-link-45deg me-1"></i>{{ link }}
+                                                        </a>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                        {% if proj.description %}
+                                            <p class="text-muted small mb-2 mt-1">{{ proj.description }}</p>
+                                        {% elif proj.description_snippets %}
+                                            <p class="text-muted small mb-2 mt-1">{{ proj.description_snippets|join(' ') }}</p>
+                                        {% endif %}
+                                        {% if proj.technologies %}
+                                            <div class="d-flex flex-wrap gap-1 mt-1">
+                                                {% for t in proj.technologies %}
+                                                    <span class="badge bg-light text-dark border m-1" style="font-size: 0.72rem;">{{ t|title }}</span>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% else %}
+                        <p class="text-muted small mb-0">No structured project blocks identified. Consider organizing personal and academic projects with dedicated project headings and technology tags.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Internships & Practical Experience (Scrollable) -->
+        <div class="col-lg-6">
+            <div class="card h-100 shadow-sm print-card">
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-briefcase-fill text-primary me-2"></i>Internships &amp; Practical Experience ({{ analysis.internships|length if analysis.internships else 0 }})</h5>
+                    <span class="badge bg-primary-subtle text-primary border border-primary">Industry Training</span>
+                </div>
+                <div class="card-body p-4">
+                    {% if analysis.internships and analysis.internships|length > 0 %}
+                        <div class="internships-scroll-container">
+                            <div class="list-group list-group-flush">
+                                {% for intern in analysis.internships %}
+                                    <div class="list-group-item px-0 py-3 border-bottom">
+                                        <div class="d-flex justify-content-between align-items-start mb-1">
+                                            <div>
+                                                <h6 class="fw-bold text-dark mb-0">{{ intern.organization }}</h6>
+                                                {% if intern.position %}
+                                                    <span class="text-primary small fw-semibold">{{ intern.position }}</span>
+                                                {% endif %}
+                                            </div>
+                                            <div class="text-end">
+                                                {% if intern.is_ongoing %}
+                                                    <span class="badge bg-success-subtle text-success border border-success">Ongoing</span>
+                                                {% elif intern.dates %}
+                                                    <span class="badge bg-light text-muted border">Completed</span>
+                                                {% endif %}
+                                                {% if intern.dates %}
+                                                    <small class="text-muted d-block mt-1" style="font-size: 0.75rem;"><i class="bi bi-calendar-event me-1"></i>{{ intern.dates }}</small>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        {% if intern.internship_type and intern.internship_type != 'Internship' %}
+                                            <span class="badge bg-info-subtle text-info border border-info mb-2" style="font-size: 0.7rem;">{{ intern.internship_type }}</span>
+                                        {% endif %}
+                                        {% if intern.responsibilities %}
+                                            <ul class="text-muted small ps-3 mb-2 mt-1">
+                                                {% for resp in intern.responsibilities %}
+                                                    <li>{{ resp }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        {% endif %}
+                                        {% if intern.technologies %}
+                                            <div class="d-flex flex-wrap gap-1 mt-1">
+                                                {% for t in intern.technologies %}
+                                                    <span class="badge bg-light text-primary border m-1" style="font-size: 0.72rem;">{{ t|title }}</span>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="p-4 text-center text-muted">
+                            <i class="bi bi-journal-x fs-2 d-block mb-2 text-secondary"></i>
+                            <p class="mb-0 small">No internships identified in the uploaded resume.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recommendations & Learning Resources -->
+    <div class="row g-4 mb-4">
+        <!-- Improvement Recommendations -->
+        <div class="col-lg-6">
+            <div class="card h-100 shadow-sm border-0 print-card">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-lightbulb-fill text-warning me-2"></i>Resume Improvement Recommendations</h5>
+                </div>
+                <div class="card-body p-4">
+                    {% if analysis.recommendations %}
+                        <div class="list-group list-group-flush">
+                            {% for rec in analysis.recommendations %}
+                                <div class="list-group-item px-0 py-3 border-bottom">
+                                    <div class="d-flex align-items-center gap-2 mb-1">
+                                        <span class="badge {% if rec.severity == 'critical' %}bg-danger{% elif rec.severity == 'important' %}bg-warning text-dark{% else %}bg-primary{% endif %}" style="font-size: 0.7rem;">
+                                            {{ rec.category }}
+                                        </span>
+                                    </div>
+                                    <h6 class="fw-bold text-dark mb-1">{{ rec.recommendation }}</h6>
+                                    <p class="text-muted small mb-0">{{ rec.actionable_step }}</p>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0">No critical resume adjustments flagged.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Curated Learning Resources -->
+        <div class="col-lg-6">
+            <div class="card h-100 shadow-sm border-0 print-card">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-book-half text-primary me-2"></i>Curated Learning Resources</h5>
+                </div>
+                <div class="card-body p-4">
+                    {% if analysis.learning_resources %}
+                        <div class="list-group list-group-flush">
+                            {% for res in analysis.learning_resources %}
+                                <div class="list-group-item px-0 py-2 border-bottom">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="fw-bold text-primary">{{ res.skill }}</span>
+                                        <small class="text-muted">{{ res.provider }}</small>
+                                    </div>
+                                    <p class="small text-muted mb-2">{{ res.description }}</p>
+                                    <a href="{{ res.url }}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary py-0" style="font-size: 0.75rem;">
+                                        <i class="bi bi-box-arrow-up-right me-1"></i>Official Docs &bull; {{ res.title }}
+                                    </a>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% elif analysis.has_missing_skills %}
+                        <div class="p-3 text-muted">
+                            <i class="bi bi-info-circle text-primary me-1"></i>
+                            No curated resource available for these specific gaps. Consult official vendor documentation or standard academic coursework for the identified technologies.
+                        </div>
+                    {% else %}
+                        <div class="p-3 text-success">
+                            <i class="bi bi-check-circle-fill me-1"></i>
+                            All required technical qualifications for this role are evidenced in the candidate resume.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

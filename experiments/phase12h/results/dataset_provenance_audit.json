@@ -1,0 +1,97 @@
+{
+  "phase": "12H",
+  "audit_date": "2026-11-13",
+  "repository": "D:\\skillsync1",
+  "auditor_role": "Principal ML Research Scientist & Dataset Forensics Specialist",
+  "datasets": {
+    "primary_resumematch_corpus": {
+      "dataset_name": "Resume-Job Description Fit (cnamuangtoun/resume-job-description-fit)",
+      "file_paths": [
+        "data/raw/resume_job_fit_train.csv",
+        "data/raw/resume_job_fit_test.csv"
+      ],
+      "source_url": "https://huggingface.co/datasets/cnamuangtoun/resume-job-description-fit",
+      "license": "Unspecified on Hugging Face (community research usage; potential privacy/PII constraint)",
+      "total_pairs": 7999,
+      "train_pairs": 6240,
+      "test_pairs": 1759,
+      "unique_resumes": 643,
+      "unique_jobs": 351,
+      "labels": {
+        "classes": ["No Fit", "Potential Fit", "Good Fit"],
+        "train_distribution": {
+          "No Fit": 3142,
+          "Potential Fit": 1556,
+          "Good Fit": 1542
+        },
+        "test_distribution": {
+          "No Fit": 857,
+          "Potential Fit": 444,
+          "Good Fit": 458
+        }
+      },
+      "label_provenance": "Recruiter/expert manual judgment on three-tier suitability scale.",
+      "label_nature": "Manual ordinal assessment of qualification alignment.",
+      "data_quality_issues": [
+        "6 known exact-pair label contradictions in raw data (e.g. identical resume-job pair labeled both 'No Fit' and 'Good Fit').",
+        "Inter-annotator agreement ceiling estimated at 70%-75% for 3-class fit.",
+        "Severe entity sparsity: 643 resumes and 351 jobs across 8,000 pairs (mean ~12 pairs/resume, ~23 pairs/job)."
+      ],
+      "supports_three_class": true,
+      "status": "ACTIVE_PRIMARY_CORPUS (Frozen splits: Dual-Unseen, Job-Disjoint, Resume-Disjoint)"
+    },
+    "secondary_job_skill_set": {
+      "dataset_name": "Job Skill Set (batuhanmtl/job-skill-set)",
+      "file_paths": [
+        "data/raw/job_skill_set.csv",
+        "data/raw/job_skill_set.parquet"
+      ],
+      "source_url": "https://huggingface.co/datasets/batuhanmtl/job-skill-set",
+      "license": "MIT / Creative Commons (open research)",
+      "total_records": 1067,
+      "unique_job_ids": 1067,
+      "unique_resumes": 0,
+      "labelled_pairs": 0,
+      "labels": {
+        "classes": [],
+        "description": "Job skill tags extracted across 5 job categories (Business Dev, Finance, Sales, HR, IT)"
+      },
+      "label_provenance": "Rule-based and NER-extracted skill taxonomies from job descriptions.",
+      "label_nature": "Entity extraction annotations (NOT candidate-job fit matches).",
+      "supports_three_class": false,
+      "status": "AUXILIARY_DICTIONARY (Used for SkillEngine vocabulary and domain feature expansion)"
+    },
+    "external_djinni_corpus": {
+      "dataset_name": "Djinni Recruitment Corpus (English Subset)",
+      "file_paths": [
+        "data/external/djinni/djinni_candidate_profiles_english.parquet",
+        "data/external/djinni/djinni_job_descriptions_english.parquet"
+      ],
+      "source_url": "ACL 2024 (Koshkin et al., 'Introducing the Djinni Recruitment Dataset')",
+      "license": "MIT License / Open Data Commons Attribution (ODC-By)",
+      "total_resumes": 210250,
+      "total_jobs": 141897,
+      "labelled_pairs": 0,
+      "pairing_status": "UNPAIRED / DUAL-MODALITY ONLY",
+      "label_provenance": "None. Tables share zero common candidate/job foreign keys, application IDs, or recruiter feedback.",
+      "label_nature": "Unlabelled candidate profiles and unlabelled job postings.",
+      "supports_three_class": false,
+      "status": "UNSUPERVISED_ONLY (Permitted for domain adaptation and proposal generation; PROHIBITED from synthetic ground-truth benchmarking)"
+    },
+    "pilot_human_annotation_subset": {
+      "dataset_name": "Phase 12E-3.1 Stratified Candidate-Job Pilot Subset",
+      "file_paths": [
+        "PHASE12E3_1_PILOT_200_PAIRS.csv",
+        "PHASE12E3_1_PILOT_200_RESTRICTED_METADATA.csv"
+      ],
+      "source_url": "Stratified proposal from Djinni English corpus",
+      "license": "Derived under MIT / ODC-By",
+      "total_pairs": 200,
+      "labelled_pairs": 0,
+      "annotation_status": "PILOT_EXECUTION_PENDING",
+      "label_provenance": "Designed for dual-annotator human recruiter review (Cohen's kappa >= 0.70 required). Zero synthetic labels created.",
+      "supports_three_class": true,
+      "status": "PENDING_HUMAN_ANNOTATION (Not currently usable as a benchmark)"
+    }
+  }
+}

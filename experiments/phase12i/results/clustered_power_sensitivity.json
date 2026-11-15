@@ -1,0 +1,106 @@
+{
+  "phase": "12I.1",
+  "audit_date": "2026-11-14",
+  "methodology": "Cross-Clustered Asymptotic Formulation & Monte Carlo Simulation (B=2,000 runs per scenario/N cell)",
+  "fixed_parameters": {
+    "target_effect_size_delta": 0.04,
+    "significance_level_alpha": 0.05,
+    "z_critical_alpha": 1.96,
+    "mean_candidate_cluster_size_mc": 3.0,
+    "mean_job_cluster_size_mj": 7.5
+  },
+  "scenarios_evaluated": {
+    "baseline": {
+      "candidate_icc": 0.20,
+      "job_icc": 0.10,
+      "discordance_rate_PD": 0.28,
+      "design_effect": 2.05,
+      "power_at_sample_sizes": {
+        "N_1500": {"power_analytical": 0.5338, "power_simulated": 0.5515, "se_delta": 0.0196},
+        "N_2000": {"power_analytical": 0.6558, "power_simulated": 0.6570, "se_delta": 0.0170},
+        "N_2500": {"power_analytical": 0.7482, "power_simulated": 0.7510, "se_delta": 0.0152},
+        "N_2850": {"power_analytical": 0.8062, "power_simulated": 0.8100, "se_delta": 0.0142},
+        "N_3500": {"power_analytical": 0.8710, "power_simulated": 0.8555, "se_delta": 0.0128}
+      },
+      "sample_size_requirements": {
+        "power_80_percent": {"nominal_N": 2816, "effective_N": 1374},
+        "power_90_percent": {"nominal_N": 3770, "effective_N": 1839}
+      }
+    },
+    "optimistic_low_icc": {
+      "candidate_icc": 0.10,
+      "job_icc": 0.05,
+      "discordance_rate_PD": 0.28,
+      "design_effect": 1.52,
+      "power_at_sample_sizes": {
+        "N_1500": {"power_analytical": 0.6698, "power_simulated": 0.6675, "se_delta": 0.0169},
+        "N_2000": {"power_analytical": 0.7876, "power_simulated": 0.7840, "se_delta": 0.0146},
+        "N_2500": {"power_analytical": 0.8647, "power_simulated": 0.8590, "se_delta": 0.0131},
+        "N_2850": {"power_analytical": 0.9022, "power_simulated": 0.8980, "se_delta": 0.0122},
+        "N_3500": {"power_analytical": 0.9472, "power_simulated": 0.9395, "se_delta": 0.0110}
+      },
+      "sample_size_requirements": {
+        "power_80_percent": {"nominal_N": 2095, "effective_N": 1374},
+        "power_90_percent": {"nominal_N": 2805, "effective_N": 1839}
+      }
+    },
+    "pessimistic_high_icc": {
+      "candidate_icc": 0.30,
+      "job_icc": 0.15,
+      "discordance_rate_PD": 0.28,
+      "design_effect": 2.58,
+      "power_at_sample_sizes": {
+        "N_1500": {"power_analytical": 0.4532, "power_simulated": 0.4625, "se_delta": 0.0219},
+        "N_2000": {"power_analytical": 0.5635, "power_simulated": 0.5655, "se_delta": 0.0190},
+        "N_2500": {"power_analytical": 0.6558, "power_simulated": 0.6460, "se_delta": 0.0170},
+        "N_2850": {"power_analytical": 0.7130, "power_simulated": 0.7130, "se_delta": 0.0159},
+        "N_3500": {"power_analytical": 0.7925, "power_simulated": 0.7680, "se_delta": 0.0144}
+      },
+      "sample_size_requirements": {
+        "power_80_percent": {"nominal_N": 3537, "effective_N": 1374},
+        "power_90_percent": {"nominal_N": 4736, "effective_N": 1839}
+      }
+    },
+    "low_discordance": {
+      "candidate_icc": 0.20,
+      "job_icc": 0.10,
+      "discordance_rate_PD": 0.22,
+      "design_effect": 2.05,
+      "power_at_sample_sizes": {
+        "N_1500": {"power_analytical": 0.6502, "power_simulated": 0.6520, "se_delta": 0.0173},
+        "N_2000": {"power_analytical": 0.7680, "power_simulated": 0.7530, "se_delta": 0.0150},
+        "N_2500": {"power_analytical": 0.8492, "power_simulated": 0.8350, "se_delta": 0.0134},
+        "N_2850": {"power_analytical": 0.8890, "power_simulated": 0.8890, "se_delta": 0.0126},
+        "N_3500": {"power_analytical": 0.9380, "power_simulated": 0.9215, "se_delta": 0.0114}
+      },
+      "sample_size_requirements": {
+        "power_80_percent": {"nominal_N": 2213, "effective_N": 1080},
+        "power_90_percent": {"nominal_N": 2962, "effective_N": 1445}
+      }
+    },
+    "high_discordance": {
+      "candidate_icc": 0.20,
+      "job_icc": 0.10,
+      "discordance_rate_PD": 0.35,
+      "design_effect": 2.05,
+      "power_at_sample_sizes": {
+        "N_1500": {"power_analytical": 0.4532, "power_simulated": 0.4675, "se_delta": 0.0219},
+        "N_2000": {"power_analytical": 0.5635, "power_simulated": 0.5665, "se_delta": 0.0190},
+        "N_2500": {"power_analytical": 0.6558, "power_simulated": 0.6545, "se_delta": 0.0169},
+        "N_2850": {"power_analytical": 0.7130, "power_simulated": 0.7160, "se_delta": 0.0159},
+        "N_3500": {"power_analytical": 0.7925, "power_simulated": 0.7780, "se_delta": 0.0143}
+      },
+      "sample_size_requirements": {
+        "power_80_percent": {"nominal_N": 3520, "effective_N": 1717},
+        "power_90_percent": {"nominal_N": 4713, "effective_N": 2299}
+      }
+    }
+  },
+  "simulation_limitations": [
+    "Assumes normal random effects for crossed candidate and job shocks on binary difference outcomes (linear probability approximation).",
+    "Assumes balanced cluster topology (exact m_c=3.0, m_j=7.5); in practice, cluster sizes vary with high-volume jobs having slightly higher m_j.",
+    "Assumes constant treatment effect delta=0.04 across all strata; does not model heterogeneous subgroup gains.",
+    "Empirical ICC values cannot be established definitively until initial annotated pilot data is collected."
+  ],
+  "provisional_sample_size_verdict": "RETAIN N=2,850 AS PROVISIONAL TARGET. Under the central baseline scenario, N=2,850 achieves 80.6% power (simulated 81.0%). If preliminary pilot annotation indicates pessimistic clustering (ICC_c > 0.25, ICC_j > 0.12), the sample must be scaled up to N=3,500."
+}

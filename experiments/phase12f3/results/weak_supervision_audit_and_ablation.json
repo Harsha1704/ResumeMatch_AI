@@ -1,0 +1,89 @@
+{
+  "all_lfs_weak_augmented": {
+    "accuracy": 0.402,
+    "balanced_accuracy": 0.3744,
+    "macro_precision": 0.3764,
+    "macro_recall": 0.3744,
+    "macro_f1": 0.3505,
+    "weighted_f1": 0.3748,
+    "brier_score": 0.6844,
+    "per_class": {
+      "No Fit": {
+        "precision": 0.513,
+        "recall": 0.6423,
+        "f1": 0.5704,
+        "support": 123
+      },
+      "Potential Fit": {
+        "precision": 0.2613,
+        "recall": 0.3625,
+        "f1": 0.3037,
+        "support": 80
+      },
+      "Good Fit": {
+        "precision": 0.3548,
+        "recall": 0.1183,
+        "f1": 0.1774,
+        "support": 93
+      }
+    },
+    "confusion_matrix": [
+      [
+        79,
+        35,
+        9
+      ],
+      [
+        40,
+        29,
+        11
+      ],
+      [
+        35,
+        47,
+        11
+      ]
+    ]
+  },
+  "pruned_lfs_weak_augmented": {
+    "accuracy": 0.4155,
+    "balanced_accuracy": 0.405,
+    "macro_f1": 0.3889
+  },
+  "delta": {
+    "accuracy_delta": 0.0135,
+    "macro_f1_delta": 0.0384
+  },
+  "per_lf_audit": {
+    "lf_mandatory_skill_coverage": {
+      "coverage": 0.6775,
+      "abstention_rate": 0.3225,
+      "ground_truth_accuracy": 0.3379,
+      "macro_f1": 0.3308
+    },
+    "lf_experience_gap": {
+      "coverage": 0.5105,
+      "abstention_rate": 0.4895,
+      "ground_truth_accuracy": 0.4088,
+      "macro_f1": 0.2806
+    },
+    "lf_veto_disqualification": {
+      "coverage": 0.0775,
+      "abstention_rate": 0.9225,
+      "ground_truth_accuracy": 0.5385,
+      "macro_f1": 0.2333
+    },
+    "lf_transferable_skills": {
+      "coverage": 0.042,
+      "abstention_rate": 0.958,
+      "ground_truth_accuracy": 0.2407,
+      "macro_f1": 0.1294
+    },
+    "lf_jaccard_similarity": {
+      "coverage": 0.7599,
+      "abstention_rate": 0.2401,
+      "ground_truth_accuracy": 0.4616,
+      "macro_f1": 0.3498
+    }
+  }
+}

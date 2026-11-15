@@ -1,0 +1,134 @@
+{
+  "champion_model_name": "Optimized LightGBM",
+  "dual_unseen_val_size": 297,
+  "evaluation_duration_sec": 1.0487709045410156,
+  "champion_metrics": {
+    "n_samples": 297,
+    "n_correct": 127,
+    "accuracy": 0.4276094276094276,
+    "accuracy_ci_95": [
+      0.3726213420634922,
+      0.48444623044276724
+    ],
+    "macro_precision": 0.4017098275410296,
+    "macro_recall": 0.40277777777777785,
+    "macro_f1": 0.39129239244263503,
+    "weighted_f1": 0.4108800579926006,
+    "per_class": {
+      "No Fit": {
+        "precision": 0.5064935064935064,
+        "recall": 0.6290322580645161,
+        "f1": 0.5611510791366906
+      },
+      "Good Fit": {
+        "precision": 0.37254901960784315,
+        "recall": 0.20430107526881722,
+        "f1": 0.2638888888888889
+      },
+      "Potential Fit": {
+        "precision": 0.32608695652173914,
+        "recall": 0.375,
+        "f1": 0.3488372093023256
+      }
+    },
+    "confusion_matrix": [
+      [
+        78,
+        22,
+        24
+      ],
+      [
+        36,
+        19,
+        38
+      ],
+      [
+        40,
+        10,
+        30
+      ]
+    ],
+    "label_order": [
+      "No Fit",
+      "Good Fit",
+      "Potential Fit"
+    ]
+  },
+  "baseline_metrics": {
+    "n_samples": 297,
+    "n_correct": 137,
+    "accuracy": 0.4612794612794613,
+    "accuracy_ci_95": [
+      0.4054412849458481,
+      0.5181064863947094
+    ],
+    "macro_precision": 0.4405865607727537,
+    "macro_recall": 0.44713261648745517,
+    "macro_f1": 0.43506814898561647,
+    "weighted_f1": 0.44955234145360384,
+    "per_class": {
+      "No Fit": {
+        "precision": 0.5474452554744526,
+        "recall": 0.6048387096774194,
+        "f1": 0.5747126436781609
+      },
+      "Good Fit": {
+        "precision": 0.38596491228070173,
+        "recall": 0.23655913978494625,
+        "f1": 0.29333333333333333
+      },
+      "Potential Fit": {
+        "precision": 0.3883495145631068,
+        "recall": 0.5,
+        "f1": 0.4371584699453552
+      }
+    },
+    "confusion_matrix": [
+      [
+        75,
+        21,
+        28
+      ],
+      [
+        36,
+        22,
+        35
+      ],
+      [
+        26,
+        14,
+        40
+      ]
+    ],
+    "label_order": [
+      "No Fit",
+      "Good Fit",
+      "Potential Fit"
+    ]
+  },
+  "historical_benchmarks": {
+    "scenario_a_unseen_jobs": {
+      "description": "Historical 1,759-pair held-out test set (unseen jobs only)",
+      "baseline_lr_accuracy": 0.5121,
+      "baseline_lr_macro_f1": 0.4666,
+      "svm_phase7b_c_accuracy": 0.5319,
+      "svm_phase7b_c_macro_f1": 0.481
+    },
+    "scenario_b_unseen_resumes": {
+      "description": "Historical 1,600-pair held-out resume split (unseen resumes only)",
+      "reported_accuracy_range": "48.5% - 52.8%"
+    },
+    "scenario_c_dual_unseen": {
+      "description": "Pristine 297-pair dual-unseen holdout (both resumes and jobs unseen)",
+      "champion_model": "Optimized LightGBM",
+      "champion_accuracy": 0.4276094276094276,
+      "champion_accuracy_ci_95": [
+        0.3726213420634922,
+        0.48444623044276724
+      ],
+      "champion_macro_f1": 0.39129239244263503,
+      "baseline_accuracy": 0.4612794612794613,
+      "baseline_macro_f1": 0.43506814898561647
+    }
+  }
+}

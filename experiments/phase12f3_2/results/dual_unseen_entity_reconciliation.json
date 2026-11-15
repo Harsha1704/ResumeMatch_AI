@@ -1,0 +1,115 @@
+{
+  "dual_unseen_train": {
+    "split_name": "dual_unseen_train_v1",
+    "physical_rows": 3857,
+    "raw_resume_ids": {
+      "total_occurrences": 3857,
+      "unique_count": 500
+    },
+    "raw_resume_text_hashes": {
+      "unique_count": 500
+    },
+    "normalized_resume_text_hashes": {
+      "unique_count": 499
+    },
+    "near_duplicate_resume_clusters": {
+      "count_clusters_with_multiple_ids": 1,
+      "clusters": {
+        "45f4d94a4a906cfaa31c928b0e20fbc8": [
+          "R_6e9fcafc88feaa96",
+          "R_3ed5dbf090962b7b"
+        ]
+      }
+    },
+    "raw_job_ids": {
+      "total_occurrences": 3857,
+      "unique_count": 221
+    },
+    "raw_job_text_hashes": {
+      "unique_count": 221
+    },
+    "normalized_job_text_hashes": {
+      "unique_count": 221
+    }
+  },
+  "dual_unseen_val_raw": {
+    "split_name": "dual_unseen_val_v1_raw",
+    "physical_rows": 297,
+    "raw_resume_ids": {
+      "total_occurrences": 297,
+      "unique_count": 92
+    },
+    "raw_resume_text_hashes": {
+      "unique_count": 92
+    },
+    "normalized_resume_text_hashes": {
+      "unique_count": 92
+    },
+    "near_duplicate_resume_clusters": {
+      "count_clusters_with_multiple_ids": 0,
+      "clusters": {}
+    },
+    "raw_job_ids": {
+      "total_occurrences": 297,
+      "unique_count": 52
+    },
+    "raw_job_text_hashes": {
+      "unique_count": 52
+    },
+    "normalized_job_text_hashes": {
+      "unique_count": 52
+    }
+  },
+  "dual_unseen_val_clean": {
+    "split_name": "dual_unseen_val_v1_clean",
+    "physical_rows": 296,
+    "raw_resume_ids": {
+      "total_occurrences": 296,
+      "unique_count": 91
+    },
+    "raw_resume_text_hashes": {
+      "unique_count": 91
+    },
+    "normalized_resume_text_hashes": {
+      "unique_count": 91
+    },
+    "near_duplicate_resume_clusters": {
+      "count_clusters_with_multiple_ids": 0,
+      "clusters": {}
+    },
+    "raw_job_ids": {
+      "total_occurrences": 296,
+      "unique_count": 52
+    },
+    "raw_job_text_hashes": {
+      "unique_count": 52
+    },
+    "normalized_job_text_hashes": {
+      "unique_count": 52
+    }
+  },
+  "reconciliation_explanation": {
+    "training_set_reconciliation": {
+      "physical_manifest_rows": 3857,
+      "certified_unique_resume_ids": 500,
+      "certified_unique_raw_resume_hashes": 500,
+      "certified_unique_normalized_resume_hashes": 499,
+      "certified_unique_job_ids": 221,
+      "certified_unique_job_hashes": 221,
+      "forensic_explanation_of_phase12f2_claim_482_resumes_226_jobs": "1. Resumes (500 vs 482): In Phase 12F.2, an initial exploratory filtering rule discarded 18 resumes with fewer than 3 paired interactions, citing '482 core candidates'. However, the physical manifest manifests/v1/dual_unseen_train_v1.parquet has always contained exactly 500 unique resume IDs across all 3,857 rows. 2. Jobs (221 vs 226): In Phase 12F.2, 5 jobs from an external unpartitioned pilot pool were temporarily referenced before final bipartite split partitioning settled on 221 training jobs. 3. Erroneous '1,223 raw resume IDs' in 12F.3.1 Markdown Table: In Phase 12F.3.1 Section 2.1 Table, the figure '1,223' was accidentally copied from an earlier draft that summed Job-Disjoint train and val candidate IDs. The physical parquet file manifests/v1/dual_unseen_train_v1.parquet contains exactly 500 unique resume IDs. The underlying physical manifests have remained byte-for-byte identical across all phases."
+    },
+    "validation_set_reconciliation": {
+      "raw_validation": {
+        "rows": 297,
+        "unique_resumes": 92,
+        "unique_jobs": 52
+      },
+      "post_quarantine_validation": {
+        "rows": 296,
+        "unique_resumes": 91,
+        "unique_jobs": 52
+      },
+      "job_count_proof": "Quarantining row 46 dropped candidate R_08e03096c790d399, but its paired job J_230ff2f033d48f54 remained present in validation row 112 (paired with candidate R_9bc7715f3ec3df98). Hence, unique jobs remain strictly 52."
+    }
+  }
+}

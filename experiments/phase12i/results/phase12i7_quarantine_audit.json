@@ -1,0 +1,108 @@
+{
+  "phase": "12I.7",
+  "audit_name": "Benchmark Vault Quarantine, Blinding & Zero-Leakage Forensic Audit",
+  "timestamp": "2026-11-14T20:48:00Z",
+  "vault_architecture": {
+    "quarantine_directory": "data/benchmark_vault/pilot_quarantine",
+    "intake_ledger": "data/benchmark_vault/intake/raw_submissions.jsonl",
+    "evaluator_queues": "data/benchmark_vault/queues",
+    "access_policy": "Strict isolation from model training pipelines, feature engineering, and inference tuning."
+  },
+  "cross_split_contamination_audit": {
+    "pilot_manifest": "experiments/phase12i/results/phase12i4_pilot_sampling_manifest.json",
+    "pilot_unique_candidates": 120,
+    "pilot_unique_jobs": 60,
+    "evaluated_splits": [
+      {
+        "split_file": "manifests/v1/dual_unseen_train_v1.parquet",
+        "row_count": 3857,
+        "candidate_overlap": 0,
+        "job_overlap": 0,
+        "leakage_detected": false
+      },
+      {
+        "split_file": "manifests/v1/dual_unseen_val_v1.parquet",
+        "row_count": 297,
+        "candidate_overlap": 0,
+        "job_overlap": 0,
+        "leakage_detected": false
+      },
+      {
+        "split_file": "manifests/v1/held_out_test_v1.parquet",
+        "row_count": 1759,
+        "candidate_overlap": 0,
+        "job_overlap": 0,
+        "leakage_detected": false
+      },
+      {
+        "split_file": "manifests/v1/job_disjoint_train_v1.parquet",
+        "row_count": 5462,
+        "candidate_overlap": 0,
+        "job_overlap": 0,
+        "leakage_detected": false
+      },
+      {
+        "split_file": "manifests/v1/job_disjoint_val_v1.parquet",
+        "row_count": 778,
+        "candidate_overlap": 0,
+        "job_overlap": 0,
+        "leakage_detected": false
+      },
+      {
+        "split_file": "manifests/v1/resume_disjoint_train_v1.parquet",
+        "row_count": 5217,
+        "candidate_overlap": 0,
+        "job_overlap": 0,
+        "leakage_detected": false
+      },
+      {
+        "split_file": "manifests/v1/resume_disjoint_val_v1.parquet",
+        "row_count": 1023,
+        "candidate_overlap": 0,
+        "job_overlap": 0,
+        "leakage_detected": false
+      }
+    ],
+    "total_leakage_events": 0,
+    "quarantine_isolation_verdict": "VERIFIED_PERFECT_ISOLATION"
+  },
+  "blinding_enforcement_audit": {
+    "queue_REC_A_892": {
+      "file_path": "data/benchmark_vault/queues/queue_REC_A_892.json",
+      "model_predictions_exposed": false,
+      "peer_ratings_exposed": false,
+      "candidate_pii_exposed": false
+    },
+    "queue_REC_B_314": {
+      "file_path": "data/benchmark_vault/queues/queue_REC_B_314.json",
+      "model_predictions_exposed": false,
+      "peer_ratings_exposed": false,
+      "candidate_pii_exposed": false
+    },
+    "intake_linter_blinding_filter": {
+      "active": true,
+      "forbidden_keys": ["model_prediction", "peer_rating", "annotator_agreement", "challenger_pred"],
+      "action_on_detection": "Immediate submission rejection"
+    }
+  },
+  "production_checkpoints_integrity": {
+    "best_model": {
+      "path": "models/best_model.joblib",
+      "byte_size": 61487,
+      "sha256": "1001baaf42db8832e1ba3e28ee9da7146e59f1d2d1808c73c4f7587535b2ed4a",
+      "unmodified": true
+    },
+    "feature_pipeline": {
+      "path": "models/feature_pipeline.joblib",
+      "byte_size": 270105,
+      "sha256": "2ebf209f691b7084decb5d3a183b82e9b425fe89335345a4af661fed2fc88ae6",
+      "unmodified": true
+    },
+    "challenger_model": {
+      "path": "models/phase12f/challenger_model_phase12f.joblib",
+      "byte_size": 2330440,
+      "sha256": "5934990e987abe98223bf790ac9e9a79fb5ec99daac4509093e8eb0036461766",
+      "unmodified": true
+    }
+  }
+}

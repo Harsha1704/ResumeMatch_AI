@@ -1,0 +1,40 @@
+{
+  "phase": "12I.10",
+  "audit_name": "47.64% Result Architecture Attribution & Disjointness Forensic Audit",
+  "timestamp": "2026-11-14T21:24:00Z",
+  "audited_metric": {
+    "metric_value": "47.64% Overall Accuracy (141 / 296 pairs)",
+    "balanced_accuracy": 0.4136,
+    "macro_f1": 0.3638,
+    "eval_dataset": "experiments/phase12f3_3/predictions/contrastive_vs_raw_seed_42.csv (N=296)",
+    "prediction_file": "experiments/phase12g/predictions/oof_calibrated_predictions_seed42.csv"
+  },
+  "reconstructed_evaluation_procedure": {
+    "source_script": "scripts/phase12g/run_phase12g_research.py (lines 171-235)",
+    "inner_model": "Domain-Adapted Contrastive InfoNCE Projector (Seed 42)",
+    "calibration_protocol": "Nested 5-Fold Stratified Candidate-Cluster Cross-Validation",
+    "threshold_selection_rule": "tau_Good_Fit selected in range [0.15, 0.40] optimizing inner-fold Macro F1",
+    "selected_threshold_per_fold": [0.15, 0.15, 0.15, 0.15, 0.15],
+    "mean_selected_tau": 0.15
+  },
+  "fold_disjointness_forensic_audit": {
+    "is_candidate_disjoint": true,
+    "candidate_overlap_across_folds": 0,
+    "candidate_partition_details": "Fold 0: 19 candidates; Fold 1: 18; Fold 2: 18; Fold 3: 18; Fold 4: 18 (All 91 candidates partitioned disjointly).",
+    "is_job_disjoint_across_folds": false,
+    "job_overlap_details": [
+      {"fold": 0, "val_jobs": 37, "train_jobs": 49, "overlapping_jobs": 34},
+      {"fold": 1, "val_jobs": 33, "train_jobs": 50, "overlapping_jobs": 31},
+      {"fold": 2, "val_jobs": 26, "train_jobs": 50, "overlapping_jobs": 24},
+      {"fold": 3, "val_jobs": 35, "train_jobs": 50, "overlapping_jobs": 33},
+      {"fold": 4, "val_jobs": 31, "train_jobs": 51, "overlapping_jobs": 30}
+    ],
+    "disjointness_verdict": "CANDIDATE_DISJOINT_OOF_ONLY. Because job descriptions were shared across inner training and evaluation folds, the threshold calibration procedure was candidate-disjoint but NOT job-disjoint across folds."
+  },
+  "architecture_attribution_verdict": {
+    "deep_cross_encoder_attribution": "UNVERIFIED_AND_WITHDRAWN",
+    "standalone_cross_encoder_checkpoint_exists": false,
+    "official_certified_architecture": "Nested Out-of-Fold Threshold-Calibrated Contrastive Projector (Seed 42)",
+    "scientific_summary": "The 47.64% score is verified, non-leaking, and reproducible from oof_calibrated_predictions_seed42.csv. However, it was produced by a calibrated decision rule on contrastive embeddings, NOT by a deep cross-attention transformer."
+  }
+}

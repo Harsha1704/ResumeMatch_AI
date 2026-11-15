@@ -1,0 +1,41 @@
+{
+  "all_checkpoints_passed": true,
+  "checkpoints": [
+    {
+      "name": "Production Best Model (Logistic Regression)",
+      "path": "models/best_model.joblib",
+      "expected_hash": "1001baaf42db8832e1ba3e28ee9da7146e59f1d2d1808c73c4f7587535b2ed4a",
+      "current_hash": "1001baaf42db8832e1ba3e28ee9da7146e59f1d2d1808c73c4f7587535b2ed4a",
+      "expected_size": 61487,
+      "current_size": 61487,
+      "status": "PASS"
+    },
+    {
+      "name": "Production Feature Pipeline",
+      "path": "models/feature_pipeline.joblib",
+      "expected_hash": "2ebf209f691b7084decb5d3a183b82e9b425fe89335345a4af661fed2fc88ae6",
+      "current_hash": "2ebf209f691b7084decb5d3a183b82e9b425fe89335345a4af661fed2fc88ae6",
+      "expected_size": 270105,
+      "current_size": 270105,
+      "status": "PASS"
+    },
+    {
+      "name": "Challenger Model Phase 12F (Linear Baseline)",
+      "path": "models/phase12f/challenger_model_phase12f.joblib",
+      "expected_hash": "5934990e987abe98223bf790ac9e9a79fb5ec99daac4509093e8eb0036461766",
+      "current_hash": "5934990e987abe98223bf790ac9e9a79fb5ec99daac4509093e8eb0036461766",
+      "expected_size": 2330440,
+      "current_size": 2330440,
+      "status": "PASS"
+    },
+    {
+      "name": "Challenger Model 5 (Semantic-Skill Fusion Head)",
+      "path": "models/phase13/semantic_skill_fusion_challenger.joblib",
+      "expected_hash": "50aaabfe53025a04d2221f71fa6977bec9615649cff84e8da37d299f5cc44807",
+      "current_hash": "50aaabfe53025a04d2221f71fa6977bec9615649cff84e8da37d299f5cc44807",
+      "expected_size": 78194,
+      "current_size": 78194,
+      "status": "PASS"
+    }
+  ]
+}

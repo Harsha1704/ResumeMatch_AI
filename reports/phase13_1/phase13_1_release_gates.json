@@ -1,0 +1,71 @@
+{
+  "audit_phase": "Phase 13.1",
+  "task": "Task 7 \u2014 Correct Release Gates (Evidence-Derived Evaluation)",
+  "model_evaluated": "Model 5 (Semantic & Skill Fusion Challenger)",
+  "gate_counts": {
+    "total_gates": 8,
+    "PASS": 4,
+    "CONDITIONAL": 2,
+    "FAIL": 2,
+    "NOT_VERIFIED": 0
+  },
+  "overall_promotion_recommendation": "ELIGIBLE_FOR_SHADOW_TESTING_WITH_PRECOMPUTED_EMBEDDINGS_ONLY",
+  "gates": {
+    "gate_1_reproducibility": {
+      "name": "Complete Reproducibility",
+      "required_threshold": "100% deterministic code, fixed seed replication, all checkpoints & scripts preserved",
+      "observed_value": "Linear fusion head is strictly deterministic; 5-seed std is 0.00%; all data keyed and scripts preserved",
+      "status": "PASS",
+      "rationale": "Exact code, data keys, and prediction hashes are fully reproducible."
+    },
+    "gate_2_leakage_safety": {
+      "name": "Zero Data Contamination & Leakage Safety",
+      "required_threshold": "Quarantined official test set used ZERO times; 0% entity overlap in Dual-Unseen validation",
+      "observed_value": "Official test accessed 0 times; Dual-Unseen split guard verified 0 resume/job overlap; row 46 near-duplicate quarantined",
+      "status": "PASS",
+      "rationale": "Strict protocol split guard confirmed zero leakage across candidate resumes and job postings."
+    },
+    "gate_3_statistically_significant_improvement": {
+      "name": "Statistical or Meaningful Improvement",
+      "required_threshold": "Statistically significant improvement over baseline under paired hypothesis test and two-way clustering",
+      "observed_value": "McNemar exact p=0.0125 (<0.05); CGM 95% CI [0.60, 13.59] pp strictly excludes zero; Macro F1 bootstrap CI [0.0014, 0.1798] strictly positive; but accuracy bootstrap CI [-2.98, 16.58] pp crosses zero",
+      "status": "CONDITIONAL",
+      "rationale": "Significance holds under McNemar exact test and analytical CGM two-way sandwich, but Owen crossed-cluster bootstrap dispersion crosses zero on accuracy delta. Directional superiority is proven (+7.09 pp, 43 wins vs 22 losses), but statistical significance is conditional on the cluster dispersion model."
+    },
+    "gate_4_good_fit_recall_improvement": {
+      "name": "Good Fit Recall Improvement",
+      "required_threshold": "Substantial improvement in identifying high-quality matches without collapsing to No Fit",
+      "observed_value": "Good Fit recall increased from 15.05% (14/93) to 26.88% (25/93), a +78.57% relative improvement, with 40.32% precision (25/62)",
+      "status": "PASS",
+      "rationale": "Overcomes historical Good Fit collapse without precision degradation."
+    },
+    "gate_5_inference_latency": {
+      "name": "Inference Latency Limit",
+      "required_threshold": "<= 50 ms / pair end-to-end inference latency",
+      "observed_value": "End-to-end single-pair CPU latency: Mean 374.343 ms, p50 506.397 ms, p95 587.141 ms. Precomputed-feature classification head alone is 4.47 ms.",
+      "status": "FAIL",
+      "rationale": "Complete end-to-end single-pair inference on CPU (including SBERT encoding and domain regex extraction) takes ~374 ms per pair, exceeding the 50 ms SLA. Would require GPU, batching, or precomputed embedding caching to meet sub-50ms target."
+    },
+    "gate_6_model_size_and_memory": {
+      "name": "Model Size & Memory Limit",
+      "required_threshold": "<= 50 MB total deployable artifact size and peak RAM",
+      "observed_value": "Total deployable artifact size: 174.07 MB (SBERT weights: 174.0 MB, classifier head: 76.4 KB). Peak process RSS: 637.09 MB.",
+      "status": "FAIL",
+      "rationale": "The deployable model requires SBERT transformer weights (174 MB) and PyTorch runtime (~637 MB peak RSS), exceeding the 50 MB standalone lightweight edge budget."
+    },
+    "gate_7_probability_calibration": {
+      "name": "Probability Calibration",
+      "required_threshold": "Normalized Brier Score <= 0.35 OR Expected Calibration Error <= 0.15; No severe calibration degradation",
+      "observed_value": "Normalized Brier Score: 0.3511 (raw 0.7022); ECE: 0.1896. Clean Baseline Brier: 0.3727; Baseline ECE: 0.2318.",
+      "status": "CONDITIONAL",
+      "rationale": "Model 5 Normalized Brier Score is 0.3511 (borderline to the 0.35 target) and ECE is 0.1896 (> 0.15 SLA). Post-hoc temperature scaling or isotonic calibration is required prior to production exposure."
+    },
+    "gate_8_no_class_degradation": {
+      "name": "No Degradation on Any Class",
+      "required_threshold": "No substantial degradation on any individual class F1, precision, or recall",
+      "observed_value": "No Fit recall: 59.35% vs 60.98% (-1.63 pp), but precision improved to 51.41% (+4.53 pp); Potential Fit F1: 0.3721 vs 0.2532 (+0.1189); Good Fit F1: 0.3226 vs 0.1854 (+0.1372)",
+      "status": "PASS",
+      "rationale": "Small trade-off in No Fit recall (-1.6 pp) is heavily outweighed by substantial improvements across all three classes in F1, precision, and multi-class balance."
+    }
+  }
+}

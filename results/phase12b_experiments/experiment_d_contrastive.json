@@ -1,0 +1,31 @@
+{
+  "cosine_distribution_by_class": {
+    "No Fit": {
+      "mean": 0.36579999327659607,
+      "median": 0.3589000105857849,
+      "std": 0.10769999772310257,
+      "p25": 0.28540000319480896,
+      "p75": 0.44130000472068787
+    },
+    "Potential Fit": {
+      "mean": 0.4169999957084656,
+      "median": 0.41679999232292175,
+      "std": 0.11230000108480453,
+      "p25": 0.34610000252723694,
+      "p75": 0.4959000051021576
+    },
+    "Good Fit": {
+      "mean": 0.42239999771118164,
+      "median": 0.4162999987602234,
+      "std": 0.09939999878406525,
+      "p25": 0.352400004863739,
+      "p75": 0.4812000095844269
+    }
+  },
+  "margins": {
+    "good_vs_no_fit": 0.0566,
+    "good_vs_potential_fit": 0.0054,
+    "potential_vs_no_fit": 0.0512
+  },
+  "contrastive_viability_verdict": "POOR SEPARATION FOR CONTRASTIVE TRIPLET LOSS: The cosine margin between Good Fit (0.422) and Potential Fit (0.417) is only +0.005. Treating Potential Fit as binary hard negative creates severe false-negative gradient penalty."
+}

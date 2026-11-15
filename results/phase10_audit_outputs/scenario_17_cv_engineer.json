@@ -1,0 +1,163 @@
+{
+  "scenario_key": "scenario_17_cv_engineer",
+  "candidate_id": "cand_17_cv_engineer",
+  "description": "Computer vision engineer specialized in real-time object detection and OpenCV processing",
+  "matching_analysis": {
+    "match_score": null,
+    "category": null,
+    "matched_skills": [],
+    "missing_skills": [],
+    "satisfied_alternatives": {},
+    "requirement_breakdown": {}
+  },
+  "evidence_registry": {
+    "total_evidence_units": null,
+    "evidence_coverage_ratio": null
+  },
+  "career_mentor": {
+    "candidate_name": null,
+    "counseling_profile_keys": [],
+    "roadmap_skills_count": 0,
+    "scheduled_tasks_count": 14
+  },
+  "interview_studio": {
+    "total_questions_generated": 15,
+    "questions": [
+      {
+        "question_id": "tb_py_02",
+        "category": "E",
+        "question_text": "How do Python generators work, and what is the difference between `yield` and `return`?",
+        "framework": "WHAT-WHY-HOW",
+        "validation_score": 100.0,
+        "validation_issues": [],
+        "detailed_answer_preview": "A Python generator is a special function that implements the Iterator Protocol (`__iter__` and `__next__`) automatically. When a function body contains the `yield` keyword, calling the function does n"
+      },
+      {
+        "question_id": "qa_edu_01aae434",
+        "category": "A",
+        "question_text": "How has your academic background (Verified against degree mentions in parsed resume.) provided the theoretical foundation for your software and engineering work?",
+        "framework": "PREP",
+        "validation_score": 100.0,
+        "validation_issues": [],
+        "detailed_answer_preview": "My coursework and technical study in Education details not confidently identified provided the foundational principles behind scalable software engineering. Studying Data Structures and Algorithms tau"
+      },
+      {
+        "question_id": "tb_py_04",
+        "category": "E",
+        "question_text": "What are Python decorators, and how do you implement a parameterized decorator with `functools.wraps`?",
+        "framework": "WHAT-WHY-HOW",
+        "validation_score": 100.0,
+        "validation_issues": [],
+        "detailed_answer_preview": "In Python, functions are first-class citizens: they can be passed as arguments, assigned to variables, and returned from other functions. A decorator leverages closures to wrap a target function, allo"
+      },
+      {
+        "question_id": "tb_py_03",
+        "category": "E",
+        "question_text": "Explain the Python Global Interpreter Lock (GIL) and its implications for CPU-bound vs I/O-bound concurrency.",
+        "framework": "WHAT-WHY-HOW",
+        "validation_score": 100.0,
+        "validation_issues": [],
+        "detailed_answer_preview": "The Global Interpreter Lock (GIL) is a synchronization mutex utilized by CPython to protect memory management structures and prevent race conditions in its reference-counting garbage collector. Becaus"
+      },
+      {
+        "question_id": "tb_java_02",
+        "category": "E",
+        "question_text": "How does Garbage Collection work in the JVM, and what is the Weak Generational Hypothesis?",
+        "framework": "WHAT-WHY-HOW",
+        "validation_score": 100.0,
+        "validation_issues": [],
+        "detailed_answer_preview": "JVM Garbage Collection manages memory dynamically by automatically identifying and freeing unreachable objects on the heap. It is anchored on the Weak Generational Hypothesis, which observes that the "
+      },
+      {
+        "question_id": "tb_py_01",
+        "category": "E",
+        "question_text": "What is the difference between mutable and immutable types in Python, and how does it affect function arguments?",
+        "framework": "WHAT-WHY-HOW",
+        "validation_score": 100.0,
+        "validation_issues": [],
+        "detailed_answer_preview": "In Python, mutability defines whether an object's state can be altered after allocation. Immutable types include int, float, str, tuple, and frozenset; attempting to modify them results in creating a "
+      },
+      {
+        "question_id": "tb_cpp_01",
+        "category": "E",
+        "question_text": "What are Smart Pointers in modern C++ (C++11 onwards) and how do `std::unique_ptr` and `std::shared_ptr` prevent memory leaks?",
+        "framework": "WHAT-WHY-HOW",
+        "validation_score": 100.0,
+        "validation_issues": [],
+        "detailed_answer_preview": "In modern C++ (C++11 and later), smart pointers implement the Resource Acquisition Is Initialization (RAII) paradigm to eliminate manual memory management and prevent memory leaks, dangling pointers, "
+      },
+      {
+        "question_id": "hr_05",
+        "category": "F",
+        "question_text": "Describe a situation where you encountered a technical conflict or disagreement with a teammate, and how you resolved it.",
+        "framework": "STAR+L",
+        "validation_score": 100.0,
+        "validation_issues": [],
+        "detailed_answer_preview": "While collaborating on [Project Name], my teammate and I encountered a fundamental disagreement regarding [Technical Decision, e.g. whether to use a relational SQL schema or a document-based NoSQL dat"
+      },
+      {
+        "question_id": "tb_ds_02",
+        "category": "E",
+        "question_text": "How do Hash Tables handle collisions, and what is the difference between Separate Chaining and Open Addressing?",
+        "framework": "WHAT-WHY-HOW",
+        "validation_score": 100.0,
+        "validation_issues": [],
+        "detailed_answer_preview": "A hash table maps keys to array bucket indices using a hash function. A collision occurs when two distinct keys produce the identical bucket index (`hash(k1) % table_size == hash(k2) % table_size`). T"
+      },
+      {
+        "question_id": "hr_01",
+        "category": "F",
+        "question_text": "Tell me about yourself and walk me through your technical background.",
+        "framework": "PREP",
+        "validation_score": 100.0,
+        "validation_issues": [],
+        "detailed_answer_preview": "I am a software engineer with a strong academic foundation in Computer Science and hands-on experience developing end-to-end applications. My technical toolkit centers on [Core Technologies, e.g. Pyth"
+      },
+      {
+        "question_id": "tb_algo_01",
+        "category": "E",
+        "question_text": "Compare QuickSort and MergeSort: analyze their time complexities, space complexities, stability, and real-world performance.",
+        "framework": "PEEL",
+        "validation_score": 100.0,
+        "validation_issues": [],
+        "detailed_answer_preview": "Both QuickSort and MergeSort are divide-and-conquer sorting algorithms, but they make opposite trade-offs. MergeSort divides the input array into two equal halves recursively until base cases of size "
+      },
+      {
+        "question_id": "hr_06",
+        "category": "F",
+        "question_text": "Tell me about a technical mistake or project failure you experienced, and what you learned from it.",
+        "framework": "STAR+L",
+        "validation_score": 100.0,
+        "validation_issues": [],
+        "detailed_answer_preview": "In an early iteration of [Project Title], an edge case in input parsing caused our processing pipeline to crash unexpectedly when handling [Specific Input Condition, e.g. malformed unicode characters "
+      },
+      {
+        "question_id": "tb_dbms_02",
+        "category": "E",
+        "question_text": "What is Database Normalization? Compare 1NF, 2NF, 3NF, and BCNF, and explain when denormalization is justified.",
+        "framework": "WHAT-WHY-HOW",
+        "validation_score": 100.0,
+        "validation_issues": [],
+        "detailed_answer_preview": "Database normalization decomposes large, redundant tables into smaller, well-structured relational tables linked by foreign keys. 1NF (First Normal Form) requires that every column value is atomic (no"
+      },
+      {
+        "question_id": "hr_02",
+        "category": "F",
+        "question_text": "What are your greatest technical strengths, and how have they contributed to project success?",
+        "framework": "STAR",
+        "validation_score": 100.0,
+        "validation_issues": [],
+        "detailed_answer_preview": "My primary technical strengths are rapid learning agility and systematic engineering rigor. When approaching unfamiliar technologies or complex requirements, I break systems down to first principles, "
+      },
+      {
+        "question_id": "tb_sql_02",
+        "category": "E",
+        "question_text": "What is the logical execution order of an SQL query, and how does `WHERE` differ from `HAVING`?",
+        "framework": "WHAT-WHY-HOW",
+        "validation_score": 100.0,
+        "validation_issues": [],
+        "detailed_answer_preview": "Although an SQL query is written starting with `SELECT`, the database query engine executes clauses in a strict logical order: 1) `FROM` / `JOIN` (identifies and joins candidate tables), 2) `WHERE` (e"
+      }
+    ]
+  }
+}

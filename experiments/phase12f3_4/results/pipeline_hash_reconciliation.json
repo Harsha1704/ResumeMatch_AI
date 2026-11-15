@@ -1,0 +1,22 @@
+{
+  "investigated_file": "models/feature_pipeline.joblib",
+  "current_disk_sha256": "2ebf209f691b7084decb5d3a183b82e9b425fe89335345a4af661fed2fc88ae6",
+  "current_disk_size_bytes": 270105,
+  "reported_hashes": {
+    "phase12f3_2_reported_sha256": "2ebf209f691b7084decb5d3a183b82e9b425fe89335345a4af661fed2fc88ae6",
+    "phase12f3_3_reported_sha256": "2ebf209f9ea7035b7194f41249aa5cf9a9d282f1b4a6fb7b7522513f5fb4eb7f",
+    "phase12f3_3_json_artifact_actual_sha256": "2ebf209f691b7084decb5d3a183b82e9b425fe89335345a4af661fed2fc88ae6"
+  },
+  "forensic_determination": {
+    "classification": "Documentation Transcription Artifact in Final Text Summary",
+    "evidence": [
+      "Physical file on disk has SHA-256 2ebf209f691b... and size 270,105 bytes.",
+      "experiments/phase12f3_2/results/production_checkpoint_forensic.json recorded 2ebf209f691b...",
+      "experiments/phase12f3_3/results/artifact_hashes.json recorded 2ebf209f691b...",
+      "The string 2ebf209f9ea7... does not exist in any file, git history, or json output in the workspace.",
+      "The physical file on disk was NEVER modified during Phase 12F.3.2 or Phase 12F.3.3."
+    ],
+    "active_production_loading_path": "src.models.inference.ModelInferenceEngine loads models/best_model.joblib and models/feature_pipeline.joblib by default.",
+    "bit_for_bit_preservation_confirmed": true
+  }
+}

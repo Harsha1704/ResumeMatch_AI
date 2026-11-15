@@ -1,0 +1,72 @@
+{
+  "42": {
+    "seed": 42,
+    "contingency_table": {
+      "both_incorrect_n00": 130,
+      "raw_correct_contrastive_incorrect_n10": 30,
+      "raw_incorrect_contrastive_correct_n01": 53,
+      "both_correct_n11": 83
+    },
+    "discordant_pairs_total": 83,
+    "baseline_only_correct": 30,
+    "contrastive_only_correct": 53,
+    "mcnemar_exact_two_sided_p_value": 0.0152,
+    "statistically_significant_at_alpha_0_05": true
+  },
+  "43": {
+    "seed": 43,
+    "contingency_table": {
+      "both_incorrect_n00": 129,
+      "raw_correct_contrastive_incorrect_n10": 32,
+      "raw_incorrect_contrastive_correct_n01": 54,
+      "both_correct_n11": 81
+    },
+    "discordant_pairs_total": 86,
+    "baseline_only_correct": 32,
+    "contrastive_only_correct": 54,
+    "mcnemar_exact_two_sided_p_value": 0.023,
+    "statistically_significant_at_alpha_0_05": true
+  },
+  "44": {
+    "seed": 44,
+    "contingency_table": {
+      "both_incorrect_n00": 137,
+      "raw_correct_contrastive_incorrect_n10": 43,
+      "raw_incorrect_contrastive_correct_n01": 46,
+      "both_correct_n11": 70
+    },
+    "discordant_pairs_total": 89,
+    "baseline_only_correct": 43,
+    "contrastive_only_correct": 46,
+    "mcnemar_exact_two_sided_p_value": 0.8323,
+    "statistically_significant_at_alpha_0_05": false
+  },
+  "45": {
+    "seed": 45,
+    "contingency_table": {
+      "both_incorrect_n00": 123,
+      "raw_correct_contrastive_incorrect_n10": 37,
+      "raw_incorrect_contrastive_correct_n01": 60,
+      "both_correct_n11": 76
+    },
+    "discordant_pairs_total": 97,
+    "baseline_only_correct": 37,
+    "contrastive_only_correct": 60,
+    "mcnemar_exact_two_sided_p_value": 0.025,
+    "statistically_significant_at_alpha_0_05": true
+  },
+  "46": {
+    "seed": 46,
+    "contingency_table": {
+      "both_incorrect_n00": 126,
+      "raw_correct_contrastive_incorrect_n10": 33,
+      "raw_incorrect_contrastive_correct_n01": 57,
+      "both_correct_n11": 80
+    },
+    "discordant_pairs_total": 90,
+    "baseline_only_correct": 33,
+    "contrastive_only_correct": 57,
+    "mcnemar_exact_two_sided_p_value": 0.0149,
+    "statistically_significant_at_alpha_0_05": true
+  }
+}

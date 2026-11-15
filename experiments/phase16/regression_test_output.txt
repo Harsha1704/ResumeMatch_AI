@@ -1,0 +1,80 @@
+=== Testing experiments/phase13_1/tests/ ===
+============================= test session starts =============================
+platform win32 -- Python 3.14.8, pytest-9.1.1, pluggy-1.7.0 -- C:\Users\Harsha\AppData\Local\Python\pythoncore-3.14-64\python.exe
+cachedir: .pytest_cache
+rootdir: D:\skillsync1
+plugins: anyio-4.16.0, cov-7.1.0, flask-1.3.0, mock-3.17.0
+collecting ... collected 7 items
+
+experiments/phase13_1/tests/test_phase13_1_corrections.py::test_production_artifacts_unmodified PASSED [ 14%]
+experiments/phase13_1/tests/test_phase13_1_corrections.py::test_keyed_splits_and_one_to_one_alignment PASSED [ 28%]
+experiments/phase13_1/tests/test_phase13_1_corrections.py::test_contradictory_duplicate_detected_in_raw_validation PASSED [ 42%]
+experiments/phase13_1/tests/test_phase13_1_corrections.py::test_brier_score_normalization_formula PASSED [ 57%]
+experiments/phase13_1/tests/test_phase13_1_corrections.py::test_relative_good_fit_improvement_calculation PASSED [ 71%]
+experiments/phase13_1/tests/test_phase13_1_corrections.py::test_end_to_end_latency_benchmark_results PASSED [ 85%]
+experiments/phase13_1/tests/test_phase13_1_corrections.py::test_release_gates_integrity PASSED [100%]
+
+============================== 7 passed in 1.17s ==============================
+
+=== Testing experiments/phase14/tests/ ===
+============================= test session starts =============================
+platform win32 -- Python 3.14.8, pytest-9.1.1, pluggy-1.7.0 -- C:\Users\Harsha\AppData\Local\Python\pythoncore-3.14-64\python.exe
+cachedir: .pytest_cache
+rootdir: D:\skillsync1
+plugins: anyio-4.16.0, cov-7.1.0, flask-1.3.0, mock-3.17.0
+collecting ... collected 10 items
+
+experiments/phase14/tests/test_embedding_cache.py::test_production_artifacts_unmodified PASSED [ 10%]
+experiments/phase14/tests/test_embedding_cache.py::test_text_normalization_determinism PASSED [ 20%]
+experiments/phase14/tests/test_embedding_cache.py::test_cache_hits_and_misses PASSED [ 30%]
+experiments/phase14/tests/test_embedding_cache.py::test_separate_resume_and_job_namespaces PASSED [ 40%]
+experiments/phase14/tests/test_embedding_cache.py::test_cache_invalidation_on_text_change PASSED [ 50%]
+experiments/phase14/tests/test_embedding_cache.py::test_cache_invalidation_on_encoder_version_change PASSED [ 60%]
+experiments/phase14/tests/test_embedding_cache.py::test_cache_persistence_across_instances PASSED [ 70%]
+experiments/phase14/tests/test_embedding_cache.py::test_concurrency_and_race_condition_prevention PASSED [ 80%]
+experiments/phase14/tests/test_embedding_cache.py::test_inference_prediction_numerical_equivalence PASSED [ 90%]
+experiments/phase14/tests/test_embedding_cache.py::test_zero_validation_labels_in_inference PASSED [100%]
+
+============================= 10 passed in 17.69s =============================
+
+=== Testing experiments/phase15/tests/ ===
+============================= test session starts =============================
+platform win32 -- Python 3.14.8, pytest-9.1.1, pluggy-1.7.0 -- C:\Users\Harsha\AppData\Local\Python\pythoncore-3.14-64\python.exe
+cachedir: .pytest_cache
+rootdir: D:\skillsync1
+plugins: anyio-4.16.0, cov-7.1.0, flask-1.3.0, mock-3.17.0
+collecting ... collected 10 items
+
+experiments/phase15/tests/test_flask_integration.py::test_production_checkpoints_preserved PASSED [ 10%]
+experiments/phase15/tests/test_flask_integration.py::test_health_check_endpoint PASSED [ 20%]
+experiments/phase15/tests/test_flask_integration.py::test_resume_upload_and_parsing_workflow PASSED [ 30%]
+experiments/phase15/tests/test_flask_integration.py::test_job_input_validation PASSED [ 40%]
+experiments/phase15/tests/test_flask_integration.py::test_model_selection_production_vs_challenger PASSED [ 50%]
+experiments/phase15/tests/test_flask_integration.py::test_prediction_equivalence_api_vs_standalone_engine PASSED [ 60%]
+experiments/phase15/tests/test_flask_integration.py::test_challenger_graceful_fallback_on_failure PASSED [ 70%]
+experiments/phase15/tests/test_flask_integration.py::test_cache_persistence_across_restarts PASSED [ 80%]
+experiments/phase15/tests/test_flask_integration.py::test_concurrent_flask_requests PASSED [ 90%]
+experiments/phase15/tests/test_flask_integration.py::test_error_handling_and_security PASSED [100%]
+
+============================= 10 passed in 6.94s ==============================
+
+=== Testing experiments/phase15_1/tests/ ===
+============================= test session starts =============================
+platform win32 -- Python 3.14.8, pytest-9.1.1, pluggy-1.7.0 -- C:\Users\Harsha\AppData\Local\Python\pythoncore-3.14-64\python.exe
+cachedir: .pytest_cache
+rootdir: D:\skillsync1
+plugins: anyio-4.16.0, cov-7.1.0, flask-1.3.0, mock-3.17.0
+collecting ... collected 10 items
+
+experiments/phase15_1/tests/test_deployment_hardening.py::test_production_checkpoints_preserved PASSED [ 10%]
+experiments/phase15_1/tests/test_deployment_hardening.py::test_flask_process_clean_from_torch_and_sentence_transformers PASSED [ 20%]
+experiments/phase15_1/tests/test_deployment_hardening.py::test_flask_startup_rss_below_200mb PASSED [ 30%]
+experiments/phase15_1/tests/test_deployment_hardening.py::test_persistent_job_queue_lifecycle PASSED [ 40%]
+experiments/phase15_1/tests/test_deployment_hardening.py::test_zero_lost_jobs_across_restarts PASSED [ 50%]
+experiments/phase15_1/tests/test_deployment_hardening.py::test_fallback_telemetry_correctness PASSED [ 60%]
+experiments/phase15_1/tests/test_deployment_hardening.py::test_file_upload_security_and_validation PASSED [ 70%]
+experiments/phase15_1/tests/test_deployment_hardening.py::test_csrf_and_rate_limiting PASSED [ 80%]
+experiments/phase15_1/tests/test_deployment_hardening.py::test_headless_api_allow_fallback_behavior PASSED [ 90%]
+experiments/phase15_1/tests/test_deployment_hardening.py::test_api_input_boundaries_and_error_handling PASSED [100%]
+
+============================= 10 passed in 5.23s ==============================

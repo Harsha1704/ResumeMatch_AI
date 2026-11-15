@@ -1,0 +1,191 @@
+{
+  "audit_phase": "Phase 13.1",
+  "sample_size": {
+    "N": 296,
+    "candidates_C": 91,
+    "jobs_J": 52
+  },
+  "primary_model_evaluation": "Model 5 (Semantic & Skill Fusion Challenger, Seed 42)",
+  "comparisons": {
+    "model_5_vs_clean_baseline": {
+      "challenger": "Model 5 (Seed 42)",
+      "comparator": "Clean Dual-Unseen Logistic Regression Baseline (pred_baseline_logreg)",
+      "accuracy_delta_pp": 7.1,
+      "macro_f1_delta": 0.0923,
+      "good_fit_recall_delta_pp": 11.83,
+      "good_fit_recall_relative_gain_pct": 78.57,
+      "mcnemar_exact_test": {
+        "contingency_table": {
+          "both_incorrect_n00": 144,
+          "baseline_only_correct_n10": 22,
+          "challenger_only_correct_n01": 43,
+          "both_correct_n11": 87
+        },
+        "discordant_pairs_total": 65,
+        "baseline_only_correct": 22,
+        "challenger_only_correct": 43,
+        "mcnemar_exact_two_sided_p_value": 0.0125,
+        "statistically_significant_at_alpha_0_05": true
+      },
+      "pigeonhole_bootstrap_10k": {
+        "B": 10000,
+        "seed": 42,
+        "accuracy_delta_mean_pp": 7.0,
+        "accuracy_delta_se_pp": 4.93,
+        "accuracy_delta_95_ci_pp": [
+          -2.98,
+          16.58
+        ],
+        "accuracy_ci_crosses_zero": true,
+        "macro_f1_delta_mean": 0.0899,
+        "macro_f1_delta_95_ci": [
+          0.0014,
+          0.1798
+        ],
+        "macro_f1_ci_crosses_zero": false,
+        "good_fit_recall_delta_mean_pp": 11.63,
+        "good_fit_recall_delta_95_ci_pp": [
+          0.0,
+          27.94
+        ],
+        "good_fit_recall_ci_crosses_zero": true
+      },
+      "cgm_two_way_crve_sandwich": {
+        "point_estimate_pp": 7.09,
+        "se_pp": 3.32,
+        "ci_95_pp": [
+          0.6,
+          13.59
+        ],
+        "ci_crosses_zero": false,
+        "design_effect": 1.5119,
+        "effective_sample_size_neff": 195.8,
+        "candidate_clusters_C": 91,
+        "job_clusters_J": 52,
+        "evaluation_pairs_N": 296
+      },
+      "statistical_significance_summary": {
+        "mcnemar_significant_alpha_0_05": true,
+        "cgm_accuracy_ci_excludes_zero": true,
+        "pigeonhole_accuracy_ci_excludes_zero": false,
+        "pigeonhole_macro_f1_ci_excludes_zero": true,
+        "synthesis": "Statistically significant on paired McNemar (p=0.0125) and analytical CGM CI [0.60, 13.59] pp; Macro F1 bootstrap CI [0.0014, 0.1798] strictly positive; accuracy bootstrap CI crosses zero under double-clustering dispersion [-2.98, 16.58] pp."
+      }
+    },
+    "model_5_vs_raw_sbert_baseline": {
+      "challenger": "Model 5 (Seed 42)",
+      "comparator": "Raw SBERT Bi-Encoder Baseline",
+      "accuracy_delta_pp": 5.74,
+      "macro_f1_delta": 0.087,
+      "good_fit_recall_delta_pp": 12.9,
+      "mcnemar_exact_test": {
+        "contingency_table": {
+          "both_incorrect_n00": 139,
+          "baseline_only_correct_n10": 27,
+          "challenger_only_correct_n01": 44,
+          "both_correct_n11": 86
+        },
+        "discordant_pairs_total": 71,
+        "baseline_only_correct": 27,
+        "challenger_only_correct": 44,
+        "mcnemar_exact_two_sided_p_value": 0.05681,
+        "statistically_significant_at_alpha_0_05": false
+      },
+      "pigeonhole_bootstrap_10k": {
+        "B": 10000,
+        "seed": 42,
+        "accuracy_delta_mean_pp": 5.67,
+        "accuracy_delta_se_pp": 5.47,
+        "accuracy_delta_95_ci_pp": [
+          -5.39,
+          16.43
+        ],
+        "accuracy_ci_crosses_zero": true,
+        "macro_f1_delta_mean": 0.0844,
+        "macro_f1_delta_95_ci": [
+          -0.0159,
+          0.1909
+        ],
+        "macro_f1_ci_crosses_zero": true,
+        "good_fit_recall_delta_mean_pp": 12.73,
+        "good_fit_recall_delta_95_ci_pp": [
+          0.0,
+          30.14
+        ],
+        "good_fit_recall_ci_crosses_zero": true
+      },
+      "cgm_two_way_crve_sandwich": {
+        "point_estimate_pp": 5.74,
+        "se_pp": 3.93,
+        "ci_95_pp": [
+          -1.96,
+          13.45
+        ],
+        "ci_crosses_zero": true,
+        "design_effect": 1.9266,
+        "effective_sample_size_neff": 153.6,
+        "candidate_clusters_C": 91,
+        "job_clusters_J": 52,
+        "evaluation_pairs_N": 296
+      }
+    },
+    "model_4_vs_clean_baseline": {
+      "challenger": "Model 4 (SkillAwareMatchingClassifier)",
+      "comparator": "Clean Dual-Unseen Logistic Regression Baseline (pred_baseline_logreg)",
+      "accuracy_delta_pp": 3.72,
+      "macro_f1_delta": 0.0773,
+      "good_fit_recall_delta_pp": 18.28,
+      "good_fit_recall_relative_gain_pct": 121.43,
+      "mcnemar_exact_test": {
+        "contingency_table": {
+          "both_incorrect_n00": 123,
+          "baseline_only_correct_n10": 53,
+          "challenger_only_correct_n01": 64,
+          "both_correct_n11": 56
+        },
+        "discordant_pairs_total": 117,
+        "baseline_only_correct": 53,
+        "challenger_only_correct": 64,
+        "mcnemar_exact_two_sided_p_value": 0.35528,
+        "statistically_significant_at_alpha_0_05": false
+      },
+      "pigeonhole_bootstrap_10k": {
+        "B": 10000,
+        "seed": 42,
+        "accuracy_delta_mean_pp": 3.79,
+        "accuracy_delta_se_pp": 6.87,
+        "accuracy_delta_95_ci_pp": [
+          -9.74,
+          17.51
+        ],
+        "accuracy_ci_crosses_zero": true,
+        "macro_f1_delta_mean": 0.0776,
+        "macro_f1_delta_95_ci": [
+          -0.0492,
+          0.2089
+        ],
+        "macro_f1_ci_crosses_zero": true,
+        "good_fit_recall_delta_mean_pp": 18.32,
+        "good_fit_recall_delta_95_ci_pp": [
+          -3.7,
+          43.22
+        ],
+        "good_fit_recall_ci_crosses_zero": true
+      },
+      "cgm_two_way_crve_sandwich": {
+        "point_estimate_pp": 3.72,
+        "se_pp": 4.59,
+        "ci_95_pp": [
+          -5.28,
+          12.71
+        ],
+        "ci_crosses_zero": true,
+        "design_effect": 1.5781,
+        "effective_sample_size_neff": 187.6,
+        "candidate_clusters_C": 91,
+        "job_clusters_J": 52,
+        "evaluation_pairs_N": 296
+      }
+    }
+  }
+}

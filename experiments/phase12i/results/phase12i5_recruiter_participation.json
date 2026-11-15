@@ -1,0 +1,47 @@
+{
+  "phase": "12I.5",
+  "audit_name": "Recruiter Pilot Participation, Cohort Qualifications & Queue Allocation",
+  "timestamp": "2026-11-14T20:34:00Z",
+  "recruiter_cohort": [
+    {
+      "pseudonymous_id": "REC_A_892",
+      "role": "Independent Primary Evaluator A",
+      "qualifications": "Senior Technical Recruiter with >= 5 years tech recruiting experience specializing in Software Engineering and Cloud/DevOps hiring.",
+      "assigned_pairs_count": 200,
+      "queue_file": "data/benchmark_vault/queues/queue_REC_A_892.json",
+      "blinding_verified": {
+        "model_predictions_masked": true,
+        "peer_ratings_masked": true,
+        "pii_sanitized": true
+      },
+      "onboarding_package_delivered": true,
+      "submission_status": "AWAITING_RECRUITER_RATINGS"
+    },
+    {
+      "pseudonymous_id": "REC_B_314",
+      "role": "Independent Primary Evaluator B",
+      "qualifications": "Technical Talent Partner with >= 6 years domain recruitment in Data Science, Machine Learning, QA Automation, and Technical Management.",
+      "assigned_pairs_count": 200,
+      "queue_file": "data/benchmark_vault/queues/queue_REC_B_314.json",
+      "blinding_verified": {
+        "model_predictions_masked": true,
+        "peer_ratings_masked": true,
+        "pii_sanitized": true
+      },
+      "onboarding_package_delivered": true,
+      "submission_status": "AWAITING_RECRUITER_RATINGS"
+    },
+    {
+      "pseudonymous_id": "LEAD_ADJ_001",
+      "role": "Senior Consensus Adjudicator",
+      "qualifications": "Director of Engineering Talent / Principal Recruiter with >= 8 years hiring authority across technical disciplines.",
+      "assigned_task": "Consensus resolution of discordant pairs where REC_A_892 != REC_B_314",
+      "status": "STANDBY_FOR_ADJUDICATION"
+    }
+  ],
+  "governance_verification": {
+    "zero_synthetic_recruiter_guarantee": true,
+    "independent_blinded_evaluation": true,
+    "append_only_intake_pipeline_ready": true
+  }
+}

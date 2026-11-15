@@ -1,0 +1,57 @@
+{
+  "audit_phase": "Phase 13.1",
+  "task": "Task 6 \u2014 Correct Performance Measurements (End-to-End Inference)",
+  "sample_size": 100,
+  "hardware_environment": {
+    "cpu_cores": 16,
+    "platform": "win32"
+  },
+  "models": {
+    "production_baseline": {
+      "model_name": "Model 1: Production Baseline",
+      "deployable_artifact_bytes": 331592,
+      "deployable_artifact_mb": 0.316,
+      "external_transformer_weights_required": false,
+      "cold_start_load_ms": 2068.02,
+      "post_load_rss_mb": 305.33,
+      "peak_rss_mb": 201.43,
+      "latency_mean_ms": 61.603,
+      "latency_p50_ms": 58.155,
+      "latency_p95_ms": 101.585,
+      "latency_p99_ms": 138.997
+    },
+    "skill_aware_matching": {
+      "model_name": "Model 4: Skill-Aware Matching Classifier",
+      "deployable_artifact_bytes": 4131,
+      "deployable_artifact_mb": 0.004,
+      "external_transformer_weights_required": false,
+      "cold_start_load_ms": 482.02,
+      "post_load_rss_mb": 213.6,
+      "peak_rss_mb": 205.09,
+      "latency_mean_ms": 70.28,
+      "latency_p50_ms": 67.088,
+      "latency_p95_ms": 111.553,
+      "latency_p99_ms": 133.048
+    },
+    "semantic_skill_fusion_challenger": {
+      "model_name": "Model 5: Semantic & Structured-Feature Fusion Challenger",
+      "deployable_artifact_bytes": 182525374,
+      "deployable_artifact_mb": 174.07,
+      "transformer_weights_mb": 174.0,
+      "classifier_head_kb": 76.4,
+      "external_transformer_weights_required": true,
+      "cold_start_load_ms": 82910.03,
+      "post_load_rss_mb": 630.23,
+      "peak_rss_mb": 637.09,
+      "latency_mean_ms": 374.343,
+      "latency_p50_ms": 506.397,
+      "latency_p95_ms": 587.141,
+      "latency_p99_ms": 622.272,
+      "component_breakdown_ms": {
+        "sbert_encoding_mean_ms": 319.073,
+        "domain_features_mean_ms": 50.797,
+        "classifier_head_mean_ms": 4.474
+      }
+    }
+  }
+}

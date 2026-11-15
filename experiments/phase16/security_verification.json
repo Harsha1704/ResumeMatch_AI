@@ -1,0 +1,100 @@
+{
+  "all_passed": true,
+  "results": {
+    "file_type_validation": {
+      "status": "PASS",
+      "details": {
+        "valid_pdf": {
+          "passed": true,
+          "detected_ext": "valid_resume.pdf"
+        },
+        "valid_docx": {
+          "passed": true,
+          "detected_ext": "valid_resume.docx"
+        },
+        "valid_txt": {
+          "passed": true,
+          "detected_ext": "valid_resume.txt"
+        }
+      }
+    },
+    "content_mismatch_defense": {
+      "status": "PASS",
+      "details": {
+        "fake_pdf_rejected": true,
+        "fake_docx_rejected": true,
+        "null_byte_rejected": true
+      }
+    },
+    "file_size_enforcement": {
+      "status": "PASS",
+      "rejected": true,
+      "max_size_bytes": 16777216,
+      "test_payload_bytes": 16778249
+    },
+    "path_traversal_defense": {
+      "status": "PASS",
+      "details": [
+        {
+          "original": "../../evil_resume.pdf",
+          "sanitized": "evil_resume.pdf",
+          "is_safe": true
+        },
+        {
+          "original": "..\\..\\windows\\system32\\cmd.exe",
+          "sanitized": "cmd.exe",
+          "is_safe": true
+        },
+        {
+          "original": "/etc/passwd",
+          "sanitized": "passwd",
+          "is_safe": true
+        },
+        {
+          "original": "....//....//nested/test.txt",
+          "sanitized": "test.txt",
+          "is_safe": true
+        },
+        {
+          "original": "normal_user_resume.pdf",
+          "sanitized": "normal_user_resume.pdf",
+          "is_safe": true
+        },
+        {
+          "original": "resume;rm -rf.pdf",
+          "sanitized": "resumerm_-rf.pdf",
+          "is_safe": true
+        }
+      ]
+    },
+    "csrf_protection": {
+      "status": "PASS",
+      "valid_token_accepted": true,
+      "missing_token_rejected": true,
+      "null_token_rejected": true,
+      "forged_token_rejected": true
+    },
+    "rate_limiting": {
+      "status": "PASS",
+      "requests_allowed": 10,
+      "requests_blocked": 5,
+      "retry_after_seconds": 1.0
+    },
+    "sensitive_info_redaction": {
+      "status": "PASS",
+      "leaks_detected": [],
+      "tested_status_codes": [
+        404,
+        405,
+        400
+      ]
+    },
+    "sqlite_storage_security": {
+      "status": "PASS",
+      "cache_db_exists": true,
+      "queue_db_exists": true,
+      "cache_path_confined": true,
+      "queue_path_confined": true
+    }
+  }
+}

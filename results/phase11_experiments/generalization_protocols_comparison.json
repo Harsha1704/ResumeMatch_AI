@@ -1,0 +1,186 @@
+{
+  "1. Random Pair Split (Diagnostic)": {
+    "accuracy": 0.6239,
+    "balanced_accuracy": 0.6619,
+    "macro_precision": 0.624,
+    "macro_recall": 0.6619,
+    "macro_f1": 0.6236,
+    "weighted_f1": 0.6227,
+    "brier_score": 0.9293,
+    "confusion_matrix": [
+      [
+        242,
+        118,
+        111
+      ],
+      [
+        43,
+        155,
+        36
+      ],
+      [
+        24,
+        20,
+        187
+      ]
+    ],
+    "per_class": {
+      "No Fit": {
+        "precision": 0.7832,
+        "recall": 0.5138,
+        "f1": 0.6205,
+        "support": 471
+      },
+      "Potential Fit": {
+        "precision": 0.529,
+        "recall": 0.6624,
+        "f1": 0.5882,
+        "support": 234
+      },
+      "Good Fit": {
+        "precision": 0.5599,
+        "recall": 0.8095,
+        "f1": 0.6619,
+        "support": 231
+      }
+    }
+  },
+  "2. Job-Disjoint Split (Unseen Jobs)": {
+    "accuracy": 0.5129,
+    "balanced_accuracy": 0.4349,
+    "macro_precision": 0.4331,
+    "macro_recall": 0.4349,
+    "macro_f1": 0.422,
+    "weighted_f1": 0.5103,
+    "brier_score": 0.87,
+    "confusion_matrix": [
+      [
+        248,
+        142,
+        25
+      ],
+      [
+        56,
+        135,
+        39
+      ],
+      [
+        43,
+        74,
+        16
+      ]
+    ],
+    "per_class": {
+      "No Fit": {
+        "precision": 0.7147,
+        "recall": 0.5976,
+        "f1": 0.6509,
+        "support": 415
+      },
+      "Potential Fit": {
+        "precision": 0.3846,
+        "recall": 0.587,
+        "f1": 0.4647,
+        "support": 230
+      },
+      "Good Fit": {
+        "precision": 0.2,
+        "recall": 0.1203,
+        "f1": 0.1502,
+        "support": 133
+      }
+    }
+  },
+  "3. Resume-Disjoint Split (Unseen Resumes)": {
+    "accuracy": 0.6334,
+    "balanced_accuracy": 0.6495,
+    "macro_precision": 0.6254,
+    "macro_recall": 0.6495,
+    "macro_f1": 0.6282,
+    "weighted_f1": 0.6314,
+    "brier_score": 0.9172,
+    "confusion_matrix": [
+      [
+        269,
+        109,
+        108
+      ],
+      [
+        60,
+        146,
+        42
+      ],
+      [
+        38,
+        18,
+        233
+      ]
+    ],
+    "per_class": {
+      "No Fit": {
+        "precision": 0.733,
+        "recall": 0.5535,
+        "f1": 0.6307,
+        "support": 486
+      },
+      "Potential Fit": {
+        "precision": 0.5348,
+        "recall": 0.5887,
+        "f1": 0.5605,
+        "support": 248
+      },
+      "Good Fit": {
+        "precision": 0.6084,
+        "recall": 0.8062,
+        "f1": 0.6935,
+        "support": 289
+      }
+    }
+  },
+  "4. Dual-Unseen Split (Unseen Jobs & Resumes)": {
+    "accuracy": 0.4646,
+    "balanced_accuracy": 0.4475,
+    "macro_precision": 0.4429,
+    "macro_recall": 0.4475,
+    "macro_f1": 0.4418,
+    "weighted_f1": 0.4563,
+    "brier_score": 0.7907,
+    "confusion_matrix": [
+      [
+        76,
+        23,
+        25
+      ],
+      [
+        26,
+        36,
+        18
+      ],
+      [
+        38,
+        29,
+        26
+      ]
+    ],
+    "per_class": {
+      "No Fit": {
+        "precision": 0.5429,
+        "recall": 0.6129,
+        "f1": 0.5758,
+        "support": 124
+      },
+      "Potential Fit": {
+        "precision": 0.4091,
+        "recall": 0.45,
+        "f1": 0.4286,
+        "support": 80
+      },
+      "Good Fit": {
+        "precision": 0.3768,
+        "recall": 0.2796,
+        "f1": 0.321,
+        "support": 93
+      }
+    }
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "validation_pairs": 296,
+  "candidate_entities": {
+    "unique_count": 91,
+    "canonical_definition": "resume_id (corresponds 1-to-1 with normalized resume_text_hash)",
+    "min_pairs_per_candidate": 1,
+    "median_pairs_per_candidate": 2.0,
+    "max_pairs_per_candidate": 15,
+    "mean_pairs_per_candidate": 3.2527472527472527,
+    "single_cluster_guarantee": "Every validation row belongs to exactly 1 candidate cluster."
+  },
+  "job_entities": {
+    "unique_count": 52,
+    "canonical_definition": "job_id (corresponds 1-to-1 with normalized job_text_hash)",
+    "min_pairs_per_job": 1,
+    "median_pairs_per_job": 5.0,
+    "max_pairs_per_job": 16,
+    "mean_pairs_per_job": 5.6923076923076925,
+    "single_cluster_guarantee": "Every validation row belongs to exactly 1 job cluster."
+  },
+  "resolution_of_43_cluster_claim": {
+    "finding": "The code in analyze_per_seed_mcnemar_and_bootstrap.py executed unique_candidates = np.unique(candidate_ids) which yielded exactly 91 candidate clusters (not 43).",
+    "origin_of_number_43": "The number 43 in report text was a historical echo of the debunked Phase 12F.2 Table 2.1 typo (43 resumes / 20 jobs). The actual cluster bootstrap was run on 91 candidate clusters.",
+    "pseudonymous_cluster_sample": [
+      {
+        "candidate_cluster_id": "CAND_00",
+        "resume_id_hash": "R_0196f5cc750ee0a5",
+        "pair_count": 7
+      },
+      {
+        "candidate_cluster_id": "CAND_01",
+        "resume_id_hash": "R_08fdaf0637c85a8d",
+        "pair_count": 8
+      },
+      {
+        "candidate_cluster_id": "CAND_02",
+        "resume_id_hash": "R_0a7374e7d12cb8b6",
+        "pair_count": 3
+      },
+      {
+        "candidate_cluster_id": "CAND_03",
+        "resume_id_hash": "R_0b82deb80152e72e",
+        "pair_count": 6
+      },
+      {
+        "candidate_cluster_id": "CAND_04",
+        "resume_id_hash": "R_0ffd09ef1a6bdb2e",
+        "pair_count": 5
+      },
+      {
+        "candidate_cluster_id": "CAND_05",
+        "resume_id_hash": "R_13ab385172349c85",
+        "pair_count": 7
+      },
+      {
+        "candidate_cluster_id": "CAND_06",
+        "resume_id_hash": "R_188ea87dc647270e",
+        "pair_count": 1
+      },
+      {
+        "candidate_cluster_id": "CAND_07",
+        "resume_id_hash": "R_1a184365820c2a8f",
+        "pair_count": 5
+      },
+      {
+        "candidate_cluster_id": "CAND_08",
+        "resume_id_hash": "R_1b510adcd05bcb04",
+        "pair_count": 2
+      },
+      {
+        "candidate_cluster_id": "CAND_09",
+        "resume_id_hash": "R_1bd9678d27832c39",
+        "pair_count": 8
+      }
+    ]
+  }
+}

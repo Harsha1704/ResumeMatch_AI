@@ -1,0 +1,247 @@
+{
+  "Config A: TF-IDF Baseline (Word TF-IDF + 15 Dense)": {
+    "accuracy": 0.4974,
+    "balanced_accuracy": 0.422,
+    "macro_precision": 0.4256,
+    "macro_recall": 0.422,
+    "macro_f1": 0.4177,
+    "weighted_f1": 0.4937,
+    "brier_score": 0.9019,
+    "confusion_matrix": [
+      [
+        251,
+        139,
+        25
+      ],
+      [
+        77,
+        114,
+        39
+      ],
+      [
+        62,
+        49,
+        22
+      ]
+    ],
+    "per_class": {
+      "No Fit": {
+        "precision": 0.6436,
+        "recall": 0.6048,
+        "f1": 0.6236,
+        "support": 415
+      },
+      "Potential Fit": {
+        "precision": 0.3775,
+        "recall": 0.4957,
+        "f1": 0.4286,
+        "support": 230
+      },
+      "Good Fit": {
+        "precision": 0.2558,
+        "recall": 0.1654,
+        "f1": 0.2009,
+        "support": 133
+      }
+    },
+    "feature_dim": 2515,
+    "train_time_sec": 2.25,
+    "inf_time_ms_per_pair": 0.0
+  },
+  "Config B: Semantic Embeddings Only (SBERT 1,537 dims)": {
+    "accuracy": 0.509,
+    "balanced_accuracy": 0.4762,
+    "macro_precision": 0.4703,
+    "macro_recall": 0.4762,
+    "macro_f1": 0.4726,
+    "weighted_f1": 0.5122,
+    "brier_score": 1.4746,
+    "confusion_matrix": [
+      [
+        238,
+        124,
+        53
+      ],
+      [
+        90,
+        105,
+        35
+      ],
+      [
+        58,
+        22,
+        53
+      ]
+    ],
+    "per_class": {
+      "No Fit": {
+        "precision": 0.6166,
+        "recall": 0.5735,
+        "f1": 0.5943,
+        "support": 415
+      },
+      "Potential Fit": {
+        "precision": 0.4183,
+        "recall": 0.4565,
+        "f1": 0.4366,
+        "support": 230
+      },
+      "Good Fit": {
+        "precision": 0.3759,
+        "recall": 0.3985,
+        "f1": 0.3869,
+        "support": 133
+      }
+    },
+    "feature_dim": 1537,
+    "train_time_sec": 7.56,
+    "inf_time_ms_per_pair": 0.0
+  },
+  "Config C: Structured Matching Only (25 Dense Domain Feats)": {
+    "accuracy": 0.4344,
+    "balanced_accuracy": 0.3928,
+    "macro_precision": 0.4002,
+    "macro_recall": 0.3928,
+    "macro_f1": 0.3877,
+    "weighted_f1": 0.4551,
+    "brier_score": 0.7402,
+    "confusion_matrix": [
+      [
+        219,
+        95,
+        101
+      ],
+      [
+        65,
+        77,
+        88
+      ],
+      [
+        45,
+        46,
+        42
+      ]
+    ],
+    "per_class": {
+      "No Fit": {
+        "precision": 0.6657,
+        "recall": 0.5277,
+        "f1": 0.5887,
+        "support": 415
+      },
+      "Potential Fit": {
+        "precision": 0.3532,
+        "recall": 0.3348,
+        "f1": 0.3438,
+        "support": 230
+      },
+      "Good Fit": {
+        "precision": 0.1818,
+        "recall": 0.3158,
+        "f1": 0.2308,
+        "support": 133
+      }
+    },
+    "feature_dim": 25,
+    "train_time_sec": 0.03,
+    "inf_time_ms_per_pair": 0.0
+  },
+  "Config D: Semantic Embeddings + Structured Matching (1,562 dims)": {
+    "accuracy": 0.4846,
+    "balanced_accuracy": 0.4569,
+    "macro_precision": 0.4528,
+    "macro_recall": 0.4569,
+    "macro_f1": 0.4529,
+    "weighted_f1": 0.4896,
+    "brier_score": 1.4681,
+    "confusion_matrix": [
+      [
+        222,
+        142,
+        51
+      ],
+      [
+        92,
+        104,
+        34
+      ],
+      [
+        52,
+        30,
+        51
+      ]
+    ],
+    "per_class": {
+      "No Fit": {
+        "precision": 0.6066,
+        "recall": 0.5349,
+        "f1": 0.5685,
+        "support": 415
+      },
+      "Potential Fit": {
+        "precision": 0.3768,
+        "recall": 0.4522,
+        "f1": 0.4111,
+        "support": 230
+      },
+      "Good Fit": {
+        "precision": 0.375,
+        "recall": 0.3835,
+        "f1": 0.3792,
+        "support": 133
+      }
+    },
+    "feature_dim": 1562,
+    "train_time_sec": 12.1,
+    "inf_time_ms_per_pair": 0.0
+  },
+  "Config E: Composite (TF-IDF + Semantic + Structured, 4,062 dims)": {
+    "accuracy": 0.4897,
+    "balanced_accuracy": 0.4618,
+    "macro_precision": 0.4563,
+    "macro_recall": 0.4618,
+    "macro_f1": 0.4571,
+    "weighted_f1": 0.4951,
+    "brier_score": 1.4707,
+    "confusion_matrix": [
+      [
+        225,
+        139,
+        51
+      ],
+      [
+        89,
+        104,
+        37
+      ],
+      [
+        51,
+        30,
+        52
+      ]
+    ],
+    "per_class": {
+      "No Fit": {
+        "precision": 0.6164,
+        "recall": 0.5422,
+        "f1": 0.5769,
+        "support": 415
+      },
+      "Potential Fit": {
+        "precision": 0.381,
+        "recall": 0.4522,
+        "f1": 0.4135,
+        "support": 230
+      },
+      "Good Fit": {
+        "precision": 0.3714,
+        "recall": 0.391,
+        "f1": 0.381,
+        "support": 133
+      }
+    },
+    "feature_dim": 4062,
+    "train_time_sec": 16.86,
+    "inf_time_ms_per_pair": 0.01
+  }
+}

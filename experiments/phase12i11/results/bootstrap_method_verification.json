@@ -1,0 +1,56 @@
+{
+  "audit_phase": "Phase 12I.11",
+  "timestamp": "2026-11-14T21:38:30Z",
+  "audited_implementation": {
+    "source_file": "experiments/phase12i10/results/paired_two_way_bootstrap.json",
+    "theoretical_foundation": "Cameron, Gelbach, & Miller (2011) multi-way clustering bootstrap framework for non-nested crossed grouping factors",
+    "resampling_scheme": "Two-way independent multinomial cluster resampling on candidates (C=91) and jobs (J=52)",
+    "cluster_weighting_mechanism": "w_i = c_counts[cand(i)] * j_counts[job(i)] where c_counts ~ Multinomial(C, 1/C) and j_counts ~ Multinomial(J, 1/J)",
+    "replicate_count_B": 10000,
+    "interval_type": "Empirical Percentile Confidence Interval [2.5%, 97.5%]"
+  },
+  "forensic_methodological_checks": {
+    "crossed_cluster_resampling_verified": true,
+    "crossed_cluster_mechanism": "Candidate clusters and job clusters are resampled independently with replacement. A pair (c, j) receives non-zero weight if and only if both candidate c and job j are selected in the respective cluster resamples.",
+    "paired_prediction_alignment_preserved": true,
+    "alignment_mechanism": "Predictions from challenger and comparator are indexed by pair row i. The paired accuracy difference Delta_i = I(challenger_i == y_i) - I(comparator_i == y_i) is evaluated directly on pair i, ensuring perfect paired alignment for every resampled pair.",
+    "duplicate_cluster_handling": "Duplicate selections of candidate c (k_c > 1) and job j (k_j > 1) scale the pair weight multiplicatively: w_i = k_c * k_j. This correctly represents the joint cluster multiplicity.",
+    "candidate_job_incidence_structure_preserved": true,
+    "incidence_mechanism": "The sparse bipartite graph structure of 296 pairs across 91 candidates and 52 jobs is strictly preserved because weights only apply to existing pairs E in the graph. No synthetic unobserved pairs are generated.",
+    "finite_cluster_correction": {
+      "included_in_raw_weights": false,
+      "finite_adjustment_factor": "sqrt((C / (C - 1)) * (J / (J - 1))) = sqrt((91/90) * (52/51)) = 1.0152 (+1.52% standard error adjustment)",
+      "impact_assessment": "Because the finite-sample correction inflates standard error by 1.52%, it slightly widens the confidence intervals, further reinforcing that 95% CIs span zero."
+    },
+    "interval_methodology_audit": {
+      "interval_type": "Empirical Percentile Interval [2.5%, 97.5%]",
+      "basic_bootstrap_interval_checked": true,
+      "percentile_interval_validity": "Percentile intervals are transformation-invariant and robust for bounded proportions. Basic (empirical pivotal) intervals yield virtually identical bounds (e.g. Seed 42 vs Baseline: Percentile [-1.34%, +19.92%], Basic [-1.68%, +19.58%])."
+    },
+    "convergence_and_degenerate_replicates": {
+      "total_replicates": 10000,
+      "failed_replicates": 0,
+      "degenerate_replicates_sum_w_zero": 0,
+      "effective_sample_size_per_replicate_mean": 148.6
+    }
+  },
+  "evaluation_under_both_comparators": {
+    "comparator_a_production_baseline": {
+      "point_estimate_mean_pp": 7.78,
+      "bootstrap_se_range_pp": [
+        5.47,
+        6.19
+      ],
+      "confidence_interval_conclusion": "95% CIs cross zero for all 5 seeds due to two-way cluster variance inflation (SE ~5.5-6.2% vs unclustered ~2.9%)."
+    },
+    "comparator_b_raw_sbert": {
+      "point_estimate_mean_pp": 6.42,
+      "bootstrap_se_range_pp": [
+        5.2,
+        5.91
+      ],
+      "confidence_interval_conclusion": "95% CIs cross zero for all 5 seeds due to two-way cluster variance inflation."
+    }
+  },
+  "verdict_on_bootstrap_integrity": "METHODOLOGICALLY_DEFENSIBLE_AND_REPRODUCED"
+}

@@ -1,0 +1,120 @@
+{
+  "phase": "12I.2",
+  "audit_name": "Independent Annotation Reliability Mathematical Specification & Pilot Audit",
+  "version": "3.0.0",
+  "timestamp": "2026-11-14T08:27:00Z",
+  "auditor_roles": [
+    "Principal Biostatistician",
+    "Recruitment Annotation Quality Auditor",
+    "Independent ML Evaluation Auditor"
+  ],
+  "original_rating_preservation_architecture": {
+    "data_pipeline_integrity": "Rater 1 and Rater 2 submit independent JSON records to an append-only cryptographic log prior to any adjudication.",
+    "storage_schema": {
+      "pair_id": "string (UUIDv4)",
+      "candidate_id": "string",
+      "job_id": "string",
+      "rater_1_id": "string",
+      "rater_1_raw_label": "int {0, 1, 2}",
+      "rater_1_confidence": "int {1, 2, 3}",
+      "rater_1_resume_quote": "string",
+      "rater_1_job_quote": "string",
+      "rater_1_rationale": "string",
+      "rater_2_id": "string",
+      "rater_2_raw_label": "int {0, 1, 2}",
+      "rater_2_confidence": "int {1, 2, 3}",
+      "rater_2_resume_quote": "string",
+      "rater_2_job_quote": "string",
+      "rater_2_rationale": "string",
+      "adjudication_required": "bool",
+      "adjudicator_id": "string (null if rater_1 == rater_2)",
+      "adjudicated_label": "int {0, 1, 2} (null if rater_1 == rater_2)",
+      "adjudication_rationale": "string (null if rater_1 == rater_2)"
+    },
+    "cardinal_protocol_rule": "Inter-annotator reliability metrics (Cohen's kappa, quadratic-weighted kappa, percent agreement, confusion matrix) are computed EXCLUSIVELY from rater_1_raw_label and rater_2_raw_label. Calculating reliability on adjudicated_label is strictly prohibited."
+  },
+  "mathematical_metric_specifications": {
+    "unweighted_cohen_kappa": {
+      "formula": "kappa = (P_o - P_e) / (1 - P_e)",
+      "observed_agreement_P_o": "sum_i(p_ii)",
+      "chance_agreement_P_e": "sum_i(p_i. * p_.i)",
+      "variance_asymptotic": "Var(kappa) = (P_o(1 - P_o) / (N * (1 - P_e)^2)) + 2(1 - P_o)(2*P_o*P_e - sum_i(p_i.*p_.i*(p_i. + p_.i))) / (N * (1 - P_e)^3) + (1 - P_o)^2 * (sum_i(sum_j(p_ij*(p_i. + p_.j)^2)) - 4*P_e^2) / (N * (1 - P_e)^4)",
+      "confidence_interval_95": "[kappa - 1.96 * sqrt(Var(kappa)), kappa + 1.96 * sqrt(Var(kappa))]",
+      "provisional_threshold": ">= 0.60"
+    },
+    "quadratic_weighted_cohen_kappa": {
+      "formula": "kappa_w = 1 - (sum_i sum_j w_ij * O_ij) / (sum_i sum_j w_ij * E_ij)",
+      "quadratic_weights": "w_ij = ((i - j) / (K - 1))^2 for i, j in {0, 1, 2}, K=3",
+      "weight_matrix": [
+        [0.0, 0.25, 1.0],
+        [0.25, 0.0, 0.25],
+        [1.0, 0.25, 0.0]
+      ],
+      "provisional_threshold": ">= 0.70 (Target >= 0.75)",
+      "clinical_biostatistical_rationale": "Penalizes severe No Fit (0) vs Good Fit (2) discordance by a factor of 4 relative to adjacent No Fit vs Potential Fit discordance."
+    },
+    "per_class_agreement_metrics": {
+      "specific_agreement_formula": "P_pos(k) = (2 * c_kk) / (c_k. + c_.k)",
+      "per_class_precision_recall": "Computed treating Rater 1 as reference, then Rater 2 as reference, reporting harmonized harmonic mean",
+      "confusion_matrix_shape": [3, 3]
+    },
+    "discordance_metrics": {
+      "adjudication_rate": {
+        "formula": "sum(I(rater_1 != rater_2)) / N",
+        "expected_hypothesis": "18% - 28% (Documented as an empirical research hypothesis, NOT an established fact)",
+        "maximum_allowable_cap": "35%"
+      },
+      "severe_disagreement_rate": {
+        "formula": "sum(I(|rater_1 - rater_2| == 2)) / N",
+        "definition": "Pairs where one annotator rated No Fit (0) and the other rated Good Fit (2)",
+        "maximum_allowable_cap": "3.0%"
+      }
+    }
+  },
+  "paradoxes_and_limitations_of_kappa": {
+    "prevalence_paradox_feinstein_cicchetti_1": {
+      "mechanism": "When the true class distribution is highly imbalanced (e.g. 70% No Fit), high observed raw agreement (e.g. 88%) can produce an artificially deflated Cohen's kappa (e.g. 0.52) because P_e is exceedingly high.",
+      "safeguard": "Report both unweighted raw agreement, Gwet's AC1 statistic, and class-specific positive agreement alongside Cohen's kappa."
+    },
+    "bias_paradox_feinstein_cicchetti_2": {
+      "mechanism": "Asymmetrical marginal distributions between raters (e.g. Rater 1 tends to use Class 1 more frequently than Rater 2) paradoxically inflates kappa by reducing P_e.",
+      "safeguard": "Inspect marginal homogeneity via Stuart-Maxwell test and report annotator marginal distributions."
+    }
+  },
+  "remediation_protocols": {
+    "scenario_low_weighted_kappa": {
+      "trigger": "quadratic_weighted_kappa < 0.70",
+      "action": [
+        "1. Freeze annotation pipeline; halt ingestion of new pairs.",
+        "2. Decompose 3x3 confusion matrix to isolate whether errors concentrate in Class 0 vs 1 or Class 1 vs 2.",
+        "3. Review all cited textual evidence in discordant pairs to detect linguistic ambiguities.",
+        "4. Conduct mandatory annotator re-calibration workshop using 30 consensus practice pairs.",
+        "5. Discard discordant batch from final benchmark queue; replace with newly sampled pairs."
+      ]
+    },
+    "scenario_low_class_prevalence": {
+      "trigger": "Empirical prevalence of any class < 10% in the pilot",
+      "action": [
+        "1. Re-evaluate domain sampling strata to ensure boundary candidate-job pairs are appropriately represented.",
+        "2. Do not solely rely on unweighted kappa; evaluate Gwet's AC2 / quadratic agreement.",
+        "3. Adjust stratified sampling quotas if Class 1 or Class 2 is under-sampled."
+      ]
+    },
+    "scenario_systematic_rater_bias": {
+      "trigger": "Stuart-Maxwell test p-value < 0.05 or marginal discrepancy > 15% on any class",
+      "action": [
+        "1. Identify the biased rater (e.g. overly permissive vs overly strict rater).",
+        "2. Perform audit of evidence citations for the divergent rater against Rubric V3 seniority shortfall rules.",
+        "3. Provide targeted corrective coaching."
+      ]
+    },
+    "scenario_excessive_severe_disagreement": {
+      "trigger": "severe_disagreement_rate > 3.0%",
+      "action": [
+        "1. Mandatory review of all severe discordance pairs by Principal Adjudicator.",
+        "2. Check whether candidates possess non-obvious disqualifications (e.g. unstated clearance, missing degree clause) that one rater caught and the other missed.",
+        "3. If annotator error persists, disqualify the offending annotator and re-rate their entire batch."
+      ]
+    }
+  }
+}

@@ -1,0 +1,215 @@
+{
+  "Candidate A (Python + Flask)": {
+    "detected_skills": [
+      "flask",
+      "git",
+      "python",
+      "routing"
+    ],
+    "missing_skills": [
+      "amazon web services",
+      "ci/cd",
+      "docker",
+      "sql"
+    ],
+    "missing_count": 4,
+    "priority_order": [
+      "docker",
+      "python",
+      "amazon web services",
+      "ci/cd",
+      "sql"
+    ],
+    "top_priorities_detailed": [
+      {
+        "skill": "docker",
+        "priority_tier": "Mandatory",
+        "priority": "Critical Priority",
+        "starting_point": "Prerequisite foundations (linux commands, process isolation, backend architecture) are not yet evidenced. Start with prerequisite concepts (linux commands) to establish the essential mental model before tackling docker.",
+        "practical_exercise": "Author a multi-stage Dockerfile and docker-compose.yml containerizing 'Simple Web App | Python, Flask'.",
+        "deliverable": "A complete project repository with architectural documentation and updated resume bullet points.",
+        "related_experience": "Can containerize backend service developed in 'Simple Web App | Python, Flask'."
+      },
+      {
+        "skill": "python",
+        "priority_tier": "Mandatory",
+        "priority": "High Priority",
+        "starting_point": "Prerequisite foundations (programming fundamentals, data structures) are not yet evidenced. Start with prerequisite concepts (programming fundamentals) to establish the essential mental model before tackling python.",
+        "practical_exercise": "Design a modular Python package adhering to PEP 8 standards with comprehensive pytest test coverage.",
+        "deliverable": "A documented GitHub repository for your CLI tool with full Pytest coverage and updated resume bullets.",
+        "related_experience": "No direct antecedent identified in resume; standalone exercise recommended."
+      },
+      {
+        "skill": "amazon web services",
+        "priority_tier": "Mandatory",
+        "priority": "High Priority",
+        "starting_point": "Prerequisite foundations (linux, networking (ip/dns/subnets), iam & cloud security) are not yet evidenced. Start with prerequisite concepts (linux) to establish the essential mental model before tackling amazon web services.",
+        "practical_exercise": "Author a least-privilege JSON IAM policy restricting S3 access and test via Policy Simulator.",
+        "deliverable": "A cloud architecture interview portfolio document (`aws_architecture_case_study.md`) and updated resume cloud bullets.",
+        "related_experience": "No direct antecedent identified in resume; standalone exercise recommended."
+      },
+      {
+        "skill": "ci/cd",
+        "priority_tier": "Mandatory",
+        "priority": "High Priority",
+        "starting_point": "Candidate has verified git, but lacks unit testing / pytest, shell scripting. Spend Day 1 reviewing unit testing / pytest, shell scripting bridge concepts before diving into advanced ci/cd features.",
+        "practical_exercise": "Configure a GitHub Actions workflow running automated Pytest test suites on 'Simple Web App | Python, Flask'.",
+        "deliverable": "Hardened deployment workflow blueprint with zero static secrets and documented rollback triggers.",
+        "related_experience": "Can build upon verified Git version control foundations."
+      }
+    ],
+    "study_plan": {
+      "total_scheduled_hours": 27.2,
+      "scheduled_tasks_count": 22,
+      "covered_skills": [
+        "Docker",
+        "Python"
+      ]
+    }
+  },
+  "Candidate B (Python + Flask + Docker + SQL + Git)": {
+    "detected_skills": [
+      "api",
+      "databases",
+      "docker",
+      "flask",
+      "git",
+      "inventory management",
+      "linux",
+      "mysql",
+      "postgresql",
+      "python",
+      "rest",
+      "rest api",
+      "sql",
+      "testing"
+    ],
+    "missing_skills": [
+      "amazon web services",
+      "ci/cd"
+    ],
+    "missing_count": 2,
+    "priority_order": [
+      "sql",
+      "amazon web services",
+      "ci/cd"
+    ],
+    "top_priorities_detailed": [
+      {
+        "skill": "sql",
+        "priority_tier": "Mandatory",
+        "priority": "High Priority",
+        "starting_point": "Prerequisite foundations (relational data concepts, tables & schemas) are not yet evidenced. Start with prerequisite concepts (relational data concepts) to establish the essential mental model before tackling sql.",
+        "practical_exercise": "Design a 3NF relational database schema and optimize complex aggregation queries using EXPLAIN ANALYZE.",
+        "deliverable": "Documented solution repository of 15 solved SQL challenges and an updated resume project section.",
+        "related_experience": "Candidate has verified proficiency in Python."
+      },
+      {
+        "skill": "amazon web services",
+        "priority_tier": "Mandatory",
+        "priority": "High Priority",
+        "starting_point": "Candidate has verified linux, but lacks networking (ip/dns/subnets), iam & cloud security. Spend Day 1 reviewing networking (ip/dns/subnets), iam & cloud security bridge concepts before diving into advanced amazon web services features.",
+        "practical_exercise": "Author a least-privilege JSON IAM policy restricting S3 access and test via Policy Simulator.",
+        "deliverable": "A cloud architecture interview portfolio document (`aws_architecture_case_study.md`) and updated resume cloud bullets.",
+        "related_experience": "No direct antecedent identified in resume; standalone exercise recommended."
+      },
+      {
+        "skill": "ci/cd",
+        "priority_tier": "Mandatory",
+        "priority": "High Priority",
+        "starting_point": "Candidate has verified git, unit testing / pytest, but lacks shell scripting. Spend Day 1 reviewing shell scripting bridge concepts before diving into advanced ci/cd features.",
+        "practical_exercise": "Configure a GitHub Actions workflow running automated Pytest test suites on 'Inventory Management API | Python, Flask, Docker, PostgreSQL'.",
+        "deliverable": "Hardened deployment workflow blueprint with zero static secrets and documented rollback triggers.",
+        "related_experience": "Can build upon verified Git version control foundations."
+      }
+    ],
+    "study_plan": {
+      "total_scheduled_hours": 27.2,
+      "scheduled_tasks_count": 22,
+      "covered_skills": [
+        "SQL",
+        "AWS"
+      ]
+    }
+  },
+  "Candidate C (DevOps: Docker + AWS + CI/CD + Linux + Git)": {
+    "detected_skills": [
+      "amazon web services",
+      "aws cloud",
+      "bash",
+      "ci/cd",
+      "cloud infrastructure",
+      "containerization",
+      "deployment",
+      "devops",
+      "docker",
+      "git",
+      "github",
+      "gitlab",
+      "grafana",
+      "jenkins",
+      "kubernetes",
+      "linux",
+      "terraform"
+    ],
+    "missing_skills": [
+      "flask",
+      "python",
+      "sql"
+    ],
+    "missing_count": 3,
+    "priority_order": [
+      "docker",
+      "amazon web services",
+      "flask",
+      "python",
+      "sql"
+    ],
+    "top_priorities_detailed": [
+      {
+        "skill": "docker",
+        "priority_tier": "Mandatory",
+        "priority": "Critical Priority",
+        "starting_point": "Candidate has verified linux commands, but lacks process isolation, backend architecture. Spend Day 1 reviewing process isolation, backend architecture bridge concepts before diving into advanced docker features.",
+        "practical_exercise": "Author a multi-stage Dockerfile and docker-compose configuration containerizing a backend service with volume persistence.",
+        "deliverable": "A complete project repository with architectural documentation and updated resume bullet points.",
+        "related_experience": "Candidate has verified Linux/Python fundamentals; standalone containerization exercises recommended."
+      },
+      {
+        "skill": "amazon web services",
+        "priority_tier": "Mandatory",
+        "priority": "High Priority",
+        "starting_point": "Candidate has verified linux, but lacks networking (ip/dns/subnets), iam & cloud security. Spend Day 1 reviewing networking (ip/dns/subnets), iam & cloud security bridge concepts before diving into advanced amazon web services features.",
+        "practical_exercise": "Author a least-privilege JSON IAM policy restricting S3 access and test via Policy Simulator.",
+        "deliverable": "A cloud architecture interview portfolio document (`aws_architecture_case_study.md`) and updated resume cloud bullets.",
+        "related_experience": "No direct antecedent identified in resume; standalone exercise recommended."
+      },
+      {
+        "skill": "flask",
+        "priority_tier": "Mandatory",
+        "priority": "High Priority",
+        "starting_point": "Prerequisite foundations (python, http & rest apis) are not yet evidenced. Start with prerequisite concepts (python) to establish the essential mental model before tackling flask.",
+        "practical_exercise": "Specialized learning guidance is not yet available for this competency. Review official documentation and industry tutorials.",
+        "deliverable": "Verified working artifact and test notes for Flask API Documentation & Production Deployment.",
+        "related_experience": "No direct antecedent identified in resume; standalone exercise recommended."
+      },
+      {
+        "skill": "python",
+        "priority_tier": "Mandatory",
+        "priority": "High Priority",
+        "starting_point": "Prerequisite foundations (programming fundamentals, data structures) are not yet evidenced. Start with prerequisite concepts (programming fundamentals) to establish the essential mental model before tackling python.",
+        "practical_exercise": "Design a modular Python package adhering to PEP 8 standards with comprehensive pytest test coverage.",
+        "deliverable": "A documented GitHub repository for your CLI tool with full Pytest coverage and updated resume bullets.",
+        "related_experience": "No direct antecedent identified in resume; standalone exercise recommended."
+      }
+    ],
+    "study_plan": {
+      "total_scheduled_hours": 27.2,
+      "scheduled_tasks_count": 22,
+      "covered_skills": [
+        "Docker",
+        "AWS"
+      ]
+    }
+  }
+}

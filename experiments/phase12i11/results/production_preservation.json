@@ -1,0 +1,22 @@
+{
+  "phase": "12I.11",
+  "audit_timestamp": "2026-11-14T21:32:00Z",
+  "status": "VERIFIED_PRESERVED",
+  "checkpoints": {
+    "models/best_model.joblib": {
+      "size": 61487,
+      "sha256": "1001baaf42db8832e1ba3e28ee9da7146e59f1d2d1808c73c4f7587535b2ed4a",
+      "verified": true
+    },
+    "models/feature_pipeline.joblib": {
+      "size": 270105,
+      "sha256": "2ebf209f691b7084decb5d3a183b82e9b425fe89335345a4af661fed2fc88ae6",
+      "verified": true
+    },
+    "models/phase12f/challenger_model_phase12f.joblib": {
+      "size": 2330440,
+      "sha256": "5934990e987abe98223bf790ac9e9a79fb5ec99daac4509093e8eb0036461766",
+      "verified": true
+    }
+  }
+}

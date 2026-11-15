@@ -1,0 +1,16 @@
+{
+  "selected_champion": "Optimized LightGBM",
+  "champion_type": "lightgbm",
+  "training_samples_raw": 3857,
+  "training_samples_active": 3845,
+  "val_samples_dual_unseen": 297,
+  "n_tfidf_features": 2500,
+  "n_svd_components": 128,
+  "n_features_total": 7788,
+  "label_order": [
+    "No Fit",
+    "Good Fit",
+    "Potential Fit"
+  ],
+  "timestamp": "2026-11-09 17:06:06"
+}

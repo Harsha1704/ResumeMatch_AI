@@ -1,0 +1,49 @@
+{
+  "phase": "12I.8",
+  "audit_name": "Zero-Leakage & Entity Disjointness Forensic Audit",
+  "timestamp": "2026-11-14T21:05:00Z",
+  "manifest_version": "1.0.0",
+  "primary_dataset_sha256": "b86fa488a21258015de1750633a9ac410f701ff96bf533f68978dbe3adec6d40",
+  "split_verifications": [
+    {
+      "protocol": "job_disjoint",
+      "train_file": "manifests/v1/job_disjoint_train_v1.parquet",
+      "val_file": "manifests/v1/job_disjoint_val_v1.parquet",
+      "overlapping_jobs": 0,
+      "overlapping_pairs": 0,
+      "leakage_status": "ZERO_LEAKAGE"
+    },
+    {
+      "protocol": "resume_disjoint",
+      "train_file": "manifests/v1/resume_disjoint_train_v1.parquet",
+      "val_file": "manifests/v1/resume_disjoint_val_v1.parquet",
+      "overlapping_resumes": 0,
+      "overlapping_pairs": 0,
+      "leakage_status": "ZERO_LEAKAGE"
+    },
+    {
+      "protocol": "dual_unseen",
+      "train_file": "manifests/v1/dual_unseen_train_v1.parquet",
+      "val_file": "manifests/v1/dual_unseen_val_v1.parquet",
+      "overlapping_resumes": 0,
+      "overlapping_jobs": 0,
+      "overlapping_pairs": 0,
+      "leakage_status": "ZERO_LEAKAGE"
+    },
+    {
+      "protocol": "held_out_test",
+      "train_file": "manifests/v1/job_disjoint_train_v1.parquet",
+      "test_file": "manifests/v1/held_out_test_v1.parquet",
+      "overlapping_jobs": 0,
+      "overlapping_pairs": 0,
+      "leakage_status": "ZERO_LEAKAGE"
+    }
+  ],
+  "unlabelled_corpus_isolation": {
+    "djinni_cvs": "data/external/djinni/djinni_candidate_profiles_english.parquet (210,250 unlabelled profiles)",
+    "djinni_jobs": "data/external/djinni/djinni_job_descriptions_english.parquet (141,897 unlabelled jobs)",
+    "usage": "Self-supervised contrastive domain adaptation only. Zero synthetic fit labels generated.",
+    "leakage_into_labels": false
+  },
+  "overall_leakage_verdict": "PERFECT_SPLIT_ISOLATION_CONFIRMED"
+}

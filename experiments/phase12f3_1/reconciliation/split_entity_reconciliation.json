@@ -1,0 +1,94 @@
+{
+  "audit_metadata": {
+    "version": "Phase 12F.3.1",
+    "auditor_role": "Data Integrity Specialist & Independent Statistical Auditor"
+  },
+  "per_file_entity_counts": {
+    "dual_unseen_train": {
+      "dataset_name": "dual_unseen_train_v1",
+      "physical_rows": 3857,
+      "unique_raw_resume_ids": 500,
+      "unique_raw_resume_hashes": 500,
+      "unique_norm_resume_hashes": 499,
+      "unique_raw_job_ids": 221,
+      "unique_raw_job_hashes": 221,
+      "unique_norm_job_hashes": 221,
+      "unique_exact_pairs": 3851
+    },
+    "dual_unseen_val_raw": {
+      "dataset_name": "dual_unseen_val_v1_raw",
+      "physical_rows": 297,
+      "unique_raw_resume_ids": 92,
+      "unique_raw_resume_hashes": 92,
+      "unique_norm_resume_hashes": 92,
+      "unique_raw_job_ids": 52,
+      "unique_raw_job_hashes": 52,
+      "unique_norm_job_hashes": 52,
+      "unique_exact_pairs": 296
+    },
+    "dual_unseen_val_clean": {
+      "dataset_name": "dual_unseen_val_v1_post_quarantine",
+      "physical_rows": 296,
+      "unique_raw_resume_ids": 91,
+      "unique_raw_resume_hashes": 91,
+      "unique_norm_resume_hashes": 91,
+      "unique_raw_job_ids": 52,
+      "unique_raw_job_hashes": 52,
+      "unique_norm_job_hashes": 52,
+      "unique_exact_pairs": 295
+    },
+    "job_disjoint_train": {
+      "dataset_name": "job_disjoint_train_v1",
+      "physical_rows": 5462,
+      "unique_raw_resume_ids": null,
+      "unique_raw_resume_hashes": 633,
+      "unique_norm_resume_hashes": 631,
+      "unique_raw_job_ids": null,
+      "unique_raw_job_hashes": 238,
+      "unique_norm_job_hashes": 238,
+      "unique_exact_pairs": 5456
+    },
+    "job_disjoint_val": {
+      "dataset_name": "job_disjoint_val_v1",
+      "physical_rows": 778,
+      "unique_raw_resume_ids": null,
+      "unique_raw_resume_hashes": 373,
+      "unique_norm_resume_hashes": 371,
+      "unique_raw_job_ids": null,
+      "unique_raw_job_hashes": 42,
+      "unique_norm_job_hashes": 42,
+      "unique_exact_pairs": 778
+    },
+    "held_out_test": {
+      "dataset_name": "held_out_test_v1",
+      "physical_rows": 1759,
+      "unique_raw_resume_ids": null,
+      "unique_raw_resume_hashes": 477,
+      "unique_norm_resume_hashes": 476,
+      "unique_raw_job_ids": null,
+      "unique_raw_job_hashes": 71,
+      "unique_norm_job_hashes": 71,
+      "unique_exact_pairs": 1759
+    }
+  },
+  "quarantined_record_evidence": {
+    "quarantined_row_index": 46,
+    "resume_id": "R_08e03096c790d399",
+    "job_id": "J_230ff2f033d48f54",
+    "normalized_resume_hash": "6a32d8afbdfcf33fd87ade0742b3926c",
+    "normalized_job_hash": "8ccebcb7e1624d28ee1eeaae826d6b15",
+    "training_twin_row_index": 168,
+    "training_twin_resume_id": "R_d52829f08594c40e",
+    "training_twin_job_id": "J_62f627b49ba79256",
+    "exact_text_difference": "6 punctuation characters ('|' vs '\u2013' and ':')",
+    "job_id_occurrences_in_raw_val": 2,
+    "job_id_occurrences_in_clean_val": 1,
+    "job_discrepancy_explanation": "The quarantined row 46 contained job J_230ff2f033d48f54. This job ID also appeared in another validation row (row index 112). Thus, removing row 46 removed a duplicated candidate resume (reducing unique resumes from 92 to 91), but the job J_230ff2f033d48f54 remained present in row 112. Consequently, unique jobs remained EXACTLY 52 before and after quarantine. The claim of '51 jobs after quarantine' in prior notes was a mistaken deduction assuming the quarantined resume's job was unique to that row."
+  },
+  "corpus_level_accounting_explanation": {
+    "formula_351": "238 (job_disjoint_train) + 42 (job_disjoint_val) + 71 (held_out_test) = 351 unique jobs",
+    "accounting_reconciliation": "The 351 unique jobs account for the entirety of the primary Job-Disjoint evaluation lineage. The 42 validation jobs referenced in the formula '238 + 42 + 71 = 351' originate strictly from job_disjoint_val_v1.parquet (42 jobs). Dual-unseen validation (dual_unseen_val_v1.parquet) is a separate partition designed with different constraints containing 52 unique jobs. Confusing the 42 jobs of Job-Disjoint Val with the 52 jobs of Dual-Unseen Val was a documentation conflation.",
+    "job_disjoint_corpus_unique_jobs": 351,
+    "dual_unseen_corpus_unique_jobs": 273
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "total_val_samples": 778,
+  "total_errors": 201,
+  "error_rate": 0.2584,
+  "failure_modes": {
+    "good_fit_misclassified_as_no_fit": {
+      "count": 11,
+      "pct_of_good_fit": 8.27,
+      "sample_case": {
+        "resume_excerpt": "Professional SummaryWith the attitude of learning I am looking for an internship from summer 2017 to gain as much as knowledge as I can and contribute to the organizations success. Core QualificationsC, C++, C#, SQL pl/sqlOperating Systems: Windows, ",
+        "jd_excerpt": "Job Description Experience with CC++ programming and HLSL, Cg or other vendor specific shader programming language.Experience with 3D graphics APIs (Direct3D 11+, OpenGL, Vulkan andor vendor specific).Experience optimizing both performance factors an",
+        "confidence": 0.5748,
+        "prob_no_fit": 0.4101,
+        "prob_good_fit": 0.0151
+      }
+    },
+    "good_fit_misclassified_as_potential_fit": {
+      "count": 6,
+      "pct_of_good_fit": 4.51,
+      "sample_case": {
+        "resume_excerpt": "SummaryHighly motivated Sales Associate with extensive customer service and sales experience. Outgoing sales professional with track record of driving increased sales, improving buying experience and elevating company profile with target market. Skil",
+        "jd_excerpt": "Hello,Greetings from DevCare SolutionsI got an Opening with our direct client in Michigan *Need Only Local to Michigan Candidate 100% placement Position* Job title: Business AnalystLocation: Lansing, MIDuration: 1+YearsInterview mode: Ms. Teams Respo",
+        "confidence": 0.4081,
+        "prob_potential_fit": 0.2327
+      }
+    },
+    "no_fit_misclassified_as_good_fit": {
+      "count": 44,
+      "pct_of_no_fit": 10.6,
+      "sample_case": {
+        "resume_excerpt": "Experience01/2015toPresentSenior Electrical / Controls EngineerHenkel\u2013Salt Lake City,UT,Integral in the design, automation, and installation of new equipment and current equipment upgrades.Converted older hydraulics systems into linear servo hydrauli",
+        "jd_excerpt": "Skills - Cucumber BDD + Selenium UI Automation Experience Excellent knowledge and experience in testing Financial Domain applications.  Hands-on experience in Test Plan, Test Case, and Test Scenario development. Experience in creating data requests b",
+        "confidence": 0.6217,
+        "prob_good_fit": 0.0535
+      }
+    },
+    "potential_fit_confusions": {
+      "count": 57,
+      "pct_of_potential_fit": 24.78
+    }
+  }
+}

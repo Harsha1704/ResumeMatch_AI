@@ -1,0 +1,81 @@
+{
+  "phase": "12I",
+  "audit_date": "2026-11-14",
+  "reconciliation_summary": {
+    "historical_discrepancy": "7,999 vs 8,000 pairs",
+    "forensic_finding": "The raw train file contains exactly 6,241 pairs and raw test contains 1,759 pairs, summing to exactly 8,000 total pairs. The citation of '7,999 pairs' arose in Phase 12E/12F due to a header-row counting offset in raw CSV ingestion, and because dual_unseen_val_v1 dropped 1 quarantined corrupt row (row 46, duplicate pair with conflicting label), leaving 296 pairs. The complete raw corpus on disk contains 8,000 rows across 643 unique resumes and 351 unique jobs.",
+    "raw_train_rows": 6241,
+    "raw_test_rows": 1759,
+    "total_physical_rows": 8000,
+    "unique_raw_pairs": 7993,
+    "exact_pair_duplicates_in_train": 7,
+    "exact_pair_overlap_train_test": 0
+  },
+  "frozen_splits_inventory": {
+    "dual_unseen_train_v1": {
+      "file_path": "manifests/v1/dual_unseen_train_v1.parquet",
+      "row_count": 3857,
+      "unique_resumes": 500,
+      "unique_jobs": 221,
+      "file_size_bytes": 10292487,
+      "sha256": "06ac7b0ff524475ba5f1d75ca9275ebcc084f9beeae878b83153413ff205a464",
+      "split_nature": "Candidate-and-Job Disjoint Training Partition"
+    },
+    "dual_unseen_val_v1": {
+      "file_path": "manifests/v1/dual_unseen_val_v1.parquet",
+      "row_count": 297,
+      "clean_quarantined_count": 296,
+      "unique_resumes": 92,
+      "clean_unique_resumes": 91,
+      "unique_jobs": 52,
+      "file_size_bytes": 392250,
+      "sha256": "1b31ae0c5d05ddccdaf351f58742e86ea89d1923050377efa335844e07c22321",
+      "split_nature": "Candidate-and-Job Disjoint Validation Benchmark"
+    },
+    "job_disjoint_train_v1": {
+      "file_path": "manifests/v1/job_disjoint_train_v1.parquet",
+      "row_count": 5462,
+      "unique_resumes": 633,
+      "unique_jobs": 238,
+      "file_size_bytes": 15300693,
+      "sha256": "1a0bb01d84689bd44df1b46dc654e100bdb2fa7e9d780f6575f181edb5179c40",
+      "split_nature": "Job-Disjoint Training Partition (Resumes overlap with test/val)"
+    },
+    "job_disjoint_val_v1": {
+      "file_path": "manifests/v1/job_disjoint_val_v1.parquet",
+      "row_count": 778,
+      "unique_resumes": 373,
+      "unique_jobs": 42,
+      "file_size_bytes": 1239086,
+      "sha256": "8008cbb7d5fda22847708675bf68c1962016dc9fe1db94bb5510f40fd8036445",
+      "split_nature": "Job-Disjoint Validation Partition (Jobs unseen by training)"
+    },
+    "resume_disjoint_train_v1": {
+      "file_path": "manifests/v1/resume_disjoint_train_v1.parquet",
+      "row_count": 5217,
+      "unique_resumes": 545,
+      "unique_jobs": 280,
+      "file_size_bytes": 14319595,
+      "sha256": "08aa53fda660e3ccb50a294ad34d90f05a02f2b7f236ee33ad4018965d76da85",
+      "split_nature": "Resume-Disjoint Training Partition (Jobs overlap with val)"
+    },
+    "resume_disjoint_val_v1": {
+      "file_path": "manifests/v1/resume_disjoint_val_v1.parquet",
+      "row_count": 1023,
+      "unique_resumes": 97,
+      "unique_jobs": 219,
+      "file_size_bytes": 651002,
+      "sha256": "f3618ae092c029caa7e4f082c6c41e40216cbe86cf5b1b0a3147362dfd27371f",
+      "split_nature": "Resume-Disjoint Validation Partition (Resumes unseen by training)"
+    },
+    "held_out_test_v1": {
+      "file_path": "manifests/v1/held_out_test_v1.parquet",
+      "row_count": 1759,
+      "unique_resumes": 477,
+      "unique_jobs": 71,
+      "file_size_bytes": 3615846,
+      "sha256": "d4319c1fb86f7708ece03ddb361514940f7416b22958ec6d9c94dc09f367d39b",
+      "split_nature": "Official Held-Out Test (Job-Disjoint from training; 476 of 477 resumes overlap with training)"
+    }
+  }
+}

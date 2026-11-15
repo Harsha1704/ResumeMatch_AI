@@ -1,0 +1,77 @@
+[
+  {
+    "seed": 42,
+    "prediction_file": "contrastive_vs_raw_seed_42.csv",
+    "file_sha256": "2953c9657af97d03595eac1105dbd9468f156625f536b7db8ae4b250cca81d1d",
+    "total_examples": 296,
+    "missing_rows": 0,
+    "ground_truth_label_mismatches": 0,
+    "prediction_differences_between_models": 129,
+    "contingency_counts": {
+      "both_correct_n11": 83,
+      "both_incorrect_n00": 130,
+      "raw_correct_contrastive_incorrect_n10": 30,
+      "raw_incorrect_contrastive_correct_n01": 53
+    }
+  },
+  {
+    "seed": 43,
+    "prediction_file": "contrastive_vs_raw_seed_43.csv",
+    "file_sha256": "bcd27209afa61408573bb7356e0233b70c2f532e7c41a5f1766034a8e45dcf69",
+    "total_examples": 296,
+    "missing_rows": 0,
+    "ground_truth_label_mismatches": 0,
+    "prediction_differences_between_models": 135,
+    "contingency_counts": {
+      "both_correct_n11": 81,
+      "both_incorrect_n00": 129,
+      "raw_correct_contrastive_incorrect_n10": 32,
+      "raw_incorrect_contrastive_correct_n01": 54
+    }
+  },
+  {
+    "seed": 44,
+    "prediction_file": "contrastive_vs_raw_seed_44.csv",
+    "file_sha256": "c9e78db612e3ad7c4370d8fd2d0abfdb9c581481e882c03f60b66c0ffdfa088b",
+    "total_examples": 296,
+    "missing_rows": 0,
+    "ground_truth_label_mismatches": 0,
+    "prediction_differences_between_models": 146,
+    "contingency_counts": {
+      "both_correct_n11": 70,
+      "both_incorrect_n00": 137,
+      "raw_correct_contrastive_incorrect_n10": 43,
+      "raw_incorrect_contrastive_correct_n01": 46
+    }
+  },
+  {
+    "seed": 45,
+    "prediction_file": "contrastive_vs_raw_seed_45.csv",
+    "file_sha256": "6b373d36bb57ae0e1b9230c716581f524f08b615656d3e73ef748aa767887c78",
+    "total_examples": 296,
+    "missing_rows": 0,
+    "ground_truth_label_mismatches": 0,
+    "prediction_differences_between_models": 137,
+    "contingency_counts": {
+      "both_correct_n11": 76,
+      "both_incorrect_n00": 123,
+      "raw_correct_contrastive_incorrect_n10": 37,
+      "raw_incorrect_contrastive_correct_n01": 60
+    }
+  },
+  {
+    "seed": 46,
+    "prediction_file": "contrastive_vs_raw_seed_46.csv",
+    "file_sha256": "17faef9ea675e24fb79f442b3db847a1aa108b011146751c529b4068d1905f7d",
+    "total_examples": 296,
+    "missing_rows": 0,
+    "ground_truth_label_mismatches": 0,
+    "prediction_differences_between_models": 135,
+    "contingency_counts": {
+      "both_correct_n11": 80,
+      "both_incorrect_n00": 126,
+      "raw_correct_contrastive_incorrect_n10": 33,
+      "raw_incorrect_contrastive_correct_n01": 57
+    }
+  }
+]

@@ -1,0 +1,47 @@
+{
+  "sample_counts": {
+    "validation_pairs": 296,
+    "candidate_clusters": 91,
+    "job_clusters": 52
+  },
+  "paired_mcnemar_per_seed": {
+    "seed_42": {
+      "p_unadjusted": 0.0152,
+      "p_holm": 0.0745
+    },
+    "seed_43": {
+      "p_unadjusted": 0.023,
+      "p_holm": 0.0745
+    },
+    "seed_44": {
+      "p_unadjusted": 0.8323,
+      "p_holm": 0.8323
+    },
+    "seed_45": {
+      "p_unadjusted": 0.025,
+      "p_holm": 0.0745
+    },
+    "seed_46": {
+      "p_unadjusted": 0.0149,
+      "p_holm": 0.0745
+    }
+  },
+  "pooled_mcnemar_classification": "EXPLORATORY DESCRIPTIVE EVIDENCE ONLY (Repeats 296 pairs across 5 seeds; not 1,480 independent samples)",
+  "bootstrap_uncertainty_seed42": {
+    "candidate_grouped_95_ci": [
+      0.0253,
+      0.1386
+    ],
+    "job_grouped_95_ci": [
+      0.0127,
+      0.1398
+    ],
+    "two_way_grouped_95_ci": [
+      0.0064,
+      0.1532
+    ],
+    "probability_delta_positive_cand": 0.9982,
+    "probability_delta_positive_job": 0.9872,
+    "probability_delta_positive_twoway": 0.9752
+  }
+}

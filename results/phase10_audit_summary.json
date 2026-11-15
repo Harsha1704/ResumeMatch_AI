@@ -1,0 +1,13 @@
+{
+  "total_scenarios_audited": 30,
+  "total_questions_audited": 450,
+  "passed_validation_questions": 450,
+  "validation_pass_rate": 100.0,
+  "invariant_failures_count": 0,
+  "alternative_failures_count": 0,
+  "recommendation_sentence_repetition_rate": 0.0,
+  "average_interview_answer_jaccard_similarity": 0.1188,
+  "invariant_failures": [],
+  "alternative_failures": [],
+  "sample_validation_issues": []
+}

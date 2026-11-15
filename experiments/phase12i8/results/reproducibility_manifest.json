@@ -1,0 +1,60 @@
+{
+  "phase": "12I.8",
+  "pipeline_name": "ResumeMatch AI Automated Research & Model Improvement Pipeline",
+  "execution_timestamp": "2026-11-14T21:08:00Z",
+  "environment": {
+    "os": "Windows (AMD64)",
+    "python_version": "3.14.8 (tags/v3.14.8:8e6e75d, Sep 30 2026, 18:19:33) [MSC v.1944 64 bit (AMD64)]",
+    "core_packages": {
+      "torch": "2.15.0+cpu",
+      "transformers": "5.22.2",
+      "sentence_transformers": "6.2.0",
+      "lightgbm": "4.7.0",
+      "xgboost": "3.4.1",
+      "catboost": "1.2.10",
+      "scikit-learn": "1.9.1",
+      "scipy": "1.18.1",
+      "numpy": "2.5.4",
+      "pandas": "3.0.6",
+      "joblib": "1.6.0"
+    }
+  },
+  "preserved_production_artifacts": [
+    {
+      "name": "Production Logistic Regression Classifier",
+      "path": "models/best_model.joblib",
+      "byte_size": 61487,
+      "sha256": "1001baaf42db8832e1ba3e28ee9da7146e59f1d2d1808c73c4f7587535b2ed4a",
+      "status": "VERIFIED_UNCHANGED"
+    },
+    {
+      "name": "Feature Engineering Pipeline",
+      "path": "models/feature_pipeline.joblib",
+      "byte_size": 270105,
+      "sha256": "2ebf209f691b7084decb5d3a183b82e9b425fe89335345a4af661fed2fc88ae6",
+      "status": "VERIFIED_UNCHANGED"
+    },
+    {
+      "name": "Phase 12F Challenger Stacking Model",
+      "path": "models/phase12f/challenger_model_phase12f.joblib",
+      "byte_size": 2330440,
+      "sha256": "5934990e987abe98223bf790ac9e9a79fb5ec99daac4509093e8eb0036461766",
+      "status": "VERIFIED_UNCHANGED"
+    }
+  ],
+  "experimental_checkpoints": [
+    {
+      "name": "Candidate LightGBM Model",
+      "path": "experiments/phase12i8/checkpoints/lightgbm_candidate.joblib"
+    },
+    {
+      "name": "MiniLM SBERT Embedding Cache",
+      "path": "results/phase12b_embeddings/minilm_l6_v2_cache.npz",
+      "sha256": "3cb6b98ea5a5e3bc9b6c085006bdfd8ce609c1fae7e606a297926e85744cb912"
+    }
+  ],
+  "reproducibility_commands": [
+    "python experiments/phase12i8/run_phase12i8_automated_pipeline.py",
+    "python -m pytest tests/test_phase12i8_human_free_pipeline.py -v"
+  ]
+}

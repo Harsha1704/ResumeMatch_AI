@@ -1,0 +1,40 @@
+{
+  "phase": "12I.10",
+  "audit_name": "Production Checkpoint Forensic Verification & Preservation Audit",
+  "timestamp": "2026-11-14T21:22:00Z",
+  "verification_verdict": "VERIFIED_PERFECT_PRESERVATION",
+  "checkpoints": [
+    {
+      "name": "Production Logistic Regression Classifier",
+      "path": "models/best_model.joblib",
+      "expected_size_bytes": 61487,
+      "actual_size_bytes": 61487,
+      "expected_sha256": "1001baaf42db8832e1ba3e28ee9da7146e59f1d2d1808c73c4f7587535b2ed4a",
+      "actual_sha256": "1001baaf42db8832e1ba3e28ee9da7146e59f1d2d1808c73c4f7587535b2ed4a",
+      "status": "UNMODIFIED"
+    },
+    {
+      "name": "Production Feature Engineering Pipeline",
+      "path": "models/feature_pipeline.joblib",
+      "expected_size_bytes": 270105,
+      "actual_size_bytes": 270105,
+      "expected_sha256": "2ebf209f691b7084decb5d3a183b82e9b425fe89335345a4af661fed2fc88ae6",
+      "actual_sha256": "2ebf209f691b7084decb5d3a183b82e9b425fe89335345a4af661fed2fc88ae6",
+      "status": "UNMODIFIED"
+    },
+    {
+      "name": "Phase 12F Challenger Hybrid Stacking Model",
+      "path": "models/phase12f/challenger_model_phase12f.joblib",
+      "expected_size_bytes": 2330440,
+      "actual_size_bytes": 2330440,
+      "expected_sha256": "5934990e987abe98223bf790ac9e9a79fb5ec99daac4509093e8eb0036461766",
+      "actual_sha256": "5934990e987abe98223bf790ac9e9a79fb5ec99daac4509093e8eb0036461766",
+      "status": "UNMODIFIED"
+    }
+  ],
+  "production_governance": {
+    "promotion_permitted": false,
+    "release_decision": "PROMOTION_WITHHELD",
+    "rationale": "Challenger models demonstrate validation progress but do not clear official release gates (+3.0% margin on held-out test and 40% Good Fit recall)."
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "dataset_name": "cnamuangtoun/resume-job-description-fit",
+  "provenance": "Hugging Face Datasets / Open Web Scraped Resumes and Job Postings",
+  "license": "Open research / permissive educational benchmark",
+  "train_set": {
+    "total_pairs": 6241,
+    "unique_resumes": 642,
+    "unique_jobs": 280,
+    "label_distribution": {
+      "No Fit": 3143,
+      "Potential Fit": 1556,
+      "Good Fit": 1542
+    },
+    "resume_word_count": {
+      "min": 84,
+      "median": 618.0,
+      "mean": 708.1,
+      "max": 3134
+    },
+    "job_word_count": {
+      "min": 11,
+      "median": 328.0,
+      "mean": 371.5,
+      "max": 1079
+    },
+    "short_jobs_count_under_30_words": 54,
+    "pii_occurrences": {
+      "emails": 32,
+      "phone_numbers": 36
+    }
+  },
+  "test_set": {
+    "total_pairs": 1759,
+    "unique_resumes": 477,
+    "unique_jobs": 71,
+    "label_distribution": {
+      "No Fit": 857,
+      "Good Fit": 458,
+      "Potential Fit": 444
+    },
+    "resume_overlap_with_train": 476,
+    "job_overlap_with_train": 0,
+    "pair_overlap_with_train": 0
+  }
+}

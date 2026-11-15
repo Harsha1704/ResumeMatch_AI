@@ -1,0 +1,319 @@
+{
+  "audit_phase": "Phase 13",
+  "benchmark_protocol": "Dual-Unseen Protocol v1 Clean Validation (N=296 pairs, 91 candidates, 52 jobs)",
+  "models": {
+    "model_1_production_baseline": {
+      "accuracy": 0.3682,
+      "balanced_accuracy": 0.3368,
+      "macro_precision": 0.3222,
+      "macro_recall": 0.3368,
+      "macro_f1": 0.3229,
+      "weighted_f1": 0.3469,
+      "good_fit_recall": 0.1505,
+      "good_fit_precision": 0.2414,
+      "good_fit_f1": 0.1854,
+      "brier_score_total": 0.3665,
+      "brier_score_normalized": 0.1222,
+      "expected_calibration_error": 0.0887,
+      "per_class": {
+        "No Fit": {
+          "precision": 0.4688,
+          "recall": 0.6098,
+          "f1": 0.53,
+          "support": 123
+        },
+        "Potential Fit": {
+          "precision": 0.2564,
+          "recall": 0.25,
+          "f1": 0.2532,
+          "support": 80
+        },
+        "Good Fit": {
+          "precision": 0.2414,
+          "recall": 0.1505,
+          "f1": 0.1854,
+          "support": 93
+        }
+      },
+      "confusion_matrix": [
+        [
+          75,
+          27,
+          21
+        ],
+        [
+          37,
+          20,
+          23
+        ],
+        [
+          48,
+          31,
+          14
+        ]
+      ],
+      "inference_latency_ms_mean": 0.00866,
+      "inference_latency_ms_p95": 0.01877,
+      "peak_memory_mb": 0.0395,
+      "checkpoint": "models/best_model.joblib",
+      "checkpoint_bytes": 61487
+    },
+    "model_2_raw_sbert_baseline": {
+      "accuracy": 0.3851,
+      "balanced_accuracy": 0.3503,
+      "macro_precision": 0.337,
+      "macro_recall": 0.3503,
+      "macro_f1": 0.3329,
+      "weighted_f1": 0.3575,
+      "good_fit_recall": 0.1505,
+      "good_fit_precision": 0.2692,
+      "good_fit_f1": 0.1931,
+      "brier_score_total": 1.299,
+      "brier_score_normalized": 0.433,
+      "expected_calibration_error": 0.6449,
+      "per_class": {
+        "No Fit": {
+          "precision": 0.4678,
+          "recall": 0.6504,
+          "f1": 0.5442,
+          "support": 123
+        },
+        "Potential Fit": {
+          "precision": 0.274,
+          "recall": 0.25,
+          "f1": 0.2614,
+          "support": 80
+        },
+        "Good Fit": {
+          "precision": 0.2692,
+          "recall": 0.1505,
+          "f1": 0.1931,
+          "support": 93
+        }
+      },
+      "confusion_matrix": [
+        [
+          80,
+          23,
+          20
+        ],
+        [
+          42,
+          20,
+          18
+        ],
+        [
+          49,
+          30,
+          14
+        ]
+      ],
+      "inference_latency_ms_mean": 0.00536,
+      "inference_latency_ms_p95": 0.00891,
+      "peak_memory_mb": 0.0352,
+      "checkpoint": "in-memory / SBERT Bi-Encoder + LogReg C=1.0",
+      "checkpoint_bytes": 37120
+    },
+    "model_3_contrastive_infonce": {
+      "accuracy_mean": 0.4493,
+      "accuracy_std": 0.0239,
+      "macro_f1_mean": 0.3325,
+      "macro_f1_std": 0.0281,
+      "good_fit_recall_mean": 0.0946,
+      "good_fit_recall_std": 0.0369,
+      "seed_42": {
+        "accuracy": 0.4662,
+        "balanced_accuracy": 0.404,
+        "macro_precision": 0.4825,
+        "macro_recall": 0.404,
+        "macro_f1": 0.3427,
+        "weighted_f1": 0.3727,
+        "good_fit_recall": 0.0645,
+        "good_fit_precision": 0.5,
+        "good_fit_f1": 0.1143,
+        "brier_score_total": 1.4469,
+        "brier_score_normalized": 0.4823,
+        "expected_calibration_error": 0.712,
+        "per_class": {
+          "No Fit": {
+            "precision": 0.4618,
+            "recall": 0.935,
+            "f1": 0.6183,
+            "support": 123
+          },
+          "Potential Fit": {
+            "precision": 0.4857,
+            "recall": 0.2125,
+            "f1": 0.2957,
+            "support": 80
+          },
+          "Good Fit": {
+            "precision": 0.5,
+            "recall": 0.0645,
+            "f1": 0.1143,
+            "support": 93
+          }
+        },
+        "confusion_matrix": [
+          [
+            115,
+            5,
+            3
+          ],
+          [
+            60,
+            17,
+            3
+          ],
+          [
+            74,
+            13,
+            6
+          ]
+        ]
+      }
+    },
+    "model_4_skill_aware_matching": {
+      "accuracy": 0.4054,
+      "balanced_accuracy": 0.4047,
+      "macro_precision": 0.4055,
+      "macro_recall": 0.4047,
+      "macro_f1": 0.4002,
+      "weighted_f1": 0.4087,
+      "good_fit_recall": 0.3333,
+      "good_fit_precision": 0.3563,
+      "good_fit_f1": 0.3444,
+      "brier_score_total": 0.7503,
+      "brier_score_normalized": 0.2501,
+      "expected_calibration_error": 0.2137,
+      "per_class": {
+        "No Fit": {
+          "precision": 0.53,
+          "recall": 0.4309,
+          "f1": 0.4753,
+          "support": 123
+        },
+        "Potential Fit": {
+          "precision": 0.3303,
+          "recall": 0.45,
+          "f1": 0.381,
+          "support": 80
+        },
+        "Good Fit": {
+          "precision": 0.3563,
+          "recall": 0.3333,
+          "f1": 0.3444,
+          "support": 93
+        }
+      },
+      "confusion_matrix": [
+        [
+          53,
+          35,
+          35
+        ],
+        [
+          23,
+          36,
+          21
+        ],
+        [
+          24,
+          38,
+          31
+        ]
+      ],
+      "inference_latency_ms_mean": 0.00525,
+      "inference_latency_ms_p95": 0.01119,
+      "peak_memory_mb": 0.044,
+      "checkpoint": "models/phase13/skill_aware_matching_model.joblib",
+      "checkpoint_bytes": 4131,
+      "checkpoint_sha256": "e4b2775e7a147acb93fb8b5bfd98b92d672506e64fa57e169e33dce6205ee6a6"
+    },
+    "model_5_semantic_skill_fusion_challenger": {
+      "accuracy_mean": 0.4392,
+      "accuracy_std": 0.0,
+      "macro_f1_mean": 0.4152,
+      "macro_f1_std": 0.0,
+      "good_fit_recall_mean": 0.2688,
+      "good_fit_recall_std": 0.0,
+      "inference_latency_ms_mean": 0.00645,
+      "inference_latency_ms_p95": 0.01201,
+      "peak_memory_mb": 0.0348,
+      "checkpoint": "models/phase13/semantic_skill_fusion_challenger.joblib",
+      "checkpoint_bytes": 78194,
+      "checkpoint_sha256": "50aaabfe53025a04d2221f71fa6977bec9615649cff84e8da37d299f5cc44807",
+      "primary_seed_42": {
+        "accuracy": 0.4392,
+        "balanced_accuracy": 0.4208,
+        "macro_precision": 0.4217,
+        "macro_recall": 0.4208,
+        "macro_f1": 0.4152,
+        "weighted_f1": 0.4309,
+        "good_fit_recall": 0.2688,
+        "good_fit_precision": 0.4032,
+        "good_fit_f1": 0.3226,
+        "brier_score_total": 0.8902,
+        "brier_score_normalized": 0.2967,
+        "expected_calibration_error": 0.3258,
+        "per_class": {
+          "No Fit": {
+            "precision": 0.5141,
+            "recall": 0.5935,
+            "f1": 0.5509,
+            "support": 123
+          },
+          "Potential Fit": {
+            "precision": 0.3478,
+            "recall": 0.4,
+            "f1": 0.3721,
+            "support": 80
+          },
+          "Good Fit": {
+            "precision": 0.4032,
+            "recall": 0.2688,
+            "f1": 0.3226,
+            "support": 93
+          }
+        },
+        "confusion_matrix": [
+          [
+            73,
+            29,
+            21
+          ],
+          [
+            32,
+            32,
+            16
+          ],
+          [
+            37,
+            31,
+            25
+          ]
+        ]
+      }
+    }
+  },
+  "production_checkpoints_preserved": {
+    "best_model.joblib": {
+      "path": "D:\\skillsync1\\models\\best_model.joblib",
+      "sha256": "1001baaf42db8832e1ba3e28ee9da7146e59f1d2d1808c73c4f7587535b2ed4a",
+      "size_bytes": 61487,
+      "status": "PRESERVED_INTACT_VERIFIED"
+    },
+    "feature_pipeline.joblib": {
+      "path": "D:\\skillsync1\\models\\feature_pipeline.joblib",
+      "sha256": "2ebf209f691b7084decb5d3a183b82e9b425fe89335345a4af661fed2fc88ae6",
+      "size_bytes": 270105,
+      "status": "PRESERVED_INTACT_VERIFIED"
+    },
+    "challenger_model_phase12f.joblib": {
+      "path": "D:\\skillsync1\\models\\phase12f\\challenger_model_phase12f.joblib",
+      "sha256": "5934990e987abe98223bf790ac9e9a79fb5ec99daac4509093e8eb0036461766",
+      "size_bytes": 2330440,
+      "status": "PRESERVED_INTACT_VERIFIED"
+    }
+  }
+}

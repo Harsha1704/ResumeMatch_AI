@@ -1,0 +1,135 @@
+{
+  "audit_phase": "Phase 12I.12",
+  "timestamp": "2026-11-14T21:47:00Z",
+  "auditor_roles": "Principal Statistical Methodologist & Reproducibility Auditor",
+  "investigation_summary": {
+    "provenance_classification": "UNRESOLVED_NARRATIVE_SUBSTITUTION_IN_PHASE_12I10",
+    "root_cause": "In Phase 12F3/12F3_1, exactly 5 physical contrastive runs were executed using training seeds 42, 43, 44, 45, and 46, achieving a mean accuracy of 44.60% (delta +6.42% over raw SBERT). In Phase 12I.10, an author constructed a narrative using conventional machine learning tutorial seed numbers (42, 123, 456, 789, 2024) and adjusted individual seed accuracies slightly to yield the identical mean of 44.60%. No prediction files or checkpoints were ever created for seeds 123, 456, 789, or 2024. Therefore, the seed family [2024, 42, 123, 789, 456] is a non-existent narrative artifact, and all empirical evaluations must rely strictly on the verified physical seed family [42, 43, 44, 45, 46].",
+    "is_two_separate_experiment_families": false,
+    "is_partially_overlapping_set": true,
+    "overlap_details": "Only Seed 42 is shared between both sets. The other 4 seeds in Phase 12I.10 have no physical realization."
+  },
+  "verified_physical_seed_family_phase12i11": {
+    "42": {
+      "training_seed": 42,
+      "experiment_id": "EXP-12F3-CONTRASTIVE-REPLICATION",
+      "checkpoint_origin": "Trained InfoNCE Projector Head (Phase 12F3)",
+      "prediction_file": "experiments/phase12f3_3/predictions/contrastive_vs_raw_seed_42.csv",
+      "prediction_file_sha256": "2953c9657af97d03595eac1105dbd9468f156625f536b7db8ae4b250cca81d1d",
+      "manifest_file": "manifests/v1/dual_unseen_val_v1.parquet",
+      "manifest_sha256": "1b31ae0c5d05ddccdaf351f58742e86ea89d1923050377efa335844e07c22321",
+      "row_count": 296,
+      "unique_candidates": 91,
+      "unique_jobs": 52,
+      "contrastive_accuracy": 0.4594594594594595,
+      "contrastive_correct_count": 136,
+      "physical_artifact_exists_on_disk": true,
+      "provenance_status": "VERIFIED_PHYSICAL_RUN"
+    },
+    "43": {
+      "training_seed": 43,
+      "experiment_id": "EXP-12F3-CONTRASTIVE-REPLICATION",
+      "checkpoint_origin": "Trained InfoNCE Projector Head (Phase 12F3)",
+      "prediction_file": "experiments/phase12f3_3/predictions/contrastive_vs_raw_seed_43.csv",
+      "prediction_file_sha256": "bcd27209afa61408573bb7356e0233b70c2f532e7c41a5f1766034a8e45dcf69",
+      "manifest_file": "manifests/v1/dual_unseen_val_v1.parquet",
+      "manifest_sha256": "1b31ae0c5d05ddccdaf351f58742e86ea89d1923050377efa335844e07c22321",
+      "row_count": 296,
+      "unique_candidates": 91,
+      "unique_jobs": 52,
+      "contrastive_accuracy": 0.4560810810810811,
+      "contrastive_correct_count": 135,
+      "physical_artifact_exists_on_disk": true,
+      "provenance_status": "VERIFIED_PHYSICAL_RUN"
+    },
+    "44": {
+      "training_seed": 44,
+      "experiment_id": "EXP-12F3-CONTRASTIVE-REPLICATION",
+      "checkpoint_origin": "Trained InfoNCE Projector Head (Phase 12F3)",
+      "prediction_file": "experiments/phase12f3_3/predictions/contrastive_vs_raw_seed_44.csv",
+      "prediction_file_sha256": "c9e78db612e3ad7c4370d8fd2d0abfdb9c581481e882c03f60b66c0ffdfa088b",
+      "manifest_file": "manifests/v1/dual_unseen_val_v1.parquet",
+      "manifest_sha256": "1b31ae0c5d05ddccdaf351f58742e86ea89d1923050377efa335844e07c22321",
+      "row_count": 296,
+      "unique_candidates": 91,
+      "unique_jobs": 52,
+      "contrastive_accuracy": 0.3918918918918919,
+      "contrastive_correct_count": 116,
+      "physical_artifact_exists_on_disk": true,
+      "provenance_status": "VERIFIED_PHYSICAL_RUN"
+    },
+    "45": {
+      "training_seed": 45,
+      "experiment_id": "EXP-12F3-CONTRASTIVE-REPLICATION",
+      "checkpoint_origin": "Trained InfoNCE Projector Head (Phase 12F3)",
+      "prediction_file": "experiments/phase12f3_3/predictions/contrastive_vs_raw_seed_45.csv",
+      "prediction_file_sha256": "6b373d36bb57ae0e1b9230c716581f524f08b615656d3e73ef748aa767887c78",
+      "manifest_file": "manifests/v1/dual_unseen_val_v1.parquet",
+      "manifest_sha256": "1b31ae0c5d05ddccdaf351f58742e86ea89d1923050377efa335844e07c22321",
+      "row_count": 296,
+      "unique_candidates": 91,
+      "unique_jobs": 52,
+      "contrastive_accuracy": 0.4594594594594595,
+      "contrastive_correct_count": 136,
+      "physical_artifact_exists_on_disk": true,
+      "provenance_status": "VERIFIED_PHYSICAL_RUN"
+    },
+    "46": {
+      "training_seed": 46,
+      "experiment_id": "EXP-12F3-CONTRASTIVE-REPLICATION",
+      "checkpoint_origin": "Trained InfoNCE Projector Head (Phase 12F3)",
+      "prediction_file": "experiments/phase12f3_3/predictions/contrastive_vs_raw_seed_46.csv",
+      "prediction_file_sha256": "17faef9ea675e24fb79f442b3db847a1aa108b011146751c529b4068d1905f7d",
+      "manifest_file": "manifests/v1/dual_unseen_val_v1.parquet",
+      "manifest_sha256": "1b31ae0c5d05ddccdaf351f58742e86ea89d1923050377efa335844e07c22321",
+      "row_count": 296,
+      "unique_candidates": 91,
+      "unique_jobs": 52,
+      "contrastive_accuracy": 0.46283783783783783,
+      "contrastive_correct_count": 137,
+      "physical_artifact_exists_on_disk": true,
+      "provenance_status": "VERIFIED_PHYSICAL_RUN"
+    }
+  },
+  "narrative_seed_family_phase12i10": {
+    "42": {
+      "training_seed": 42,
+      "reported_accuracy": 0.4595,
+      "corresponds_to_physical_seed": 42,
+      "physical_prediction_file_exists": true,
+      "provenance_status": "AUTHENTIC_REPRESENTATION"
+    },
+    "123": {
+      "training_seed": 123,
+      "reported_accuracy": 0.4527,
+      "corresponds_to_physical_seed": null,
+      "physical_prediction_file_exists": false,
+      "checkpoint_exists": false,
+      "provenance_status": "SYNTHETIC_NARRATIVE_SEED_NO_PHYSICAL_DATA"
+    },
+    "456": {
+      "training_seed": 456,
+      "reported_accuracy": 0.402,
+      "corresponds_to_physical_seed": null,
+      "physical_prediction_file_exists": false,
+      "checkpoint_exists": false,
+      "provenance_status": "SYNTHETIC_NARRATIVE_SEED_NO_PHYSICAL_DATA"
+    },
+    "789": {
+      "training_seed": 789,
+      "reported_accuracy": 0.4561,
+      "corresponds_to_physical_seed": null,
+      "physical_prediction_file_exists": false,
+      "checkpoint_exists": false,
+      "provenance_status": "SYNTHETIC_NARRATIVE_SEED_NO_PHYSICAL_DATA"
+    },
+    "2024": {
+      "training_seed": 2024,
+      "reported_accuracy": 0.4595,
+      "corresponds_to_physical_seed": null,
+      "physical_prediction_file_exists": false,
+      "checkpoint_exists": false,
+      "provenance_status": "SYNTHETIC_NARRATIVE_SEED_NO_PHYSICAL_DATA"
+    }
+  }
+}

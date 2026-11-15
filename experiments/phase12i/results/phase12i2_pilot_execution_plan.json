@@ -1,0 +1,72 @@
+{
+  "phase": "12I.2",
+  "plan_name": "Phase 12I Pilot Study Execution Package & Safeguard Architecture",
+  "version": "2.0.0",
+  "timestamp": "2026-11-14T08:27:30Z",
+  "pilot_sample_design": {
+    "total_pilot_pairs": 200,
+    "unique_candidates_target": 120,
+    "unique_jobs_target": 60,
+    "candidate_cluster_cap": 3,
+    "job_cluster_cap": 6,
+    "domain_allocation": [
+      {
+        "stratum": "Software Engineering / Full-Stack / Backend",
+        "quota": 80,
+        "percentage": 40.0,
+        "sampling_method": "Stratified random selection across senior, mid, junior candidate pools"
+      },
+      {
+        "stratum": "DevOps / SRE / Cloud Infrastructure",
+        "quota": 40,
+        "percentage": 20.0,
+        "sampling_method": "Targeted representation of AWS, GCP, Azure, and Kubernetes toolchains"
+      },
+      {
+        "stratum": "Data Science / Machine Learning / Data Engineering",
+        "quota": 40,
+        "percentage": 20.0,
+        "sampling_method": "Balanced representation of ML modeling, LLM/NLP, and data platform roles"
+      },
+      {
+        "stratum": "Quality Assurance / Test Automation",
+        "quota": 20,
+        "percentage": 10.0,
+        "sampling_method": "Focus on automation frameworks (Selenium, Playwright, Cypress)"
+      },
+      {
+        "stratum": "Technical Product / Project Management",
+        "quota": 20,
+        "percentage": 10.0,
+        "sampling_method": "Focus on technical scope, systems architecture, and engineering governance"
+      }
+    ]
+  },
+  "scientific_safeguards": {
+    "model_blind_sampling": "Pairs are selected strictly based on domain stratum quotas and metadata. Zero model inferences or similarity embeddings are computed or exposed during selection.",
+    "independent_annotation": "Annotators access pairs in randomized individual task queues. No real-time chat, shared spreadsheets, or visible peer ratings.",
+    "complete_blinding": {
+      "model_predictions": "Models (Production, Challenger, Baselines) are 100% masked.",
+      "peer_ratings": "Rater 1 cannot see Rater 2's rating or comments.",
+      "candidate_identity": "Direct PII (names, contact details, profile URLs) redacted.",
+      "company_identity": "Hiring organization names sanitized to generic company profiles."
+    },
+    "dual_sided_evidence_logging": "Mandatory extraction of exact resume quote and job description quote justifying assigned label.",
+    "original_rating_immutability": "Pre-adjudication ratings logged with SHA-256 integrity hashes prior to tie-break adjudication."
+  },
+  "pilot_quarantine_and_isolation_policy": {
+    "cardinal_isolation_rule": "Pilot pairs utilized for annotator training, rubric refinement, or boundary calibration are PERMANENTLY QUARANTINED and EXCLUDED from the final frozen evaluation benchmark.",
+    "rationale": "Evaluating models on pairs that underwent subjective discussion or rubric adjustment introduces experimenter degree-of-freedom leakage and optimistic bias.",
+    "final_benchmark_requirement": "The final evaluation benchmark (N >= 2,850 pairs) must consist exclusively of virgin pairs evaluated under the frozen, finalized Rubric V3 without interim guideline alterations."
+  },
+  "human_annotation_readiness_status": {
+    "protocol_readiness": "100% Complete (Rubric V3, Reliability Specs, Sampling Quotas, and Schemas defined)",
+    "execution_status": "AWAITING HUMAN ANNOTATOR ONBOARDING",
+    "synthetic_data_declaration": "ZERO synthetic or pseudo-labels have been generated. Independent statistical evaluation will commence once human recruiters execute the blinded pilot queue.",
+    "prohibited_actions": [
+      "Claiming pilot has passed before human ratings exist",
+      "Using LLMs to generate surrogate recruiter labels",
+      "Reporting empirical kappa on unannotated data"
+    ]
+  }
+}

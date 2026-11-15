@@ -1,0 +1,121 @@
+{
+  "manifest_version": "1.0.0",
+  "description": "Immutable versioned split manifests for ResumeMatch AI evaluation",
+  "created_at": "2026-11-11T18:40:00Z",
+  "primary_dataset_path": "data/raw/resume_job_fit_train.csv",
+  "primary_dataset_sha256": "b86fa488a21258015de1750633a9ac410f701ff96bf533f68978dbe3adec6d40",
+  "contradictory_pairs_excluded": 6,
+  "files": [
+    {
+      "filename": "job_disjoint_train_v1.parquet",
+      "relative_path": "job_disjoint_train_v1.parquet",
+      "protocol": "job_disjoint",
+      "role": "train",
+      "record_count": 5462,
+      "unique_resumes": 633,
+      "unique_jobs": 238,
+      "label_distribution": {
+        "No Fit": 2727,
+        "Good Fit": 1409,
+        "Potential Fit": 1326
+      },
+      "sha256": "1a0bb01d84689bd44df1b46dc654e100bdb2fa7e9d780f6575f181edb5179c40"
+    },
+    {
+      "filename": "job_disjoint_val_v1.parquet",
+      "relative_path": "job_disjoint_val_v1.parquet",
+      "protocol": "job_disjoint",
+      "role": "val",
+      "record_count": 778,
+      "unique_resumes": 373,
+      "unique_jobs": 42,
+      "label_distribution": {
+        "No Fit": 415,
+        "Potential Fit": 230,
+        "Good Fit": 133
+      },
+      "sha256": "8008cbb7d5fda22847708675bf68c1962016dc9fe1db94bb5510f40fd8036445"
+    },
+    {
+      "filename": "held_out_test_v1.parquet",
+      "relative_path": "held_out_test_v1.parquet",
+      "protocol": "held_out_test",
+      "role": "test",
+      "record_count": 1759,
+      "unique_resumes": 477,
+      "unique_jobs": 71,
+      "label_distribution": {
+        "No Fit": 857,
+        "Good Fit": 458,
+        "Potential Fit": 444
+      },
+      "sha256": "d4319c1fb86f7708ece03ddb361514940f7416b22958ec6d9c94dc09f367d39b"
+    },
+    {
+      "filename": "resume_disjoint_train_v1.parquet",
+      "relative_path": "resume_disjoint_train_v1.parquet",
+      "protocol": "resume_disjoint",
+      "role": "train",
+      "record_count": 5217,
+      "unique_resumes": 545,
+      "unique_jobs": 280,
+      "label_distribution": {
+        "No Fit": 2656,
+        "Potential Fit": 1308,
+        "Good Fit": 1253
+      },
+      "sha256": "08aa53fda660e3ccb50a294ad34d90f05a02f2b7f236ee33ad4018965d76da85"
+    },
+    {
+      "filename": "resume_disjoint_val_v1.parquet",
+      "relative_path": "resume_disjoint_val_v1.parquet",
+      "protocol": "resume_disjoint",
+      "role": "val",
+      "record_count": 1023,
+      "unique_resumes": 97,
+      "unique_jobs": 219,
+      "label_distribution": {
+        "No Fit": 486,
+        "Good Fit": 289,
+        "Potential Fit": 248
+      },
+      "sha256": "f3618ae092c029caa7e4f082c6c41e40216cbe86cf5b1b0a3147362dfd27371f"
+    },
+    {
+      "filename": "dual_unseen_train_v1.parquet",
+      "relative_path": "dual_unseen_train_v1.parquet",
+      "protocol": "dual_unseen",
+      "role": "train",
+      "record_count": 3857,
+      "unique_resumes": 500,
+      "unique_jobs": 221,
+      "label_distribution": {
+        "No Fit": 1980,
+        "Good Fit": 951,
+        "Potential Fit": 926
+      },
+      "sha256": "06ac7b0ff524475ba5f1d75ca9275ebcc084f9beeae878b83153413ff205a464"
+    },
+    {
+      "filename": "dual_unseen_val_v1.parquet",
+      "relative_path": "dual_unseen_val_v1.parquet",
+      "protocol": "dual_unseen",
+      "role": "val",
+      "record_count": 297,
+      "unique_resumes": 92,
+      "unique_jobs": 52,
+      "label_distribution": {
+        "No Fit": 124,
+        "Good Fit": 93,
+        "Potential Fit": 80
+      },
+      "sha256": "1b31ae0c5d05ddccdaf351f58742e86ea89d1923050377efa335844e07c22321"
+    }
+  ],
+  "isolation_guarantees": {
+    "job_disjoint": "0 overlapping jobs between train and val; 0 overlapping pairs",
+    "resume_disjoint": "0 overlapping resumes between train and val; 0 overlapping pairs",
+    "dual_unseen": "0 overlapping resumes AND 0 overlapping jobs between train and val; 0 overlapping pairs",
+    "held_out_test": "0 overlapping jobs with primary training data; 0 overlapping pairs"
+  }
+}

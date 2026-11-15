@@ -1,0 +1,30 @@
+{
+  "phase": "12I.9",
+  "audit_name": "Model Architecture Attribution & Checkpoint Forensic Audit",
+  "timestamp": "2026-11-14T21:11:30Z",
+  "audited_attributions": [
+    {
+      "metric_value": "47.64% Accuracy (Dual-Unseen Validation)",
+      "historical_label": "Cross-Encoder (DeBERTa-v3 / ModernBERT / MiniLM-L6 Cross-Encoder)",
+      "traced_code_origin": "scripts/phase12g/run_phase12g_research.py (lines 171-235)",
+      "traced_data_origin": "experiments/phase12g/results/threshold_calibration_quality_audit.json",
+      "actual_producing_architecture": "Nested 5-Fold Stratified Candidate-Cluster Threshold Calibration (tau_Good_Fit = 0.15) applied to Contrastive InfoNCE Projector (Seed 42) probabilities.",
+      "physical_checkpoint_audit": {
+        "standalone_cross_encoder_weights_exist": false,
+        "checkpoint_files_found": ["models/best_model.joblib", "models/feature_pipeline.joblib", "models/phase12f/challenger_model_phase12f.joblib"],
+        "pytorch_model_bin_found": false
+      },
+      "audit_verdict": "MISATTRIBUTED — OFFICIAL RE-ATTRIBUTION TO CALIBRATED CONTRASTIVE PROJECTOR",
+      "corrective_action": "Mark the deep cross-encoder claim as UNVERIFIED. The 47.64% score is verified and reproducible, but its mechanism is post-hoc decision-threshold optimization, not full-attention cross-encoder neural modeling."
+    },
+    {
+      "metric_value": "50.26% Accuracy (Official Held-Out Test)",
+      "historical_label": "Threshold-Calibrated Decision Rule (Phase 12I.8 model_comparison.json)",
+      "traced_code_origin": "scripts/phase12f/run_phase12f_experiments.py (lines 440-469)",
+      "traced_data_origin": "experiments/phase12f/results/phase12f_experiment_registry.json (EXP-12F-PSEUDO)",
+      "actual_producing_architecture": "Hybrid Stacking Classifier (LightGBM + CatBoost + SBERT + Dense Features) retrained on training set augmented with confidence-gated pseudo-labels from Djinni unlabelled candidate pairs.",
+      "audit_verdict": "MISATTRIBUTED IN PHASE 12I.8 — OFFICIAL RE-ATTRIBUTION TO EXP-12F-PSEUDO",
+      "corrective_action": "Restore correct attribution to Confidence-Gated Pseudo-Labeling with Hybrid Stacking. The threshold calibration rule on held-out test was an ungrounded label swap."
+    }
+  ]
+}

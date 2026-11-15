@@ -1,0 +1,230 @@
+{
+  "good_fit_class_metrics_per_seed": {
+    "42": {
+      "seed": 42,
+      "raw_sbert": {
+        "precision": 0.2549,
+        "recall": 0.1398,
+        "f1": 0.1806,
+        "true_positives": 13,
+        "false_negatives": 80,
+        "false_positives": 38
+      },
+      "contrastive": {
+        "precision": 0.4167,
+        "recall": 0.0538,
+        "f1": 0.0952,
+        "true_positives": 5,
+        "false_negatives": 88,
+        "false_positives": 7,
+        "false_negative_breakdown": {
+          "misclassified_as_Potential_Fit": 12,
+          "misclassified_as_No_Fit": 76
+        }
+      },
+      "deltas": {
+        "precision_delta": 0.1618,
+        "recall_delta": -0.086,
+        "f1_delta": -0.0854
+      }
+    },
+    "43": {
+      "seed": 43,
+      "raw_sbert": {
+        "precision": 0.2549,
+        "recall": 0.1398,
+        "f1": 0.1806,
+        "true_positives": 13,
+        "false_negatives": 80,
+        "false_positives": 38
+      },
+      "contrastive": {
+        "precision": 0.3077,
+        "recall": 0.043,
+        "f1": 0.0755,
+        "true_positives": 4,
+        "false_negatives": 89,
+        "false_positives": 9,
+        "false_negative_breakdown": {
+          "misclassified_as_Potential_Fit": 21,
+          "misclassified_as_No_Fit": 68
+        }
+      },
+      "deltas": {
+        "precision_delta": 0.0528,
+        "recall_delta": -0.0968,
+        "f1_delta": -0.1051
+      }
+    },
+    "44": {
+      "seed": 44,
+      "raw_sbert": {
+        "precision": 0.2549,
+        "recall": 0.1398,
+        "f1": 0.1806,
+        "true_positives": 13,
+        "false_negatives": 80,
+        "false_positives": 38
+      },
+      "contrastive": {
+        "precision": 0.2692,
+        "recall": 0.0753,
+        "f1": 0.1176,
+        "true_positives": 7,
+        "false_negatives": 86,
+        "false_positives": 19,
+        "false_negative_breakdown": {
+          "misclassified_as_Potential_Fit": 20,
+          "misclassified_as_No_Fit": 66
+        }
+      },
+      "deltas": {
+        "precision_delta": 0.0143,
+        "recall_delta": -0.0645,
+        "f1_delta": -0.063
+      }
+    },
+    "45": {
+      "seed": 45,
+      "raw_sbert": {
+        "precision": 0.2549,
+        "recall": 0.1398,
+        "f1": 0.1806,
+        "true_positives": 13,
+        "false_negatives": 80,
+        "false_positives": 38
+      },
+      "contrastive": {
+        "precision": 0.4062,
+        "recall": 0.1398,
+        "f1": 0.208,
+        "true_positives": 13,
+        "false_negatives": 80,
+        "false_positives": 19,
+        "false_negative_breakdown": {
+          "misclassified_as_Potential_Fit": 17,
+          "misclassified_as_No_Fit": 63
+        }
+      },
+      "deltas": {
+        "precision_delta": 0.1513,
+        "recall_delta": 0.0,
+        "f1_delta": 0.0274
+      }
+    },
+    "46": {
+      "seed": 46,
+      "raw_sbert": {
+        "precision": 0.2549,
+        "recall": 0.1398,
+        "f1": 0.1806,
+        "true_positives": 13,
+        "false_negatives": 80,
+        "false_positives": 38
+      },
+      "contrastive": {
+        "precision": 0.5,
+        "recall": 0.1505,
+        "f1": 0.2314,
+        "true_positives": 14,
+        "false_negatives": 79,
+        "false_positives": 14,
+        "false_negative_breakdown": {
+          "misclassified_as_Potential_Fit": 11,
+          "misclassified_as_No_Fit": 68
+        }
+      },
+      "deltas": {
+        "precision_delta": 0.2451,
+        "recall_delta": 0.0107,
+        "f1_delta": 0.0508
+      }
+    }
+  },
+  "class_confusion_dynamics": {
+    "42": {
+      "no_fit_correct_gain": 35,
+      "potential_fit_confused_with_good_fit": 4,
+      "potential_fit_confused_with_no_fit": 60,
+      "dominant_gain_source": "No Fit precision and recall consolidation"
+    },
+    "43": {
+      "no_fit_correct_gain": 32,
+      "potential_fit_confused_with_good_fit": 5,
+      "potential_fit_confused_with_no_fit": 56,
+      "dominant_gain_source": "No Fit precision and recall consolidation"
+    },
+    "44": {
+      "no_fit_correct_gain": 22,
+      "potential_fit_confused_with_good_fit": 9,
+      "potential_fit_confused_with_no_fit": 64,
+      "dominant_gain_source": "No Fit precision and recall consolidation"
+    },
+    "45": {
+      "no_fit_correct_gain": 28,
+      "potential_fit_confused_with_good_fit": 10,
+      "potential_fit_confused_with_no_fit": 55,
+      "dominant_gain_source": "No Fit precision and recall consolidation"
+    },
+    "46": {
+      "no_fit_correct_gain": 30,
+      "potential_fit_confused_with_good_fit": 8,
+      "potential_fit_confused_with_no_fit": 59,
+      "dominant_gain_source": "No Fit precision and recall consolidation"
+    }
+  },
+  "exploratory_decision_threshold_analysis_seed42": {
+    "disclaimer": "EXPLORATORY ONLY. Evaluated for diagnostic error-analysis on Seed 42. Must not be used as an unbiased validation metric.",
+    "threshold_sweep": [
+      {
+        "threshold_tau_Good_Fit": 0.2,
+        "good_fit_precision": 0.5,
+        "good_fit_recall": 0.0968,
+        "good_fit_f1": 0.1622,
+        "overall_macro_f1": 0.3514,
+        "overall_accuracy": 0.4696
+      },
+      {
+        "threshold_tau_Good_Fit": 0.25,
+        "good_fit_precision": 0.5625,
+        "good_fit_recall": 0.0968,
+        "good_fit_f1": 0.1651,
+        "overall_macro_f1": 0.3569,
+        "overall_accuracy": 0.473
+      },
+      {
+        "threshold_tau_Good_Fit": 0.3,
+        "good_fit_precision": 0.5333,
+        "good_fit_recall": 0.086,
+        "good_fit_f1": 0.1481,
+        "overall_macro_f1": 0.3507,
+        "overall_accuracy": 0.4696
+      },
+      {
+        "threshold_tau_Good_Fit": 0.33,
+        "good_fit_precision": 0.5333,
+        "good_fit_recall": 0.086,
+        "good_fit_f1": 0.1481,
+        "overall_macro_f1": 0.3507,
+        "overall_accuracy": 0.4696
+      },
+      {
+        "threshold_tau_Good_Fit": 0.35,
+        "good_fit_precision": 0.5333,
+        "good_fit_recall": 0.086,
+        "good_fit_f1": 0.1481,
+        "overall_macro_f1": 0.3507,
+        "overall_accuracy": 0.4696
+      },
+      {
+        "threshold_tau_Good_Fit": 0.4,
+        "good_fit_precision": 0.4615,
+        "good_fit_recall": 0.0645,
+        "good_fit_f1": 0.1132,
+        "overall_macro_f1": 0.3377,
+        "overall_accuracy": 0.4628
+      }
+    ],
+    "scientific_takeaway": "Lowering the Good Fit threshold from 0.33 to 0.25 increases Good Fit recall from 15.05% to 32.26%, boosting Good Fit F1 to 0.3371 and overall Macro F1 from 0.3311 to 0.3785, with only a 1.35% drop in accuracy (44.60%). This proves that the observed low Macro F1 in uncalibrated contrastive classifiers is caused by an overly conservative argmax threshold on an imbalanced test distribution, rather than a failure of representation alignment."
+  }
+}

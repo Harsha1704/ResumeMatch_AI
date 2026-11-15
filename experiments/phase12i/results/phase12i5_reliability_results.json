@@ -1,0 +1,42 @@
+{
+  "phase": "12I.5",
+  "audit_name": "Pre-Adjudication Recruiter Pilot Reliability Results Specification",
+  "timestamp": "2026-11-14T20:34:30Z",
+  "status": "PENDING_HUMAN_ANNOTATION_COMPLETION",
+  "reliability_reporting_policy": {
+    "cardinal_rule_1": "Reliability metrics (Cohen's kappa, quadratic-weighted kappa, Gwet's AC1, specific agreement) MUST be calculated exclusively from independent pre-adjudication ratings.",
+    "cardinal_rule_2": "Under strict scientific audit standards, NO synthetic or simulated values are reported. Values remain null until real human recruiter submissions are processed."
+  },
+  "metrics": {
+    "raw_observed_agreement_P_o": null,
+    "unweighted_cohen_kappa": null,
+    "linear_weighted_cohen_kappa": null,
+    "quadratic_weighted_cohen_kappa": null,
+    "gwet_ac1": null,
+    "per_class_specific_agreement": {
+      "class_0_no_fit": null,
+      "class_1_potential_fit": null,
+      "class_2_good_fit": null
+    },
+    "confusion_matrix_3x3": null,
+    "adjudication_rate": null,
+    "severe_disagreement_rate": null,
+    "confidence_intervals_95": {
+      "unweighted_kappa_ci": null,
+      "quadratic_weighted_kappa_ci": null,
+      "gwet_ac1_ci": null
+    }
+  },
+  "quality_gate_thresholds": {
+    "quadratic_weighted_kappa_gate": ">= 0.70 (Target >= 0.75)",
+    "linear_weighted_kappa_gate": ">= 0.65",
+    "gwet_ac1_gate": ">= 0.70",
+    "maximum_allowable_adjudication_rate": "35.0%",
+    "maximum_allowable_severe_discordance": "3.0%"
+  },
+  "verdict_trigger_logic": {
+    "passed_condition": "quadratic_weighted_kappa >= 0.70 AND severe_disagreement_rate <= 3.0%",
+    "failed_condition": "quadratic_weighted_kappa < 0.70 OR severe_disagreement_rate > 3.0%",
+    "current_operational_state": "PILOT READY — AWAITING RECRUITERS"
+  }
+}

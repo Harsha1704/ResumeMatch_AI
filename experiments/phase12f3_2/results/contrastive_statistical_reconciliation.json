@@ -1,0 +1,108 @@
+{
+  "individual_seed_runs": [
+    {
+      "seed": 42,
+      "raw_accuracy": 0.3818,
+      "proj_accuracy": 0.4595,
+      "accuracy_delta": 0.0777,
+      "raw_balanced_acc": 0.3467,
+      "proj_balanced_acc": 0.3962,
+      "balanced_acc_delta": 0.0495,
+      "raw_macro_f1": 0.3282,
+      "proj_macro_f1": 0.3311,
+      "macro_f1_delta": 0.003
+    },
+    {
+      "seed": 43,
+      "raw_accuracy": 0.3818,
+      "proj_accuracy": 0.4561,
+      "accuracy_delta": 0.0743,
+      "raw_balanced_acc": 0.3467,
+      "proj_balanced_acc": 0.397,
+      "balanced_acc_delta": 0.0503,
+      "raw_macro_f1": 0.3282,
+      "proj_macro_f1": 0.3329,
+      "macro_f1_delta": 0.0047
+    },
+    {
+      "seed": 44,
+      "raw_accuracy": 0.3818,
+      "proj_accuracy": 0.3919,
+      "accuracy_delta": 0.0101,
+      "raw_balanced_acc": 0.3467,
+      "proj_balanced_acc": 0.3307,
+      "balanced_acc_delta": -0.0161,
+      "raw_macro_f1": 0.3282,
+      "proj_macro_f1": 0.2703,
+      "macro_f1_delta": -0.0579
+    },
+    {
+      "seed": 45,
+      "raw_accuracy": 0.3818,
+      "proj_accuracy": 0.4595,
+      "accuracy_delta": 0.0777,
+      "raw_balanced_acc": 0.3467,
+      "proj_balanced_acc": 0.4018,
+      "balanced_acc_delta": 0.055,
+      "raw_macro_f1": 0.3282,
+      "proj_macro_f1": 0.3604,
+      "macro_f1_delta": 0.0322
+    },
+    {
+      "seed": 46,
+      "raw_accuracy": 0.3818,
+      "proj_accuracy": 0.4628,
+      "accuracy_delta": 0.0811,
+      "raw_balanced_acc": 0.3467,
+      "proj_balanced_acc": 0.4024,
+      "balanced_acc_delta": 0.0557,
+      "raw_macro_f1": 0.3282,
+      "proj_macro_f1": 0.3589,
+      "macro_f1_delta": 0.0307
+    }
+  ],
+  "seed_variation_statistics": {
+    "n_seeds": 5,
+    "degrees_of_freedom": 4,
+    "mean_accuracy_delta": 0.0642,
+    "sample_standard_deviation_ddof1": 0.0303,
+    "population_standard_deviation_ddof0": 0.0271,
+    "standard_error_of_mean": 0.0136,
+    "two_sided_student_t_critical_value": 2.7764,
+    "certified_student_t_95_ci": [
+      0.0265,
+      0.1018
+    ],
+    "previous_interval_reconciliation": {
+      "previously_reported_interval": [
+        0.0404,
+        0.088
+      ],
+      "methodological_defect": "The previously reported interval [+4.04%, +8.80%] was computed using the asymptotic normal z=1.96 with population standard deviation (ddof=0). For N=5 observations, the Student-t distribution with df=4 (t_crit=2.776) and sample standard deviation (ddof=1) must be used. The proper cross-seed Student-t 95% CI is [+2.65%, +10.18%]."
+    }
+  },
+  "validation_sample_uncertainty_seed42": {
+    "validation_sample_size": 296,
+    "paired_bootstrap_10000_resamples_95_ci": [
+      0.0169,
+      0.1352
+    ],
+    "contingency_table": {
+      "both_incorrect_n00": 130,
+      "raw_correct_proj_incorrect_n10": 30,
+      "raw_incorrect_proj_correct_n01": 53,
+      "both_correct_n11": 83
+    },
+    "mcnemar_exact_test": {
+      "discordant_pairs": 83,
+      "p_value": 0.0152,
+      "statistically_significant_at_alpha_0_05": true
+    }
+  },
+  "macro_f1_and_balanced_accuracy_summary": {
+    "balanced_accuracy_delta_mean": 0.0389,
+    "balanced_accuracy_delta_std": 0.0309,
+    "macro_f1_delta_mean": 0.0025,
+    "macro_f1_delta_std": 0.0365
+  }
+}

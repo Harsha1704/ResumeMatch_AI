@@ -1,0 +1,110 @@
+{
+  "audit_phase": "Phase 12I.11",
+  "timestamp": "2026-11-14T21:38:00Z",
+  "multiple_testing_methodology": {
+    "procedure": "Step-down Holm-Bonferroni Family-Wise Error Rate (FWER) control",
+    "target_fwer_alpha": 0.05,
+    "formula": "adjusted_p_(i) = max_{k <= i} (min(1.0, (m - k + 1) * raw_p_(k)))",
+    "non_independence_statement": "The five seeds are evaluated on the exact same frozen validation sample of 296 pairs. They represent model training stability across random initializations on identical data, NOT five independent dataset replications. Combining p-values using Fisher combined test is mathematically invalid."
+  },
+  "families": {
+    "family_a_production_baseline": {
+      "comparator": "Production Baseline (Logistic Regression / models/best_model.joblib)",
+      "comparator_accuracy": 0.3682,
+      "family_size_m": 5,
+      "sorted_hypotheses": [
+        {
+          "rank": 1,
+          "seed": 42,
+          "raw_exact_p": 0.004512,
+          "multiplier": 5,
+          "holm_adjusted_p": 0.02256,
+          "fwer_significant_05": true
+        },
+        {
+          "rank": 2,
+          "seed": 46,
+          "raw_exact_p": 0.004609,
+          "multiplier": 4,
+          "holm_adjusted_p": 0.02256,
+          "fwer_significant_05": true
+        },
+        {
+          "rank": 3,
+          "seed": 43,
+          "raw_exact_p": 0.006674,
+          "multiplier": 3,
+          "holm_adjusted_p": 0.02256,
+          "fwer_significant_05": true
+        },
+        {
+          "rank": 4,
+          "seed": 45,
+          "raw_exact_p": 0.008634,
+          "multiplier": 2,
+          "holm_adjusted_p": 0.02256,
+          "fwer_significant_05": true
+        },
+        {
+          "rank": 5,
+          "seed": 44,
+          "raw_exact_p": 0.53406,
+          "multiplier": 1,
+          "holm_adjusted_p": 0.53406,
+          "fwer_significant_05": false
+        }
+      ],
+      "fwer_pass_count": 4,
+      "statistical_conclusion": "Under paired unclustered McNemar tests, 4 of 5 seeds reject H0 at FWER alpha=0.05 against Production Baseline. However, when accounting for candidate/job crossed clustering via two-way bootstrap, the 95% confidence intervals cross zero for all 5 seeds, indicating that statistical significance is not confirmed under clustering."
+    },
+    "family_b_raw_sbert": {
+      "comparator": "Raw SBERT Bi-Encoder (Cosine Similarity Thresholding)",
+      "comparator_accuracy": 0.3818,
+      "family_size_m": 5,
+      "sorted_hypotheses": [
+        {
+          "rank": 1,
+          "seed": 46,
+          "raw_exact_p": 0.014867,
+          "multiplier": 5,
+          "holm_adjusted_p": 0.074335,
+          "fwer_significant_05": false
+        },
+        {
+          "rank": 2,
+          "seed": 42,
+          "raw_exact_p": 0.015232,
+          "multiplier": 4,
+          "holm_adjusted_p": 0.074335,
+          "fwer_significant_05": false
+        },
+        {
+          "rank": 3,
+          "seed": 43,
+          "raw_exact_p": 0.022983,
+          "multiplier": 3,
+          "holm_adjusted_p": 0.074335,
+          "fwer_significant_05": false
+        },
+        {
+          "rank": 4,
+          "seed": 45,
+          "raw_exact_p": 0.024991,
+          "multiplier": 2,
+          "holm_adjusted_p": 0.074335,
+          "fwer_significant_05": false
+        },
+        {
+          "rank": 5,
+          "seed": 44,
+          "raw_exact_p": 0.832258,
+          "multiplier": 1,
+          "holm_adjusted_p": 0.832258,
+          "fwer_significant_05": false
+        }
+      ],
+      "fwer_pass_count": 0,
+      "statistical_conclusion": "Against Raw SBERT, the lowest raw p-value (0.0149) yields a Holm-adjusted p-value of 0.0743 > 0.05. Zero seeds achieve statistical significance under FWER control at alpha=0.05."
+    }
+  }
+}

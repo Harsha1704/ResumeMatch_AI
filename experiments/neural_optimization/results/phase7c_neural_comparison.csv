@@ -1,0 +1,5 @@
+Model,Family,Mean CV Macro F1,Std CV Macro F1,Mean CV Accuracy,OOF Macro F1,Hardware
+Phase 7B-C Optimized Linear SVM,Max-Margin Linear,0.481,0.0232,0.5319,0.4831,CPU
+Phase 3 Baseline (Logistic Reg),Linear Model,0.4666,0.0227,0.5121,0.466,CPU
+Phase 7B-C GPU XGBoost,Gradient Boosted Trees,0.4534,0.0416,0.5282,0.4571,GPU (RTX 4050)
+Phase 7C Text CNN Pair Classifier,Neural Network,0.44,0.0226,0.4967,0.4416,CPU Multi-Thread

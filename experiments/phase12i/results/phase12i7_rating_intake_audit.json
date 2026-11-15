@@ -1,0 +1,79 @@
+{
+  "phase": "12I.7",
+  "audit_name": "Secure Rating Intake Engine Architecture & Integrity Validation Audit",
+  "timestamp": "2026-11-14T20:47:30Z",
+  "engine_metadata": {
+    "module_path": "src/benchmark/rating_intake_validator.py",
+    "validator_class": "RatingIntakeValidator",
+    "manifest_source": "experiments/phase12i/results/phase12i4_pilot_sampling_manifest.json",
+    "intake_ledger_path": "data/benchmark_vault/intake/raw_submissions.jsonl",
+    "quarantine_directory": "data/benchmark_vault/pilot_quarantine",
+    "authorized_evaluators": ["REC_A_892", "REC_B_314", "LEAD_ADJ_001"]
+  },
+  "validation_rules_specification": {
+    "rule_1_evaluator_authorization": {
+      "field": "evaluator_id",
+      "requirement": "Must belong to authorized evaluators set.",
+      "failure_action": "Reject submission with UNAUTHORIZED_EVALUATOR error."
+    },
+    "rule_2_pair_membership": {
+      "field": "pair_id",
+      "requirement": "Must match regex ^PILOT_P_\\d{4}$ and exist in the frozen 200-pair manifest.",
+      "failure_action": "Reject submission with INVALID_PAIR_ID or UNKNOWN_PAIR error."
+    },
+    "rule_3_duplicate_prevention": {
+      "field": "(evaluator_id, pair_id)",
+      "requirement": "Exactly one accepted submission per pair per evaluator. Duplicate attempts are permanently rejected.",
+      "failure_action": "Reject submission with DUPLICATE_SUBMISSION error."
+    },
+    "rule_4_rating_domain": {
+      "field": "rating",
+      "requirement": "Strict integer in {0, 1, 2} corresponding to No Fit, Potential Fit, and Good Fit.",
+      "failure_action": "Reject submission with INVALID_RATING error."
+    },
+    "rule_5_confidence_scale": {
+      "field": "confidence",
+      "requirement": "Strict integer in {1, 2, 3} corresponding to Low, Medium, High confidence.",
+      "failure_action": "Reject submission with INVALID_CONFIDENCE error."
+    },
+    "rule_6_verbatim_quote_match": {
+      "field": "job_evidence_quote",
+      "requirement": "Must be non-empty and a normalized verbatim substring (>= 8 chars) of the job description snippet in the manifest.",
+      "failure_action": "Reject submission with JOB_QUOTE_UNVERIFIED error."
+    },
+    "rule_7_decision_rationale_depth": {
+      "field": "decision_rationale",
+      "requirement": "Non-empty string with length >= 25 characters detailing domain matching rationale.",
+      "failure_action": "Reject submission with INSUFFICIENT_RATIONALE error."
+    },
+    "rule_8_mandatory_skill_justification": {
+      "field": "mandatory_justification",
+      "requirement": "Non-empty string with length >= 10 characters articulating candidate alignment with required technical competencies.",
+      "failure_action": "Reject submission with INSUFFICIENT_MANDATORY_JUSTIFICATION error."
+    },
+    "rule_9_resume_evidence_status": {
+      "field": "resume_evidence_status",
+      "requirement": "Strict enum value in ['CONFIRMED_PRESENT', 'CONFIRMED_CONTRADICTED', 'UNSTATED_UNVERIFIED'].",
+      "failure_action": "Reject submission with INVALID_RESUME_EVIDENCE_STATUS error."
+    },
+    "rule_10_blinding_violation_defense": {
+      "field": "payload_keys",
+      "requirement": "Strictly forbids fields containing model predictions, peer annotations, or benchmark scores.",
+      "failure_action": "Reject submission immediately with BLINDING_VIOLATION error."
+    },
+    "rule_11_ledger_immutability": {
+      "field": "intake_hash",
+      "requirement": "Every accepted submission is appended as an immutable JSON line with SHA-256 payload digest and UTC timestamp. In-place modification, deletion, or truncation is forbidden.",
+      "failure_action": "Ledger write failure or validation fault."
+    }
+  },
+  "current_ledger_audit": {
+    "ledger_file_exists": true,
+    "total_records_stored": 0,
+    "accepted_evaluator_a_records": 0,
+    "accepted_evaluator_b_records": 0,
+    "accepted_adjudicator_records": 0,
+    "tamper_evidence_detected": false
+  },
+  "intake_verification_status": "READY_FOR_HUMAN_DATA"
+}

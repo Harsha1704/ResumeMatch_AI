@@ -1,0 +1,106 @@
+{
+  "dataset_size": {
+    "total_pairs": 8000,
+    "train_pairs": 6241,
+    "test_pairs": 1759,
+    "unique_resumes": 643,
+    "unique_jobs": 351,
+    "unique_pairs": 7993
+  },
+  "missing_values": {
+    "resume_text": {
+      "train_null": 0,
+      "test_null": 0,
+      "train_empty": 0,
+      "test_empty": 0
+    },
+    "job_description_text": {
+      "train_null": 0,
+      "test_null": 0,
+      "train_empty": 0,
+      "test_empty": 0
+    },
+    "label": {
+      "train_null": 0,
+      "test_null": 0,
+      "train_empty": 0,
+      "test_empty": 0
+    }
+  },
+  "class_distributions": {
+    "train_counts": {
+      "No Fit": 3143,
+      "Potential Fit": 1556,
+      "Good Fit": 1542
+    },
+    "train_percentages": {
+      "No Fit": 50.36,
+      "Potential Fit": 24.93,
+      "Good Fit": 24.71
+    },
+    "test_counts": {
+      "No Fit": 857,
+      "Good Fit": 458,
+      "Potential Fit": 444
+    },
+    "test_percentages": {
+      "No Fit": 48.72,
+      "Good Fit": 26.04,
+      "Potential Fit": 25.24
+    },
+    "full_counts": {
+      "No Fit": 4000,
+      "Potential Fit": 2000,
+      "Good Fit": 2000
+    }
+  },
+  "entity_statistics": {
+    "train_unique_resumes": 642,
+    "train_unique_jobs": 280,
+    "test_unique_resumes": 477,
+    "test_unique_jobs": 71,
+    "cross_split_leakage": {
+      "overlapping_resumes_count": 476,
+      "overlapping_resumes_pct_of_test": 99.79,
+      "overlapping_jobs_count": 0,
+      "overlapping_jobs_pct_of_test": 0.0,
+      "overlapping_exact_pairs_count": 0
+    },
+    "exact_duplicate_rows": 1,
+    "contradictory_label_pairs": 6,
+    "jobs_per_resume": {
+      "mean": 12.44,
+      "max": 82,
+      "min": 1
+    },
+    "resumes_per_job": {
+      "mean": 22.79,
+      "max": 111,
+      "min": 1
+    }
+  },
+  "lengths": {
+    "resume_words": {
+      "min": 84,
+      "mean": 704.39,
+      "median": 618.0,
+      "p25": 488.0,
+      "p75": 809.0,
+      "p95": 1591.0,
+      "max": 3134
+    },
+    "job_words": {
+      "min": 11,
+      "mean": 378.44,
+      "median": 326.0,
+      "p25": 169.0,
+      "p75": 552.0,
+      "p95": 811.0,
+      "max": 1254
+    }
+  },
+  "anomalies": {
+    "short_resumes_lt_50_words": 0,
+    "short_jobs_lt_30_words": 54
+  }
+}

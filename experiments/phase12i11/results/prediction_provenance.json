@@ -1,0 +1,108 @@
+{
+  "audit_phase": "Phase 12I.11",
+  "timestamp": "2026-11-14T21:37:00Z",
+  "evaluation_split": "dual_unseen_val",
+  "manifest_file": "manifests/v1/dual_unseen_val_v1.parquet",
+  "manifest_sha256": "1b31ae0c5d05ddccdaf351f58742e86ea89d1923050377efa335844e07c22321",
+  "evaluated_rows": 296,
+  "alignment_verification": {
+    "pair_order_identical_across_all_files": true,
+    "resume_text_hash_match": true,
+    "job_text_hash_match": true,
+    "ground_truth_labels_match": true,
+    "label_distribution": {
+      "No Fit": 123,
+      "Good Fit": 93,
+      "Potential Fit": 80
+    }
+  },
+  "baseline_and_comparator_models": {
+    "production_baseline": {
+      "model_name": "Production Baseline (Logistic Regression)",
+      "checkpoint_path": "models/best_model.joblib",
+      "checkpoint_sha256": "1001baaf42db8832e1ba3e28ee9da7146e59f1d2d1808c73c4f7587535b2ed4a",
+      "prediction_file": "experiments/phase12f2/predictions/phase12f2_dual_unseen_val_predictions.csv",
+      "prediction_file_sha256": "33244e5691e48393919c768cb7f0310bd14169b7f20c3498dc208175df98a5c7",
+      "prediction_column": "pred_baseline_logreg",
+      "total_examples": 296,
+      "correct_predictions": 109,
+      "incorrect_predictions": 187,
+      "accuracy": 0.36824324324324326
+    },
+    "hybrid_stacking": {
+      "model_name": "Supervised Hybrid Stacking",
+      "checkpoint_path": "experiments/phase12f2/models/supervised_hybrid_model.joblib",
+      "checkpoint_sha256": null,
+      "prediction_file": "experiments/phase12f2/predictions/phase12f2_dual_unseen_val_predictions.csv",
+      "prediction_file_sha256": "33244e5691e48393919c768cb7f0310bd14169b7f20c3498dc208175df98a5c7",
+      "prediction_column": "pred_supervised_hybrid",
+      "total_examples": 296,
+      "correct_predictions": 124,
+      "incorrect_predictions": 172,
+      "accuracy": 0.4189189189189189
+    },
+    "raw_sbert": {
+      "model_name": "Raw SBERT Bi-Encoder (Cosine Similarity Thresholding)",
+      "checkpoint_path": "sentence-transformers/all-MiniLM-L6-v2",
+      "prediction_file": "experiments/phase12f3_3/predictions/contrastive_vs_raw_seed_42.csv",
+      "prediction_file_sha256": "2953c9657af97d03595eac1105dbd9468f156625f536b7db8ae4b250cca81d1d",
+      "prediction_column": "pred_raw_sbert",
+      "total_examples": 296,
+      "correct_predictions": 113,
+      "incorrect_predictions": 183,
+      "accuracy": 0.38175675675675674
+    }
+  },
+  "contrastive_seeds": {
+    "42": {
+      "seed": 42,
+      "prediction_file": "experiments/phase12f3_3/predictions/contrastive_vs_raw_seed_42.csv",
+      "prediction_file_sha256": "2953c9657af97d03595eac1105dbd9468f156625f536b7db8ae4b250cca81d1d",
+      "prediction_column": "pred_contrastive",
+      "total_examples": 296,
+      "correct_predictions": 136,
+      "incorrect_predictions": 160,
+      "accuracy": 0.4594594594594595
+    },
+    "43": {
+      "seed": 43,
+      "prediction_file": "experiments/phase12f3_3/predictions/contrastive_vs_raw_seed_43.csv",
+      "prediction_file_sha256": "bcd27209afa61408573bb7356e0233b70c2f532e7c41a5f1766034a8e45dcf69",
+      "prediction_column": "pred_contrastive",
+      "total_examples": 296,
+      "correct_predictions": 135,
+      "incorrect_predictions": 161,
+      "accuracy": 0.4560810810810811
+    },
+    "44": {
+      "seed": 44,
+      "prediction_file": "experiments/phase12f3_3/predictions/contrastive_vs_raw_seed_44.csv",
+      "prediction_file_sha256": "c9e78db612e3ad7c4370d8fd2d0abfdb9c581481e882c03f60b66c0ffdfa088b",
+      "prediction_column": "pred_contrastive",
+      "total_examples": 296,
+      "correct_predictions": 116,
+      "incorrect_predictions": 180,
+      "accuracy": 0.3918918918918919
+    },
+    "45": {
+      "seed": 45,
+      "prediction_file": "experiments/phase12f3_3/predictions/contrastive_vs_raw_seed_45.csv",
+      "prediction_file_sha256": "6b373d36bb57ae0e1b9230c716581f524f08b615656d3e73ef748aa767887c78",
+      "prediction_column": "pred_contrastive",
+      "total_examples": 296,
+      "correct_predictions": 136,
+      "incorrect_predictions": 160,
+      "accuracy": 0.4594594594594595
+    },
+    "46": {
+      "seed": 46,
+      "prediction_file": "experiments/phase12f3_3/predictions/contrastive_vs_raw_seed_46.csv",
+      "prediction_file_sha256": "17faef9ea675e24fb79f442b3db847a1aa108b011146751c529b4068d1905f7d",
+      "prediction_column": "pred_contrastive",
+      "total_examples": 296,
+      "correct_predictions": 137,
+      "incorrect_predictions": 159,
+      "accuracy": 0.46283783783783783
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "dual_unseen_train_v1_parquet": {
+    "path": "D:\\skillsync1\\manifests\\v1\\dual_unseen_train_v1.parquet",
+    "sha256": "06ac7b0ff524475ba5f1d75ca9275ebcc084f9beeae878b83153413ff205a464",
+    "size_bytes": 10292487
+  },
+  "dual_unseen_val_v1_parquet": {
+    "path": "D:\\skillsync1\\manifests\\v1\\dual_unseen_val_v1.parquet",
+    "sha256": "1b31ae0c5d05ddccdaf351f58742e86ea89d1923050377efa335844e07c22321",
+    "size_bytes": 392250
+  },
+  "sbert_cache_npz": {
+    "path": "D:\\skillsync1\\results\\phase12b_embeddings\\minilm_l6_v2_cache.npz",
+    "sha256": "a4607688da6812d8714c3aafa51cb35518af0c5529f25f4b19f2b976e2b36671",
+    "size_bytes": 1742736
+  },
+  "production_model_joblib": {
+    "path": "D:\\skillsync1\\models\\best_model.joblib",
+    "sha256": "1001baaf42db8832e1ba3e28ee9da7146e59f1d2d1808c73c4f7587535b2ed4a",
+    "size_bytes": 61487
+  },
+  "feature_pipeline_joblib": {
+    "path": "D:\\skillsync1\\models\\feature_pipeline.joblib",
+    "sha256": "2ebf209f691b7084decb5d3a183b82e9b425fe89335345a4af661fed2fc88ae6",
+    "size_bytes": 270105
+  }
+}

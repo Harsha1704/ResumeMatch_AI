@@ -1,0 +1,558 @@
+{
+  "audit_phase": "Phase 13.1",
+  "benchmark_protocol": "Dual-Unseen Protocol v1 Clean Validation (N=296 pairs, 91 candidates, 52 jobs)",
+  "primary_model": "Model 5: Semantic & Structured-Feature Fusion Challenger (Seed 42)",
+  "models": {
+    "model_1_clean_baseline": {
+      "accuracy": 0.3682,
+      "balanced_accuracy": 0.3368,
+      "macro_precision": 0.3222,
+      "macro_recall": 0.3368,
+      "macro_f1": 0.3229,
+      "weighted_f1": 0.3469,
+      "good_fit_recall": 0.1505,
+      "good_fit_precision": 0.2414,
+      "good_fit_f1": 0.1854,
+      "brier_score_raw": 0.7454,
+      "brier_score_normalized": 0.3727,
+      "expected_calibration_error": 0.2318,
+      "per_class": {
+        "No Fit": {
+          "precision": 0.4688,
+          "recall": 0.6098,
+          "f1": 0.53,
+          "support": 123,
+          "correct_count": 75
+        },
+        "Potential Fit": {
+          "precision": 0.2564,
+          "recall": 0.25,
+          "f1": 0.2532,
+          "support": 80,
+          "correct_count": 20
+        },
+        "Good Fit": {
+          "precision": 0.2414,
+          "recall": 0.1505,
+          "f1": 0.1854,
+          "support": 93,
+          "correct_count": 14
+        }
+      },
+      "confusion_matrix": [
+        [
+          75,
+          27,
+          21
+        ],
+        [
+          37,
+          20,
+          23
+        ],
+        [
+          48,
+          31,
+          14
+        ]
+      ]
+    },
+    "model_1_deployed_checkpoint": {
+      "accuracy": 0.7399,
+      "balanced_accuracy": 0.7561,
+      "macro_precision": 0.7417,
+      "macro_recall": 0.7561,
+      "macro_f1": 0.7373,
+      "weighted_f1": 0.7351,
+      "good_fit_recall": 0.9247,
+      "good_fit_precision": 0.7478,
+      "good_fit_f1": 0.8269,
+      "brier_score_raw": 0.3665,
+      "brier_score_normalized": 0.1833,
+      "expected_calibration_error": 0.0887,
+      "per_class": {
+        "No Fit": {
+          "precision": 0.8391,
+          "recall": 0.5935,
+          "f1": 0.6952,
+          "support": 123,
+          "correct_count": 73
+        },
+        "Potential Fit": {
+          "precision": 0.6383,
+          "recall": 0.75,
+          "f1": 0.6897,
+          "support": 80,
+          "correct_count": 60
+        },
+        "Good Fit": {
+          "precision": 0.7478,
+          "recall": 0.9247,
+          "f1": 0.8269,
+          "support": 93,
+          "correct_count": 86
+        }
+      },
+      "confusion_matrix": [
+        [
+          73,
+          32,
+          18
+        ],
+        [
+          9,
+          60,
+          11
+        ],
+        [
+          5,
+          2,
+          86
+        ]
+      ],
+      "evaluation_note": "CONTAMINATED ON DUAL-UNSEEN: 91 of 91 candidates in val were part of train_sub_A training set."
+    },
+    "model_2_raw_sbert_baseline": {
+      "accuracy": 0.3818,
+      "balanced_accuracy": 0.3467,
+      "macro_precision": 0.331,
+      "macro_recall": 0.3467,
+      "macro_f1": 0.3282,
+      "weighted_f1": 0.3531,
+      "good_fit_recall": 0.1398,
+      "good_fit_precision": 0.2549,
+      "good_fit_f1": 0.1806,
+      "brier_score_raw": 0.7056,
+      "brier_score_normalized": 0.3528,
+      "expected_calibration_error": 0.1682,
+      "per_class": {
+        "No Fit": {
+          "precision": 0.4678,
+          "recall": 0.6504,
+          "f1": 0.5442,
+          "support": 123,
+          "correct_count": 80
+        },
+        "Potential Fit": {
+          "precision": 0.2703,
+          "recall": 0.25,
+          "f1": 0.2597,
+          "support": 80,
+          "correct_count": 20
+        },
+        "Good Fit": {
+          "precision": 0.2549,
+          "recall": 0.1398,
+          "f1": 0.1806,
+          "support": 93,
+          "correct_count": 13
+        }
+      },
+      "confusion_matrix": [
+        [
+          80,
+          23,
+          20
+        ],
+        [
+          42,
+          20,
+          18
+        ],
+        [
+          49,
+          31,
+          13
+        ]
+      ]
+    },
+    "model_4_skill_aware_matching": {
+      "accuracy": 0.4054,
+      "balanced_accuracy": 0.4047,
+      "macro_precision": 0.4055,
+      "macro_recall": 0.4047,
+      "macro_f1": 0.4002,
+      "weighted_f1": 0.4087,
+      "good_fit_recall": 0.3333,
+      "good_fit_precision": 0.3563,
+      "good_fit_f1": 0.3444,
+      "brier_score_raw": 0.7503,
+      "brier_score_normalized": 0.3751,
+      "expected_calibration_error": 0.2137,
+      "per_class": {
+        "No Fit": {
+          "precision": 0.53,
+          "recall": 0.4309,
+          "f1": 0.4753,
+          "support": 123,
+          "correct_count": 53
+        },
+        "Potential Fit": {
+          "precision": 0.3303,
+          "recall": 0.45,
+          "f1": 0.381,
+          "support": 80,
+          "correct_count": 36
+        },
+        "Good Fit": {
+          "precision": 0.3563,
+          "recall": 0.3333,
+          "f1": 0.3444,
+          "support": 93,
+          "correct_count": 31
+        }
+      },
+      "confusion_matrix": [
+        [
+          53,
+          35,
+          35
+        ],
+        [
+          23,
+          36,
+          21
+        ],
+        [
+          24,
+          38,
+          31
+        ]
+      ]
+    },
+    "model_5_primary_seed_42": {
+      "accuracy": 0.4392,
+      "balanced_accuracy": 0.4208,
+      "macro_precision": 0.4217,
+      "macro_recall": 0.4208,
+      "macro_f1": 0.4152,
+      "weighted_f1": 0.4309,
+      "good_fit_recall": 0.2688,
+      "good_fit_precision": 0.4032,
+      "good_fit_f1": 0.3226,
+      "brier_score_raw": 0.7022,
+      "brier_score_normalized": 0.3511,
+      "expected_calibration_error": 0.1896,
+      "per_class": {
+        "No Fit": {
+          "precision": 0.5141,
+          "recall": 0.5935,
+          "f1": 0.5509,
+          "support": 123,
+          "correct_count": 73
+        },
+        "Potential Fit": {
+          "precision": 0.3478,
+          "recall": 0.4,
+          "f1": 0.3721,
+          "support": 80,
+          "correct_count": 32
+        },
+        "Good Fit": {
+          "precision": 0.4032,
+          "recall": 0.2688,
+          "f1": 0.3226,
+          "support": 93,
+          "correct_count": 25
+        }
+      },
+      "confusion_matrix": [
+        [
+          73,
+          29,
+          21
+        ],
+        [
+          32,
+          32,
+          16
+        ],
+        [
+          37,
+          31,
+          25
+        ]
+      ]
+    },
+    "model_5_descriptive_5_seeds": {
+      "accuracy_mean": 0.4392,
+      "accuracy_std": 0.0,
+      "macro_f1_mean": 0.4152,
+      "macro_f1_std": 0.0,
+      "good_fit_recall_mean": 0.2688,
+      "good_fit_recall_std": 0.0,
+      "per_seed_results": {
+        "42": {
+          "accuracy": 0.4392,
+          "balanced_accuracy": 0.4208,
+          "macro_precision": 0.4217,
+          "macro_recall": 0.4208,
+          "macro_f1": 0.4152,
+          "weighted_f1": 0.4309,
+          "good_fit_recall": 0.2688,
+          "good_fit_precision": 0.4032,
+          "good_fit_f1": 0.3226,
+          "brier_score_raw": 0.7022,
+          "brier_score_normalized": 0.3511,
+          "expected_calibration_error": 0.1896,
+          "per_class": {
+            "No Fit": {
+              "precision": 0.5141,
+              "recall": 0.5935,
+              "f1": 0.5509,
+              "support": 123,
+              "correct_count": 73
+            },
+            "Potential Fit": {
+              "precision": 0.3478,
+              "recall": 0.4,
+              "f1": 0.3721,
+              "support": 80,
+              "correct_count": 32
+            },
+            "Good Fit": {
+              "precision": 0.4032,
+              "recall": 0.2688,
+              "f1": 0.3226,
+              "support": 93,
+              "correct_count": 25
+            }
+          },
+          "confusion_matrix": [
+            [
+              73,
+              29,
+              21
+            ],
+            [
+              32,
+              32,
+              16
+            ],
+            [
+              37,
+              31,
+              25
+            ]
+          ]
+        },
+        "43": {
+          "accuracy": 0.4392,
+          "balanced_accuracy": 0.4208,
+          "macro_precision": 0.4217,
+          "macro_recall": 0.4208,
+          "macro_f1": 0.4152,
+          "weighted_f1": 0.4309,
+          "good_fit_recall": 0.2688,
+          "good_fit_precision": 0.4032,
+          "good_fit_f1": 0.3226,
+          "brier_score_raw": 0.7022,
+          "brier_score_normalized": 0.3511,
+          "expected_calibration_error": 0.1896,
+          "per_class": {
+            "No Fit": {
+              "precision": 0.5141,
+              "recall": 0.5935,
+              "f1": 0.5509,
+              "support": 123,
+              "correct_count": 73
+            },
+            "Potential Fit": {
+              "precision": 0.3478,
+              "recall": 0.4,
+              "f1": 0.3721,
+              "support": 80,
+              "correct_count": 32
+            },
+            "Good Fit": {
+              "precision": 0.4032,
+              "recall": 0.2688,
+              "f1": 0.3226,
+              "support": 93,
+              "correct_count": 25
+            }
+          },
+          "confusion_matrix": [
+            [
+              73,
+              29,
+              21
+            ],
+            [
+              32,
+              32,
+              16
+            ],
+            [
+              37,
+              31,
+              25
+            ]
+          ]
+        },
+        "44": {
+          "accuracy": 0.4392,
+          "balanced_accuracy": 0.4208,
+          "macro_precision": 0.4217,
+          "macro_recall": 0.4208,
+          "macro_f1": 0.4152,
+          "weighted_f1": 0.4309,
+          "good_fit_recall": 0.2688,
+          "good_fit_precision": 0.4032,
+          "good_fit_f1": 0.3226,
+          "brier_score_raw": 0.7022,
+          "brier_score_normalized": 0.3511,
+          "expected_calibration_error": 0.1896,
+          "per_class": {
+            "No Fit": {
+              "precision": 0.5141,
+              "recall": 0.5935,
+              "f1": 0.5509,
+              "support": 123,
+              "correct_count": 73
+            },
+            "Potential Fit": {
+              "precision": 0.3478,
+              "recall": 0.4,
+              "f1": 0.3721,
+              "support": 80,
+              "correct_count": 32
+            },
+            "Good Fit": {
+              "precision": 0.4032,
+              "recall": 0.2688,
+              "f1": 0.3226,
+              "support": 93,
+              "correct_count": 25
+            }
+          },
+          "confusion_matrix": [
+            [
+              73,
+              29,
+              21
+            ],
+            [
+              32,
+              32,
+              16
+            ],
+            [
+              37,
+              31,
+              25
+            ]
+          ]
+        },
+        "45": {
+          "accuracy": 0.4392,
+          "balanced_accuracy": 0.4208,
+          "macro_precision": 0.4217,
+          "macro_recall": 0.4208,
+          "macro_f1": 0.4152,
+          "weighted_f1": 0.4309,
+          "good_fit_recall": 0.2688,
+          "good_fit_precision": 0.4032,
+          "good_fit_f1": 0.3226,
+          "brier_score_raw": 0.7022,
+          "brier_score_normalized": 0.3511,
+          "expected_calibration_error": 0.1896,
+          "per_class": {
+            "No Fit": {
+              "precision": 0.5141,
+              "recall": 0.5935,
+              "f1": 0.5509,
+              "support": 123,
+              "correct_count": 73
+            },
+            "Potential Fit": {
+              "precision": 0.3478,
+              "recall": 0.4,
+              "f1": 0.3721,
+              "support": 80,
+              "correct_count": 32
+            },
+            "Good Fit": {
+              "precision": 0.4032,
+              "recall": 0.2688,
+              "f1": 0.3226,
+              "support": 93,
+              "correct_count": 25
+            }
+          },
+          "confusion_matrix": [
+            [
+              73,
+              29,
+              21
+            ],
+            [
+              32,
+              32,
+              16
+            ],
+            [
+              37,
+              31,
+              25
+            ]
+          ]
+        },
+        "46": {
+          "accuracy": 0.4392,
+          "balanced_accuracy": 0.4208,
+          "macro_precision": 0.4217,
+          "macro_recall": 0.4208,
+          "macro_f1": 0.4152,
+          "weighted_f1": 0.4309,
+          "good_fit_recall": 0.2688,
+          "good_fit_precision": 0.4032,
+          "good_fit_f1": 0.3226,
+          "brier_score_raw": 0.7022,
+          "brier_score_normalized": 0.3511,
+          "expected_calibration_error": 0.1896,
+          "per_class": {
+            "No Fit": {
+              "precision": 0.5141,
+              "recall": 0.5935,
+              "f1": 0.5509,
+              "support": 123,
+              "correct_count": 73
+            },
+            "Potential Fit": {
+              "precision": 0.3478,
+              "recall": 0.4,
+              "f1": 0.3721,
+              "support": 80,
+              "correct_count": 32
+            },
+            "Good Fit": {
+              "precision": 0.4032,
+              "recall": 0.2688,
+              "f1": 0.3226,
+              "support": 93,
+              "correct_count": 25
+            }
+          },
+          "confusion_matrix": [
+            [
+              73,
+              29,
+              21
+            ],
+            [
+              32,
+              32,
+              16
+            ],
+            [
+              37,
+              31,
+              25
+            ]
+          ]
+        }
+      }
+    }
+  }
+}

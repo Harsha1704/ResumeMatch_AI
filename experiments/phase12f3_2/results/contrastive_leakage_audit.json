@@ -1,0 +1,43 @@
+{
+  "function_signature": {
+    "name": "train_contrastive_encoder_on_train_only",
+    "module": "scripts.phase12f3_1.reproduce_contrastive_downstream",
+    "parameters": [
+      "u_tr",
+      "v_tr",
+      "y_tr",
+      "seed"
+    ],
+    "source_location": "scripts/phase12f3_1/reproduce_contrastive_downstream.py:40-70"
+  },
+  "leakage_checks": {
+    "training_only_fit": {
+      "status": "VERIFIED_PASS",
+      "proof": "DataLoader is constructed solely from torch.utils.data.TensorDataset(u_pos, v_pos) where u_pos, v_pos are filtered from u_tr, v_tr."
+    },
+    "no_validation_label_access": {
+      "status": "VERIFIED_PASS",
+      "proof": "y_vl is never passed to or referenced by train_contrastive_encoder_on_train_only."
+    },
+    "no_test_label_access": {
+      "status": "VERIFIED_PASS",
+      "proof": "held_out_test_v1 is neither loaded nor accessed during contrastive representation learning."
+    },
+    "no_candidate_or_job_entity_overlap": {
+      "status": "VERIFIED_PASS",
+      "proof": "Cryptographic text hash intersection is exactly 0 resumes and 0 jobs (0 and 0 overlap)."
+    },
+    "no_validation_derived_negative_sampling": {
+      "status": "VERIFIED_PASS",
+      "proof": "Negative keys in InfoNCE loss matrix sim = torch.matmul(z_u, z_v.T) / 0.07 originate strictly from other training resumes within the training mini-batch."
+    },
+    "no_test_derived_normalization_or_feature_selection": {
+      "status": "VERIFIED_PASS",
+      "proof": "StandardScaler is fitted strictly on X_proj_tr via StandardScaler().fit(X_proj_tr). X_proj_vl is transformed using training statistics."
+    },
+    "no_hyperparameter_selection_using_evaluation_labels": {
+      "status": "VERIFIED_PASS",
+      "proof": "Architecture (input 384, hidden 256, output 128, temperature 0.07, lr 1e-3, 10 epochs) is fixed a priori without grid-searching or tuning against validation metrics."
+    }
+  }
+}

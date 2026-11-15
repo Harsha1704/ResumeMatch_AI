@@ -1,0 +1,57 @@
+{
+  "phase": "12I.4",
+  "audit_name": "Recruiter Pilot Inter-Annotator Reliability Analysis & Mathematical Specification",
+  "timestamp": "2026-11-14T20:27:00Z",
+  "execution_status": "PILOT READY — AWAITING RECRUITERS",
+  "declaration_of_scientific_integrity": {
+    "human_annotation_status": "PENDING_RECRUITER_PARTICIPATION",
+    "synthetic_data_fabricated": false,
+    "cardinal_prohibition": "Under strict audit rules, NO synthetic or LLM-generated recruiter ratings were manufactured. Metrics are maintained as pending until actual human recruiters complete independent blinded evaluations."
+  },
+  "pre_adjudication_reliability_pipeline": {
+    "input_schema": {
+      "pair_id": "string",
+      "annotator_1_id": "string (pseudonymous, e.g. REC_01)",
+      "annotator_1_rating": "int {0: No Fit, 1: Potential Fit, 2: Good Fit}",
+      "annotator_1_confidence": "int {1: Low, 2: Medium, 3: High}",
+      "annotator_1_job_quote": "string",
+      "annotator_1_mandatory_justification": "string",
+      "annotator_1_resume_evidence_status": "string {CONFIRMED_PRESENT, CONFIRMED_CONTRADICTED, UNSTATED_UNVERIFIED}",
+      "annotator_1_decision_rationale": "string",
+      "annotator_2_id": "string (pseudonymous, e.g. REC_02)",
+      "annotator_2_rating": "int {0: No Fit, 1: Potential Fit, 2: Good Fit}",
+      "annotator_2_confidence": "int {1, 2, 3}",
+      "annotator_2_job_quote": "string",
+      "annotator_2_mandatory_justification": "string",
+      "annotator_2_resume_evidence_status": "string {CONFIRMED_PRESENT, CONFIRMED_CONTRADICTED, UNSTATED_UNVERIFIED}",
+      "annotator_2_decision_rationale": "string"
+    },
+    "metrics_ready_to_compute_on_arrival": {
+      "raw_agreement_P_o": "null (Awaiting ratings)",
+      "linear_weighted_kappa": "null (Awaiting ratings)",
+      "quadratic_weighted_kappa": "null (Awaiting ratings)",
+      "gwet_ac1": "null (Awaiting ratings)",
+      "per_class_specific_agreement": {
+        "class_0_no_fit": "null",
+        "class_1_potential_fit": "null",
+        "class_2_good_fit": "null"
+      },
+      "confusion_matrix_3x3": "null",
+      "adjudication_rate": "null",
+      "severe_disagreement_rate": "null",
+      "confidence_intervals_95": "null"
+    },
+    "mathematical_formulas_verified": {
+      "linear_weighted_kappa": "kappa_linear = 1 - (sum v_ij * O_ij) / (sum v_ij * E_ij) where v_ij = |i - j| / (K - 1)",
+      "quadratic_weighted_kappa": "kappa_quadratic = 1 - (sum v_ij * O_ij) / (sum v_ij * E_ij) where v_ij = ((i - j) / (K - 1))^2",
+      "gwet_ac1": "AC1 = (P_o - P_e_gamma) / (1 - P_e_gamma) where P_e_gamma = 1/(K-1) * sum pi_k * (1 - pi_k) and pi_k = (p_k. + p_.k) / 2",
+      "specific_agreement": "P_pos(k) = 2 * c_kk / (c_k. + c_.k)"
+    },
+    "quality_gates": {
+      "quadratic_weighted_kappa_gate": ">= 0.70",
+      "max_allowable_adjudication_rate": "35.0%",
+      "max_allowable_severe_discordance": "3.0%",
+      "remediation_action_if_gate_fails": "Batch rejection, rubric ambiguity workshop, fresh re-annotation."
+    }
+  }
+}

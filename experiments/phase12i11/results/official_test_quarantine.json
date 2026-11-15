@@ -1,0 +1,77 @@
+{
+  "audit_phase": "Phase 12I.11",
+  "timestamp": "2026-11-14T21:39:00Z",
+  "quarantined_split": {
+    "split_file": "manifests/v1/held_out_test_v1.parquet",
+    "sha256": "d4319c1fb86f7708ece03ddb361514940f7416b22958ec6d9c94dc09f367d39b",
+    "row_count": 1759,
+    "unique_candidates": 477,
+    "unique_jobs": 71,
+    "candidate_overlap_with_train": 476,
+    "candidate_overlap_percentage": 99.79,
+    "job_overlap_with_train": 0,
+    "job_overlap_percentage": 0.0,
+    "true_isolation_type": "Job-Disjoint Test Set (Unseen Jobs, Known Candidates, Unseen Pairs)"
+  },
+  "quarantine_policy": {
+    "status": "PERMANENTLY_QUARANTINED",
+    "policy_statement": "held_out_test_v1.parquet has been historically exposed to multiple sequential model comparisons, hyperparameter evaluations, and checkpoint screenings. Consequently, it has lost blind out-of-sample quarantine integrity. It is formally quarantined and must NEVER be used for model selection, threshold calibration, architecture tuning, or claims of unbiased final generalization.",
+    "preservation_mandate": "The original parquet split and historical prediction files are preserved unmodified in their versioned locations for scientific reproducibility. No historical files shall be deleted or rewritten.",
+    "replacement_prohibition": "Engineering teams must NOT manufacture a replacement test set by randomly re-splitting or re-partitioning existing dataset pools and claiming external independence."
+  },
+  "historical_sequential_evaluations": [
+    {
+      "configuration_id": "EXP-12F-SUP:logistic_regression",
+      "model_type": "Supervised Baseline (Logistic Regression on SBERT + 25 features)",
+      "accuracy": 0.4645,
+      "macro_f1": 0.4328,
+      "date": "Phase 12F"
+    },
+    {
+      "configuration_id": "EXP-12F-SUP:hybrid_stacking",
+      "model_type": "Supervised Stacking (Random Forest + Gradient Boosting + LR)",
+      "accuracy": 0.5105,
+      "macro_f1": 0.4532,
+      "date": "Phase 12F"
+    },
+    {
+      "configuration_id": "EXP-12F-WEAK",
+      "model_type": "Programmatic Weak Supervision Augmented Classifier",
+      "accuracy": 0.473,
+      "macro_f1": 0.4371,
+      "date": "Phase 12F"
+    },
+    {
+      "configuration_id": "EXP-12F-SSDA",
+      "model_type": "Self-Supervised Domain Adaptation on Djinni Corpus",
+      "accuracy": 0.4514,
+      "macro_f1": 0.4344,
+      "date": "Phase 12F"
+    },
+    {
+      "configuration_id": "EXP-12F-PSEUDO",
+      "model_type": "Confidence-Gated Pseudo-Labeling from Candidate Pool",
+      "accuracy": 0.5026,
+      "macro_f1": 0.4321,
+      "date": "Phase 12F"
+    },
+    {
+      "configuration_id": "EXP-12F-COMBINED",
+      "model_type": "Final Automated Pipeline Challenger (LightGBM Optuna Tuned)",
+      "accuracy": 0.4889,
+      "macro_f1": 0.439,
+      "date": "Phase 12F"
+    }
+  ],
+  "leakage_taxonomy_and_differentiation": {
+    "direct_label_leakage": {
+      "occurred": false,
+      "findings": "Ground-truth test labels were never provided as input features or training targets to any model. Pseudo-labels were sourced from external candidate pools."
+    },
+    "adaptive_test_reuse_bias": {
+      "occurred": true,
+      "findings": "Evaluating 6 distinct configurations sequentially against the same 1,759 test rows created Freedman post-selection bias. The best-performing configuration (50.26% or 51.05%) reflects adaptive selection over test evaluations rather than unbiased out-of-sample generalization."
+    }
+  },
+  "operational_classification": "HISTORICAL_DESCRIPTIVE_ONLY_NOT_CERTIFIED_BENCHMARK"
+}

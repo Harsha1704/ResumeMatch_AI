@@ -1,0 +1,37 @@
+{
+  "phase": "12I.3",
+  "timestamp": "2026-11-14T08:33:00Z",
+  "design_comparison": {
+    "pilot": {
+      "pairs_N": 200,
+      "candidates_C": 120,
+      "jobs_J": 60,
+      "mean_candidate_cluster_mc": 1.6667,
+      "mean_job_cluster_mj": 3.3333,
+      "design_effect_DEFF": 1.3667,
+      "effective_sample_size_N_eff": 146.3,
+      "power_for_delta_004": 0.1485,
+      "purpose": "Estimating annotator reliability (kappa), verifying rubric clarity, estimating variance components (sigma_c^2, sigma_j^2). NOT powered for hypothesis testing."
+    },
+    "main_benchmark": {
+      "pairs_N": 2850,
+      "candidates_C": 950,
+      "jobs_J": 380,
+      "mean_candidate_cluster_mc": 3.0,
+      "mean_job_cluster_mj": 7.5,
+      "design_effect_DEFF": 2.05,
+      "effective_sample_size_N_eff": 1390.2,
+      "power_for_delta_004": 0.8069,
+      "purpose": "Definitive evaluation benchmark for Model 0 vs Model 1 comparison powered at >= 80%."
+    }
+  },
+  "transportability_analysis": {
+    "core_finding": "DEFF CANNOT BE DIRECTLY TRANSPORTED from pilot to main benchmark. DEFF is a function of cluster size. However, latent variance components (sigma_c^2, sigma_j^2) and ICCs (ICC_c, ICC_j) ARE transportable across designs.",
+    "conservative_transport_protocol": [
+      "Step 1: Fit crossed random-effects logistic/linear mixed model on 200-pair pilot ratings to estimate sigma_c^2 and sigma_j^2.",
+      "Step 2: Construct 80% upper confidence bounds for ICC_c and ICC_j to account for pilot estimation uncertainty (SE(ICC) ~ 0.08 - 0.12).",
+      "Step 3: Plug ICC_c_upper and ICC_j_upper into the MAIN BENCHMARK cluster dimensions: DEFF_projected = 1 + (mc_main* - 1)*ICC_c_upper + (mj_main* - 1)*ICC_j_upper.",
+      "Step 4: Compute adaptive sample size N_adaptive using DEFF_projected."
+    ]
+  }
+}

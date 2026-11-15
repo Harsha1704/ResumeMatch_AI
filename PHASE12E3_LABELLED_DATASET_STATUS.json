@@ -1,0 +1,76 @@
+{
+  "status_document_version": "1.0.0",
+  "phase": "Phase 12E-3",
+  "audit_timestamp": "2026-11-13T17:20:00Z",
+  "auditor": "Principal Data Quality Auditor & Independent ML Evaluation Auditor",
+  "production_checkpoint_status": {
+    "model_path": "models/best_model.joblib",
+    "sha256": "1001BAAF42DB8832E1BA3E28EE9DA7146E59F1D2D1808C73C4F7587535B2ED4A",
+    "status": "FROZEN_UNCHANGED"
+  },
+  "dataset_categories": {
+    "category_A_gold_standard_core": {
+      "name": "Legacy Core Anchor Dataset",
+      "description": "Original human-annotated resume-job fit pairs from Phase 1-12",
+      "total_pairs": 8000,
+      "train_split_count": 6241,
+      "test_split_count": 1759,
+      "unique_resumes": 643,
+      "unique_jobs": 351,
+      "labeled_status": "100% HUMAN_LABELLED",
+      "class_distribution": {
+        "No Fit": 4000,
+        "Potential Fit": 2000,
+        "Good Fit": 2000
+      },
+      "clean_train_manifest_v1_count": 5462,
+      "contradictory_pairs_excluded_from_clean": 6
+    },
+    "category_B_djinni_proposed_sample": {
+      "name": "Djinni Stratified Candidate-Pair Proposals",
+      "description": "Candidate pairs sampled from Djinni English data across High Alignment, Borderline Runner-Up, and Cross-Domain strata",
+      "file_path": "data/external/djinni/proposed_candidate_pairs_sample.csv",
+      "sha256": "0923f8a779511ba1a3761ac71b8bff963375bbc5004656a6d2fc7c89ba2ef76e",
+      "total_proposed_pairs": 830,
+      "unique_candidates": 136,
+      "unique_jobs": 120,
+      "human_annotated_count": 0,
+      "human_adjudicated_count": 0,
+      "labeled_status": "100% UNLABELLED (Ready for Human Annotation)",
+      "per_class_labeled_counts": {
+        "No Fit": 0,
+        "Potential Fit": 0,
+        "Good Fit": 0
+      },
+      "pilot_template": {
+        "file_path": "PHASE12E2_PAIR_ANNOTATION_TEMPLATE.csv",
+        "sample_size": 50,
+        "human_annotated_count": 0,
+        "adjudicated_count": 0,
+        "status": "PILOT_TEMPLATE_STAGED"
+      }
+    },
+    "category_C_djinni_unlabeled_inventory": {
+      "name": "Djinni Full Unpaired Inventory",
+      "description": "Raw candidate profiles and job postings downloaded from Hugging Face",
+      "total_candidate_cvs": 210250,
+      "total_job_descriptions": 141897,
+      "pairwise_links_in_source": 0,
+      "labeled_status": "100% UNPAIRED_UNLABELLED_INVENTORY",
+      "use_policy": "Permitted ONLY for unsupervised pre-training, vocabulary extraction, and stratified pair sampling. STRICTLY FORBIDDEN from supervised training without human adjudication."
+    }
+  },
+  "supervised_dataset_integrity_rules": {
+    "rule_1": "Category B (830 proposed pairs) is NEVER merged into supervised training sets until human annotation and adjudication are 100% complete.",
+    "rule_2": "Category C (352k unpaired inventory) is NEVER auto-labelled via heuristics, similarity thresholds, or synthetic LLMs.",
+    "rule_3": "The 1,759 held-out test pairs in Category A remain strictly frozen and untouched.",
+    "rule_4": "No claim of an expanded labelled dataset (e.g. 15,000 pairs) is made until physical human annotations exist on disk."
+  },
+  "current_real_counts_summary": {
+    "total_supervised_labeled_pairs": 8000,
+    "total_unlabeled_proposed_pairs": 830,
+    "total_unlabeled_inventory_documents": 352147,
+    "inter_annotator_agreement_measured": null,
+    "annotation_readiness": "READY_FOR_HUMAN_REVIEWERS"
+  }
+}

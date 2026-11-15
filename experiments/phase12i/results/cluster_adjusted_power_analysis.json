@@ -1,0 +1,52 @@
+{
+  "phase": "12I",
+  "audit_date": "2026-11-14",
+  "power_calculation_model": "Two-Way Cross-Clustered Asymptotic McNemar Formulation (Cameron & Miller 2015, Kish 1965)",
+  "hypothesis_parameters": {
+    "significance_level_alpha": 0.05,
+    "z_critical_two_sided": 1.96,
+    "target_power_1_minus_beta": 0.80,
+    "z_power_critical": 0.8416,
+    "detectable_effect_size_delta": 0.04,
+    "expected_discordance_rate_PD": 0.28
+  },
+  "provisional_design_evaluation": {
+    "nominal_pairs_N": 1500,
+    "unique_candidates": 500,
+    "unique_jobs": 200,
+    "mean_pairs_per_candidate_mc": 3.0,
+    "mean_pairs_per_job_mj": 7.5,
+    "intra_cluster_correlation_candidate_icc_c": 0.20,
+    "intra_cluster_correlation_job_icc_j": 0.10,
+    "design_effect_candidate_deff_c": 1.40,
+    "design_effect_job_deff_j": 1.65,
+    "combined_two_way_deff": 2.05,
+    "effective_sample_size_N_eff": 731.7,
+    "achieved_statistical_power": 0.5338,
+    "assessment": "INSUFFICIENT POWER. A sample of 1,500 pairs achieves only 53.38% statistical power under realistic candidate and job clustering (ICC_c=0.20, ICC_j=0.10). An unadjusted N=1,500 overestimates effective statistical evidence by a factor of 2.05x."
+  },
+  "cluster_adjusted_recommendations": {
+    "target_effective_sample_size_N_eff": 1373.6,
+    "two_way_deff_factor": 2.05,
+    "recommended_nominal_pairs_N": 2816,
+    "conservative_target_sample_size": 2850,
+    "sampling_topology_for_80_percent_power": {
+      "total_pairs": 2850,
+      "minimum_unique_candidates": 950,
+      "minimum_unique_jobs": 380,
+      "mean_pairs_per_candidate": 3.0,
+      "mean_pairs_per_job": 7.5,
+      "maximum_pairs_per_candidate": 5,
+      "maximum_pairs_per_job": 10,
+      "expected_N_eff": 1390.2,
+      "expected_power_at_delta_0_04": 0.8062
+    },
+    "alternative_low_correlation_design": {
+      "description": "If pairs are strictly one-to-one (1 pair per candidate, 1 pair per job), DEFF = 1.0.",
+      "nominal_pairs_required": 1400,
+      "unique_candidates_required": 1400,
+      "unique_jobs_required": 1400,
+      "feasibility_assessment": "Recruitment matching requires evaluating candidates against competing jobs. The 2,850-pair cross-clustered design is more practically and domain-wise defensible."
+    }
+  }
+}

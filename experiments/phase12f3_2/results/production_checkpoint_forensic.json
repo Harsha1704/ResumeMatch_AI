@@ -1,0 +1,108 @@
+{
+  "environment": {
+    "python_version": "3.14.8 (tags/v3.14.8:8e6e75d, Sep 30 2026, 18:19:33) [MSC v.1944 64 bit (AMD64)]",
+    "scikit_learn_version": "1.9.1",
+    "joblib_version": "1.6.0"
+  },
+  "production_model_artifact": {
+    "path": "D:\\skillsync1\\models\\best_model.joblib",
+    "size_bytes": 61487,
+    "sha256": "1001baaf42db8832e1ba3e28ee9da7146e59f1d2d1808c73c4f7587535b2ed4a",
+    "exact_class": "<class 'sklearn.linear_model._logistic.LogisticRegression'>",
+    "mro": [
+      "sklearn.linear_model._logistic.LogisticRegression",
+      "sklearn.callback._callback_support.CallbackSupportMixin",
+      "sklearn.linear_model._base.LinearClassifierMixin",
+      "sklearn.base.ClassifierMixin",
+      "sklearn.linear_model._base.SparseCoefMixin",
+      "sklearn.base.BaseEstimator",
+      "sklearn.utils._repr_html.base.ReprHTMLMixin",
+      "sklearn.utils._repr_html.base._HTMLDocumentationLinkMixin",
+      "sklearn.utils._metadata_requests._MetadataRequester",
+      "builtins.object"
+    ],
+    "is_pipeline": false,
+    "classes": [
+      "Good Fit",
+      "No Fit",
+      "Potential Fit"
+    ],
+    "n_features_in": 2518,
+    "coef_shape": [
+      3,
+      2518
+    ],
+    "intercept": [
+      1.8310385700511296,
+      -2.9774156938547236,
+      1.146377123806117
+    ]
+  },
+  "feature_pipeline_artifact": {
+    "path": "D:\\skillsync1\\models\\feature_pipeline.joblib",
+    "size_bytes": 270105,
+    "sha256": "2ebf209f691b7084decb5d3a183b82e9b425fe89335345a4af661fed2fc88ae6",
+    "exact_class": "<class 'src.features.feature_pipeline.ResumeJobFeaturePipeline'>",
+    "transformers": {
+      "vectorizer": {
+        "type": "<class 'sklearn.feature_extraction.text.TfidfVectorizer'>",
+        "vocab_size": 2500,
+        "ngram_range": [
+          1,
+          2
+        ],
+        "max_features": 2500
+      },
+      "scaler": {
+        "type": "<class 'sklearn.preprocessing._data.StandardScaler'>",
+        "mean_dim": [
+          15
+        ]
+      },
+      "feature_names_count": 2518
+    }
+  },
+  "shape_reconciliation_verdict": {
+    "historical_claim_3_778": "INCORRECT / CLERICAL TYPO in Phase 12F.3 report prose",
+    "certified_actual_shape": [
+      3,
+      2518
+    ],
+    "explanation": "The active production checkpoint models/best_model.joblib has always had physical size 61,487 bytes and SHA-256 1001baaf42db8832e1ba3e28ee9da7146e59f1d2d1808c73c4f7587535b2ed4a. It takes 2,518 features (2,500 word TF-IDF + 18 dense domain features) extracted by models/feature_pipeline.joblib. The coefficient shape is strictly (3, 2518). The citation '(3, 778)' in Phase 12F.3 documentation was a clerical transcription typo (likely conflating with the 778 rows in job_disjoint_val_v1)."
+  },
+  "reference_predictions": [
+    {
+      "pair_id": 1,
+      "resume_snippet": "Experienced Python Developer with 5 years in Django, Flask, ",
+      "job_snippet": "Looking for Python Software Engineer with strong SQL, Docker",
+      "predicted_class": "Good Fit",
+      "probabilities": {
+        "Good Fit": 0.868015,
+        "No Fit": 0.017209,
+        "Potential Fit": 0.114776
+      }
+    },
+    {
+      "pair_id": 2,
+      "resume_snippet": "Senior Accountant with CPA, 10 years experience in financial",
+      "job_snippet": "Accounting Manager needed to oversee financial audits, tax p",
+      "predicted_class": "No Fit",
+      "probabilities": {
+        "Good Fit": 0.022762,
+        "No Fit": 0.961382,
+        "Potential Fit": 0.015856
+      }
+    },
+    {
+      "pair_id": 3,
+      "resume_snippet": "Entry level marketing graduate with social media internship ",
+      "job_snippet": "Staff Data Scientist with PhD in Machine Learning, PyTorch, ",
+      "predicted_class": "Good Fit",
+      "probabilities": {
+        "Good Fit": 0.549396,
+        "No Fit": 0.136794,
+        "Potential Fit": 0.31381
+      }
+    }
+  ]
+}

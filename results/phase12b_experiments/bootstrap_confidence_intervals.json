@@ -1,0 +1,13 @@
+{
+  "n_bootstraps": 1000,
+  "mean_accuracy": 0.4854,
+  "ci_95_accuracy": [
+    0.4511,
+    0.5219
+  ],
+  "mean_macro_f1": 0.4529,
+  "ci_95_macro_f1": [
+    0.414,
+    0.4902
+  ]
+}

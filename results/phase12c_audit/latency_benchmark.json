@@ -1,0 +1,16 @@
+{
+  "model_load_time_sec": 1.26,
+  "ram_before_load_mb": 1567.97,
+  "ram_after_load_mb": 1670.65,
+  "ram_model_footprint_mb": 102.68,
+  "cold_start_latency_ms": 74.93,
+  "warm_runs_n": 50,
+  "warm_median_ms": 66.47,
+  "warm_mean_ms": 66.37,
+  "warm_std_ms": 3.59,
+  "warm_p95_ms": 71.28,
+  "warm_p99_ms": 74.05,
+  "warm_min_ms": 55.56,
+  "warm_max_ms": 74.57,
+  "throughput_pairs_per_sec": 15.04
+}

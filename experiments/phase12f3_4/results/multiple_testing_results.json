@@ -1,0 +1,60 @@
+{
+  "multiple_testing_adjustments": [
+    {
+      "seed": 42,
+      "unadjusted_p": 0.0152,
+      "bonferroni_p": 0.076,
+      "holm_p": 0.0745,
+      "significant_post_holm_alpha_0_05": false
+    },
+    {
+      "seed": 43,
+      "unadjusted_p": 0.023,
+      "bonferroni_p": 0.115,
+      "holm_p": 0.0745,
+      "significant_post_holm_alpha_0_05": false
+    },
+    {
+      "seed": 44,
+      "unadjusted_p": 0.8323,
+      "bonferroni_p": 1.0,
+      "holm_p": 0.8323,
+      "significant_post_holm_alpha_0_05": false
+    },
+    {
+      "seed": 45,
+      "unadjusted_p": 0.025,
+      "bonferroni_p": 0.125,
+      "holm_p": 0.0745,
+      "significant_post_holm_alpha_0_05": false
+    },
+    {
+      "seed": 46,
+      "unadjusted_p": 0.0149,
+      "bonferroni_p": 0.0745,
+      "holm_p": 0.0745,
+      "significant_post_holm_alpha_0_05": false
+    }
+  ],
+  "pre_specified_aggregate_paired_tests": {
+    "pooled_trial_mcnemar_test": {
+      "total_trials": 1480,
+      "discordant_b_raw_only": 175,
+      "discordant_c_contrastive_only": 270,
+      "exact_two_sided_p_value": 7.748359192196487e-06,
+      "statistically_significant": true,
+      "methodological_note": "Treats the 5 seeds as repeated evaluations of the representation against baseline."
+    },
+    "ensemble_majority_vote_mcnemar_test": {
+      "n_pairs": 296,
+      "ensemble_accuracy": 0.4426,
+      "raw_accuracy": 0.3818,
+      "discordant_b_raw_only": 35,
+      "discordant_c_ensemble_only": 53,
+      "exact_two_sided_p_value": 0.0693,
+      "statistically_significant": false,
+      "methodological_note": "Pre-specified deterministic model combination collapsing seed variance into a single prediction."
+    }
+  },
+  "critical_statistical_caveat": "Evaluating 5 training seeds on the same 296 validation pairs introduces shared validation sample variance. The 4 unadjusted p < 0.05 tests reflect model training variance under different weight initializations and batch orderings, NOT 5 independent population samples. After strict family-wise error rate control (Bonferroni / Holm), individual per-seed p-values adjust to ~0.0745."
+}

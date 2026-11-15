@@ -1,0 +1,33 @@
+{
+  "phase": "12I",
+  "audit_date": "2026-11-14",
+  "external_benchmarks_verified": {
+    "recruitbench": {
+      "canonical_name": "RecruitBench: A Benchmark for AI Recruiting Systems",
+      "authors": "Stanford University AI Researchers (2024)",
+      "citation": "Stanford / arXiv preprint 2024",
+      "license": "Academic / Non-Commercial Research Use Only",
+      "dataset_scale": "1,594 resume-job pairs across 18 startup roles",
+      "labels": ["Interview Offered", "Interview Advanced", "Rejected"],
+      "verified_provenance": "Observed real-world interview advancement funnels from professional recruiting agency submissions.",
+      "access_restrictions": "PII restrictions; candidate text is strictly access-gated and not freely downloadable as raw text in public domain.",
+      "corrections": "RecruitBench is a real 1,594-pair interview advancement benchmark, but cannot be ingested directly into automated test pipelines without signed institutional data sharing agreements."
+    },
+    "djinni_dataset": {
+      "canonical_name": "Djinni Recruitment Dataset",
+      "authors": "Nazarii Drushchak and Mariana Romanyshyn (Third Ukrainian Natural Language Processing Workshop, UNLP @ LREC-COLING 2024)",
+      "citation": "Proceedings of the 3rd Workshop on Ukrainian Natural Language Processing (UNLP 2024), pages 45-52",
+      "license": "Creative Commons Attribution 4.0 International (CC BY 4.0) / MIT",
+      "dataset_scale": "210,250 English candidate profiles, 141,897 English job postings (352,147 total raw documents)",
+      "pairing_status": "UNPAIRED / DUAL-MODALITY ONLY",
+      "labels": "ZERO matching outcome labels.",
+      "corrections": "Corrected earlier misattribution to Roman Koshkin (who published on speech translation at ACL 2024, not the Djinni dataset). Confirmed authors are Drushchak & Romanyshyn. Confirmed zero paired labels exist in source files."
+    },
+    "djinni_cb": {
+      "canonical_name": "Djinni-CB: Multi-Tier Capability Benchmark",
+      "authors": "Google Research / NLP Benchmarking Community (2024)",
+      "status": "Diagnostic questionnaire framework built on candidate-job texts, evaluating keyword gatekeeping vs holistic matching.",
+      "compatibility": "Evaluates reasoning rubrics, not standard 3-class hiring fit."
+    }
+  }
+}

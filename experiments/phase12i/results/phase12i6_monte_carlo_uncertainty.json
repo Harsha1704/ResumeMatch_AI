@@ -1,0 +1,38 @@
+{
+  "phase": "12I.6",
+  "timestamp": "2026-11-14T20:38:30Z",
+  "simulation_parameters": {
+    "replications_B": 10000,
+    "sample_size_N": 2850,
+    "true_delta": 0.04,
+    "true_P_D": 0.28,
+    "random_seed": 20261114
+  },
+  "replicate_moments": {
+    "mean_delta_hat": 0.040081,
+    "target_delta": 0.04,
+    "bias": 8.1e-05,
+    "variance_delta_hat": 0.0001744537,
+    "standard_error_delta_hat": 0.013208,
+    "skewness": 0.0071,
+    "kurtosis": 0.0235
+  },
+  "deff_sampling_distribution": {
+    "theoretical_deff": 1.779963,
+    "empirical_deff": 1.785894,
+    "mcse_deff": 0.025174,
+    "ci_90": [
+      1.7445,
+      1.8273
+    ],
+    "ci_95": [
+      1.7366,
+      1.8352
+    ],
+    "ci_99": [
+      1.7211,
+      1.8507
+    ],
+    "contains_theoretical_deff": true
+  }
+}

@@ -1,0 +1,82 @@
+{
+  "truncation_256": {
+    "token_stats": {
+      "mean": 251.7,
+      "median": 256.0,
+      "p95": 256.0,
+      "max": 256
+    },
+    "skill_retention_mean": 0.2642,
+    "mandatory_skill_retention_mean": 0.6184,
+    "experience_evidence_retention_mean": 0.94,
+    "extraction_failure_rate": 0.0,
+    "processing_latency_ms": {
+      "mean": 3.17,
+      "p95": 5.46
+    }
+  },
+  "rge_256": {
+    "token_stats": {
+      "mean": 245.4,
+      "median": 256.0,
+      "p95": 256.0,
+      "max": 256
+    },
+    "skill_retention_mean": 0.3837,
+    "mandatory_skill_retention_mean": 0.8392,
+    "experience_evidence_retention_mean": 0.97,
+    "extraction_failure_rate": 0.01,
+    "processing_latency_ms": {
+      "mean": 9.78,
+      "p95": 16.81
+    }
+  },
+  "truncation_512": {
+    "token_stats": {
+      "mean": 488.0,
+      "median": 512.0,
+      "p95": 512.0,
+      "max": 512
+    },
+    "skill_retention_mean": 0.4526,
+    "mandatory_skill_retention_mean": 0.8338,
+    "experience_evidence_retention_mean": 0.94,
+    "extraction_failure_rate": 0.0,
+    "processing_latency_ms": {
+      "mean": 3.22,
+      "p95": 5.26
+    }
+  },
+  "rge_512": {
+    "token_stats": {
+      "mean": 298.3,
+      "median": 310.0,
+      "p95": 373.1,
+      "max": 388
+    },
+    "skill_retention_mean": 0.4288,
+    "mandatory_skill_retention_mean": 0.9379,
+    "experience_evidence_retention_mean": 0.97,
+    "extraction_failure_rate": 0.01,
+    "processing_latency_ms": {
+      "mean": 9.59,
+      "p95": 16.19
+    }
+  },
+  "omitted_evidence_analysis": {
+    "omitted_cases_count_256": 10,
+    "omitted_cases_rate_256": 0.1,
+    "omitted_row_indices": [
+      2,
+      11,
+      26,
+      32,
+      33,
+      46,
+      64,
+      67,
+      68,
+      95
+    ]
+  }
+}

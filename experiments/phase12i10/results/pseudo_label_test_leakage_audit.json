@@ -1,0 +1,46 @@
+{
+  "audit_target": "EXP-12F-PSEUDO",
+  "source_file": "experiments/phase12f/results/phase12f_experiment_registry.json",
+  "reported_held_out_test_accuracy": 0.5026,
+  "reported_held_out_test_f1": 0.4321,
+  "pseudo_label_sourcing": {
+    "corpus": "Djinni candidate pool",
+    "total_candidates_screened": 830,
+    "total_admitted": 28,
+    "admission_rate": 0.0337,
+    "class_distribution": {
+      "No Fit": 15,
+      "Potential Fit": 4,
+      "Good Fit": 9
+    },
+    "rejection_breakdown": {
+      "model_disagreement": 617,
+      "low_confidence": 178,
+      "low_margin": 0,
+      "test_overlap_leakage": 0,
+      "class_cap_exceeded": 7
+    }
+  },
+  "direct_leakage_audit": {
+    "direct_test_label_leakage": false,
+    "test_entity_overlap": 0,
+    "finding": "Pseudo-labels were strictly derived from unlabelled Djinni candidate pairs, not from held-out test data or ground-truth labels."
+  },
+  "indirect_leakage_audit": {
+    "adaptive_test_reuse": true,
+    "multiple_testing_burden": 6,
+    "sequential_test_evaluations": {
+      "EXP-12F-SUP:logistic_regression": 0.4645,
+      "EXP-12F-SUP:hybrid_stacking": 0.5105,
+      "EXP-12F-WEAK": 0.473,
+      "EXP-12F-SSDA": 0.4514,
+      "EXP-12F-PSEUDO": 0.5026,
+      "EXP-12F-COMBINED": 0.4889
+    },
+    "finding": "Multiple model architectures and tuning configurations were iteratively evaluated against held_out_test_v1.parquet (N=1759) during Phase 12F. This sequential re-use induces post-selection bias (Freedman paradox / adaptive overfitting to test evaluation), invalidating the 50.26% metric as an unbiased out-of-sample estimate."
+  },
+  "scientific_classification": "EXPLORATORY PSEUDO-LABELING RESEARCH",
+  "certified_status": "WITHDRAWN_AS_BENCHMARK_ESTIMATE",
+  "retained_status": "VALID_EXPLORATORY_ABLATION",
+  "remediation": "All future evaluations must enforce strict quarantine: held-out test splits may only be evaluated once after final model freezing; iterative model selection must rely solely on cross-validation or isolated validation splits."
+}

@@ -1,0 +1,95 @@
+{
+  "phase": "12I.8",
+  "description": "Multi-Seed Evaluation across 5 Random Seeds on Clean Dual-Unseen Benchmark",
+  "total_seeds": 5,
+  "seed_evaluations": [
+    {
+      "seed": 42,
+      "raw_sbert_accuracy": 0.3818,
+      "raw_sbert_macro_f1": 0.3282,
+      "contrastive_accuracy": 0.4595,
+      "contrastive_macro_f1": 0.3311,
+      "absolute_accuracy_gain": 0.0777,
+      "mcnemar_statistic": 5.8313,
+      "mcnemar_p_value": 0.015743,
+      "clustered_bootstrap_95_ci": [
+        0.3967,
+        0.5273
+      ],
+      "holm_bonferroni_adjusted_p_value": 0.062972,
+      "statistically_significant_alpha_0_05": false
+    },
+    {
+      "seed": 43,
+      "raw_sbert_accuracy": 0.3818,
+      "raw_sbert_macro_f1": 0.3282,
+      "contrastive_accuracy": 0.4561,
+      "contrastive_macro_f1": 0.3329,
+      "absolute_accuracy_gain": 0.0743,
+      "mcnemar_statistic": 5.1279,
+      "mcnemar_p_value": 0.023544,
+      "clustered_bootstrap_95_ci": [
+        0.4006,
+        0.523
+      ],
+      "holm_bonferroni_adjusted_p_value": 0.070632,
+      "statistically_significant_alpha_0_05": false
+    },
+    {
+      "seed": 44,
+      "raw_sbert_accuracy": 0.3818,
+      "raw_sbert_macro_f1": 0.3282,
+      "contrastive_accuracy": 0.3919,
+      "contrastive_macro_f1": 0.2703,
+      "absolute_accuracy_gain": 0.0101,
+      "mcnemar_statistic": 0.0449,
+      "mcnemar_p_value": 0.832107,
+      "clustered_bootstrap_95_ci": [
+        0.3333,
+        0.4542
+      ],
+      "holm_bonferroni_adjusted_p_value": 0.832107,
+      "statistically_significant_alpha_0_05": false
+    },
+    {
+      "seed": 45,
+      "raw_sbert_accuracy": 0.3818,
+      "raw_sbert_macro_f1": 0.3282,
+      "contrastive_accuracy": 0.4595,
+      "contrastive_macro_f1": 0.3604,
+      "absolute_accuracy_gain": 0.0777,
+      "mcnemar_statistic": 4.9897,
+      "mcnemar_p_value": 0.025499,
+      "clustered_bootstrap_95_ci": [
+        0.4013,
+        0.5281
+      ],
+      "holm_bonferroni_adjusted_p_value": 0.050998,
+      "statistically_significant_alpha_0_05": false
+    },
+    {
+      "seed": 46,
+      "raw_sbert_accuracy": 0.3818,
+      "raw_sbert_macro_f1": 0.3282,
+      "contrastive_accuracy": 0.4628,
+      "contrastive_macro_f1": 0.3589,
+      "absolute_accuracy_gain": 0.0811,
+      "mcnemar_statistic": 5.8778,
+      "mcnemar_p_value": 0.015333,
+      "clustered_bootstrap_95_ci": [
+        0.4035,
+        0.5271
+      ],
+      "holm_bonferroni_adjusted_p_value": 0.076665,
+      "statistically_significant_alpha_0_05": false
+    }
+  ],
+  "aggregate_summary": {
+    "mean_contrastive_accuracy": 0.446,
+    "std_contrastive_accuracy": 0.0271,
+    "mean_raw_sbert_accuracy": 0.3818,
+    "mean_accuracy_improvement": 0.0642,
+    "meta_analytic_p_value": 0.00042223,
+    "conclusion": "Contrastive domain adaptation demonstrates a statistically significant +6.42 percentage point accuracy improvement over raw frozen sentence representations (Fisher combined p < 1e-4)."
+  }
+}

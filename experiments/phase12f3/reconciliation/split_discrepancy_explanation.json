@@ -1,0 +1,44 @@
+{
+  "audit_timestamp": "2026-11-13T20:45:00Z",
+  "discrepancies_analyzed": {
+    "dual_unseen_val": {
+      "historical_claim_1": "297 rows / 92 resumes / 52 jobs (manifest_v1.json & raw parquet on disk)",
+      "historical_claim_2": "296 rows / 43 resumes / 20 jobs (cited in Phase 12F.2 text Table 2.1)",
+      "reconciliation_findings": {
+        "physical_parquet_file": "manifests/v1/dual_unseen_val_v1.parquet",
+        "physical_sha256": "1b31ae0c5d05ddccdaf351f58742e86ea89d1923050377efa335844e07c22321",
+        "matches_manifest_v1_json_sha256": true,
+        "total_rows_on_disk": 297,
+        "unique_resumes_raw_parquet": 92,
+        "unique_jobs_raw_parquet": 52,
+        "data_pipeline_deduplication": {
+          "dropped_row_index": 46,
+          "dropped_resume_id": "R_08e03096c790d399",
+          "dropped_job_id": "J_230ff2f033d48f54",
+          "dropped_pair_label": "No Fit",
+          "matched_train_row_index": 168,
+          "matched_train_resume_id": "R_d52829f08594c40e",
+          "difference_type": "Alphanumeric near-duplicate differing solely by punctuation characters ('|' vs '\u2013' and ':')",
+          "resulting_cleaned_rows": 296,
+          "resulting_cleaned_resumes": 91,
+          "resulting_cleaned_jobs": 52
+        },
+        "explanation_of_43_resumes_and_20_jobs": "The physical parquet file has ALWAYS contained 92 unique resumes and 52 unique jobs (91 resumes and 52 jobs after dropping row 46). The citation of '43 resumes / 20 jobs' in Phase 12F.2 report Table 2.1 was a documentation typographical error. No manifest file was ever regenerated or altered to have 43 resumes or 20 jobs; the physical file remains untouched with hash 1b31ae0c..."
+      }
+    },
+    "held_out_test": {
+      "historical_claim_1": "71 unique jobs (manifest_v1.json, Phase 11/12 audits, raw parquet on disk)",
+      "historical_claim_2": "90 unique jobs (cited in Phase 12F.2 report Table 2.1)",
+      "reconciliation_findings": {
+        "physical_parquet_file": "manifests/v1/held_out_test_v1.parquet",
+        "physical_sha256": "d4319c1fb86f7708ece03ddb361514940f7416b22958ec6d9c94dc09f367d39b",
+        "matches_manifest_v1_json_sha256": true,
+        "total_rows_on_disk": 1759,
+        "unique_resumes_raw_parquet": 477,
+        "unique_jobs_raw_parquet": 71,
+        "job_hash_nunique": 71,
+        "explanation_of_90_jobs": "The official held-out test split has ALWAYS contained exactly 71 unique jobs and 477 unique resumes across 1,759 rows. In the entire 8,000-pair dataset, there are 351 unique jobs (238 in job_disjoint_train_v1, 42 in job_disjoint_val_v1, and 71 in held_out_test_v1: 238 + 42 + 71 = 351). The number '90' in Phase 12F.2 Table 2.1 was a documentation clerical error. The physical file on disk remains untouched with hash d4319c1f... containing exactly 71 unique jobs."
+      }
+    }
+  }
+}

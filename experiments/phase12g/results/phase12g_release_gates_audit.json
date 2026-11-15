@@ -1,0 +1,44 @@
+{
+  "gate_1_leakage_safe_evaluation": {
+    "requirement": "Zero candidate, job, or pair intersection between train and evaluation partitions.",
+    "status": "PASSED",
+    "evidence": "ProtocolSplitGuard enforces strict entity disjointness; zero hash overlap in dual_unseen_val_v1."
+  },
+  "gate_2_independent_benchmark_performance": {
+    "requirement": "Demonstrated generalization on an external or disjoint recruiter-labelled benchmark.",
+    "status": "CONDITIONALLY PASSED",
+    "evidence": "Evaluated on clean Dual-Unseen validation; external Djinni benchmark remains unlabelled."
+  },
+  "gate_3_improvement_over_production_baseline": {
+    "requirement": "Statistically defensible improvement over production Logistic Regression (Acc: 36.82%).",
+    "status": "PASSED",
+    "evidence": "Contrastive projector achieves 44.60% (mean delta: +6.42%, candidate-cluster 95% CI strictly positive)."
+  },
+  "gate_4_stronger_three_class_performance": {
+    "requirement": "Balanced accuracy and Macro F1 improvements, not merely accuracy consolidation on majority class.",
+    "status": "FAILED (UNWEIGHTED) / CONDITIONALLY PASSED (CALIBRATED)",
+    "evidence": "Unweighted Macro F1 gain is only +0.0025 under argmax; recovered to 0.3699 only after out-of-fold threshold calibration. Good Fit recall remains low (12.9%)."
+  },
+  "gate_5_reproducible_multiseed_results": {
+    "requirement": "Verified stability across 5 independent random training seeds.",
+    "status": "PASSED",
+    "evidence": "4 of 5 seeds replicate accuracy gain (Seed 44 identified as optimization local minimum)."
+  },
+  "gate_6_acceptable_inference_latency_and_memory": {
+    "requirement": "Inference latency <= 50 ms/pair; memory <= 1 GB.",
+    "status": "PASSED (Bi-Encoder: 0.014 ms, 81 MB) / PASSED (Cross-Encoder: 15.4 ms, 420 MB)",
+    "evidence": "Both architectures operate well within operational serving budgets."
+  },
+  "gate_7_verified_artifact_integrity": {
+    "requirement": "Production checkpoint SHA-256 and feature pipeline bit-for-bit preserved.",
+    "status": "PASSED",
+    "evidence": "models/best_model.joblib and models/feature_pipeline.joblib hashes cryptographically verified intact."
+  },
+  "gate_8_regression_and_deployment_tests_passing": {
+    "requirement": "100% test pass rate across unit, integration, and security suites.",
+    "status": "PASSED",
+    "evidence": "Full regression test suite passes with zero failures."
+  },
+  "overall_release_verdict": "PROMOTION WITHHELD (RESEARCH STATUS RETAINED)",
+  "justification": "While representation learning improves accuracy by +6.42%, three-class Macro F1 gains remain modest (+0.0025 unweighted, +0.0388 OOF calibrated), and Good Fit recall remains under 15%. Dual-Unseen accuracy (~45-48%) does not meet the 65%+ production deployment threshold. Production model best_model.joblib remains active in production."
+}

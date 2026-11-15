@@ -1,0 +1,194 @@
+{
+  "Feat A: Baseline (Word TF-IDF + 15 Dense)": {
+    "accuracy": 0.5141,
+    "balanced_accuracy": 0.4349,
+    "macro_precision": 0.4339,
+    "macro_recall": 0.4349,
+    "macro_f1": 0.4236,
+    "weighted_f1": 0.5068,
+    "brier_score": 0.991,
+    "confusion_matrix": [
+      [
+        252,
+        139,
+        24
+      ],
+      [
+        67,
+        131,
+        32
+      ],
+      [
+        56,
+        60,
+        17
+      ]
+    ],
+    "per_class": {
+      "No Fit": {
+        "precision": 0.672,
+        "recall": 0.6072,
+        "f1": 0.638,
+        "support": 415
+      },
+      "Potential Fit": {
+        "precision": 0.397,
+        "recall": 0.5696,
+        "f1": 0.4679,
+        "support": 230
+      },
+      "Good Fit": {
+        "precision": 0.2329,
+        "recall": 0.1278,
+        "f1": 0.165,
+        "support": 133
+      }
+    },
+    "feature_dim": 2512,
+    "fit_time_sec": 62.25
+  },
+  "Feat B: Baseline + Enhanced Domain Features": {
+    "accuracy": 0.5219,
+    "balanced_accuracy": 0.4437,
+    "macro_precision": 0.4466,
+    "macro_recall": 0.4437,
+    "macro_f1": 0.4338,
+    "weighted_f1": 0.5159,
+    "brier_score": 0.9888,
+    "confusion_matrix": [
+      [
+        255,
+        139,
+        21
+      ],
+      [
+        64,
+        132,
+        34
+      ],
+      [
+        53,
+        61,
+        19
+      ]
+    ],
+    "per_class": {
+      "No Fit": {
+        "precision": 0.6855,
+        "recall": 0.6145,
+        "f1": 0.648,
+        "support": 415
+      },
+      "Potential Fit": {
+        "precision": 0.3976,
+        "recall": 0.5739,
+        "f1": 0.4698,
+        "support": 230
+      },
+      "Good Fit": {
+        "precision": 0.2568,
+        "recall": 0.1429,
+        "f1": 0.1836,
+        "support": 133
+      }
+    },
+    "feature_dim": 2517,
+    "fit_time_sec": 68.13
+  },
+  "Feat C: Baseline + Char n-grams (3-5)": {
+    "accuracy": 0.5283,
+    "balanced_accuracy": 0.4548,
+    "macro_precision": 0.464,
+    "macro_recall": 0.4548,
+    "macro_f1": 0.4463,
+    "weighted_f1": 0.5223,
+    "brier_score": 1.0358,
+    "confusion_matrix": [
+      [
+        254,
+        139,
+        22
+      ],
+      [
+        67,
+        135,
+        28
+      ],
+      [
+        52,
+        59,
+        22
+      ]
+    ],
+    "per_class": {
+      "No Fit": {
+        "precision": 0.681,
+        "recall": 0.612,
+        "f1": 0.6447,
+        "support": 415
+      },
+      "Potential Fit": {
+        "precision": 0.4054,
+        "recall": 0.587,
+        "f1": 0.4796,
+        "support": 230
+      },
+      "Good Fit": {
+        "precision": 0.3056,
+        "recall": 0.1654,
+        "f1": 0.2146,
+        "support": 133
+      }
+    },
+    "feature_dim": 3513,
+    "fit_time_sec": 133.7
+  },
+  "Feat D: Combined (Word + Char + Enhanced Domain)": {
+    "accuracy": 0.5206,
+    "balanced_accuracy": 0.4453,
+    "macro_precision": 0.4516,
+    "macro_recall": 0.4453,
+    "macro_f1": 0.4357,
+    "weighted_f1": 0.5156,
+    "brier_score": 1.0352,
+    "confusion_matrix": [
+      [
+        252,
+        141,
+        22
+      ],
+      [
+        66,
+        133,
+        31
+      ],
+      [
+        48,
+        65,
+        20
+      ]
+    ],
+    "per_class": {
+      "No Fit": {
+        "precision": 0.6885,
+        "recall": 0.6072,
+        "f1": 0.6453,
+        "support": 415
+      },
+      "Potential Fit": {
+        "precision": 0.3923,
+        "recall": 0.5783,
+        "f1": 0.4675,
+        "support": 230
+      },
+      "Good Fit": {
+        "precision": 0.274,
+        "recall": 0.1504,
+        "f1": 0.1942,
+        "support": 133
+      }
+    },
+    "feature_dim": 3518,
+    "fit_time_sec": 124.2
+  }
+}

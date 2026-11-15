@@ -1,0 +1,87 @@
+{
+  "benchmark_metadata": {
+    "phase": "Phase 15.1: Deployment Hardening",
+    "timestamp": "2026-11-15T06:53:05Z",
+    "python_version": "3.14.8",
+    "cpu_cores": 16
+  },
+  "memory_telemetry": {
+    "flask_boot_startup_rss_mb": 53.08,
+    "flask_steady_state_traffic_rss_mb": 227.82,
+    "background_worker_rss_mb": 646.57,
+    "total_system_rss_mb": 874.39,
+    "flask_rss_threshold_mb": 200.0,
+    "flask_rss_gate_passed": false
+  },
+  "cache_hit_1000_benchmark": {
+    "total_requests": 1000,
+    "mean_latency_ms": 19.955,
+    "p50_latency_ms": 11.849,
+    "p95_latency_ms": 22.818,
+    "p99_latency_ms": 56.395,
+    "throughput_rps": 50.1,
+    "error_rate_pct": 0.0,
+    "p95_sla_threshold_ms": 50.0,
+    "p95_gate_passed": true
+  },
+  "worker_queue_100_jobs_benchmark": {
+    "total_jobs_enqueued": 100,
+    "total_jobs_processed": 100,
+    "enqueue_time_total_ms": 2364.98,
+    "enqueue_latency_per_job_ms": 23.65,
+    "worker_total_duration_sec": 36.22,
+    "worker_throughput_jobs_sec": 2.76,
+    "mean_job_processing_latency_ms": 362.19,
+    "lost_jobs_count": 0
+  },
+  "concurrency_stress_benchmark": {
+    "1": {
+      "workers": 1,
+      "requests": 50,
+      "success_rate_pct": 100.0,
+      "throughput_rps": 47.2,
+      "mean_latency_ms": 20.9,
+      "p95_latency_ms": 53.5
+    },
+    "5": {
+      "workers": 5,
+      "requests": 50,
+      "success_rate_pct": 100.0,
+      "throughput_rps": 56.03,
+      "mean_latency_ms": 83.68,
+      "p95_latency_ms": 175.45
+    },
+    "10": {
+      "workers": 10,
+      "requests": 50,
+      "success_rate_pct": 100.0,
+      "throughput_rps": 72.32,
+      "mean_latency_ms": 110.58,
+      "p95_latency_ms": 206.03
+    },
+    "25": {
+      "workers": 25,
+      "requests": 50,
+      "success_rate_pct": 100.0,
+      "throughput_rps": 62.61,
+      "mean_latency_ms": 136.79,
+      "p95_latency_ms": 344.54
+    }
+  },
+  "artifact_and_db_sizes": {
+    "embedding_cache_sqlite_kb": 316.0,
+    "embedding_queue_sqlite_kb": 108.0,
+    "production_best_model_kb": 60.05,
+    "production_feature_pipeline_kb": 263.77,
+    "challenger_model5_head_kb": 76.36
+  },
+  "release_gate_status": {
+    "flask_serving_rss_below_200mb": "FAIL",
+    "cache_hit_p95_below_50ms": "PASS",
+    "no_silent_model_fallback": "PASS",
+    "no_lost_embedding_jobs": "PASS",
+    "checkpoint_hashes_unmodified": "PASS",
+    "quarantined_test_unaccessed": "PASS",
+    "regression_suite_pass_rate": "100%"
+  }
+}

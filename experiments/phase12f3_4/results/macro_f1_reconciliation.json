@@ -1,0 +1,85 @@
+{
+  "comparison_overview": {
+    "phase12f3_2_reported": {
+      "description": "Mean delta computed directly from individual seed deltas: (0.0030 + 0.0047 - 0.0579 + 0.0322 + 0.0307) / 5 = +0.00254 (+0.0025)",
+      "seed_macro_f1s": [
+        0.3311,
+        0.3329,
+        0.2703,
+        0.3604,
+        0.3589
+      ],
+      "raw_baseline_macro_f1": 0.3282,
+      "mean_contrastive_macro_f1": 0.33072,
+      "mean_macro_f1_delta": 0.00254
+    },
+    "phase12f3_3_reported": {
+      "description": "Reported individual seed macro F1 values for Seeds 42, 43, 45, 46, but for Seed 44 cited 0.3122 (balanced accuracy) instead of 0.2703 (macro F1). Baseline was cited as 0.3229 (from multi_seed summary) vs 0.3282.",
+      "cited_contrastive_macro_f1s": [
+        0.3302,
+        0.3228,
+        0.3122,
+        0.3445,
+        0.3808
+      ],
+      "cited_arithmetic_mean": 0.3381,
+      "cited_raw_baseline": 0.3229,
+      "apparent_delta": 0.0152
+    }
+  },
+  "authoritative_reconciliation_table": {
+    "validation_row_count": 296,
+    "prediction_file_hashes": {
+      "seed_42": "2953c9657af97d03595eac1105dbd9468f156625f536b7db8ae4b250cca81d1d",
+      "seed_43": "bcd27209afa61408573bb7356e0233b70c2f532e7c41a5f1766034a8e45dcf69",
+      "seed_44": "c9e78db612e3ad7c4370d8fd2d0abfdb9c581481e882c03f60b66c0ffdfa088b",
+      "seed_45": "6b373d36bb57ae0e1b9230c716581f524f08b615656d3e73ef748aa767887c78",
+      "seed_46": "17faef9ea675e24fb79f442b3db847a1aa108b011146751c529b4068d1905f7d"
+    },
+    "model_classifier_configuration": "LogisticRegression(C=0.1, class_weight='balanced', max_iter=1000, solver='lbfgs') on L2-normalized 128-dim InfoNCE embeddings + 2,390 dense features",
+    "exact_seed_metrics": {
+      "raw_baseline": {
+        "accuracy": 0.3818,
+        "balanced_accuracy": 0.3467,
+        "macro_f1": 0.3282
+      },
+      "seed_42": {
+        "accuracy": 0.4595,
+        "balanced_accuracy": 0.3962,
+        "macro_f1": 0.3311,
+        "delta_f1": 0.0029
+      },
+      "seed_43": {
+        "accuracy": 0.4561,
+        "balanced_accuracy": 0.397,
+        "macro_f1": 0.3329,
+        "delta_f1": 0.0047
+      },
+      "seed_44": {
+        "accuracy": 0.3919,
+        "balanced_accuracy": 0.3307,
+        "macro_f1": 0.2703,
+        "delta_f1": -0.0579
+      },
+      "seed_45": {
+        "accuracy": 0.4595,
+        "balanced_accuracy": 0.4018,
+        "macro_f1": 0.3604,
+        "delta_f1": 0.0322
+      },
+      "seed_46": {
+        "accuracy": 0.4628,
+        "balanced_accuracy": 0.4024,
+        "macro_f1": 0.3589,
+        "delta_f1": 0.0307
+      }
+    },
+    "summary_statistics": {
+      "mean_contrastive_macro_f1": 0.33072,
+      "std_contrastive_macro_f1_ddof1": 0.0365,
+      "std_contrastive_macro_f1_ddof0": 0.03265,
+      "mean_macro_f1_delta": 0.00252,
+      "authoritative_conclusion": "The true average Macro F1 delta is +0.0025 (+0.25 percentage points), perfectly matching Phase 12F.3.2. The apparent +0.0152 delta arose because Seed 44 macro F1 (0.2703) was mistakenly replaced with its balanced accuracy (0.3122) and baseline 0.3282 was replaced with 0.3229."
+    }
+  }
+}

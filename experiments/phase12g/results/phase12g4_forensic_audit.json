@@ -1,0 +1,296 @@
+{
+  "audit_metadata": {
+    "phase": "12G.4",
+    "audit_type": "READ-ONLY FORENSIC VERIFICATION",
+    "auditor_role": "Principal ML Research Auditor & Reproducibility Specialist",
+    "execution_timestamp": "2026-11-13T17:47:36Z",
+    "overall_audit_verdict": "RESEARCH EVIDENCE CONDITIONALLY VERIFIED"
+  },
+  "checkpoint_integrity": {
+    "production_model_joblib": {
+      "path": "D:\\skillsync1\\models\\best_model.joblib",
+      "sha256": "1001baaf42db8832e1ba3e28ee9da7146e59f1d2d1808c73c4f7587535b2ed4a",
+      "size_bytes": 61487,
+      "expected_sha256": "1001baaf42db8832e1ba3e28ee9da7146e59f1d2d1808c73c4f7587535b2ed4a",
+      "expected_size_bytes": 61487,
+      "status": "VERIFIED_BIT_FOR_BIT_IDENTICAL"
+    },
+    "feature_pipeline_joblib": {
+      "path": "D:\\skillsync1\\models\\feature_pipeline.joblib",
+      "sha256": "2ebf209f691b7084decb5d3a183b82e9b425fe89335345a4af661fed2fc88ae6",
+      "size_bytes": 270105,
+      "expected_sha256": "2ebf209f691b7084decb5d3a183b82e9b425fe89335345a4af661fed2fc88ae6",
+      "expected_size_bytes": 270105,
+      "status": "VERIFIED_BIT_FOR_BIT_IDENTICAL"
+    },
+    "challenger_model_phase12f_joblib": {
+      "path": "D:\\skillsync1\\models\\phase12f\\challenger_model_phase12f.joblib",
+      "sha256": "5934990e987abe98223bf790ac9e9a79fb5ec99daac4509093e8eb0036461766",
+      "size_bytes": 2330440,
+      "expected_sha256": "5934990e987abe98223bf790ac9e9a79fb5ec99daac4509093e8eb0036461766",
+      "expected_size_bytes": 2330440,
+      "status": "VERIFIED_UNMODIFIED_RESEARCH_CHECKPOINT"
+    }
+  },
+  "cross_encoder_audit": {
+    "claimed_metrics": {
+      "accuracy": 0.473,
+      "balanced_accuracy": 0.415,
+      "macro_f1": 0.385,
+      "good_fit_recall": 0.2581,
+      "good_fit_precision": 0.4286
+    },
+    "forensic_investigation": {
+      "saved_predictions_file": null,
+      "checkpoint_file": null,
+      "origin": "Analytical simulation and parameter estimation based on Phase 12B cross-encoder benchmark (ms-marco-MiniLM-L-6-v2, 22.7M parameters) combined with section truncation analysis.",
+      "evaluation_split": "Theoretical Dual-Unseen text projection",
+      "reproducibility_verdict": "UNVERIFIED ON DUAL-UNSEEN PREDICTIONS",
+      "reason": "No row-level prediction CSV exists on disk for a fine-tuned cross-encoder directly trained on dual_unseen_train_v1 and evaluated on dual_unseen_val_v1. The values in cross_encoder_vs_bi_encoder_comparison.json were analytically estimated from Phase 12B / 12D benchmark figures rather than emitted by an active serialized checkpoint."
+    }
+  },
+  "calibration_audit": {
+    "status": "CONDITIONALLY VERIFIED (CANDIDATE-DISJOINT, JOB-SHARED)",
+    "recomputed_metrics": {
+      "accuracy": 0.4764,
+      "balanced_accuracy": 0.4136,
+      "macro_f1": 0.3638,
+      "per_class": {
+        "No Fit": {
+          "precision": 0.4656,
+          "recall": 0.935,
+          "f1": 0.6216,
+          "support": 123
+        },
+        "Potential Fit": {
+          "precision": 0.5172,
+          "recall": 0.1875,
+          "f1": 0.2752,
+          "support": 80
+        },
+        "Good Fit": {
+          "precision": 0.55,
+          "recall": 0.1183,
+          "f1": 0.1947,
+          "support": 93
+        }
+      },
+      "confusion_matrix": {
+        "labels": [
+          "No Fit",
+          "Potential Fit",
+          "Good Fit"
+        ],
+        "matrix": [
+          [
+            115,
+            5,
+            3
+          ],
+          [
+            59,
+            15,
+            6
+          ],
+          [
+            73,
+            9,
+            11
+          ]
+        ]
+      }
+    },
+    "fold_isolation_audit": [
+      {
+        "fold_index": 0,
+        "val_candidates": 19,
+        "train_candidates": 72,
+        "candidate_overlap": 0,
+        "val_jobs": 37,
+        "train_jobs": 49,
+        "job_overlap": 34,
+        "candidate_disjoint": true,
+        "job_disjoint": false
+      },
+      {
+        "fold_index": 1,
+        "val_candidates": 18,
+        "train_candidates": 73,
+        "candidate_overlap": 0,
+        "val_jobs": 33,
+        "train_jobs": 50,
+        "job_overlap": 31,
+        "candidate_disjoint": true,
+        "job_disjoint": false
+      },
+      {
+        "fold_index": 2,
+        "val_candidates": 18,
+        "train_candidates": 73,
+        "candidate_overlap": 0,
+        "val_jobs": 26,
+        "train_jobs": 50,
+        "job_overlap": 24,
+        "candidate_disjoint": true,
+        "job_disjoint": false
+      },
+      {
+        "fold_index": 3,
+        "val_candidates": 18,
+        "train_candidates": 73,
+        "candidate_overlap": 0,
+        "val_jobs": 35,
+        "train_jobs": 50,
+        "job_overlap": 33,
+        "candidate_disjoint": true,
+        "job_disjoint": false
+      },
+      {
+        "fold_index": 4,
+        "val_candidates": 18,
+        "train_candidates": 73,
+        "candidate_overlap": 0,
+        "val_jobs": 31,
+        "train_jobs": 51,
+        "job_overlap": 30,
+        "candidate_disjoint": true,
+        "job_disjoint": false
+      }
+    ],
+    "structural_limitation": "The folds are strictly candidate-disjoint (zero candidate overlap across folds). However, jobs are not disjoint across folds (an average of ~30 jobs overlap between inner training and outer validation). This is expected because the validation set contains 52 unique jobs across 91 candidates. Outer validation labels were strictly excluded during threshold selection, preventing direct label leakage."
+  },
+  "statistical_audit": {
+    "sample_counts": {
+      "validation_pairs": 296,
+      "candidate_clusters": 91,
+      "job_clusters": 52
+    },
+    "paired_mcnemar_per_seed": {
+      "seed_42": {
+        "p_unadjusted": 0.0152,
+        "p_holm": 0.0745
+      },
+      "seed_43": {
+        "p_unadjusted": 0.023,
+        "p_holm": 0.0745
+      },
+      "seed_44": {
+        "p_unadjusted": 0.8323,
+        "p_holm": 0.8323
+      },
+      "seed_45": {
+        "p_unadjusted": 0.025,
+        "p_holm": 0.0745
+      },
+      "seed_46": {
+        "p_unadjusted": 0.0149,
+        "p_holm": 0.0745
+      }
+    },
+    "pooled_mcnemar_classification": "EXPLORATORY DESCRIPTIVE EVIDENCE ONLY (Repeats 296 pairs across 5 seeds; not 1,480 independent samples)",
+    "bootstrap_uncertainty_seed42": {
+      "candidate_grouped_95_ci": [
+        0.0253,
+        0.1386
+      ],
+      "job_grouped_95_ci": [
+        0.0127,
+        0.1398
+      ],
+      "two_way_grouped_95_ci": [
+        0.0064,
+        0.1532
+      ],
+      "probability_delta_positive_cand": 0.9982,
+      "probability_delta_positive_job": 0.9872,
+      "probability_delta_positive_twoway": 0.9752
+    }
+  },
+  "latency_memory_audit": {
+    "hardware_environment": "Intel/AMD x86_64, Windows OS, Single-Threaded CPU Execution",
+    "software_environment": "Python 3.14.8, PyTorch 2.15.0+cpu, Transformers 5.22.2, Scikit-Learn 1.7.2",
+    "sample_size": 50,
+    "warmup_iterations": 5,
+    "batch_size": 1,
+    "benchmarks": {
+      "production_end_to_end_pipeline": {
+        "pipeline_scope": "Raw text cleaning -> Structural parsing -> Skill extraction -> Feature transform (2,518 dims) -> LogReg inference",
+        "mean_latency_ms": 39.23,
+        "median_latency_ms": 33.86,
+        "p95_latency_ms": 62.54,
+        "p99_latency_ms": 96.65,
+        "classifier_only_mean_ms": 0.1368,
+        "peak_ram_mb": 194.6,
+        "model_artifact_size_bytes": 61487
+      },
+      "cross_encoder_minilm_l6_v2": {
+        "pipeline_scope": "Raw text tokenization (max 512 tokens) -> 6-layer Transformer Cross-Encoder forward pass -> Logit classification",
+        "mean_latency_ms": 66.17,
+        "median_latency_ms": 64.65,
+        "p95_latency_ms": 77.71,
+        "p99_latency_ms": 91.48,
+        "peak_ram_mb": 566.6,
+        "model_artifact_size_bytes": 90880000
+      }
+    },
+    "methodological_finding": "Previously reported 0.004 ms for production was a CLASSIFIER-ONLY forward pass on pre-computed feature vectors. Full end-to-end inference including text cleaning, skill extraction, and feature extraction takes 39.23 ms/pair. Cross-Encoder end-to-end inference takes 66.17 ms/pair on CPU."
+  },
+  "claim_verification_table": [
+    {
+      "claim": "Production model best_model.joblib is preserved unchanged",
+      "original_result": "SHA-256: 1001baaf... (61,487 bytes)",
+      "independently_verified_result": "SHA-256: 1001baaf42db8832e1ba3e28ee9da7146e59f1d2d1808c73c4f7587535b2ed4a (61487 bytes)",
+      "status": "VERIFIED",
+      "evidence": "Physical file hash computed directly from disk matches certified baseline."
+    },
+    {
+      "claim": "Production feature pipeline feature_pipeline.joblib is preserved unchanged",
+      "original_result": "SHA-256: 2ebf209f691b... (270,105 bytes)",
+      "independently_verified_result": "SHA-256: 2ebf209f691b7084decb5d3a183b82e9b425fe89335345a4af661fed2fc88ae6 (270105 bytes)",
+      "status": "VERIFIED",
+      "evidence": "Physical file hash computed directly from disk matches Phase 12F.3.2 certified baseline."
+    },
+    {
+      "claim": "Cross-Encoder architecture achieves 47.30% Accuracy and 0.3850 Macro F1 on Dual-Unseen text",
+      "original_result": "Acc: 47.30%, BalAcc: 41.50%, Macro F1: 0.3850",
+      "independently_verified_result": "Unverified on Dual-Unseen (Analytical projection derived from Phase 12B/12D benchmarks; no active checkpoint or prediction CSV exists)",
+      "status": "UNVERIFIED",
+      "evidence": "No serialized checkpoint or saved prediction file exists for this model on Dual-Unseen."
+    },
+    {
+      "claim": "Nested out-of-fold threshold calibration recovers Macro F1 to 0.3699 and Good Fit recall to 12.90%",
+      "original_result": "Acc: 47.97%, BalAcc: 41.72%, Macro F1: 0.3699, GF Recall: 12.90%",
+      "independently_verified_result": "Acc: 47.64%, BalAcc: 41.36%, Macro F1: 0.3638, GF Recall: 11.83%",
+      "status": "CONDITIONALLY VERIFIED",
+      "evidence": "Saved oof_calibrated_predictions_seed42.csv yields Acc: 47.64%, Macro F1: 0.3638 (slight discrepancy due to NumPy permutation seed difference in report). Candidates are strictly disjoint across folds; jobs overlap."
+    },
+    {
+      "claim": "Djinni recruitment corpus provides independent ground-truth evaluation benchmark",
+      "original_result": "Unpaired collection, pilot proposal generation",
+      "independently_verified_result": "UNPAIRED / UNLABELLED DUAL-MODALITY CORPUS (Gate 2: NOT PASSED / PENDING)",
+      "status": "VERIFIED",
+      "evidence": "Candidate and Job tables share zero common IDs or match records. Synthetic label creation is prohibited."
+    },
+    {
+      "claim": "Pooled McNemar test demonstrates p = 7.75e-06 statistical significance across 1,480 trials",
+      "original_result": "p = 7.75e-06 across N=1,480 trials",
+      "independently_verified_result": "Exploratory descriptive metric only (5 seeds on same 296 pairs). Holm-adjusted per-seed p = 0.0745.",
+      "status": "CONDITIONALLY VERIFIED",
+      "evidence": "Calculations mathematically correct, but cannot be interpreted as independent sample replication."
+    },
+    {
+      "claim": "Production inference latency is 0.0041 ms per pair",
+      "original_result": "0.0041 ms per pair",
+      "independently_verified_result": "End-to-End Latency: 39.23 ms (Classifier-only: 0.1368 ms)",
+      "status": "INVALIDATED",
+      "evidence": "0.0041 ms omitted preprocessing, text cleaning, skill extraction, and feature transform. End-to-end latency is 39.23 ms."
+    },
+    {
+      "claim": "Challenger models remain unpromoted and production deployment is withheld",
+      "original_result": "PROMOTION WITHHELD (RESEARCH STATUS RETAINED)",
+      "independently_verified_result": "PROMOTION WITHHELD (best_model.joblib active)",
+      "status": "VERIFIED",
+      "evidence": "Production deployment blocked; Dual-Unseen accuracy (~45%) below 65% gate."
+    }
+  ]
+}

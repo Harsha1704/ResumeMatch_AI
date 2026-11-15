@@ -1,0 +1,24 @@
+# Supervised Multimodal Resume–Job Matching & Skill Gap Analysis System
+# Core ML & Numerical
+numpy>=1.25.0
+pandas>=2.0.0
+scipy>=1.11.0
+scikit-learn>=1.3.0
+joblib>=1.3.0
+
+# Visualization & Plotting
+matplotlib>=3.8.0
+seaborn>=0.13.0
+
+# Web Application Backend (Flask Architecture)
+Flask>=3.0.0
+Jinja2>=3.1.0
+Werkzeug>=3.0.0
+
+# Document & File Processing
+requests>=2.31.0
+python-docx>=1.1.0
+PyMuPDF>=1.23.0
+
+# Testing & Quality
+pytest>=7.4.0

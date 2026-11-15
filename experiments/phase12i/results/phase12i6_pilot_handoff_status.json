@@ -1,0 +1,44 @@
+{
+  "phase": "12I.6",
+  "audit_name": "Pilot Handoff Package Verification & Queue Deployment Status",
+  "timestamp": "2026-11-14T20:39:20Z",
+  "handoff_specification": {
+    "manifest_source": "experiments/phase12i/results/phase12i4_pilot_sampling_manifest.json",
+    "total_pairs": 200,
+    "unique_candidates": 120,
+    "unique_jobs": 60,
+    "ratings_per_pair": 2,
+    "total_independent_ratings_target": 400,
+    "domain_distribution": {
+      "Software Engineering / Full-Stack / Backend": 80,
+      "DevOps / SRE / Cloud Infrastructure": 40,
+      "Data Science / Machine Learning / Data Engineering": 40,
+      "Quality Assurance / Test Automation": 20,
+      "Technical Product / Project Management": 20
+    }
+  },
+  "queue_dispatch_architecture": {
+    "evaluator_A_queue": {
+      "file_path": "data/benchmark_vault/queues/queue_REC_A_892.json",
+      "pair_count": 200,
+      "format": "JSON array of objects with sanitized resume snippets, job specs, and empty response templates",
+      "access_control": "Encrypted direct handoff to REC_A_892"
+    },
+    "evaluator_B_queue": {
+      "file_path": "data/benchmark_vault/queues/queue_REC_B_314.json",
+      "pair_count": 200,
+      "format": "JSON array of objects with identical 200 pairs randomized in different order to prevent sequence bias",
+      "access_control": "Encrypted direct handoff to REC_B_314"
+    }
+  },
+  "blinding_and_integrity_safeguards": {
+    "model_predictions_exposed": false,
+    "peer_ratings_exposed": false,
+    "candidate_contact_info_exposed": false,
+    "company_identifiers_exposed": false,
+    "append_only_intake_vault": "data/benchmark_vault/intake/raw_submissions.jsonl",
+    "intake_linter_script": "src/benchmark/validate_intake_submission.py"
+  },
+  "handoff_status": "READY_FOR_DISTRIBUTION",
+  "next_operational_milestone": "Collection and cryptographic ingestion of 400 completed raw ratings from REC_A_892 and REC_B_314"
+}

@@ -1,0 +1,47 @@
+{
+  "classification": "EXPLORATORY ONLY \u2014 DIAGNOSTIC EXPERIMENT",
+  "evaluation_on_current_validation": {
+    "threshold_tau_Good_Fit": 0.25,
+    "decision_rule": "if P(Good Fit) >= 0.25 -> Good Fit; else argmax(P(No Fit), P(Potential Fit))",
+    "accuracy": 0.473,
+    "balanced_accuracy": 0.4106,
+    "macro_f1": 0.3569,
+    "good_fit_precision": 0.5625,
+    "good_fit_recall": 0.0968,
+    "good_fit_f1": 0.1651,
+    "confusion_matrix": {
+      "labels": [
+        "No Fit",
+        "Potential Fit",
+        "Good Fit"
+      ],
+      "matrix": [
+        [
+          115,
+          5,
+          3
+        ],
+        [
+          60,
+          16,
+          4
+        ],
+        [
+          73,
+          11,
+          9
+        ]
+      ]
+    }
+  },
+  "future_calibrated_evaluation_protocol": {
+    "protocol_name": "Nested K-Fold Stratified Threshold Tuning & Out-of-Fold Calibration",
+    "steps": [
+      "1. Partition training data into K inner folds (disjoint by candidate & job entities).",
+      "2. Optimize decision thresholds tau_GF and tau_PF to maximize macro F1 / utility on validation folds.",
+      "3. Freeze thresholds prior to evaluating on the independent held-out benchmark.",
+      "4. Never tune thresholds directly on the test or final validation benchmark labels."
+    ],
+    "guarantee": "Eliminates optimistic threshold selection bias and yields unbiased generalization estimates."
+  }
+}

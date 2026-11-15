@@ -1,0 +1,39 @@
+# Virtual environments
+.venv-deploy/
+.venv/
+venv/
+env/
+ENV/
+
+# Python byte code and caches
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
+catboost_info/
+
+# Backup archives
+*.zip
+*.tar.gz
+*.7z
+
+# SQLite databases, caches and runtime logs
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+data/cache/
+experiments/phase14/cache/
+experiments/phase16/*.log
+
+# Large external datasets (>100MB blocked by GitHub)
+data/external/djinni/*.parquet
+results/phase11_experiments/train_cleaned_v1.csv
+
+# OS and IDE files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

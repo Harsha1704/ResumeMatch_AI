@@ -1,0 +1,95 @@
+{
+  "tokenizer": "sentence-transformers/all-MiniLM-L6-v2",
+  "sample_size": 100,
+  "mean_token_counts": {
+    "raw_full_document": 1694.0,
+    "same_budget_truncation_256": 251.7,
+    "requirement_gated_extraction": 298.1
+  },
+  "skill_retention_rates": {
+    "rge_retention_mean": 0.426,
+    "same_budget_256_truncation_mean": 0.2642,
+    "512_truncation_mean": 0.4526,
+    "rge_vs_same_budget_gain_pct": 16.18,
+    "rge_vs_512_gain_pct": -2.66
+  },
+  "omitted_evidence_cases_count": 8,
+  "sample_omitted_evidence": [
+    {
+      "row_index": 11,
+      "full_skills_count": 33,
+      "rge_retention": 0.3636,
+      "trunc256_retention": 0.5152,
+      "omitted_skills": [
+        "outgoing",
+        "customer service",
+        "driving",
+        "c",
+        "sales",
+        "python",
+        "sales experience"
+      ]
+    },
+    {
+      "row_index": 26,
+      "full_skills_count": 61,
+      "rge_retention": 0.1967,
+      "trunc256_retention": 0.3443,
+      "omitted_skills": [
+        "cognos",
+        "rstudio",
+        "shell",
+        "r",
+        "data analysis",
+        "tableau",
+        "oracle database",
+        "python",
+        "java",
+        "supervision",
+        "mysql",
+        "teams",
+        "technical proficiency",
+        "html",
+        "problem solving"
+      ]
+    },
+    {
+      "row_index": 32,
+      "full_skills_count": 57,
+      "rge_retention": 0.0877,
+      "trunc256_retention": 0.1754,
+      "omitted_skills": [
+        "payroll functions",
+        "payroll",
+        "office",
+        "accounting software",
+        "accounting",
+        "team player",
+        "reconciliation"
+      ]
+    },
+    {
+      "row_index": 33,
+      "full_skills_count": 49,
+      "rge_retention": 0.4286,
+      "trunc256_retention": 0.449,
+      "omitted_skills": [
+        "economics",
+        "degree in accounting"
+      ]
+    },
+    {
+      "row_index": 46,
+      "full_skills_count": 39,
+      "rge_retention": 0.3077,
+      "trunc256_retention": 0.3846,
+      "omitted_skills": [
+        "determination",
+        "finance",
+        "work ethic",
+        "strong work ethic",
+        "auditing"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,157 @@
+{
+  "audit_phase": "Phase 12I.10",
+  "created_at": "2026-11-14T21:30:00Z",
+  "auditor_role": "Principal ML Research Auditor & Statistical Evaluation Scientist",
+  "manifest_version": "1.0.0",
+  "primary_dataset_sha256": "b86fa488a21258015de1750633a9ac410f701ff96bf533f68978dbe3adec6d40",
+  "benchmarks": {
+    "held_out_test": {
+      "protocol_name": "Official Held-Out Test",
+      "split_file": "manifests/v1/held_out_test_v1.parquet",
+      "sha256": "d4319c1fb86f7708ece03ddb361514940f7416b22958ec6d9c94dc09f367d39b",
+      "rows": 1759,
+      "unique_candidates": 477,
+      "unique_jobs": 71,
+      "entity_provenance": {
+        "job_overlap_with_train": 0,
+        "job_overlap_percentage": 0.0,
+        "candidate_overlap_with_train": 476,
+        "candidate_overlap_percentage": 99.79,
+        "pair_overlap_with_train": 0,
+        "pair_overlap_percentage": 0.0,
+        "true_isolation_class": "Job-Disjoint Test Set (Unseen Jobs, Known Candidates, Unseen Pairs)"
+      },
+      "baseline_metrics": {
+        "model": "Production Baseline (models/best_model.joblib)",
+        "accuracy": 0.4861
+      },
+      "challenger_metrics": {
+        "certified_challenger": {
+          "model": "EXP-12F-COMBINED (LightGBM Challenger)",
+          "accuracy": 0.4889,
+          "status": "VALID_BENCHMARK_EVALUATION"
+        },
+        "exploratory_pseudo_label": {
+          "model": "EXP-12F-PSEUDO",
+          "accuracy": 0.5026,
+          "status": "EXPLORATORY_RESEARCH_WITHDRAWN_FROM_CERTIFIED_BENCHMARK"
+        }
+      },
+      "certification_status": "CERTIFIED_JOB_DISJOINT_TEST"
+    },
+    "dual_unseen_val": {
+      "protocol_name": "Clean Dual-Unseen Validation",
+      "split_file": "manifests/v1/dual_unseen_val_v1.parquet",
+      "sha256": "1b31ae0c5d05ddccdaf351f58742e86ea89d1923050377efa335844e07c22321",
+      "rows_total": 297,
+      "rows_evaluated": 296,
+      "contradictory_pairs_excluded": 1,
+      "unique_candidates": 91,
+      "unique_jobs": 52,
+      "entity_provenance": {
+        "job_overlap_with_dual_train": 0,
+        "job_overlap_percentage": 0.0,
+        "candidate_overlap_with_dual_train": 0,
+        "candidate_overlap_percentage": 0.0,
+        "pair_overlap_with_dual_train": 0,
+        "pair_overlap_percentage": 0.0,
+        "true_isolation_class": "Dual-Disjoint Validation Set (Unseen Jobs, Unseen Candidates, Unseen Pairs)"
+      },
+      "baseline_metrics": {
+        "model": "Production Baseline (models/best_model.joblib)",
+        "accuracy": 0.3682
+      },
+      "challenger_metrics": {
+        "contrastive_seed42": {
+          "model": "Contrastive InfoNCE Projector (Seed 42)",
+          "accuracy": 0.4595,
+          "raw_mcnemar_p": 0.0152,
+          "holm_adjusted_p": 0.0743,
+          "cgm_two_way_bootstrap_ci_95": [
+            -0.0228,
+            0.1818
+          ],
+          "status": "CERTIFIED_POINT_ESTIMATE_UNDERPOWERED_CI"
+        },
+        "contrastive_5seed_mean": {
+          "model": "Contrastive InfoNCE Projector (5 Seeds Mean)",
+          "accuracy": 0.446,
+          "seed_accuracies": [
+            0.4595,
+            0.4527,
+            0.402,
+            0.4561,
+            0.4595
+          ],
+          "mean_delta_acc": 0.0642,
+          "status": "CERTIFIED_CORRELATED_REPLICATIONS"
+        },
+        "calibrated_4764_claim": {
+          "model": "Calibrated Contrastive (tau=0.15)",
+          "accuracy": 0.4764,
+          "status": "RECLASSIFIED_AS_CANDIDATE_DISJOINT_OOF_WITH_JOB_OVERLAP"
+        }
+      },
+      "certification_status": "CERTIFIED_DUAL_UNSEEN_VAL"
+    },
+    "job_disjoint_val": {
+      "protocol_name": "Job-Disjoint Validation",
+      "split_file": "manifests/v1/job_disjoint_val_v1.parquet",
+      "sha256": "8008cbb7d5fda22847708675bf68c1962016dc9fe1db94bb5510f40fd8036445",
+      "rows": 778,
+      "unique_candidates": 373,
+      "unique_jobs": 42,
+      "entity_provenance": {
+        "job_overlap_with_train": 0,
+        "job_overlap_percentage": 0.0,
+        "candidate_overlap_with_train": 373,
+        "candidate_overlap_percentage": 100.0,
+        "pair_overlap_with_train": 0,
+        "pair_overlap_percentage": 0.0,
+        "true_isolation_class": "Job-Disjoint Validation Set (Unseen Jobs, Known Candidates, Unseen Pairs)"
+      },
+      "baseline_metrics": {
+        "model": "Production Baseline (models/best_model.joblib)",
+        "accuracy": 0.7416
+      },
+      "challenger_metrics": {
+        "stacking": {
+          "model": "Hybrid Stacking",
+          "accuracy": 0.7584,
+          "status": "VALID_BENCHMARK_EVALUATION"
+        }
+      },
+      "certification_status": "CERTIFIED_JOB_DISJOINT_VAL"
+    },
+    "resume_disjoint_val": {
+      "protocol_name": "Resume-Disjoint Validation",
+      "split_file": "manifests/v1/resume_disjoint_val_v1.parquet",
+      "sha256": "f3618ae092c029caa7e4f082c6c41e40216cbe86cf5b1b0a3147362dfd27371f",
+      "rows": 1023,
+      "unique_candidates": 97,
+      "unique_jobs": 219,
+      "entity_provenance": {
+        "candidate_overlap_with_train": 0,
+        "candidate_overlap_percentage": 0.0,
+        "job_overlap_with_train": 219,
+        "job_overlap_percentage": 100.0,
+        "pair_overlap_with_train": 0,
+        "pair_overlap_percentage": 0.0,
+        "true_isolation_class": "Candidate-Disjoint Validation Set (Unseen Candidates, Known Jobs, Unseen Pairs)"
+      },
+      "baseline_metrics": {
+        "model": "Production Baseline (models/best_model.joblib)",
+        "accuracy": 0.7771
+      },
+      "challenger_metrics": {
+        "stacking": {
+          "model": "Hybrid Stacking",
+          "accuracy": 0.7898,
+          "status": "VALID_BENCHMARK_EVALUATION"
+        }
+      },
+      "certification_status": "CERTIFIED_RESUME_DISJOINT_VAL"
+    }
+  },
+  "overall_verdict": "CONDITIONALLY CERTIFIED \u2014 SPECIFIC CLAIMS REQUIRE CORRECTION"
+}

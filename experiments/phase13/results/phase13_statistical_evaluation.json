@@ -1,0 +1,173 @@
+{
+  "audit_phase": "Phase 13",
+  "evaluation_sample": {
+    "N": 296,
+    "candidates_C": 91,
+    "jobs_J": 52
+  },
+  "model_5_vs_production_baseline": {
+    "challenger": "Model 5 (SemanticSkillFusionChallenger)",
+    "comparator": "Model 1 (Production Baseline LogReg)",
+    "accuracy_delta_percentage_points": 7.1,
+    "macro_f1_delta": 0.0923,
+    "good_fit_recall_delta_percentage_points": 11.83,
+    "mcnemar_exact_test": {
+      "contingency_table": {
+        "both_incorrect_n00": 144,
+        "baseline_only_correct_n10": 22,
+        "challenger_only_correct_n01": 43,
+        "both_correct_n11": 87
+      },
+      "discordant_pairs_total": 65,
+      "baseline_only_correct": 22,
+      "challenger_only_correct": 43,
+      "mcnemar_exact_two_sided_p_value": 0.0125,
+      "statistically_significant_at_alpha_0_05": true
+    },
+    "pigeonhole_bootstrap_10k": {
+      "B": 10000,
+      "seed": 42,
+      "accuracy_delta_mean_pp": 7.0,
+      "accuracy_delta_se_pp": 4.93,
+      "accuracy_delta_95_ci_pp": [
+        -2.98,
+        16.58
+      ],
+      "ci_crosses_zero": true,
+      "macro_f1_delta_mean": 0.0899,
+      "macro_f1_delta_95_ci": [
+        0.0014,
+        0.1798
+      ],
+      "good_fit_recall_delta_mean_pp": 11.63,
+      "good_fit_recall_delta_95_ci_pp": [
+        0.0,
+        27.94
+      ]
+    },
+    "cgm_two_way_crve_sandwich": {
+      "point_estimate_pp": 7.09,
+      "se_pp": 3.32,
+      "ci_95_pp": [
+        0.6,
+        13.59
+      ],
+      "ci_crosses_zero": false,
+      "design_effect": 1.5119,
+      "effective_sample_size_neff": 195.8,
+      "candidate_clusters_C": 91,
+      "job_clusters_J": 52,
+      "evaluation_pairs_N": 296
+    }
+  },
+  "model_5_vs_raw_sbert_baseline": {
+    "challenger": "Model 5 (SemanticSkillFusionChallenger)",
+    "comparator": "Model 2 (Raw SBERT Baseline)",
+    "accuracy_delta_percentage_points": 5.41,
+    "macro_f1_delta": 0.0823,
+    "good_fit_recall_delta_percentage_points": 11.83,
+    "mcnemar_exact_test": {
+      "contingency_table": {
+        "both_incorrect_n00": 139,
+        "baseline_only_correct_n10": 27,
+        "challenger_only_correct_n01": 43,
+        "both_correct_n11": 87
+      },
+      "discordant_pairs_total": 70,
+      "baseline_only_correct": 27,
+      "challenger_only_correct": 43,
+      "mcnemar_exact_two_sided_p_value": 0.07224,
+      "statistically_significant_at_alpha_0_05": false
+    },
+    "pigeonhole_bootstrap_10k": {
+      "B": 10000,
+      "seed": 42,
+      "accuracy_delta_mean_pp": 5.32,
+      "accuracy_delta_se_pp": 5.52,
+      "accuracy_delta_95_ci_pp": [
+        -5.84,
+        16.13
+      ],
+      "ci_crosses_zero": true,
+      "macro_f1_delta_mean": 0.0799,
+      "macro_f1_delta_95_ci": [
+        -0.0212,
+        0.1857
+      ],
+      "good_fit_recall_delta_mean_pp": 11.68,
+      "good_fit_recall_delta_95_ci_pp": [
+        0.0,
+        28.33
+      ]
+    },
+    "cgm_two_way_crve_sandwich": {
+      "point_estimate_pp": 5.41,
+      "se_pp": 4.04,
+      "ci_95_pp": [
+        -2.51,
+        13.32
+      ],
+      "ci_crosses_zero": true,
+      "design_effect": 2.059,
+      "effective_sample_size_neff": 143.8,
+      "candidate_clusters_C": 91,
+      "job_clusters_J": 52,
+      "evaluation_pairs_N": 296
+    }
+  },
+  "model_4_vs_production_baseline": {
+    "challenger": "Model 4 (SkillAwareMatchingClassifier)",
+    "comparator": "Model 1 (Production Baseline LogReg)",
+    "accuracy_delta_percentage_points": 3.72,
+    "macro_f1_delta": 0.0773,
+    "good_fit_recall_delta_percentage_points": 18.28,
+    "mcnemar_exact_test": {
+      "contingency_table": {
+        "both_incorrect_n00": 123,
+        "baseline_only_correct_n10": 53,
+        "challenger_only_correct_n01": 64,
+        "both_correct_n11": 56
+      },
+      "discordant_pairs_total": 117,
+      "baseline_only_correct": 53,
+      "challenger_only_correct": 64,
+      "mcnemar_exact_two_sided_p_value": 0.35528,
+      "statistically_significant_at_alpha_0_05": false
+    },
+    "pigeonhole_bootstrap_10k": {
+      "B": 10000,
+      "seed": 42,
+      "accuracy_delta_mean_pp": 3.79,
+      "accuracy_delta_se_pp": 6.87,
+      "accuracy_delta_95_ci_pp": [
+        -9.74,
+        17.51
+      ],
+      "ci_crosses_zero": true,
+      "macro_f1_delta_mean": 0.0776,
+      "macro_f1_delta_95_ci": [
+        -0.0492,
+        0.2089
+      ],
+      "good_fit_recall_delta_mean_pp": 18.32,
+      "good_fit_recall_delta_95_ci_pp": [
+        -3.7,
+        43.22
+      ]
+    },
+    "cgm_two_way_crve_sandwich": {
+      "point_estimate_pp": 3.72,
+      "se_pp": 4.59,
+      "ci_95_pp": [
+        -5.28,
+        12.71
+      ],
+      "ci_crosses_zero": true,
+      "design_effect": 1.5781,
+      "effective_sample_size_neff": 187.6,
+      "candidate_clusters_C": 91,
+      "job_clusters_J": 52,
+      "evaluation_pairs_N": 296
+    }
+  }
+}

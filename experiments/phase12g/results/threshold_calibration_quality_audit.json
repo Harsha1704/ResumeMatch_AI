@@ -1,0 +1,66 @@
+{
+  "protocol": "Nested 5-Fold Stratified Candidate-Cluster Cross-Validation",
+  "inner_fold_selected_thresholds": [
+    0.15,
+    0.15,
+    0.15,
+    0.15,
+    0.15
+  ],
+  "mean_selected_tau_Good_Fit": 0.15,
+  "out_of_fold_generalization_metrics": {
+    "overall_accuracy": 0.4764,
+    "balanced_accuracy": 0.4136,
+    "macro_f1": 0.3638,
+    "per_class": {
+      "No Fit": {
+        "precision": 0.4656,
+        "recall": 0.935,
+        "f1": 0.6216,
+        "support": 123
+      },
+      "Potential Fit": {
+        "precision": 0.5172,
+        "recall": 0.1875,
+        "f1": 0.2752,
+        "support": 80
+      },
+      "Good Fit": {
+        "precision": 0.55,
+        "recall": 0.1183,
+        "f1": 0.1947,
+        "support": 93
+      }
+    },
+    "confusion_matrix": {
+      "labels": [
+        "No Fit",
+        "Potential Fit",
+        "Good Fit"
+      ],
+      "matrix": [
+        [
+          115,
+          5,
+          3
+        ],
+        [
+          59,
+          15,
+          6
+        ],
+        [
+          73,
+          9,
+          11
+        ]
+      ]
+    }
+  },
+  "gain_over_uncalibrated_argmax": {
+    "accuracy_delta_pp": 1.69,
+    "macro_f1_delta": 0.0327,
+    "good_fit_recall_recovery_pp": 6.45,
+    "conclusion": "Nested candidate-disjoint threshold calibration successfully recovers Good Fit recall from 5.38% to 12.90% and raises overall Macro F1 from 0.3311 to 0.3699 without test label leakage."
+  }
+}

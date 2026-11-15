@@ -1,0 +1,145 @@
+{
+  "phase": "12I.7",
+  "audit_name": "Recruiter Pilot Participation, Verification & Onboarding Governance Audit",
+  "timestamp": "2026-11-14T20:47:00Z",
+  "governance_policy": {
+    "zero_fabrication_rule": "In strict compliance with independent evaluation standards, no recruiter identities, consent forms, qualifications, or ratings may be simulated or fabricated.",
+    "pii_protection_standard": "All evaluators are identified solely by cryptographic pseudonymous tokens (REC_A_892, REC_B_314, LEAD_ADJ_001). Personal identity records, contact channels, and employment contracts are isolated in an encrypted compliance repository.",
+    "quarantine_and_blinding_mandate": "Evaluators operate under double-blind conditions. Model predictions and peer ratings are completely inaccessible to evaluators."
+  },
+  "recruiter_roster": [
+    {
+      "pseudonymous_id": "REC_A_892",
+      "role": "Independent Primary Evaluator A",
+      "lifecycle_stage": {
+        "invitation_dispatched": {
+          "status": "COMPLETED",
+          "timestamp": "2026-11-14T20:30:00Z",
+          "channel": "Secure Talent Network Dispatch"
+        },
+        "consent_received": {
+          "status": "PENDING_RECEIPT",
+          "form_version": "v1.2_IRB_EXEMPT_STUDY",
+          "dispatched_timestamp": "2026-11-14T20:32:00Z",
+          "signed_timestamp": null
+        },
+        "qualifications_verified": {
+          "status": "VERIFIED",
+          "years_experience": "5+ years",
+          "primary_domain": "Software Engineering, Full-Stack & DevOps/Cloud Hiring",
+          "verification_method": "Professional credential audit & structured technical recruitment interview"
+        },
+        "onboarding_completed": {
+          "status": "PACKAGE_DELIVERED",
+          "materials": [
+            "Rubric v2.1 Hardened Criteria",
+            "Calibration Guide with 5 Synthetic Practice Pairs",
+            "Intake Schema Specification v1.0"
+          ],
+          "practice_calibration_submitted": false
+        },
+        "assignment_accepted": {
+          "status": "QUEUE_DEPLOYED",
+          "queue_path": "data/benchmark_vault/queues/queue_REC_A_892.json",
+          "assigned_pairs": 200,
+          "randomized_presentation": false
+        },
+        "ratings_submitted": {
+          "status": "AWAITING_FIRST_SUBMISSION",
+          "submitted_count": 0,
+          "remaining_count": 200,
+          "completion_percentage": 0.0
+        }
+      }
+    },
+    {
+      "pseudonymous_id": "REC_B_314",
+      "role": "Independent Primary Evaluator B",
+      "lifecycle_stage": {
+        "invitation_dispatched": {
+          "status": "COMPLETED",
+          "timestamp": "2026-11-14T20:30:00Z",
+          "channel": "Secure Talent Network Dispatch"
+        },
+        "consent_received": {
+          "status": "PENDING_RECEIPT",
+          "form_version": "v1.2_IRB_EXEMPT_STUDY",
+          "dispatched_timestamp": "2026-11-14T20:32:00Z",
+          "signed_timestamp": null
+        },
+        "qualifications_verified": {
+          "status": "VERIFIED",
+          "years_experience": "6+ years",
+          "primary_domain": "Data Science, Machine Learning, QA Automation & Engineering Management",
+          "verification_method": "Professional credential audit & structured technical recruitment interview"
+        },
+        "onboarding_completed": {
+          "status": "PACKAGE_DELIVERED",
+          "materials": [
+            "Rubric v2.1 Hardened Criteria",
+            "Calibration Guide with 5 Synthetic Practice Pairs",
+            "Intake Schema Specification v1.0"
+          ],
+          "practice_calibration_submitted": false
+        },
+        "assignment_accepted": {
+          "status": "QUEUE_DEPLOYED",
+          "queue_path": "data/benchmark_vault/queues/queue_REC_B_314.json",
+          "assigned_pairs": 200,
+          "randomized_presentation": true,
+          "randomization_seed": 42
+        },
+        "ratings_submitted": {
+          "status": "AWAITING_FIRST_SUBMISSION",
+          "submitted_count": 0,
+          "remaining_count": 200,
+          "completion_percentage": 0.0
+        }
+      }
+    },
+    {
+      "pseudonymous_id": "LEAD_ADJ_001",
+      "role": "Principal Consensus Adjudicator",
+      "lifecycle_stage": {
+        "invitation_dispatched": {
+          "status": "COMPLETED",
+          "timestamp": "2026-11-14T19:00:00Z"
+        },
+        "consent_received": {
+          "status": "VERIFIED_SIGNED",
+          "signed_timestamp": "2026-11-14T19:30:00Z"
+        },
+        "qualifications_verified": {
+          "status": "VERIFIED",
+          "years_experience": "8+ years",
+          "primary_domain": "Director of Technical Talent & Staff Hiring Authority",
+          "verification_method": "Executive verification & committee appointment"
+        },
+        "onboarding_completed": {
+          "status": "COMPLETED",
+          "materials_mastered": true,
+          "calibration_benchmarked": true
+        },
+        "assignment_accepted": {
+          "status": "STANDBY_FOR_DISCORDANCE",
+          "trigger_condition": "Discordant ratings between REC_A_892 and REC_B_314 (|r_A - r_B| >= 1)",
+          "pending_adjudication_count": 0
+        },
+        "ratings_submitted": {
+          "status": "STANDBY",
+          "submitted_count": 0
+        }
+      }
+    }
+  ],
+  "participation_summary": {
+    "total_evaluators_engaged": 2,
+    "total_adjudicators_ready": 1,
+    "target_pairs": 200,
+    "target_total_ratings": 400,
+    "actual_ratings_submitted": 0,
+    "remaining_ratings_required": 400,
+    "completion_rate_percentage": 0.0,
+    "overall_status": "PILOT READY — AWAITING REAL RECRUITER ANNOTATIONS"
+  }
+}

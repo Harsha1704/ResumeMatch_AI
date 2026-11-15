@@ -1,0 +1,337 @@
+{
+  "raw_counts": {
+    "train": 6241,
+    "test": 1759,
+    "total": 8000
+  },
+  "exact_duplicates": {
+    "train_duplicates": 1,
+    "test_duplicates": 0
+  },
+  "contradictory_label_pairs": {
+    "count_conflicting_pairs": 6,
+    "count_conflicting_rows": 12,
+    "pairs": [
+      {
+        "pair_hash": "11665d9d0e6a41e9aa35f9bf68ec08d1_ec15bf28b30f2c30ac860e1d2ca2840a",
+        "count": 2,
+        "labels": [
+          "No Fit",
+          "Good Fit"
+        ],
+        "row_indices": [
+          381,
+          5152
+        ],
+        "resume_char_len": 2138,
+        "job_char_len": 1076,
+        "resume_skills_count": 20,
+        "job_skills_count": 12,
+        "skill_overlap_count": 3,
+        "skill_overlap": [
+          "accounting",
+          "excel",
+          "finance"
+        ],
+        "resume_snippet": "QUALIFICATIONS\u2022\u00a0\u00a0 Over two years' experience of data analysis at Loyola Chicago University; providing statistical analysis plan and generating report, tables, graphs; proficient in R and SAS.\u2022\u00a0\u00a0 Proficient in Microsoft Office, Word, Excel and Power P",
+        "job_snippet": "Calling all data nerds who love finance!  If you're a data wiz but tired of sitting behind systems 100 percent of the time, this role offers the best of both worlds: 50% technical Tableau ownership and 50% FP&A support. The FP&A component means build"
+      },
+      {
+        "pair_hash": "388dae3fdac9ec08db9f6fe0095602e7_87ad0608defe0e01c4bba1c18c2458b1",
+        "count": 2,
+        "labels": [
+          "No Fit",
+          "Potential Fit"
+        ],
+        "row_indices": [
+          312,
+          3706
+        ],
+        "resume_char_len": 2494,
+        "job_char_len": 1982,
+        "resume_skills_count": 26,
+        "job_skills_count": 21,
+        "skill_overlap_count": 0,
+        "skill_overlap": [],
+        "resume_snippet": "SummaryHighly motivated Sales Associate with extensive customer service and sales experience. Outgoing sales professional with track record of driving increased sales, improving buying experience and elevating company profile with target market. Prof",
+        "job_snippet": "Alexander Technology Group is currently exclusively working with a local Food and Beverage Manufacturer out of the DedhamWestwood are looking for a direct hire ERP Business Analyst. Organization is currently in growth mode.  They are currently in the"
+      },
+      {
+        "pair_hash": "46d1f66aa01ead62b6d9e692e30e61f9_60308260a83c1138dda45b2b92682b59",
+        "count": 2,
+        "labels": [
+          "No Fit",
+          "Potential Fit"
+        ],
+        "row_indices": [
+          520,
+          4492
+        ],
+        "resume_char_len": 7256,
+        "job_char_len": 3261,
+        "resume_skills_count": 54,
+        "job_skills_count": 21,
+        "skill_overlap_count": 9,
+        "skill_overlap": [
+          "cloud services",
+          "data warehousing",
+          "design",
+          "documentation",
+          "engineering",
+          "etl",
+          "integration",
+          "marketing",
+          "python"
+        ],
+        "resume_snippet": "Professional SummaryBusiness Intelligence Consultant with a 10-year career in data warehousing, business intelligence reporting, and data management architecture. Progressive developer and technical team lead with a strength in design & development, ",
+        "job_snippet": "ROR Partners is a rapidly growing, client-driven digital marketing and data company. We offer proven marketing solutions to a variety of vertical industries on a nationwide basis. ROR is seeking a Principal Data Engineer to serve as a key data archit"
+      },
+      {
+        "pair_hash": "6edd1be326604b84a32c195316515d44_23becff435b17ca78e01de5861c64ccd",
+        "count": 2,
+        "labels": [
+          "No Fit",
+          "Good Fit"
+        ],
+        "row_indices": [
+          46,
+          4919
+        ],
+        "resume_char_len": 16072,
+        "job_char_len": 3553,
+        "resume_skills_count": 102,
+        "job_skills_count": 30,
+        "skill_overlap_count": 9,
+        "skill_overlap": [
+          "analytics",
+          "communication",
+          "design",
+          "development",
+          "excel",
+          "git",
+          "integration",
+          "planning",
+          "testing"
+        ],
+        "resume_snippet": "SummaryDynamic and motivated IT professional with around 7 years of experience as a Big Data Engineer with expertise in designing data intensive applications using Hadoop Ecosystem , Big Data Analytical , Cloud Data engineering , Data Warehouse / Dat",
+        "job_snippet": "Business Analyst Location: Remote.Duration: 12 + months.MOI: Skype   About the RoleThe Business Analyst will support a cross-functional project teams focused on driving the end-to-end digital product lifecycle for features and products to improve the"
+      },
+      {
+        "pair_hash": "80641268fd459f1880862e7c2642997e_d910ee3f6af11e98c761552f0446293c",
+        "count": 2,
+        "labels": [
+          "No Fit",
+          "Good Fit"
+        ],
+        "row_indices": [
+          585,
+          4888
+        ],
+        "resume_char_len": 16799,
+        "job_char_len": 3620,
+        "resume_skills_count": 67,
+        "job_skills_count": 19,
+        "skill_overlap_count": 7,
+        "skill_overlap": [
+          "design",
+          "documentation",
+          "driven",
+          "employment",
+          "integration",
+          "planning",
+          "teams"
+        ],
+        "resume_snippet": "SummaryPursue a challenging and rewarding position as a QA Analyst/ Software Quality Assurance Specialist in the competitive information technology industry where I can utilize my technical skills and abilities to accomplish professional growth while",
+        "job_snippet": "Cloud and Things is a leading provider of IT solutions in the public sector. We are dedicated to delivering results and solving complex challenges for our clients. We are looking for individuals who are passionate about making a difference in the wor"
+      },
+      {
+        "pair_hash": "e10d5bf070a51cead1d894b66a30f85e_37c711dcd7f0ca387b74abceb2b944b3",
+        "count": 2,
+        "labels": [
+          "No Fit",
+          "Good Fit"
+        ],
+        "row_indices": [
+          377,
+          5903
+        ],
+        "resume_char_len": 8850,
+        "job_char_len": 2189,
+        "resume_skills_count": 63,
+        "job_skills_count": 20,
+        "skill_overlap_count": 3,
+        "skill_overlap": [
+          "business analysis",
+          "excel",
+          "testing"
+        ],
+        "resume_snippet": "ProfileOver 4 Years of Business Intelligence /SQL Developer and Data Analyst experience with Bachelors of Computer Science and Information Systems. Extensive background and knowledge in Power BI, Tableau, T-SQL, SSIS, SSRS and many more reporting too",
+        "job_snippet": "Role - Business Analyst - Mobile Location - Louisville, KY (Onsite)  Responsibilities:Evaluating business processes, anticipating requirements, uncovering areas for improvement, and developing and implementing solutions. Leading ongoing reviews of bu"
+      }
+    ]
+  },
+  "near_duplicates": {
+    "near_dup_resumes_count": 70,
+    "near_dup_jobs_count": 8,
+    "sample_near_dup_resumes": [
+      {
+        "resume_idx_1": 0,
+        "resume_idx_2": 374,
+        "similarity": 0.9684,
+        "snippet_1": "SummaryHighly motivated Sales Associate with extensive customer service and sales experience. Outgoing sales professional with track record of driving",
+        "snippet_2": "SummaryHighly motivated Sales Associate with extensive customer service and sales experience. Outgoing sales professional with track record of driving"
+      },
+      {
+        "resume_idx_1": 18,
+        "resume_idx_2": 202,
+        "similarity": 0.9881,
+        "snippet_1": "SummaryA well-rounded pragmatic Project Manager with broad experience on Optical Networks. In depth knowledge of SONET ADMs (Fujitsu 4500/4100), Netwo",
+        "snippet_2": "SummaryA well-rounded pragmatic Project Manager with broad experience on Optical Networks. In depth knowledge of SONET ADMs (Fujitsu 4500/4100), Netwo"
+      },
+      {
+        "resume_idx_1": 22,
+        "resume_idx_2": 476,
+        "similarity": 0.9788,
+        "snippet_1": "Professional ProfileHighly motivated Sales Associate with extensive customer service and sales experience. Outgoing sales professional with track reco",
+        "snippet_2": "Professional ProfileHighly motivated Sales Associate with extensive customer service and sales experience. Outgoing sales professional with track reco"
+      },
+      {
+        "resume_idx_1": 32,
+        "resume_idx_2": 78,
+        "similarity": 0.9719,
+        "snippet_1": "SummaryDetail-oriented and highly organized individual seeking a full-time, accounting position to utilize and apply my educational skills and work ex",
+        "snippet_2": "SummaryDetail-oriented and highly organized individual seeking a full-time, accounting position to utilize and apply my educational skills and work ex"
+      },
+      {
+        "resume_idx_1": 43,
+        "resume_idx_2": 614,
+        "similarity": 0.9919,
+        "snippet_1": "Summary7+ years of experience as a BI developer with a proven track record in Business Intelligence (BI), Data Warehouse (DWH) and Data Analytics rela",
+        "snippet_2": "Summary7+ years of experience as a BI developer with a proven track record in Business Intelligence (BI), Data Warehouse (DWH) and Data Analytics rela"
+      }
+    ],
+    "sample_near_dup_jobs": [
+      {
+        "job_idx_1": 7,
+        "job_idx_2": 271,
+        "similarity": 0.9774,
+        "snippet_1": "***W2 ONLY**  Software Engineer (12-month contract  REMOTE, team based in Mounds View, MN): Top 3 Skills:1. JavaScript2. Vue.js 3. Gitlab Target Years",
+        "snippet_2": "Software Engineer (12-month contract  REMOTE, team based in Mounds View, MN): **W2 Candidates ONLY** Top 3 Skills:1. JavaScript2. Vue.js3. Gitlab Requ"
+      },
+      {
+        "job_idx_1": 28,
+        "job_idx_2": 305,
+        "similarity": 0.9512,
+        "snippet_1": "Role - Business Analyst - Mobile Location - Louisville, KY (Onsite)  Responsibilities:Evaluating business processes, anticipating requirements, uncove",
+        "snippet_2": "Who we are?For the past 20 years, we have powered many Digital Experiences for the Fortune 500. Since 1999, we have grown from a few people to more th"
+      },
+      {
+        "job_idx_1": 81,
+        "job_idx_2": 143,
+        "similarity": 0.972,
+        "snippet_1": "Electrical EngineerNDI Engineering Company is seeking an Electrical Engineer with approximately 2 to 4 years of designing experience on either Ship Hu",
+        "snippet_2": "NDI Engineering Company is seeking a Junior Electrical Engineer with 1 to 3 years of designing experience on Ship Hull, Mechanical and Electrical (HM&"
+      },
+      {
+        "job_idx_1": 136,
+        "job_idx_2": 191,
+        "similarity": 0.9634,
+        "snippet_1": "Hello, please look into the below mentioned role if you are comfortable kindly reply me back with your updated resume . Role: Electrical Engineer Loca",
+        "snippet_2": " Perform and generate reports on all routine tests and testing activities.  Troubleshoot manufacturing & component problems to the lowest Line Replace"
+      },
+      {
+        "job_idx_1": 173,
+        "job_idx_2": 216,
+        "similarity": 0.9916,
+        "snippet_1": "Job Title: Software DeveloperLocation: Dallas, TXDuration: 6+ MonthsPosition Type  Only W2 Role (No Corp to Corp)Job Description: Job Description: A d",
+        "snippet_2": "Job Title: Software DeveloperLocation: Pittsburgh, PADuration: 6+ MonthsPosition Type  Only W2 Role (No Corp to Corp)Job Description: Job Description:"
+      }
+    ]
+  },
+  "class_boundary_overlap": {
+    "No Fit": {
+      "n_samples": 619,
+      "skill_recall_mean": 0.1664,
+      "skill_recall_median": 0.1429,
+      "skill_recall_p25": 0.0667,
+      "skill_recall_p75": 0.2353,
+      "skill_jaccard_mean": 0.0589,
+      "skill_overlap_count_mean": 3.18,
+      "skill_overlap_count_median": 2.0
+    },
+    "Potential Fit": {
+      "n_samples": 280,
+      "skill_recall_mean": 0.2061,
+      "skill_recall_median": 0.1863,
+      "skill_recall_p25": 0.1,
+      "skill_recall_p75": 0.2769,
+      "skill_jaccard_mean": 0.0709,
+      "skill_overlap_count_mean": 3.68,
+      "skill_overlap_count_median": 3.0
+    },
+    "Good Fit": {
+      "n_samples": 301,
+      "skill_recall_mean": 0.2225,
+      "skill_recall_median": 0.2121,
+      "skill_recall_p25": 0.1277,
+      "skill_recall_p75": 0.3,
+      "skill_jaccard_mean": 0.0902,
+      "skill_overlap_count_mean": 4.99,
+      "skill_overlap_count_median": 4.0
+    }
+  },
+  "graph_splits": [
+    {
+      "split_name": "Protocol 2: Job-Disjoint Validation",
+      "train_pairs": 5462,
+      "test_pairs": 778,
+      "train_unique_resumes": 633,
+      "test_unique_resumes": 373,
+      "train_unique_jobs": 238,
+      "test_unique_jobs": 42,
+      "overlapping_resumes": 364,
+      "overlapping_resumes_pct": 97.59,
+      "overlapping_jobs": 0,
+      "overlapping_jobs_pct": 0.0
+    },
+    {
+      "split_name": "Protocol 3: Resume-Disjoint Validation",
+      "train_pairs": 5217,
+      "test_pairs": 1023,
+      "train_unique_resumes": 545,
+      "test_unique_resumes": 97,
+      "train_unique_jobs": 280,
+      "test_unique_jobs": 219,
+      "overlapping_resumes": 0,
+      "overlapping_resumes_pct": 0.0,
+      "overlapping_jobs": 219,
+      "overlapping_jobs_pct": 100.0
+    },
+    {
+      "split_name": "Protocol 4: Dual-Unseen Validation",
+      "train_pairs": 3857,
+      "test_pairs": 297,
+      "train_unique_resumes": 500,
+      "test_unique_resumes": 92,
+      "train_unique_jobs": 221,
+      "test_unique_jobs": 52,
+      "overlapping_resumes": 0,
+      "overlapping_resumes_pct": 0.0,
+      "overlapping_jobs": 0,
+      "overlapping_jobs_pct": 0.0
+    },
+    {
+      "split_name": "Official Held-Out Test",
+      "train_pairs": 6240,
+      "test_pairs": 1759,
+      "train_unique_resumes": 642,
+      "test_unique_resumes": 477,
+      "train_unique_jobs": 280,
+      "test_unique_jobs": 71,
+      "overlapping_resumes": 476,
+      "overlapping_resumes_pct": 99.79,
+      "overlapping_jobs": 0,
+      "overlapping_jobs_pct": 0.0
+    }
+  ]
+}

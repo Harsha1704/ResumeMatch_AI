@@ -1,0 +1,385 @@
+{
+  "job_disjoint_val": {
+    "protocol": "Job-Disjoint Validation (train_sub_job_clean -> val_sub_job, N=778)",
+    "classical_baseline": {
+      "accuracy": 0.482,
+      "balanced_accuracy": 0.4301,
+      "macro_precision": 0.4333,
+      "macro_recall": 0.4301,
+      "macro_f1": 0.4265,
+      "weighted_f1": 0.4997,
+      "brier_score": 0.8766,
+      "confusion_matrix": [
+        [
+          241,
+          107,
+          67
+        ],
+        [
+          52,
+          94,
+          84
+        ],
+        [
+          45,
+          48,
+          40
+        ]
+      ],
+      "per_class": {
+        "No Fit": {
+          "precision": 0.713,
+          "recall": 0.5807,
+          "f1": 0.6401,
+          "support": 415
+        },
+        "Potential Fit": {
+          "precision": 0.3775,
+          "recall": 0.4087,
+          "f1": 0.3925,
+          "support": 230
+        },
+        "Good Fit": {
+          "precision": 0.2094,
+          "recall": 0.3008,
+          "f1": 0.2469,
+          "support": 133
+        }
+      }
+    },
+    "sbert_config_b": {
+      "accuracy": 0.509,
+      "balanced_accuracy": 0.4762,
+      "macro_precision": 0.4703,
+      "macro_recall": 0.4762,
+      "macro_f1": 0.4726,
+      "weighted_f1": 0.5122,
+      "brier_score": 1.4741,
+      "confusion_matrix": [
+        [
+          238,
+          124,
+          53
+        ],
+        [
+          90,
+          105,
+          35
+        ],
+        [
+          58,
+          22,
+          53
+        ]
+      ],
+      "per_class": {
+        "No Fit": {
+          "precision": 0.6166,
+          "recall": 0.5735,
+          "f1": 0.5943,
+          "support": 415
+        },
+        "Potential Fit": {
+          "precision": 0.4183,
+          "recall": 0.4565,
+          "f1": 0.4366,
+          "support": 230
+        },
+        "Good Fit": {
+          "precision": 0.3759,
+          "recall": 0.3985,
+          "f1": 0.3869,
+          "support": 133
+        }
+      }
+    },
+    "hybrid_config_d": {
+      "accuracy": 0.518,
+      "balanced_accuracy": 0.4786,
+      "macro_precision": 0.4766,
+      "macro_recall": 0.4786,
+      "macro_f1": 0.4775,
+      "weighted_f1": 0.5189,
+      "brier_score": 1.4747,
+      "confusion_matrix": [
+        [
+          250,
+          115,
+          50
+        ],
+        [
+          97,
+          100,
+          33
+        ],
+        [
+          61,
+          19,
+          53
+        ]
+      ],
+      "per_class": {
+        "No Fit": {
+          "precision": 0.6127,
+          "recall": 0.6024,
+          "f1": 0.6075,
+          "support": 415
+        },
+        "Potential Fit": {
+          "precision": 0.4274,
+          "recall": 0.4348,
+          "f1": 0.431,
+          "support": 230
+        },
+        "Good Fit": {
+          "precision": 0.3897,
+          "recall": 0.3985,
+          "f1": 0.3941,
+          "support": 133
+        }
+      }
+    }
+  },
+  "dual_unseen_val_true": {
+    "protocol": "Strict Dual-Unseen (dual_train_df_clean -> dual_val_df, N=297)",
+    "sbert_config_b": {
+      "accuracy": 0.3704,
+      "balanced_accuracy": 0.3334,
+      "macro_precision": 0.3207,
+      "macro_recall": 0.3334,
+      "macro_f1": 0.3163,
+      "weighted_f1": 0.3428,
+      "brier_score": 1.3062,
+      "confusion_matrix": [
+        [
+          79,
+          25,
+          20
+        ],
+        [
+          45,
+          17,
+          18
+        ],
+        [
+          49,
+          30,
+          14
+        ]
+      ],
+      "per_class": {
+        "No Fit": {
+          "precision": 0.4566,
+          "recall": 0.6371,
+          "f1": 0.532,
+          "support": 124
+        },
+        "Potential Fit": {
+          "precision": 0.2361,
+          "recall": 0.2125,
+          "f1": 0.2237,
+          "support": 80
+        },
+        "Good Fit": {
+          "precision": 0.2692,
+          "recall": 0.1505,
+          "f1": 0.1931,
+          "support": 93
+        }
+      }
+    },
+    "hybrid_config_d": {
+      "accuracy": 0.3771,
+      "balanced_accuracy": 0.3417,
+      "macro_precision": 0.3276,
+      "macro_recall": 0.3417,
+      "macro_f1": 0.3256,
+      "weighted_f1": 0.3516,
+      "brier_score": 1.2887,
+      "confusion_matrix": [
+        [
+          79,
+          24,
+          21
+        ],
+        [
+          42,
+          19,
+          19
+        ],
+        [
+          47,
+          32,
+          14
+        ]
+      ],
+      "per_class": {
+        "No Fit": {
+          "precision": 0.4702,
+          "recall": 0.6371,
+          "f1": 0.5411,
+          "support": 124
+        },
+        "Potential Fit": {
+          "precision": 0.2533,
+          "recall": 0.2375,
+          "f1": 0.2452,
+          "support": 80
+        },
+        "Good Fit": {
+          "precision": 0.2593,
+          "recall": 0.1505,
+          "f1": 0.1905,
+          "support": 93
+        }
+      }
+    }
+  },
+  "dual_unseen_val_contaminated": {
+    "protocol": "Flawed Phase 12B Dual-Unseen (train_sub_job_clean -> dual_val_df, N=297, 84.5% Leakage)",
+    "hybrid_config_d": {
+      "accuracy": 0.8586,
+      "balanced_accuracy": 0.8622,
+      "macro_precision": 0.8549,
+      "macro_recall": 0.8622,
+      "macro_f1": 0.8565,
+      "weighted_f1": 0.8573,
+      "brier_score": 1.6304,
+      "confusion_matrix": [
+        [
+          100,
+          13,
+          11
+        ],
+        [
+          10,
+          65,
+          5
+        ],
+        [
+          2,
+          1,
+          90
+        ]
+      ],
+      "per_class": {
+        "No Fit": {
+          "precision": 0.8929,
+          "recall": 0.8065,
+          "f1": 0.8475,
+          "support": 124
+        },
+        "Potential Fit": {
+          "precision": 0.8228,
+          "recall": 0.8125,
+          "f1": 0.8176,
+          "support": 80
+        },
+        "Good Fit": {
+          "precision": 0.8491,
+          "recall": 0.9677,
+          "f1": 0.9045,
+          "support": 93
+        }
+      }
+    }
+  },
+  "resume_disjoint_val_true": {
+    "protocol": "Strict Resume-Disjoint (train_sub_res_clean -> val_sub_res, N=1023)",
+    "sbert_config_b": {
+      "accuracy": 0.5455,
+      "balanced_accuracy": 0.5474,
+      "macro_precision": 0.538,
+      "macro_recall": 0.5474,
+      "macro_f1": 0.5389,
+      "weighted_f1": 0.5493,
+      "brier_score": 1.4747,
+      "confusion_matrix": [
+        [
+          260,
+          134,
+          92
+        ],
+        [
+          82,
+          133,
+          33
+        ],
+        [
+          71,
+          53,
+          165
+        ]
+      ],
+      "per_class": {
+        "No Fit": {
+          "precision": 0.6295,
+          "recall": 0.535,
+          "f1": 0.5784,
+          "support": 486
+        },
+        "Potential Fit": {
+          "precision": 0.4156,
+          "recall": 0.5363,
+          "f1": 0.4683,
+          "support": 248
+        },
+        "Good Fit": {
+          "precision": 0.569,
+          "recall": 0.5709,
+          "f1": 0.5699,
+          "support": 289
+        }
+      }
+    }
+  },
+  "resume_disjoint_val_contaminated": {
+    "protocol": "Flawed Phase 12B Resume-Disjoint (train_sub_job_clean -> val_sub_res, N=1023, 88.9% Leakage)",
+    "hybrid_config_d": {
+      "accuracy": 0.8817,
+      "balanced_accuracy": 0.8896,
+      "macro_precision": 0.8723,
+      "macro_recall": 0.8896,
+      "macro_f1": 0.8795,
+      "weighted_f1": 0.8818,
+      "brier_score": 1.6622,
+      "confusion_matrix": [
+        [
+          411,
+          45,
+          30
+        ],
+        [
+          22,
+          217,
+          9
+        ],
+        [
+          11,
+          4,
+          274
+        ]
+      ],
+      "per_class": {
+        "No Fit": {
+          "precision": 0.9257,
+          "recall": 0.8457,
+          "f1": 0.8839,
+          "support": 486
+        },
+        "Potential Fit": {
+          "precision": 0.8158,
+          "recall": 0.875,
+          "f1": 0.8444,
+          "support": 248
+        },
+        "Good Fit": {
+          "precision": 0.8754,
+          "recall": 0.9481,
+          "f1": 0.9103,
+          "support": 289
+        }
+      }
+    }
+  }
+}

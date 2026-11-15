@@ -1,0 +1,53 @@
+{
+  "primary_dataset": {
+    "source": "cnamuangtoun/resume-job-description-fit",
+    "train_row_count": 6240,
+    "test_row_count": 1759,
+    "total_pairs": 7999,
+    "columns": [
+      "resume_text",
+      "job_description_text",
+      "label"
+    ],
+    "train_label_distribution": {
+      "No Fit": 3142,
+      "Potential Fit": 1556,
+      "Good Fit": 1542
+    },
+    "test_label_distribution": {
+      "No Fit": 857,
+      "Good Fit": 458,
+      "Potential Fit": 444
+    },
+    "train_unique_resumes": 642,
+    "train_unique_jobs": 280,
+    "test_unique_resumes": 477,
+    "test_unique_jobs": 71,
+    "job_overlap_count": 0,
+    "resume_overlap_count": 476,
+    "exact_pair_overlap": 0,
+    "train_resume_char_length": {
+      "mean": 5804.1,
+      "min": 897,
+      "max": 25364
+    },
+    "train_job_char_length": {
+      "mean": 2731.1,
+      "min": 72,
+      "max": 7669
+    }
+  },
+  "secondary_skills_dataset": {
+    "source": "batuhanmtl/job-skill-set",
+    "total_records": 1067,
+    "unique_job_ids": 1067,
+    "categories": {
+      "BUSINESS-DEVELOPMENT": 239,
+      "FINANCE": 236,
+      "SALES": 232,
+      "HR": 220,
+      "INFORMATION-TECHNOLOGY": 140
+    },
+    "unique_extracted_skills": 4476
+  }
+}

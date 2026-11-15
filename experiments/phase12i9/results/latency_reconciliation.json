@@ -1,0 +1,49 @@
+{
+  "phase": "12I.9",
+  "audit_name": "Standardized Inference Latency & Boundary Reconciliation Audit",
+  "timestamp": "2026-11-14T21:13:00Z",
+  "discrepancy_investigation": {
+    "previously_reported_latency": "0.0041 ms / pair (Production Baseline)",
+    "audit_finding": "TIMING_BOUNDARY_MISMATCH. The 0.0041 ms figure was measured exclusively on the classifier inference step (predict_proba) executing matrix-vector multiplication in C/BLAS on pre-transformed sparse feature matrices already loaded in RAM. It omitted all raw text preprocessing, structural parsing, dictionary-based skill extraction, and TF-IDF vectorization. Comparing this 0.004 ms classifier-only time with end-to-end neural cross-encoder latency (15.4 ms) was an invalid comparison.",
+    "scientific_correction": "Inference latency must be benchmarked with explicit stage boundaries: End-to-End Latency (Raw Text -> Prediction) versus Classifier-Only Latency."
+  },
+  "standardized_benchmark_results": {
+    "harness_configuration": {
+      "batch_size": 1,
+      "warmup_iterations": 10,
+      "benchmark_pairs": 100,
+      "hardware": "Intel/AMD x86_64 CPU (Single-Thread Inference)",
+      "environment": "Python 3.14.8 on Windows"
+    },
+    "production_pipeline_breakdown": {
+      "stage_1_feature_extraction": {
+        "operations": ["clean_text", "parse_structural_features", "SkillEngine.extract_skills", "TfidfVectorizer.transform", "StandardScaler.transform"],
+        "mean_latency_ms": 16.331,
+        "median_latency_ms": 14.824,
+        "percentage_of_total": 98.54
+      },
+      "stage_2_classifier_predict": {
+        "operations": ["LogisticRegression.predict_proba"],
+        "mean_latency_ms": 0.242,
+        "median_latency_ms": 0.212,
+        "percentage_of_total": 1.46
+      },
+      "end_to_end_pipeline": {
+        "mean_latency_ms": 16.573,
+        "median_latency_ms": 15.035,
+        "p95_latency_ms": 27.361,
+        "p99_latency_ms": 38.237
+      }
+    },
+    "memory_and_storage_footprint": {
+      "peak_process_ram_mb": 188.6,
+      "idle_process_ram_mb": 92.0,
+      "disk_artifacts": {
+        "best_model_bytes": 61487,
+        "feature_pipeline_bytes": 270105,
+        "challenger_stacking_bytes": 2330440
+      }
+    }
+  },
+  "sla_compliance_verdict": "Production end-to-end latency (16.57 ms mean) is suitable for interactive web API serving (< 50 ms SLA target). Pre-computing features for recurring jobs/resumes reduces inference time to 0.24 ms."
+}

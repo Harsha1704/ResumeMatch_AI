@@ -1,0 +1,20 @@
+{
+  "status": "PILOT_EXECUTION_PENDING",
+  "message": "Human annotation pilot templates are prepared but currently unannotated. Zero synthetic labels generated.",
+  "total_pairs": 200,
+  "annotator_a_completed": 0,
+  "annotator_b_completed": 0,
+  "adjudication_completed": 0,
+  "metrics": {
+    "raw_agreement": null,
+    "cohens_kappa": null,
+    "disagreement_rate": null,
+    "insufficient_evidence_rate": null,
+    "adjudication_rate": null
+  },
+  "quality_gate": {
+    "target_kappa": 0.7,
+    "passed": false,
+    "reason": "Human pilot review has not yet been executed."
+  }
+}

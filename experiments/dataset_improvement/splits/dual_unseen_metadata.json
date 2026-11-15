@@ -1,0 +1,29 @@
+{
+  "split_name": "Evaluation C: Dual-Unseen Benchmark",
+  "random_seed": 20,
+  "total_source_pairs": 6241,
+  "train_pairs": 3857,
+  "val_pairs": 297,
+  "cross_boundary_excluded_pairs": 2087,
+  "exclusion_percentage": 33.44,
+  "unique_resumes_total": 642,
+  "unique_jobs_total": 280,
+  "train_unique_resumes": 500,
+  "train_unique_jobs": 221,
+  "val_unique_resumes": 92,
+  "val_unique_jobs": 52,
+  "resume_overlap_count": 0,
+  "job_overlap_count": 0,
+  "pair_overlap_count": 0,
+  "train_label_distribution": {
+    "No Fit": 1980,
+    "Good Fit": 951,
+    "Potential Fit": 926
+  },
+  "val_label_distribution": {
+    "No Fit": 124,
+    "Good Fit": 93,
+    "Potential Fit": 80
+  },
+  "class_diversity_verified": true
+}

@@ -1,0 +1,93 @@
+{
+  "audit_phase": "Phase 12I.12",
+  "timestamp": "2026-11-14T21:46:00Z",
+  "correction_formula": "sqrt((C / (C - 1)) * (J / (J - 1)))",
+  "candidate_factor": 1.011111111111111,
+  "job_factor": 1.0196078431372548,
+  "combined_multiplier": 1.0153505892902772,
+  "percentage_inflation": 1.5350589290277217,
+  "methodological_verdict": "INAPPROPRIATE_FOR_BOOTSTRAP_DISPERSION",
+  "rationale": "Finite-cluster degrees-of-freedom adjustments (G/(G-1)) are analytical bias corrections for parametric sandwich covariance matrices under asymptotic normal approximations. In non-parametric bootstrap resampling, cluster-level sampling variability is inherently modeled by the drawing of clusters with replacement. Multiplying the empirical bootstrap standard error by this factor is ad-hoc and constitutes an unwarranted double-counting of cluster variability.",
+  "per_seed_comparison": {
+    "comparator_a_production_baseline_seed_42": {
+      "comparator": "Production Baseline",
+      "seed": 42,
+      "unadjusted_boot_se_pp": 5.51,
+      "adjusted_boot_se_pp": 5.6,
+      "se_difference_pp": 0.08,
+      "both_cis_cross_zero": true
+    },
+    "comparator_a_production_baseline_seed_43": {
+      "comparator": "Production Baseline",
+      "seed": 43,
+      "unadjusted_boot_se_pp": 5.77,
+      "adjusted_boot_se_pp": 5.86,
+      "se_difference_pp": 0.09,
+      "both_cis_cross_zero": true
+    },
+    "comparator_a_production_baseline_seed_44": {
+      "comparator": "Production Baseline",
+      "seed": 44,
+      "unadjusted_boot_se_pp": 5.9,
+      "adjusted_boot_se_pp": 5.99,
+      "se_difference_pp": 0.09,
+      "both_cis_cross_zero": true
+    },
+    "comparator_a_production_baseline_seed_45": {
+      "comparator": "Production Baseline",
+      "seed": 45,
+      "unadjusted_boot_se_pp": 6.1,
+      "adjusted_boot_se_pp": 6.19,
+      "se_difference_pp": 0.09,
+      "both_cis_cross_zero": true
+    },
+    "comparator_a_production_baseline_seed_46": {
+      "comparator": "Production Baseline",
+      "seed": 46,
+      "unadjusted_boot_se_pp": 6.12,
+      "adjusted_boot_se_pp": 6.21,
+      "se_difference_pp": 0.09,
+      "both_cis_cross_zero": true
+    },
+    "comparator_b_raw_sbert_seed_42": {
+      "comparator": "Raw SBERT",
+      "seed": 42,
+      "unadjusted_boot_se_pp": 5.26,
+      "adjusted_boot_se_pp": 5.34,
+      "se_difference_pp": 0.08,
+      "both_cis_cross_zero": true
+    },
+    "comparator_b_raw_sbert_seed_43": {
+      "comparator": "Raw SBERT",
+      "seed": 43,
+      "unadjusted_boot_se_pp": 5.66,
+      "adjusted_boot_se_pp": 5.75,
+      "se_difference_pp": 0.09,
+      "both_cis_cross_zero": true
+    },
+    "comparator_b_raw_sbert_seed_44": {
+      "comparator": "Raw SBERT",
+      "seed": 44,
+      "unadjusted_boot_se_pp": 5.6,
+      "adjusted_boot_se_pp": 5.68,
+      "se_difference_pp": 0.09,
+      "both_cis_cross_zero": true
+    },
+    "comparator_b_raw_sbert_seed_45": {
+      "comparator": "Raw SBERT",
+      "seed": 45,
+      "unadjusted_boot_se_pp": 5.9,
+      "adjusted_boot_se_pp": 5.99,
+      "se_difference_pp": 0.09,
+      "both_cis_cross_zero": true
+    },
+    "comparator_b_raw_sbert_seed_46": {
+      "comparator": "Raw SBERT",
+      "seed": 46,
+      "unadjusted_boot_se_pp": 5.73,
+      "adjusted_boot_se_pp": 5.82,
+      "se_difference_pp": 0.09,
+      "both_cis_cross_zero": true
+    }
+  }
+}

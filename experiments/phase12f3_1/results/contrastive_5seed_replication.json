@@ -1,0 +1,94 @@
+{
+  "benchmark_metadata": {
+    "evaluation_set": "dual_unseen_val_v1 (296 rows post-quarantine)",
+    "representation_protocol": "InfoNCE on positive pairs (Good Fit + Potential Fit) in train partition ONLY",
+    "zero_leakage_guarantee": "Validation partition never touched during projector training or scaler fitting",
+    "classifier_standard": "LogisticRegression(C=1.0, class_weight='balanced', max_iter=1000)"
+  },
+  "raw_sbert_5seeds": {
+    "accuracy_mean": 0.3818,
+    "accuracy_std": 0.0,
+    "macro_f1_mean": 0.3282,
+    "macro_f1_std": 0.0,
+    "runs": [
+      {
+        "seed": 42,
+        "accuracy": 0.3818,
+        "balanced_acc": 0.3467,
+        "macro_f1": 0.3282
+      },
+      {
+        "seed": 43,
+        "accuracy": 0.3818,
+        "balanced_acc": 0.3467,
+        "macro_f1": 0.3282
+      },
+      {
+        "seed": 44,
+        "accuracy": 0.3818,
+        "balanced_acc": 0.3467,
+        "macro_f1": 0.3282
+      },
+      {
+        "seed": 45,
+        "accuracy": 0.3818,
+        "balanced_acc": 0.3467,
+        "macro_f1": 0.3282
+      },
+      {
+        "seed": 46,
+        "accuracy": 0.3818,
+        "balanced_acc": 0.3467,
+        "macro_f1": 0.3282
+      }
+    ]
+  },
+  "contrastive_projection_5seeds": {
+    "accuracy_mean": 0.446,
+    "accuracy_std": 0.0271,
+    "macro_f1_mean": 0.3307,
+    "macro_f1_std": 0.0327,
+    "runs": [
+      {
+        "seed": 42,
+        "accuracy": 0.4595,
+        "balanced_acc": 0.3962,
+        "macro_f1": 0.3311
+      },
+      {
+        "seed": 43,
+        "accuracy": 0.4561,
+        "balanced_acc": 0.397,
+        "macro_f1": 0.3329
+      },
+      {
+        "seed": 44,
+        "accuracy": 0.3919,
+        "balanced_acc": 0.3307,
+        "macro_f1": 0.2703
+      },
+      {
+        "seed": 45,
+        "accuracy": 0.4595,
+        "balanced_acc": 0.4018,
+        "macro_f1": 0.3604
+      },
+      {
+        "seed": 46,
+        "accuracy": 0.4628,
+        "balanced_acc": 0.4024,
+        "macro_f1": 0.3589
+      }
+    ]
+  },
+  "paired_representation_gain": {
+    "accuracy_delta_mean": 0.0642,
+    "accuracy_delta_std": 0.0271,
+    "macro_f1_delta_mean": 0.0025,
+    "macro_f1_delta_std": 0.0327,
+    "95_ci_accuracy_delta": [
+      0.0404,
+      0.088
+    ]
+  }
+}

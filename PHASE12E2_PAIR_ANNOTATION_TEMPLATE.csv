@@ -1,0 +1,2275 @@
+pair_id,candidate_id,job_id,domain_keyword,stratum_type,candidate_position,job_position,candidate_exp_years,job_exp_years_req,candidate_english,job_english_req,candidate_cv_text,job_description_text,annotator_1_label,annotator_1_evidence,annotator_2_label,annotator_2_evidence,adjudicated_label,adjudication_notes
+83b027bf7c92600b,24e789a4-8fc7-58d2-b3ec-e503e7558df0,53f6faa9-acab-553e-b42c-d12f44cb2426,Python,HIGH_ALIGNMENT_PROPOSAL,Python/Django Developer,Junior Back End Developer,2.0,1y,intermediate,upper,"
+Creating projects from scratch
+ Initial project deployment in K8
+ Integration with third party services: payment services, property management services
+ Direct communication with customers and support team
+","We achieve this through an easy to use site that provides relevant data for gamers and earning potential for developers.
+
+We have secured investment and are growing! We need back end developers to create plugins for the site, and help third party developers come on board.
+
+We love helping beginners grow, and already have a full compliment of senior engineers. We are now casting the net out for Junior Back End Developers in Java, Python or Node JS, to help us build, help you grow and have fun along the way!
+
+We are professional development advocates! All employees have paid access to
+
+Skillshare.com membership, full access to all courses
+
+Audible.com plus membership, 1 free audio book a month and discounts on the full catalog
+
+Blinkist.com membership, full access to all blinks
+
+Responsibilities:
+These are the responsibilities we need from you, but understand that you might not feel ready yet.
+
+Don’t worry, we expect you to fall down, and we expect you to fail, we did when first starting out!
+
+All we are looking for is a commitment from you; you want to and will fill this role as quickly as you can!
+
+A functional understanding of our platform and framework
+
+We provide a structured learning path, with testing throughout
+
+Develop, test and deploy single features and plugins according to github issues assigned to you
+
+Tests can be manual as long as they are documented
+
+The more automated test coverage you have, the better
+
+Document your work and update your tasks
+
+Write down the problem you solved, where in the code you solved it and how you tested it
+
+Update your assigned issues frequently and make sure it is in the correct workflow state
+
+Technical support of production issues
+
+Assist the seniors when needed or solve non-urgent issues yourself
+
+Hard Requirements
+Computer science degree or enough experience to make up for it
+
+Hobby or professional back end project we can look through, using Java, Python or Node JS
+
+Basic knowledge of
+
+MongoDB
+
+Git and github.com
+
+Dependency Management (maven, pip or npm)
+
+Unit testing in your strongest language
+
+Bonus Requirements
+Basic knowledge of
+
+Docker
+
+Kubernetes
+
+CI/CD (github actions and code reviews)
+
+1+ Years experience as a Backend Developer in Java, Python or Node JS
+
+Gaming enthusiast
+
+You love playing games, will play games with us, and make great analytics plugins because of it
+
+Crypto enthusiast
+
+You already understand what the blockchain is, what tokens are and how etherscan.com works",,,,,,
+23ce382cc604b72c,54c086ba-a4d4-5f18-9aa9-ba993d7ab65f,53f6faa9-acab-553e-b42c-d12f44cb2426,Python,HIGH_ALIGNMENT_PROPOSAL,Junior Python/Django Developer | Scraping Expert,Junior Back End Developer,1.0,1y,intermediate,upper,"Responsive Web Design, JavaScript Algorithms and Data Structures 
+FreeCodeCamp (300 hours)
+
+Design basics (Adobe Photoshop)
+IT STEP Academy
+
+Python developer; Django Starter; Flask; MySQL; PostgreSQL; MongoDB;Git Basics;
+ITVDN
+
+Basics of software testing
+Prometeus
+
+SOFT SKILLS IT SCHOLL 2022; PM & LEADER SCHOLL 2023
+STUD-POINT
+
+Working in a Digital World:Professional Skills; Information
+Technology Fundamentals
+IBM Corporation
+
+Creative thinking; Time management; Assertive Communication; 
+Campster
+
+Introduction to Cybersecurity
+CISCO 
+
+WordPress Certification; WordPress SEO Certification
+TemplateMonster
+
+LANGUAGES
+English - B1 
+Polish - A1.1
+Campster
+I am a:
+Python developer with 1 year of experience. In my portfolio I have more than 10 pet-projects of varying complexity, such as:
+To-Do List, Password Generator, Portfolio (framework Django);
+parsing (scrapping) of diverse information from various websites (libraries Scrapy, Beautiful Soup);
+identification of a person by photo (gender, age, race, prevailing emotions)(library DeepFace);
+
+Wordpress developer with 1 year of expirience. Engaged in projects:
+creating sites on wordpress ready-made templates (online store, services website);
+stretching html templates on wordpress (customization of themes);
+working with plugins: Elementor, Gutenberg, Advanced Custom Fields, Cyr-To-Lat, Yoast SEO, WooCommerce, Contact Form 7, etc.
+","We achieve this through an easy to use site that provides relevant data for gamers and earning potential for developers.
+
+We have secured investment and are growing! We need back end developers to create plugins for the site, and help third party developers come on board.
+
+We love helping beginners grow, and already have a full compliment of senior engineers. We are now casting the net out for Junior Back End Developers in Java, Python or Node JS, to help us build, help you grow and have fun along the way!
+
+We are professional development advocates! All employees have paid access to
+
+Skillshare.com membership, full access to all courses
+
+Audible.com plus membership, 1 free audio book a month and discounts on the full catalog
+
+Blinkist.com membership, full access to all blinks
+
+Responsibilities:
+These are the responsibilities we need from you, but understand that you might not feel ready yet.
+
+Don’t worry, we expect you to fall down, and we expect you to fail, we did when first starting out!
+
+All we are looking for is a commitment from you; you want to and will fill this role as quickly as you can!
+
+A functional understanding of our platform and framework
+
+We provide a structured learning path, with testing throughout
+
+Develop, test and deploy single features and plugins according to github issues assigned to you
+
+Tests can be manual as long as they are documented
+
+The more automated test coverage you have, the better
+
+Document your work and update your tasks
+
+Write down the problem you solved, where in the code you solved it and how you tested it
+
+Update your assigned issues frequently and make sure it is in the correct workflow state
+
+Technical support of production issues
+
+Assist the seniors when needed or solve non-urgent issues yourself
+
+Hard Requirements
+Computer science degree or enough experience to make up for it
+
+Hobby or professional back end project we can look through, using Java, Python or Node JS
+
+Basic knowledge of
+
+MongoDB
+
+Git and github.com
+
+Dependency Management (maven, pip or npm)
+
+Unit testing in your strongest language
+
+Bonus Requirements
+Basic knowledge of
+
+Docker
+
+Kubernetes
+
+CI/CD (github actions and code reviews)
+
+1+ Years experience as a Backend Developer in Java, Python or Node JS
+
+Gaming enthusiast
+
+You love playing games, will play games with us, and make great analytics plugins because of it
+
+Crypto enthusiast
+
+You already understand what the blockchain is, what tokens are and how etherscan.com works",,,,,,
+b9a2c728c2d112f5,56311781-4131-52a2-87d6-293557f72c93,53f6faa9-acab-553e-b42c-d12f44cb2426,Python,HIGH_ALIGNMENT_PROPOSAL,Junior Python Developer,Junior Back End Developer,1.5,1y,pre,upper,"
+For a year, I studied at Hillel IT School and developed Django project site pizzeria. I have experience in developing telegram bots on AIOGram. Currently working in part time format, I'm parsing products reviews and pro reviews for video games on foreign sites and QC checking team tasks.
+","We achieve this through an easy to use site that provides relevant data for gamers and earning potential for developers.
+
+We have secured investment and are growing! We need back end developers to create plugins for the site, and help third party developers come on board.
+
+We love helping beginners grow, and already have a full compliment of senior engineers. We are now casting the net out for Junior Back End Developers in Java, Python or Node JS, to help us build, help you grow and have fun along the way!
+
+We are professional development advocates! All employees have paid access to
+
+Skillshare.com membership, full access to all courses
+
+Audible.com plus membership, 1 free audio book a month and discounts on the full catalog
+
+Blinkist.com membership, full access to all blinks
+
+Responsibilities:
+These are the responsibilities we need from you, but understand that you might not feel ready yet.
+
+Don’t worry, we expect you to fall down, and we expect you to fail, we did when first starting out!
+
+All we are looking for is a commitment from you; you want to and will fill this role as quickly as you can!
+
+A functional understanding of our platform and framework
+
+We provide a structured learning path, with testing throughout
+
+Develop, test and deploy single features and plugins according to github issues assigned to you
+
+Tests can be manual as long as they are documented
+
+The more automated test coverage you have, the better
+
+Document your work and update your tasks
+
+Write down the problem you solved, where in the code you solved it and how you tested it
+
+Update your assigned issues frequently and make sure it is in the correct workflow state
+
+Technical support of production issues
+
+Assist the seniors when needed or solve non-urgent issues yourself
+
+Hard Requirements
+Computer science degree or enough experience to make up for it
+
+Hobby or professional back end project we can look through, using Java, Python or Node JS
+
+Basic knowledge of
+
+MongoDB
+
+Git and github.com
+
+Dependency Management (maven, pip or npm)
+
+Unit testing in your strongest language
+
+Bonus Requirements
+Basic knowledge of
+
+Docker
+
+Kubernetes
+
+CI/CD (github actions and code reviews)
+
+1+ Years experience as a Backend Developer in Java, Python or Node JS
+
+Gaming enthusiast
+
+You love playing games, will play games with us, and make great analytics plugins because of it
+
+Crypto enthusiast
+
+You already understand what the blockchain is, what tokens are and how etherscan.com works",,,,,,
+3d6dc57ecad0a9ac,ddf7be26-ba1d-5c0f-a115-58f0a7e8bd2a,53f6faa9-acab-553e-b42c-d12f44cb2426,Python,BORDERLINE_RUNNER_UP_PROPOSAL,Junior Python Developer,Junior Back End Developer,0.0,1y,fluent,upper,"My academic background at University focused on mathematical statistics and data analysis during my diploma work. I possess a strong understanding of various data distributions and how to apply them effectively. 
+     I spent a lot of time for this work and I have several articles, one of which is in Scopus.
+I have recently completed a master's degree in applied physics and I am currently aiming to shift my professional path towards the IT sector. Throughout my academic journey, I specialized in mathematical statistics and the analysis of data in the context of my diploma project. I have a solid grasp of diverse data distributions and their practical applications. Furthermore, I am skilled in Python programming, a tool I frequently employ to construct models and conduct thorough data analysis.
+    One of good examples of my portfolio is a chat bot with long-term memory by means of LangChain, Chroma, OpenAI. 
+    I also have my own project on Django: a financial application for controlling own income/expenses with graphical analysis.
+In my future role as a Python developer, I eagerly anticipate acquiring meaningful experience and applying my knowledge in practical scenarios. At this juncture of my career, the absence of prior experience motivates me to diligently cultivate valuable skills within a professional setting. The prospect of joining a team of seasoned experts to collaboratively engage in captivating and purposeful projects holds particular significance for me.
+    I firmly believe that through teamwork, I will not only amass proficiency in crafting software solutions using Python, but also actively contribute to the process, yielding noteworthy outcomes in conjunction with my peers. I am dedicated to enhancing my prowess in data analysis, code optimization, and creatively addressing tasks that demand innovative solutions.
+    My objective centers around dynamic advancement within the realm of IT, leveraging the hands-on experience attainable through participation in authentic projects alongside a tightly-knit cadre of specialists. I am resolute in elevating my expertise and wholeheartedly committed to exerting utmost endeavor in attaining mutual objectives and refining my skills as a Python developer.","We achieve this through an easy to use site that provides relevant data for gamers and earning potential for developers.
+
+We have secured investment and are growing! We need back end developers to create plugins for the site, and help third party developers come on board.
+
+We love helping beginners grow, and already have a full compliment of senior engineers. We are now casting the net out for Junior Back End Developers in Java, Python or Node JS, to help us build, help you grow and have fun along the way!
+
+We are professional development advocates! All employees have paid access to
+
+Skillshare.com membership, full access to all courses
+
+Audible.com plus membership, 1 free audio book a month and discounts on the full catalog
+
+Blinkist.com membership, full access to all blinks
+
+Responsibilities:
+These are the responsibilities we need from you, but understand that you might not feel ready yet.
+
+Don’t worry, we expect you to fall down, and we expect you to fail, we did when first starting out!
+
+All we are looking for is a commitment from you; you want to and will fill this role as quickly as you can!
+
+A functional understanding of our platform and framework
+
+We provide a structured learning path, with testing throughout
+
+Develop, test and deploy single features and plugins according to github issues assigned to you
+
+Tests can be manual as long as they are documented
+
+The more automated test coverage you have, the better
+
+Document your work and update your tasks
+
+Write down the problem you solved, where in the code you solved it and how you tested it
+
+Update your assigned issues frequently and make sure it is in the correct workflow state
+
+Technical support of production issues
+
+Assist the seniors when needed or solve non-urgent issues yourself
+
+Hard Requirements
+Computer science degree or enough experience to make up for it
+
+Hobby or professional back end project we can look through, using Java, Python or Node JS
+
+Basic knowledge of
+
+MongoDB
+
+Git and github.com
+
+Dependency Management (maven, pip or npm)
+
+Unit testing in your strongest language
+
+Bonus Requirements
+Basic knowledge of
+
+Docker
+
+Kubernetes
+
+CI/CD (github actions and code reviews)
+
+1+ Years experience as a Backend Developer in Java, Python or Node JS
+
+Gaming enthusiast
+
+You love playing games, will play games with us, and make great analytics plugins because of it
+
+Crypto enthusiast
+
+You already understand what the blockchain is, what tokens are and how etherscan.com works",,,,,,
+70c0da3fd74b8bc4,8379b935-0618-5e23-bc34-00ae12ee3e81,53f6faa9-acab-553e-b42c-d12f44cb2426,Python,BORDERLINE_RUNNER_UP_PROPOSAL,Python Developer,Junior Back End Developer,0.5,1y,basic,upper,"
+I have little experience, I worked with python and sql databases, I want to learn and develop in this direction, I have a total of 4-5 months of experience in python, so is sql, I have little experience in design, I developed a layout for the site, and app homepage design
+","We achieve this through an easy to use site that provides relevant data for gamers and earning potential for developers.
+
+We have secured investment and are growing! We need back end developers to create plugins for the site, and help third party developers come on board.
+
+We love helping beginners grow, and already have a full compliment of senior engineers. We are now casting the net out for Junior Back End Developers in Java, Python or Node JS, to help us build, help you grow and have fun along the way!
+
+We are professional development advocates! All employees have paid access to
+
+Skillshare.com membership, full access to all courses
+
+Audible.com plus membership, 1 free audio book a month and discounts on the full catalog
+
+Blinkist.com membership, full access to all blinks
+
+Responsibilities:
+These are the responsibilities we need from you, but understand that you might not feel ready yet.
+
+Don’t worry, we expect you to fall down, and we expect you to fail, we did when first starting out!
+
+All we are looking for is a commitment from you; you want to and will fill this role as quickly as you can!
+
+A functional understanding of our platform and framework
+
+We provide a structured learning path, with testing throughout
+
+Develop, test and deploy single features and plugins according to github issues assigned to you
+
+Tests can be manual as long as they are documented
+
+The more automated test coverage you have, the better
+
+Document your work and update your tasks
+
+Write down the problem you solved, where in the code you solved it and how you tested it
+
+Update your assigned issues frequently and make sure it is in the correct workflow state
+
+Technical support of production issues
+
+Assist the seniors when needed or solve non-urgent issues yourself
+
+Hard Requirements
+Computer science degree or enough experience to make up for it
+
+Hobby or professional back end project we can look through, using Java, Python or Node JS
+
+Basic knowledge of
+
+MongoDB
+
+Git and github.com
+
+Dependency Management (maven, pip or npm)
+
+Unit testing in your strongest language
+
+Bonus Requirements
+Basic knowledge of
+
+Docker
+
+Kubernetes
+
+CI/CD (github actions and code reviews)
+
+1+ Years experience as a Backend Developer in Java, Python or Node JS
+
+Gaming enthusiast
+
+You love playing games, will play games with us, and make great analytics plugins because of it
+
+Crypto enthusiast
+
+You already understand what the blockchain is, what tokens are and how etherscan.com works",,,,,,
+bce58a28ed22c517,5bdb4709-f84a-5c66-9424-d876a4aa2824,53f6faa9-acab-553e-b42c-d12f44cb2426,Python_vs_JavaScript,CROSS_DOMAIN_NEGATIVE_CONTROL,Full Stack Web Developer,Junior Back End Developer,1.0,1y,upper,upper,"
+- Building react applications using JSX, hooks, class and functional components;
+- Creating Pixel Perfect, responsive webpages based on Figma grid layout design using HTML, CSS, SASS, BEM, and JS;
+- Work on a team project based on Node.js;
+- Handling code reviews, investigating, reproducing, and fixing bugs.
+","We achieve this through an easy to use site that provides relevant data for gamers and earning potential for developers.
+
+We have secured investment and are growing! We need back end developers to create plugins for the site, and help third party developers come on board.
+
+We love helping beginners grow, and already have a full compliment of senior engineers. We are now casting the net out for Junior Back End Developers in Java, Python or Node JS, to help us build, help you grow and have fun along the way!
+
+We are professional development advocates! All employees have paid access to
+
+Skillshare.com membership, full access to all courses
+
+Audible.com plus membership, 1 free audio book a month and discounts on the full catalog
+
+Blinkist.com membership, full access to all blinks
+
+Responsibilities:
+These are the responsibilities we need from you, but understand that you might not feel ready yet.
+
+Don’t worry, we expect you to fall down, and we expect you to fail, we did when first starting out!
+
+All we are looking for is a commitment from you; you want to and will fill this role as quickly as you can!
+
+A functional understanding of our platform and framework
+
+We provide a structured learning path, with testing throughout
+
+Develop, test and deploy single features and plugins according to github issues assigned to you
+
+Tests can be manual as long as they are documented
+
+The more automated test coverage you have, the better
+
+Document your work and update your tasks
+
+Write down the problem you solved, where in the code you solved it and how you tested it
+
+Update your assigned issues frequently and make sure it is in the correct workflow state
+
+Technical support of production issues
+
+Assist the seniors when needed or solve non-urgent issues yourself
+
+Hard Requirements
+Computer science degree or enough experience to make up for it
+
+Hobby or professional back end project we can look through, using Java, Python or Node JS
+
+Basic knowledge of
+
+MongoDB
+
+Git and github.com
+
+Dependency Management (maven, pip or npm)
+
+Unit testing in your strongest language
+
+Bonus Requirements
+Basic knowledge of
+
+Docker
+
+Kubernetes
+
+CI/CD (github actions and code reviews)
+
+1+ Years experience as a Backend Developer in Java, Python or Node JS
+
+Gaming enthusiast
+
+You love playing games, will play games with us, and make great analytics plugins because of it
+
+Crypto enthusiast
+
+You already understand what the blockchain is, what tokens are and how etherscan.com works",,,,,,
+829d08a0cb6584a9,9f8b7656-c7e5-5d14-90ee-b7c074b1cd0a,53f6faa9-acab-553e-b42c-d12f44cb2426,Python_vs_JavaScript,CROSS_DOMAIN_NEGATIVE_CONTROL,Front-End Developer,Junior Back End Developer,0.5,1y,intermediate,upper,"Of the achievements, I can boast that for 6 months I worked out for 8-10 hours every day. Completed all assigned projects and homework in IT school. Studied such knowledge as: HTML5, CSS, SAAS, JavaScript, React, redux-toolkit, Figma, git, vs-code, webpack, REST API, node.js, mongoDB, express understood the principles of web development.
+I have experience in educational/home projects.  
+8 months.
+May 2022 - December 2022
+Passed the annual intensive on full-stack development. During my studies, I completed 9 projects (4 team and 5 individual). I was a team leader on one project, a scrum master on another, and a developer on all the others.
+Technologies such as: HTML5, CSS, SAAS, JavaScript, React, redux-toolkit, Figma, git, vs-code, REST API, axios, mongoDB, node.js, express are used.
+
+Front-end Intern in the company January 2023 - March 2023
+Participated in application development
+Performed site markup
+Created components in web applications
+Writing Application Logic
+And other tasks of a junior developer
+
+Provided website development services  December 2022 - February 2023
+Development of layout and site logic, as well as work with styles
+Stack: HTML/CSS, React, JavaScript, Redux.
+
+Work on own projects December 2022 - to now
+Development of own Full-stack applications
+Writing logic, working with design and hosting the application
+
+I wish you to find a dream job/company, start developing in this direction and achieve success and new victories.
+Get as much experience and new knowledge as possible. Take part in interesting projects, work in a cool team and develop together with the company.","We achieve this through an easy to use site that provides relevant data for gamers and earning potential for developers.
+
+We have secured investment and are growing! We need back end developers to create plugins for the site, and help third party developers come on board.
+
+We love helping beginners grow, and already have a full compliment of senior engineers. We are now casting the net out for Junior Back End Developers in Java, Python or Node JS, to help us build, help you grow and have fun along the way!
+
+We are professional development advocates! All employees have paid access to
+
+Skillshare.com membership, full access to all courses
+
+Audible.com plus membership, 1 free audio book a month and discounts on the full catalog
+
+Blinkist.com membership, full access to all blinks
+
+Responsibilities:
+These are the responsibilities we need from you, but understand that you might not feel ready yet.
+
+Don’t worry, we expect you to fall down, and we expect you to fail, we did when first starting out!
+
+All we are looking for is a commitment from you; you want to and will fill this role as quickly as you can!
+
+A functional understanding of our platform and framework
+
+We provide a structured learning path, with testing throughout
+
+Develop, test and deploy single features and plugins according to github issues assigned to you
+
+Tests can be manual as long as they are documented
+
+The more automated test coverage you have, the better
+
+Document your work and update your tasks
+
+Write down the problem you solved, where in the code you solved it and how you tested it
+
+Update your assigned issues frequently and make sure it is in the correct workflow state
+
+Technical support of production issues
+
+Assist the seniors when needed or solve non-urgent issues yourself
+
+Hard Requirements
+Computer science degree or enough experience to make up for it
+
+Hobby or professional back end project we can look through, using Java, Python or Node JS
+
+Basic knowledge of
+
+MongoDB
+
+Git and github.com
+
+Dependency Management (maven, pip or npm)
+
+Unit testing in your strongest language
+
+Bonus Requirements
+Basic knowledge of
+
+Docker
+
+Kubernetes
+
+CI/CD (github actions and code reviews)
+
+1+ Years experience as a Backend Developer in Java, Python or Node JS
+
+Gaming enthusiast
+
+You love playing games, will play games with us, and make great analytics plugins because of it
+
+Crypto enthusiast
+
+You already understand what the blockchain is, what tokens are and how etherscan.com works",,,,,,
+97f6852596ecd642,a48cc5d3-0f0a-5408-af23-e17fa83f379a,53c7dff3-c16e-515d-ad8f-20d90e31a597,Python,HIGH_ALIGNMENT_PROPOSAL,Python Developer,Senior Big Data Developer with Python,9.0,5y,upper,upper,"
+""Hello! I'm an experienced Python developer and QA/QC Automation Team Lead who is actively seeking new opportunities, including relocation. My areas of expertise include microservices, system design, automation, QA/QC, GitLab pipelines, and Amazon Web Services. I'm passionate about leveraging my skills and knowledge to contribute to innovative projects and help teams achieve their goals. Please feel free to reach out if you have any opportunities that align with my background and experience. Thank you!""
+I believe in the value of long-term commitment and collaboration with companies. Ideally, I'm seeking opportunities that would allow me to contribute my skills and expertise for a period of 2-4 years or longer. This would give me the chance to fully commit to the company and give my best effort towards achieving its goals. I'm excited about the prospect of building a long-term working relationship with a company that shares my values and goals.","The Succesful candidate will join MyAnalytics Platform and help with green field development of set of Python libraries and frameworks to offer Python as a first class programming language on MyAnalytic Platform.
+
+The highly agile tech team designing, developing, and operating new high-performance cloud-native pricing and analytics platform powering primary sales, structuring, secondary market making, and execution of equity derivatives to facilitate cost efficient scale-up of structured products business across CH (Zurich), UK (London), US (New York). On a daily basis, work requires strong sense of ownership and close collaboration with trading floor quants, structuring, trading that can be defined as QuantDevOps engineering culture required to meet fast paced business opportunities and resulting tech requirements. Specifically prospective candidate will start from taking end-to-end tech ownership of strategic cross-regional cloud Platform allowing business users to evaluate and implement new concepts & workflows without involvement of software developers.
+Responsibilities:
+The role will involve close collaboration with Python users/developers i.e. Quant Developers. So the candidate will have opportunity to talk to business directly in order to gather requirements, use cases, user stories and shape the Python offering being used by Quant Developers (100+ expected)
+• Responsible for overall technology direction for the assigned module/project
+• Designs, develops and modifies code based on functional and system requirements
+• Ensure that architectural designs are future-proofed from a scale, load, and performance perspective
+• Design and implementation of data processing systems and software
+• Integration of existing databases in processing pipeline
+• Implementation of low-latency and highly available APIs
+• Perform development tool and environment design and configuration
+• Support bug fixes, change requests and functional enhancement on the code
+• Validates scope, plans and deliverables for assigned projects
+• Interacts with Design team and Test team for requirements and defects
+• Write reusable, testable and efficient code
+• Participate in testing process through unit and functional testing
+Mandatory Skills Description:
+A seasoned Python developer with passion for software engineering and solid experience with large scale business critical Python computational and data analytics setups
+- e.g. Spark, Flink, Big Data,
+- 5-6 experience in a similar role, more for Architect position
+- good communication skills, able communicator and a team player.
+• Clear written communication skills when documenting processes and features and communicating via e-mail
+Nice-to-Have Skills:
+TBC
+Languages:
+English: B2 Upper Intermediate",,,,,,
+131676b884117701,919f897f-0391-579f-a91c-3d6d79eaffae,53c7dff3-c16e-515d-ad8f-20d90e31a597,Python,HIGH_ALIGNMENT_PROPOSAL,Software Engineer,Senior Big Data Developer with Python,8.0,5y,upper,upper,"
+Continuously designed, developed and deployed distributed services (full SDLC)
+with focus on high availability, low latency and scalability.
+Looking for interesting projects to put my expertise to good use.","The Succesful candidate will join MyAnalytics Platform and help with green field development of set of Python libraries and frameworks to offer Python as a first class programming language on MyAnalytic Platform.
+
+The highly agile tech team designing, developing, and operating new high-performance cloud-native pricing and analytics platform powering primary sales, structuring, secondary market making, and execution of equity derivatives to facilitate cost efficient scale-up of structured products business across CH (Zurich), UK (London), US (New York). On a daily basis, work requires strong sense of ownership and close collaboration with trading floor quants, structuring, trading that can be defined as QuantDevOps engineering culture required to meet fast paced business opportunities and resulting tech requirements. Specifically prospective candidate will start from taking end-to-end tech ownership of strategic cross-regional cloud Platform allowing business users to evaluate and implement new concepts & workflows without involvement of software developers.
+Responsibilities:
+The role will involve close collaboration with Python users/developers i.e. Quant Developers. So the candidate will have opportunity to talk to business directly in order to gather requirements, use cases, user stories and shape the Python offering being used by Quant Developers (100+ expected)
+• Responsible for overall technology direction for the assigned module/project
+• Designs, develops and modifies code based on functional and system requirements
+• Ensure that architectural designs are future-proofed from a scale, load, and performance perspective
+• Design and implementation of data processing systems and software
+• Integration of existing databases in processing pipeline
+• Implementation of low-latency and highly available APIs
+• Perform development tool and environment design and configuration
+• Support bug fixes, change requests and functional enhancement on the code
+• Validates scope, plans and deliverables for assigned projects
+• Interacts with Design team and Test team for requirements and defects
+• Write reusable, testable and efficient code
+• Participate in testing process through unit and functional testing
+Mandatory Skills Description:
+A seasoned Python developer with passion for software engineering and solid experience with large scale business critical Python computational and data analytics setups
+- e.g. Spark, Flink, Big Data,
+- 5-6 experience in a similar role, more for Architect position
+- good communication skills, able communicator and a team player.
+• Clear written communication skills when documenting processes and features and communicating via e-mail
+Nice-to-Have Skills:
+TBC
+Languages:
+English: B2 Upper Intermediate",,,,,,
+f0979dd599eee8f0,6255c7a6-238e-56b5-a7db-b889fa415714,53c7dff3-c16e-515d-ad8f-20d90e31a597,Python,HIGH_ALIGNMENT_PROPOSAL,Python Software Engineer,Senior Big Data Developer with Python,5.0,5y,upper,upper,"
+Professional experience: 
+
+Python (Pyramid, Django), Java (Android), Swift(iOS), C#(Windows phone).
+
+Software Engineer with more than 5 years of working in IT industry. 
+Strong system administration experience.
+
+Skills
+Programming Languages: Python/Django, Java (Android), Swift, C#.
+System administration: linux based, FreeBSD, MacOS, Windows Server.
+Tools and technologies: AWS, Git, Apache, Nginx, MySQL, PostgreSQL, NoSQL, Ansible, Docker.
+Virtualisation: XEN, KVM, OpenVZ, Citrix Xenserver, Vagrant, VMware.
+","The Succesful candidate will join MyAnalytics Platform and help with green field development of set of Python libraries and frameworks to offer Python as a first class programming language on MyAnalytic Platform.
+
+The highly agile tech team designing, developing, and operating new high-performance cloud-native pricing and analytics platform powering primary sales, structuring, secondary market making, and execution of equity derivatives to facilitate cost efficient scale-up of structured products business across CH (Zurich), UK (London), US (New York). On a daily basis, work requires strong sense of ownership and close collaboration with trading floor quants, structuring, trading that can be defined as QuantDevOps engineering culture required to meet fast paced business opportunities and resulting tech requirements. Specifically prospective candidate will start from taking end-to-end tech ownership of strategic cross-regional cloud Platform allowing business users to evaluate and implement new concepts & workflows without involvement of software developers.
+Responsibilities:
+The role will involve close collaboration with Python users/developers i.e. Quant Developers. So the candidate will have opportunity to talk to business directly in order to gather requirements, use cases, user stories and shape the Python offering being used by Quant Developers (100+ expected)
+• Responsible for overall technology direction for the assigned module/project
+• Designs, develops and modifies code based on functional and system requirements
+• Ensure that architectural designs are future-proofed from a scale, load, and performance perspective
+• Design and implementation of data processing systems and software
+• Integration of existing databases in processing pipeline
+• Implementation of low-latency and highly available APIs
+• Perform development tool and environment design and configuration
+• Support bug fixes, change requests and functional enhancement on the code
+• Validates scope, plans and deliverables for assigned projects
+• Interacts with Design team and Test team for requirements and defects
+• Write reusable, testable and efficient code
+• Participate in testing process through unit and functional testing
+Mandatory Skills Description:
+A seasoned Python developer with passion for software engineering and solid experience with large scale business critical Python computational and data analytics setups
+- e.g. Spark, Flink, Big Data,
+- 5-6 experience in a similar role, more for Architect position
+- good communication skills, able communicator and a team player.
+• Clear written communication skills when documenting processes and features and communicating via e-mail
+Nice-to-Have Skills:
+TBC
+Languages:
+English: B2 Upper Intermediate",,,,,,
+e6008a054bb1bd8f,91b204bb-8f0d-5667-8036-a6c2db822726,53c7dff3-c16e-515d-ad8f-20d90e31a597,Python,BORDERLINE_RUNNER_UP_PROPOSAL,Senior Python Developer,Senior Big Data Developer with Python,4.0,5y,fluent,upper,"Languages:
+
+Ukrainian - Mother tongue
+English - Advanced
+German - Advanced
+Russian - Expert
+
+Previous 3 workplaces:
+
+Smart cities industry
+While working for a company in smart cities industry, I was involved in the integration of various devices and systems into the overall ecosystem of a smart city. I've been helping with requirements analysis and building a backend for a mobile app. I have developed a room reservation system that is synchronized with the calendar and displays on the rooms. A backend was developed for an internal mini-messenger that allows residents of a smart city to exchange messages that last only a day. I helped improve the existing virtual assistant by bringing new approaches and practices to the company. I also wrote few libraries and packages for Python and SDK for Corezoid that allowed working with one third-party IOT systems, distributed all over the place, which greatly simplified the integration process for Corezoid and Python developers.
+
+Liberty Report
+At Liberty Report, I was developing a platform for automated sociology and opinion analysis. I took the main architectural decisions, managed the integration with banking systems, graphical presentation of data for the broadcasts of ""Freedom of Speech by Savik Shuster"". I led the implementation of new features in the virtual assistant and helped the marketing department make the right decisions to expand our auditory and research panel. Developed a unique system for analyzing responses that allows real-time representative viewing of respondents' opinions for a specific region or any other resolution and automatically regulates the collection of new questionnaires.
+
+Handy.ai
+At Handy.ai I have been involved in the development of an enterprise platform for marketing and internal communication. I took part in the platform modules responsible for scheduling mailings, integrations with instant messengers and SMS delivery systems. I also took part in the development of the platform for analytics of the success of marketing campaigns created through our platform, including audience coverage, percentages of successful deliveries and recommendations for improving existing campaigns.
+Main Skills:
+
+Senior Python Developer
+4+ years of experience in Python Web Services (Flask, FastAPI)
+
+Data processing (Pandas)
+Image Processing (PIL, OpenCV)
+NLP (Dialogflow, NLTK, RASA)
+Audio Processing (PyAudio, ffmpeg)
+Telegram (AiOgram, Pyrogram)
+
+Low-Code Expertise
+2+ years of developing solutions using Corezoid & Node-Red Low-Code engines.
+
+MongoDB knowledge
+Advanced mongodb knowledge, experience in creating complex aggregations, and search optimization.
+","The Succesful candidate will join MyAnalytics Platform and help with green field development of set of Python libraries and frameworks to offer Python as a first class programming language on MyAnalytic Platform.
+
+The highly agile tech team designing, developing, and operating new high-performance cloud-native pricing and analytics platform powering primary sales, structuring, secondary market making, and execution of equity derivatives to facilitate cost efficient scale-up of structured products business across CH (Zurich), UK (London), US (New York). On a daily basis, work requires strong sense of ownership and close collaboration with trading floor quants, structuring, trading that can be defined as QuantDevOps engineering culture required to meet fast paced business opportunities and resulting tech requirements. Specifically prospective candidate will start from taking end-to-end tech ownership of strategic cross-regional cloud Platform allowing business users to evaluate and implement new concepts & workflows without involvement of software developers.
+Responsibilities:
+The role will involve close collaboration with Python users/developers i.e. Quant Developers. So the candidate will have opportunity to talk to business directly in order to gather requirements, use cases, user stories and shape the Python offering being used by Quant Developers (100+ expected)
+• Responsible for overall technology direction for the assigned module/project
+• Designs, develops and modifies code based on functional and system requirements
+• Ensure that architectural designs are future-proofed from a scale, load, and performance perspective
+• Design and implementation of data processing systems and software
+• Integration of existing databases in processing pipeline
+• Implementation of low-latency and highly available APIs
+• Perform development tool and environment design and configuration
+• Support bug fixes, change requests and functional enhancement on the code
+• Validates scope, plans and deliverables for assigned projects
+• Interacts with Design team and Test team for requirements and defects
+• Write reusable, testable and efficient code
+• Participate in testing process through unit and functional testing
+Mandatory Skills Description:
+A seasoned Python developer with passion for software engineering and solid experience with large scale business critical Python computational and data analytics setups
+- e.g. Spark, Flink, Big Data,
+- 5-6 experience in a similar role, more for Architect position
+- good communication skills, able communicator and a team player.
+• Clear written communication skills when documenting processes and features and communicating via e-mail
+Nice-to-Have Skills:
+TBC
+Languages:
+English: B2 Upper Intermediate",,,,,,
+fb0c09f07238a848,544c5168-f1b5-5261-9c35-97cb75c7f7a4,53c7dff3-c16e-515d-ad8f-20d90e31a597,Python,BORDERLINE_RUNNER_UP_PROPOSAL,Python Developer,Senior Big Data Developer with Python,2.0,5y,upper,upper,"With nearly 2 years of commercial experience and a track record of success, I believe I would be a valuable addition to your team.
+
+I am proud to have been a member of a startup that secured 3rd place at UCU Incubator, showcasing my ability to thrive in a dynamic and competitive environment. In my current role, I have been actively involved in the development of an ERP product, where I have gained expertise in Python, Odoo, Postgres, and other related technologies. I am also a co-owner of a coworking space, which has given me valuable insights into managing a business and working with diverse teams.
+
+As a Python Developer, I am skilled in designing and implementing efficient and scalable solutions. I am well-versed in developing RESTful APIs, optimizing database queries, and writing clean and maintainable code. I am also experienced in working with libraries and frameworks such as Flask, FastAPI, and SQLAlchemy. I am a fast learner, always eager to stay updated with the latest advancements in the field of Python development
+Implemented ERP, including developing a system for invoice automation, project automation, email notifications, and cron infrastructure.
+Work without any choices. I am highly motivated and can make your business grow, so if you are looking for a dev the will write only code, we will not match","The Succesful candidate will join MyAnalytics Platform and help with green field development of set of Python libraries and frameworks to offer Python as a first class programming language on MyAnalytic Platform.
+
+The highly agile tech team designing, developing, and operating new high-performance cloud-native pricing and analytics platform powering primary sales, structuring, secondary market making, and execution of equity derivatives to facilitate cost efficient scale-up of structured products business across CH (Zurich), UK (London), US (New York). On a daily basis, work requires strong sense of ownership and close collaboration with trading floor quants, structuring, trading that can be defined as QuantDevOps engineering culture required to meet fast paced business opportunities and resulting tech requirements. Specifically prospective candidate will start from taking end-to-end tech ownership of strategic cross-regional cloud Platform allowing business users to evaluate and implement new concepts & workflows without involvement of software developers.
+Responsibilities:
+The role will involve close collaboration with Python users/developers i.e. Quant Developers. So the candidate will have opportunity to talk to business directly in order to gather requirements, use cases, user stories and shape the Python offering being used by Quant Developers (100+ expected)
+• Responsible for overall technology direction for the assigned module/project
+• Designs, develops and modifies code based on functional and system requirements
+• Ensure that architectural designs are future-proofed from a scale, load, and performance perspective
+• Design and implementation of data processing systems and software
+• Integration of existing databases in processing pipeline
+• Implementation of low-latency and highly available APIs
+• Perform development tool and environment design and configuration
+• Support bug fixes, change requests and functional enhancement on the code
+• Validates scope, plans and deliverables for assigned projects
+• Interacts with Design team and Test team for requirements and defects
+• Write reusable, testable and efficient code
+• Participate in testing process through unit and functional testing
+Mandatory Skills Description:
+A seasoned Python developer with passion for software engineering and solid experience with large scale business critical Python computational and data analytics setups
+- e.g. Spark, Flink, Big Data,
+- 5-6 experience in a similar role, more for Architect position
+- good communication skills, able communicator and a team player.
+• Clear written communication skills when documenting processes and features and communicating via e-mail
+Nice-to-Have Skills:
+TBC
+Languages:
+English: B2 Upper Intermediate",,,,,,
+980266905f27f3b6,5bdb4709-f84a-5c66-9424-d876a4aa2824,53c7dff3-c16e-515d-ad8f-20d90e31a597,Python_vs_JavaScript,CROSS_DOMAIN_NEGATIVE_CONTROL,Full Stack Web Developer,Senior Big Data Developer with Python,1.0,5y,upper,upper,"
+- Building react applications using JSX, hooks, class and functional components;
+- Creating Pixel Perfect, responsive webpages based on Figma grid layout design using HTML, CSS, SASS, BEM, and JS;
+- Work on a team project based on Node.js;
+- Handling code reviews, investigating, reproducing, and fixing bugs.
+","The Succesful candidate will join MyAnalytics Platform and help with green field development of set of Python libraries and frameworks to offer Python as a first class programming language on MyAnalytic Platform.
+
+The highly agile tech team designing, developing, and operating new high-performance cloud-native pricing and analytics platform powering primary sales, structuring, secondary market making, and execution of equity derivatives to facilitate cost efficient scale-up of structured products business across CH (Zurich), UK (London), US (New York). On a daily basis, work requires strong sense of ownership and close collaboration with trading floor quants, structuring, trading that can be defined as QuantDevOps engineering culture required to meet fast paced business opportunities and resulting tech requirements. Specifically prospective candidate will start from taking end-to-end tech ownership of strategic cross-regional cloud Platform allowing business users to evaluate and implement new concepts & workflows without involvement of software developers.
+Responsibilities:
+The role will involve close collaboration with Python users/developers i.e. Quant Developers. So the candidate will have opportunity to talk to business directly in order to gather requirements, use cases, user stories and shape the Python offering being used by Quant Developers (100+ expected)
+• Responsible for overall technology direction for the assigned module/project
+• Designs, develops and modifies code based on functional and system requirements
+• Ensure that architectural designs are future-proofed from a scale, load, and performance perspective
+• Design and implementation of data processing systems and software
+• Integration of existing databases in processing pipeline
+• Implementation of low-latency and highly available APIs
+• Perform development tool and environment design and configuration
+• Support bug fixes, change requests and functional enhancement on the code
+• Validates scope, plans and deliverables for assigned projects
+• Interacts with Design team and Test team for requirements and defects
+• Write reusable, testable and efficient code
+• Participate in testing process through unit and functional testing
+Mandatory Skills Description:
+A seasoned Python developer with passion for software engineering and solid experience with large scale business critical Python computational and data analytics setups
+- e.g. Spark, Flink, Big Data,
+- 5-6 experience in a similar role, more for Architect position
+- good communication skills, able communicator and a team player.
+• Clear written communication skills when documenting processes and features and communicating via e-mail
+Nice-to-Have Skills:
+TBC
+Languages:
+English: B2 Upper Intermediate",,,,,,
+d9174a1109450c5c,9f8b7656-c7e5-5d14-90ee-b7c074b1cd0a,53c7dff3-c16e-515d-ad8f-20d90e31a597,Python_vs_JavaScript,CROSS_DOMAIN_NEGATIVE_CONTROL,Front-End Developer,Senior Big Data Developer with Python,0.5,5y,intermediate,upper,"Of the achievements, I can boast that for 6 months I worked out for 8-10 hours every day. Completed all assigned projects and homework in IT school. Studied such knowledge as: HTML5, CSS, SAAS, JavaScript, React, redux-toolkit, Figma, git, vs-code, webpack, REST API, node.js, mongoDB, express understood the principles of web development.
+I have experience in educational/home projects.  
+8 months.
+May 2022 - December 2022
+Passed the annual intensive on full-stack development. During my studies, I completed 9 projects (4 team and 5 individual). I was a team leader on one project, a scrum master on another, and a developer on all the others.
+Technologies such as: HTML5, CSS, SAAS, JavaScript, React, redux-toolkit, Figma, git, vs-code, REST API, axios, mongoDB, node.js, express are used.
+
+Front-end Intern in the company January 2023 - March 2023
+Participated in application development
+Performed site markup
+Created components in web applications
+Writing Application Logic
+And other tasks of a junior developer
+
+Provided website development services  December 2022 - February 2023
+Development of layout and site logic, as well as work with styles
+Stack: HTML/CSS, React, JavaScript, Redux.
+
+Work on own projects December 2022 - to now
+Development of own Full-stack applications
+Writing logic, working with design and hosting the application
+
+I wish you to find a dream job/company, start developing in this direction and achieve success and new victories.
+Get as much experience and new knowledge as possible. Take part in interesting projects, work in a cool team and develop together with the company.","The Succesful candidate will join MyAnalytics Platform and help with green field development of set of Python libraries and frameworks to offer Python as a first class programming language on MyAnalytic Platform.
+
+The highly agile tech team designing, developing, and operating new high-performance cloud-native pricing and analytics platform powering primary sales, structuring, secondary market making, and execution of equity derivatives to facilitate cost efficient scale-up of structured products business across CH (Zurich), UK (London), US (New York). On a daily basis, work requires strong sense of ownership and close collaboration with trading floor quants, structuring, trading that can be defined as QuantDevOps engineering culture required to meet fast paced business opportunities and resulting tech requirements. Specifically prospective candidate will start from taking end-to-end tech ownership of strategic cross-regional cloud Platform allowing business users to evaluate and implement new concepts & workflows without involvement of software developers.
+Responsibilities:
+The role will involve close collaboration with Python users/developers i.e. Quant Developers. So the candidate will have opportunity to talk to business directly in order to gather requirements, use cases, user stories and shape the Python offering being used by Quant Developers (100+ expected)
+• Responsible for overall technology direction for the assigned module/project
+• Designs, develops and modifies code based on functional and system requirements
+• Ensure that architectural designs are future-proofed from a scale, load, and performance perspective
+• Design and implementation of data processing systems and software
+• Integration of existing databases in processing pipeline
+• Implementation of low-latency and highly available APIs
+• Perform development tool and environment design and configuration
+• Support bug fixes, change requests and functional enhancement on the code
+• Validates scope, plans and deliverables for assigned projects
+• Interacts with Design team and Test team for requirements and defects
+• Write reusable, testable and efficient code
+• Participate in testing process through unit and functional testing
+Mandatory Skills Description:
+A seasoned Python developer with passion for software engineering and solid experience with large scale business critical Python computational and data analytics setups
+- e.g. Spark, Flink, Big Data,
+- 5-6 experience in a similar role, more for Architect position
+- good communication skills, able communicator and a team player.
+• Clear written communication skills when documenting processes and features and communicating via e-mail
+Nice-to-Have Skills:
+TBC
+Languages:
+English: B2 Upper Intermediate",,,,,,
+fd47ea761c22b122,77c38a98-deea-5fb4-b771-5e882404e667,c385babe-571f-5419-a6cd-cc9a76cbe99d,Python,HIGH_ALIGNMENT_PROPOSAL,Python Developer,Senior Python Developer,3.0,3y,upper,intermediate,"
+Software engineer with 3 years experience in back-end, took part in the implementation of a reporting automation project in the country's energy sector. I have experience developing Natural Language Processing services and pipelines. Good communications skills. Experience in different software development methodologies.
+","We are looking for a Senior Python Developer, to help us design and build the core services of our web application. You will work closely with our platform experts to deliver the best integration of the different endpoint agents and third party service providers. You will be joining a company early in history, with a real opportunity to directly influence the development of its products and services.
+
+Responsibilities:
+- Contribute well-written, well-documented, modularized, testable code
+- Help us with research and development of new products and services
+- Triages issues and implement appropriate fixes
+- Top level support for our high-value customers
+
+Requirements:
+- 3+ years of experience designing, building, and deploying scalable applications, ideally in a cloud-native environment
+- Expertise in Python, Django, and their ecosystems
+- Familiarity with PostgreSQL
+- Strong experience in one or more of the following cloud platforms: AWS, GCP, Azure
+
+Nice to haves, but NOT required:
+- Clickhouse
+- Elasticsearch
+- Splunk
+- Packer / Terraform
+- Ansible",,,,,,
+9f59cf22bbb96244,d2c88c0a-79aa-5fb7-9eda-5abb443bb451,c385babe-571f-5419-a6cd-cc9a76cbe99d,Python,HIGH_ALIGNMENT_PROPOSAL,Python Developer,Senior Python Developer,3.0,3y,upper,intermediate,"
+I am a Python developer with 2 years of experience. I work with Django And create Web and mobile applications of different complexity. I would like to find a new job where I could apply my knowledge and skills.
+","We are looking for a Senior Python Developer, to help us design and build the core services of our web application. You will work closely with our platform experts to deliver the best integration of the different endpoint agents and third party service providers. You will be joining a company early in history, with a real opportunity to directly influence the development of its products and services.
+
+Responsibilities:
+- Contribute well-written, well-documented, modularized, testable code
+- Help us with research and development of new products and services
+- Triages issues and implement appropriate fixes
+- Top level support for our high-value customers
+
+Requirements:
+- 3+ years of experience designing, building, and deploying scalable applications, ideally in a cloud-native environment
+- Expertise in Python, Django, and their ecosystems
+- Familiarity with PostgreSQL
+- Strong experience in one or more of the following cloud platforms: AWS, GCP, Azure
+
+Nice to haves, but NOT required:
+- Clickhouse
+- Elasticsearch
+- Splunk
+- Packer / Terraform
+- Ansible",,,,,,
+d4df3f4f0a649590,3d68190f-5441-5277-86e9-525b68e42324,c385babe-571f-5419-a6cd-cc9a76cbe99d,Python,HIGH_ALIGNMENT_PROPOSAL,Middle Python Django Developer,Senior Python Developer,4.0,3y,intermediate,intermediate,"Developed ecommerce project from zero (back-end side)
+Jan 2022 - Present time
+Python Middle Software Engineer
+
+Responsibilities: develop multi services architecture, APIs like GraphQL, REST API, WSDL, support DBs PostgreSQL and MariaDB, work with payments systems, query optimization, pytests, upgrade requirements, split project.
+
+March 2021 - Jan 2022
+Developed the online store project by solo
+Responsibilities: creating DB architecture design, REST
+API, celery tasks, user JWT/social auth, API
+documentations, integrations payment and delivery
+services, logging, writing auto tests, permissions,
+caching, debugging code, sending emails, custom filters,
+deployment, query optimization, internationalization,
+telegram bot notifier, site map, customizing admin panel,
+code refactoring/style, use pre-commit.
+
+Technologies used: Python, Django, Django REST
+framework, Celery, JWT, Swagger, Sentry, django-filters,
+PostgreSQL, Redis, RabbitMQ, Heroku, Git, Trello, Docker,
+boto3, pyTelegramBot, black, isort, flake8, mypy, CI/CD, nginx.
+
+
+February 2019 - March 2020
+Responsibilities: development REST API, user authentication,
+integration payment services, customization admin panel,
+interaction with DBs, creating Celery tasks, unit tests.
+I am looking for a challenging job with a new technologies and rapidly growing organization that can provide me with a range of goals and job objectives within a contemporary and projects setting. 
+English environment will be huge advantage.","We are looking for a Senior Python Developer, to help us design and build the core services of our web application. You will work closely with our platform experts to deliver the best integration of the different endpoint agents and third party service providers. You will be joining a company early in history, with a real opportunity to directly influence the development of its products and services.
+
+Responsibilities:
+- Contribute well-written, well-documented, modularized, testable code
+- Help us with research and development of new products and services
+- Triages issues and implement appropriate fixes
+- Top level support for our high-value customers
+
+Requirements:
+- 3+ years of experience designing, building, and deploying scalable applications, ideally in a cloud-native environment
+- Expertise in Python, Django, and their ecosystems
+- Familiarity with PostgreSQL
+- Strong experience in one or more of the following cloud platforms: AWS, GCP, Azure
+
+Nice to haves, but NOT required:
+- Clickhouse
+- Elasticsearch
+- Splunk
+- Packer / Terraform
+- Ansible",,,,,,
+983118f27e3e70e7,878a3f1d-a7b7-5a91-953f-2f35d4a7b315,c385babe-571f-5419-a6cd-cc9a76cbe99d,Python,BORDERLINE_RUNNER_UP_PROPOSAL,Python Developer,Senior Python Developer,2.5,3y,fluent,intermediate,"What are the achievements of a front end developer?
+Describe your achievements.
+
+My Accomplishments  include developing user experiences that increased the satisfaction, testing code and ensuring cross-browser compatibility, implementing and  writing front-end code for Django-based apps, and more .and also am  worked in network configuration and installing system.
+I have been working in many projects one of my project was online tutoring system is an application that helps students or any other person to find a tutor based on their requirements. Students can find any type of tutor for subjects (from KG-12, college courses, programming, SAT, TOEFL, IELTS, designing, and so on) according to their needs. On the other hand, tutors can be selected based on their educational background, skills, rating, experience, price, and other statuses.
+and also i am graphics designer and I made company logos and film poster and 
+ I am FULLSTACK web developer.
+here am doing the job not only for money, am going to do the work for increasing my experience and doing the job more effortlessly and passionately.","We are looking for a Senior Python Developer, to help us design and build the core services of our web application. You will work closely with our platform experts to deliver the best integration of the different endpoint agents and third party service providers. You will be joining a company early in history, with a real opportunity to directly influence the development of its products and services.
+
+Responsibilities:
+- Contribute well-written, well-documented, modularized, testable code
+- Help us with research and development of new products and services
+- Triages issues and implement appropriate fixes
+- Top level support for our high-value customers
+
+Requirements:
+- 3+ years of experience designing, building, and deploying scalable applications, ideally in a cloud-native environment
+- Expertise in Python, Django, and their ecosystems
+- Familiarity with PostgreSQL
+- Strong experience in one or more of the following cloud platforms: AWS, GCP, Azure
+
+Nice to haves, but NOT required:
+- Clickhouse
+- Elasticsearch
+- Splunk
+- Packer / Terraform
+- Ansible",,,,,,
+de1bb2e2378b74aa,fb2bbc63-8ac2-59e3-ba9d-15477ce6d6ed,c385babe-571f-5419-a6cd-cc9a76cbe99d,Python,BORDERLINE_RUNNER_UP_PROPOSAL,Python Developer,Senior Python Developer,0.5,3y,upper,intermediate,"
+I'm looking for job opportunities as a Python developer.
+
+I've got non-commercial experience in C, C++, Python, PHP, HTML studying in Unit Factory (https://unit.ua/en/) since 2018. I worked for San Francisco outsourcing company as a full stack developer during 8 months . My current stack includes Python / Flask / PostgreSQL / SQLAlchemy and TypeScript / React.
+
+Now I'm looking for a company where I can work on great projects as a backend developer / data engineer. I choose Python as a main language because it seems like it is one of the most demanded and perspective languages. Moreover, I'd like to be involved in projects related to machine learning and data analysis – now or in the future.
+
+I’m open to new technologies, languages, frameworks and want to grow as a developer.
+
+I am confident that I can quickly become a valuable member of your company. I used to work hard to achieve results and I'm ready for different challenges.
+","We are looking for a Senior Python Developer, to help us design and build the core services of our web application. You will work closely with our platform experts to deliver the best integration of the different endpoint agents and third party service providers. You will be joining a company early in history, with a real opportunity to directly influence the development of its products and services.
+
+Responsibilities:
+- Contribute well-written, well-documented, modularized, testable code
+- Help us with research and development of new products and services
+- Triages issues and implement appropriate fixes
+- Top level support for our high-value customers
+
+Requirements:
+- 3+ years of experience designing, building, and deploying scalable applications, ideally in a cloud-native environment
+- Expertise in Python, Django, and their ecosystems
+- Familiarity with PostgreSQL
+- Strong experience in one or more of the following cloud platforms: AWS, GCP, Azure
+
+Nice to haves, but NOT required:
+- Clickhouse
+- Elasticsearch
+- Splunk
+- Packer / Terraform
+- Ansible",,,,,,
+2c0913c78a3be9b3,5bdb4709-f84a-5c66-9424-d876a4aa2824,c385babe-571f-5419-a6cd-cc9a76cbe99d,Python_vs_JavaScript,CROSS_DOMAIN_NEGATIVE_CONTROL,Full Stack Web Developer,Senior Python Developer,1.0,3y,upper,intermediate,"
+- Building react applications using JSX, hooks, class and functional components;
+- Creating Pixel Perfect, responsive webpages based on Figma grid layout design using HTML, CSS, SASS, BEM, and JS;
+- Work on a team project based on Node.js;
+- Handling code reviews, investigating, reproducing, and fixing bugs.
+","We are looking for a Senior Python Developer, to help us design and build the core services of our web application. You will work closely with our platform experts to deliver the best integration of the different endpoint agents and third party service providers. You will be joining a company early in history, with a real opportunity to directly influence the development of its products and services.
+
+Responsibilities:
+- Contribute well-written, well-documented, modularized, testable code
+- Help us with research and development of new products and services
+- Triages issues and implement appropriate fixes
+- Top level support for our high-value customers
+
+Requirements:
+- 3+ years of experience designing, building, and deploying scalable applications, ideally in a cloud-native environment
+- Expertise in Python, Django, and their ecosystems
+- Familiarity with PostgreSQL
+- Strong experience in one or more of the following cloud platforms: AWS, GCP, Azure
+
+Nice to haves, but NOT required:
+- Clickhouse
+- Elasticsearch
+- Splunk
+- Packer / Terraform
+- Ansible",,,,,,
+046a318dc15528ce,9f8b7656-c7e5-5d14-90ee-b7c074b1cd0a,c385babe-571f-5419-a6cd-cc9a76cbe99d,Python_vs_JavaScript,CROSS_DOMAIN_NEGATIVE_CONTROL,Front-End Developer,Senior Python Developer,0.5,3y,intermediate,intermediate,"Of the achievements, I can boast that for 6 months I worked out for 8-10 hours every day. Completed all assigned projects and homework in IT school. Studied such knowledge as: HTML5, CSS, SAAS, JavaScript, React, redux-toolkit, Figma, git, vs-code, webpack, REST API, node.js, mongoDB, express understood the principles of web development.
+I have experience in educational/home projects.  
+8 months.
+May 2022 - December 2022
+Passed the annual intensive on full-stack development. During my studies, I completed 9 projects (4 team and 5 individual). I was a team leader on one project, a scrum master on another, and a developer on all the others.
+Technologies such as: HTML5, CSS, SAAS, JavaScript, React, redux-toolkit, Figma, git, vs-code, REST API, axios, mongoDB, node.js, express are used.
+
+Front-end Intern in the company January 2023 - March 2023
+Participated in application development
+Performed site markup
+Created components in web applications
+Writing Application Logic
+And other tasks of a junior developer
+
+Provided website development services  December 2022 - February 2023
+Development of layout and site logic, as well as work with styles
+Stack: HTML/CSS, React, JavaScript, Redux.
+
+Work on own projects December 2022 - to now
+Development of own Full-stack applications
+Writing logic, working with design and hosting the application
+
+I wish you to find a dream job/company, start developing in this direction and achieve success and new victories.
+Get as much experience and new knowledge as possible. Take part in interesting projects, work in a cool team and develop together with the company.","We are looking for a Senior Python Developer, to help us design and build the core services of our web application. You will work closely with our platform experts to deliver the best integration of the different endpoint agents and third party service providers. You will be joining a company early in history, with a real opportunity to directly influence the development of its products and services.
+
+Responsibilities:
+- Contribute well-written, well-documented, modularized, testable code
+- Help us with research and development of new products and services
+- Triages issues and implement appropriate fixes
+- Top level support for our high-value customers
+
+Requirements:
+- 3+ years of experience designing, building, and deploying scalable applications, ideally in a cloud-native environment
+- Expertise in Python, Django, and their ecosystems
+- Familiarity with PostgreSQL
+- Strong experience in one or more of the following cloud platforms: AWS, GCP, Azure
+
+Nice to haves, but NOT required:
+- Clickhouse
+- Elasticsearch
+- Splunk
+- Packer / Terraform
+- Ansible",,,,,,
+f2a6d31d99f7dc2c,77c38a98-deea-5fb4-b771-5e882404e667,1619b409-7268-5841-b237-4bd12571d0ab,Python,HIGH_ALIGNMENT_PROPOSAL,Python Developer,Intermediate Python Engineer,3.0,3y,upper,intermediate,"
+Software engineer with 3 years experience in back-end, took part in the implementation of a reporting automation project in the country's energy sector. I have experience developing Natural Language Processing services and pipelines. Good communications skills. Experience in different software development methodologies.
+","Required skills:
+• Extensive experience with Python and Go
+• Hands-on experience in designing and developing REST APIs
+• Experience with SQL and NoSQL storages such as PostgreSQL, Redis, Elasticsearch
+• Experience with PyTest / PyTest-aiohttp
+• Familiarity with CQRS and event-driven application design with Kafka or AMQP
+• Knowledge of containers technologies (i.e. Docker, Kubernetes)
+• Familiarity with automated testing and testing approaches
+• Understanding of the pitfalls of microservices architecture
+• Ability to productively debug the code in a microservices environment
+
+Benefits:
+• 18-20 paid time off days per year
+• 5 absence due to illness days and 21 day of extraordinary medical leave per year
+• Medical Insurance and Healthcare Kit
+• Extensive corporate professional training programs, workshops, ESL and conferences
+• Team buildings, corporate parties and Dev-Pro Hangouts
+• Visa support",,,,,,
+83c8ed8bbdf7c7cb,d2c88c0a-79aa-5fb7-9eda-5abb443bb451,1619b409-7268-5841-b237-4bd12571d0ab,Python,HIGH_ALIGNMENT_PROPOSAL,Python Developer,Intermediate Python Engineer,3.0,3y,upper,intermediate,"
+I am a Python developer with 2 years of experience. I work with Django And create Web and mobile applications of different complexity. I would like to find a new job where I could apply my knowledge and skills.
+","Required skills:
+• Extensive experience with Python and Go
+• Hands-on experience in designing and developing REST APIs
+• Experience with SQL and NoSQL storages such as PostgreSQL, Redis, Elasticsearch
+• Experience with PyTest / PyTest-aiohttp
+• Familiarity with CQRS and event-driven application design with Kafka or AMQP
+• Knowledge of containers technologies (i.e. Docker, Kubernetes)
+• Familiarity with automated testing and testing approaches
+• Understanding of the pitfalls of microservices architecture
+• Ability to productively debug the code in a microservices environment
+
+Benefits:
+• 18-20 paid time off days per year
+• 5 absence due to illness days and 21 day of extraordinary medical leave per year
+• Medical Insurance and Healthcare Kit
+• Extensive corporate professional training programs, workshops, ESL and conferences
+• Team buildings, corporate parties and Dev-Pro Hangouts
+• Visa support",,,,,,
+07ceba8976cc50a5,3d68190f-5441-5277-86e9-525b68e42324,1619b409-7268-5841-b237-4bd12571d0ab,Python,HIGH_ALIGNMENT_PROPOSAL,Middle Python Django Developer,Intermediate Python Engineer,4.0,3y,intermediate,intermediate,"Developed ecommerce project from zero (back-end side)
+Jan 2022 - Present time
+Python Middle Software Engineer
+
+Responsibilities: develop multi services architecture, APIs like GraphQL, REST API, WSDL, support DBs PostgreSQL and MariaDB, work with payments systems, query optimization, pytests, upgrade requirements, split project.
+
+March 2021 - Jan 2022
+Developed the online store project by solo
+Responsibilities: creating DB architecture design, REST
+API, celery tasks, user JWT/social auth, API
+documentations, integrations payment and delivery
+services, logging, writing auto tests, permissions,
+caching, debugging code, sending emails, custom filters,
+deployment, query optimization, internationalization,
+telegram bot notifier, site map, customizing admin panel,
+code refactoring/style, use pre-commit.
+
+Technologies used: Python, Django, Django REST
+framework, Celery, JWT, Swagger, Sentry, django-filters,
+PostgreSQL, Redis, RabbitMQ, Heroku, Git, Trello, Docker,
+boto3, pyTelegramBot, black, isort, flake8, mypy, CI/CD, nginx.
+
+
+February 2019 - March 2020
+Responsibilities: development REST API, user authentication,
+integration payment services, customization admin panel,
+interaction with DBs, creating Celery tasks, unit tests.
+I am looking for a challenging job with a new technologies and rapidly growing organization that can provide me with a range of goals and job objectives within a contemporary and projects setting. 
+English environment will be huge advantage.","Required skills:
+• Extensive experience with Python and Go
+• Hands-on experience in designing and developing REST APIs
+• Experience with SQL and NoSQL storages such as PostgreSQL, Redis, Elasticsearch
+• Experience with PyTest / PyTest-aiohttp
+• Familiarity with CQRS and event-driven application design with Kafka or AMQP
+• Knowledge of containers technologies (i.e. Docker, Kubernetes)
+• Familiarity with automated testing and testing approaches
+• Understanding of the pitfalls of microservices architecture
+• Ability to productively debug the code in a microservices environment
+
+Benefits:
+• 18-20 paid time off days per year
+• 5 absence due to illness days and 21 day of extraordinary medical leave per year
+• Medical Insurance and Healthcare Kit
+• Extensive corporate professional training programs, workshops, ESL and conferences
+• Team buildings, corporate parties and Dev-Pro Hangouts
+• Visa support",,,,,,
+b3ac32a36c536f4b,878a3f1d-a7b7-5a91-953f-2f35d4a7b315,1619b409-7268-5841-b237-4bd12571d0ab,Python,BORDERLINE_RUNNER_UP_PROPOSAL,Python Developer,Intermediate Python Engineer,2.5,3y,fluent,intermediate,"What are the achievements of a front end developer?
+Describe your achievements.
+
+My Accomplishments  include developing user experiences that increased the satisfaction, testing code and ensuring cross-browser compatibility, implementing and  writing front-end code for Django-based apps, and more .and also am  worked in network configuration and installing system.
+I have been working in many projects one of my project was online tutoring system is an application that helps students or any other person to find a tutor based on their requirements. Students can find any type of tutor for subjects (from KG-12, college courses, programming, SAT, TOEFL, IELTS, designing, and so on) according to their needs. On the other hand, tutors can be selected based on their educational background, skills, rating, experience, price, and other statuses.
+and also i am graphics designer and I made company logos and film poster and 
+ I am FULLSTACK web developer.
+here am doing the job not only for money, am going to do the work for increasing my experience and doing the job more effortlessly and passionately.","Required skills:
+• Extensive experience with Python and Go
+• Hands-on experience in designing and developing REST APIs
+• Experience with SQL and NoSQL storages such as PostgreSQL, Redis, Elasticsearch
+• Experience with PyTest / PyTest-aiohttp
+• Familiarity with CQRS and event-driven application design with Kafka or AMQP
+• Knowledge of containers technologies (i.e. Docker, Kubernetes)
+• Familiarity with automated testing and testing approaches
+• Understanding of the pitfalls of microservices architecture
+• Ability to productively debug the code in a microservices environment
+
+Benefits:
+• 18-20 paid time off days per year
+• 5 absence due to illness days and 21 day of extraordinary medical leave per year
+• Medical Insurance and Healthcare Kit
+• Extensive corporate professional training programs, workshops, ESL and conferences
+• Team buildings, corporate parties and Dev-Pro Hangouts
+• Visa support",,,,,,
+91be952d07e68d49,fb2bbc63-8ac2-59e3-ba9d-15477ce6d6ed,1619b409-7268-5841-b237-4bd12571d0ab,Python,BORDERLINE_RUNNER_UP_PROPOSAL,Python Developer,Intermediate Python Engineer,0.5,3y,upper,intermediate,"
+I'm looking for job opportunities as a Python developer.
+
+I've got non-commercial experience in C, C++, Python, PHP, HTML studying in Unit Factory (https://unit.ua/en/) since 2018. I worked for San Francisco outsourcing company as a full stack developer during 8 months . My current stack includes Python / Flask / PostgreSQL / SQLAlchemy and TypeScript / React.
+
+Now I'm looking for a company where I can work on great projects as a backend developer / data engineer. I choose Python as a main language because it seems like it is one of the most demanded and perspective languages. Moreover, I'd like to be involved in projects related to machine learning and data analysis – now or in the future.
+
+I’m open to new technologies, languages, frameworks and want to grow as a developer.
+
+I am confident that I can quickly become a valuable member of your company. I used to work hard to achieve results and I'm ready for different challenges.
+","Required skills:
+• Extensive experience with Python and Go
+• Hands-on experience in designing and developing REST APIs
+• Experience with SQL and NoSQL storages such as PostgreSQL, Redis, Elasticsearch
+• Experience with PyTest / PyTest-aiohttp
+• Familiarity with CQRS and event-driven application design with Kafka or AMQP
+• Knowledge of containers technologies (i.e. Docker, Kubernetes)
+• Familiarity with automated testing and testing approaches
+• Understanding of the pitfalls of microservices architecture
+• Ability to productively debug the code in a microservices environment
+
+Benefits:
+• 18-20 paid time off days per year
+• 5 absence due to illness days and 21 day of extraordinary medical leave per year
+• Medical Insurance and Healthcare Kit
+• Extensive corporate professional training programs, workshops, ESL and conferences
+• Team buildings, corporate parties and Dev-Pro Hangouts
+• Visa support",,,,,,
+05fa640f51ec8b5b,5bdb4709-f84a-5c66-9424-d876a4aa2824,1619b409-7268-5841-b237-4bd12571d0ab,Python_vs_JavaScript,CROSS_DOMAIN_NEGATIVE_CONTROL,Full Stack Web Developer,Intermediate Python Engineer,1.0,3y,upper,intermediate,"
+- Building react applications using JSX, hooks, class and functional components;
+- Creating Pixel Perfect, responsive webpages based on Figma grid layout design using HTML, CSS, SASS, BEM, and JS;
+- Work on a team project based on Node.js;
+- Handling code reviews, investigating, reproducing, and fixing bugs.
+","Required skills:
+• Extensive experience with Python and Go
+• Hands-on experience in designing and developing REST APIs
+• Experience with SQL and NoSQL storages such as PostgreSQL, Redis, Elasticsearch
+• Experience with PyTest / PyTest-aiohttp
+• Familiarity with CQRS and event-driven application design with Kafka or AMQP
+• Knowledge of containers technologies (i.e. Docker, Kubernetes)
+• Familiarity with automated testing and testing approaches
+• Understanding of the pitfalls of microservices architecture
+• Ability to productively debug the code in a microservices environment
+
+Benefits:
+• 18-20 paid time off days per year
+• 5 absence due to illness days and 21 day of extraordinary medical leave per year
+• Medical Insurance and Healthcare Kit
+• Extensive corporate professional training programs, workshops, ESL and conferences
+• Team buildings, corporate parties and Dev-Pro Hangouts
+• Visa support",,,,,,
+167eba03b6d1ffc0,9f8b7656-c7e5-5d14-90ee-b7c074b1cd0a,1619b409-7268-5841-b237-4bd12571d0ab,Python_vs_JavaScript,CROSS_DOMAIN_NEGATIVE_CONTROL,Front-End Developer,Intermediate Python Engineer,0.5,3y,intermediate,intermediate,"Of the achievements, I can boast that for 6 months I worked out for 8-10 hours every day. Completed all assigned projects and homework in IT school. Studied such knowledge as: HTML5, CSS, SAAS, JavaScript, React, redux-toolkit, Figma, git, vs-code, webpack, REST API, node.js, mongoDB, express understood the principles of web development.
+I have experience in educational/home projects.  
+8 months.
+May 2022 - December 2022
+Passed the annual intensive on full-stack development. During my studies, I completed 9 projects (4 team and 5 individual). I was a team leader on one project, a scrum master on another, and a developer on all the others.
+Technologies such as: HTML5, CSS, SAAS, JavaScript, React, redux-toolkit, Figma, git, vs-code, REST API, axios, mongoDB, node.js, express are used.
+
+Front-end Intern in the company January 2023 - March 2023
+Participated in application development
+Performed site markup
+Created components in web applications
+Writing Application Logic
+And other tasks of a junior developer
+
+Provided website development services  December 2022 - February 2023
+Development of layout and site logic, as well as work with styles
+Stack: HTML/CSS, React, JavaScript, Redux.
+
+Work on own projects December 2022 - to now
+Development of own Full-stack applications
+Writing logic, working with design and hosting the application
+
+I wish you to find a dream job/company, start developing in this direction and achieve success and new victories.
+Get as much experience and new knowledge as possible. Take part in interesting projects, work in a cool team and develop together with the company.","Required skills:
+• Extensive experience with Python and Go
+• Hands-on experience in designing and developing REST APIs
+• Experience with SQL and NoSQL storages such as PostgreSQL, Redis, Elasticsearch
+• Experience with PyTest / PyTest-aiohttp
+• Familiarity with CQRS and event-driven application design with Kafka or AMQP
+• Knowledge of containers technologies (i.e. Docker, Kubernetes)
+• Familiarity with automated testing and testing approaches
+• Understanding of the pitfalls of microservices architecture
+• Ability to productively debug the code in a microservices environment
+
+Benefits:
+• 18-20 paid time off days per year
+• 5 absence due to illness days and 21 day of extraordinary medical leave per year
+• Medical Insurance and Healthcare Kit
+• Extensive corporate professional training programs, workshops, ESL and conferences
+• Team buildings, corporate parties and Dev-Pro Hangouts
+• Visa support",,,,,,
+fc3e1a975473cfc6,a48cc5d3-0f0a-5408-af23-e17fa83f379a,a24eb507-9b97-5959-ba62-3194d616e9b8,Python,HIGH_ALIGNMENT_PROPOSAL,Python Developer,Senior Python Developer,9.0,5y,upper,intermediate,"
+""Hello! I'm an experienced Python developer and QA/QC Automation Team Lead who is actively seeking new opportunities, including relocation. My areas of expertise include microservices, system design, automation, QA/QC, GitLab pipelines, and Amazon Web Services. I'm passionate about leveraging my skills and knowledge to contribute to innovative projects and help teams achieve their goals. Please feel free to reach out if you have any opportunities that align with my background and experience. Thank you!""
+I believe in the value of long-term commitment and collaboration with companies. Ideally, I'm seeking opportunities that would allow me to contribute my skills and expertise for a period of 2-4 years or longer. This would give me the chance to fully commit to the company and give my best effort towards achieving its goals. I'm excited about the prospect of building a long-term working relationship with a company that shares my values and goals.","Our client is a tech startup, launched at 2020. Their platform uses the marketing data to perform on-going measurements while campaigns and channels run uninterrupted. It provides you with the tools to uncover the causality behind your marketing activities.  
+The platform is completely self-service and hands-free giving marketers' control over recommended tests and actionable insights to get even more value out of their marketing spend. Customers can unlock the full value of marketing budget using it. 
+
+
+Experience / Skills required: 
+
+4+ years professional experience in Python software development 
+Knowledge of SQL databases and capable of comfortably crafting queries 
+Experience with cashing and NOSQL solutions (Redis, druid, Elastic) 
+Good English verbal and written communication skills. 
+
+Good to have: 
+
+Experience with PySparks 
+Experience in large messaging infrastructures (Kafka, RabbitMQ) 
+Experience with DevOps tasks. 
+
+ 
+
+Responsibilities: 
+
+Build a generic environment for our measurement solution 
+Build a cloud base, distributed computing environment 
+Build a unified way to work with many API’s in parallel 
+Build a big data solution to manage and process tens of TB a day 
+You will also participate in important decisions around the product, our strategy as well as have the opportunity to choose the areas you work on based on what you want or like to do the most. We believe in helping each other get most of ourselves rather than do what we’re not interested in doing. 
+
+We offer:  
+
+Work at a new startup with a lot of supporters and positive attention from investors, press and customers, great team spirit 
+Flexible working schedule, paid vacations and sick leaves 
+Medical insurance 
+English courses  
+Great office location near subway Maidan Nezalezhnosti/Remote work.",,,,,,
+4017f68a93c5ff44,919f897f-0391-579f-a91c-3d6d79eaffae,a24eb507-9b97-5959-ba62-3194d616e9b8,Python,HIGH_ALIGNMENT_PROPOSAL,Software Engineer,Senior Python Developer,8.0,5y,upper,intermediate,"
+Continuously designed, developed and deployed distributed services (full SDLC)
+with focus on high availability, low latency and scalability.
+Looking for interesting projects to put my expertise to good use.","Our client is a tech startup, launched at 2020. Their platform uses the marketing data to perform on-going measurements while campaigns and channels run uninterrupted. It provides you with the tools to uncover the causality behind your marketing activities.  
+The platform is completely self-service and hands-free giving marketers' control over recommended tests and actionable insights to get even more value out of their marketing spend. Customers can unlock the full value of marketing budget using it. 
+
+
+Experience / Skills required: 
+
+4+ years professional experience in Python software development 
+Knowledge of SQL databases and capable of comfortably crafting queries 
+Experience with cashing and NOSQL solutions (Redis, druid, Elastic) 
+Good English verbal and written communication skills. 
+
+Good to have: 
+
+Experience with PySparks 
+Experience in large messaging infrastructures (Kafka, RabbitMQ) 
+Experience with DevOps tasks. 
+
+ 
+
+Responsibilities: 
+
+Build a generic environment for our measurement solution 
+Build a cloud base, distributed computing environment 
+Build a unified way to work with many API’s in parallel 
+Build a big data solution to manage and process tens of TB a day 
+You will also participate in important decisions around the product, our strategy as well as have the opportunity to choose the areas you work on based on what you want or like to do the most. We believe in helping each other get most of ourselves rather than do what we’re not interested in doing. 
+
+We offer:  
+
+Work at a new startup with a lot of supporters and positive attention from investors, press and customers, great team spirit 
+Flexible working schedule, paid vacations and sick leaves 
+Medical insurance 
+English courses  
+Great office location near subway Maidan Nezalezhnosti/Remote work.",,,,,,
+6ea11b77af044d0d,6255c7a6-238e-56b5-a7db-b889fa415714,a24eb507-9b97-5959-ba62-3194d616e9b8,Python,HIGH_ALIGNMENT_PROPOSAL,Python Software Engineer,Senior Python Developer,5.0,5y,upper,intermediate,"
+Professional experience: 
+
+Python (Pyramid, Django), Java (Android), Swift(iOS), C#(Windows phone).
+
+Software Engineer with more than 5 years of working in IT industry. 
+Strong system administration experience.
+
+Skills
+Programming Languages: Python/Django, Java (Android), Swift, C#.
+System administration: linux based, FreeBSD, MacOS, Windows Server.
+Tools and technologies: AWS, Git, Apache, Nginx, MySQL, PostgreSQL, NoSQL, Ansible, Docker.
+Virtualisation: XEN, KVM, OpenVZ, Citrix Xenserver, Vagrant, VMware.
+","Our client is a tech startup, launched at 2020. Their platform uses the marketing data to perform on-going measurements while campaigns and channels run uninterrupted. It provides you with the tools to uncover the causality behind your marketing activities.  
+The platform is completely self-service and hands-free giving marketers' control over recommended tests and actionable insights to get even more value out of their marketing spend. Customers can unlock the full value of marketing budget using it. 
+
+
+Experience / Skills required: 
+
+4+ years professional experience in Python software development 
+Knowledge of SQL databases and capable of comfortably crafting queries 
+Experience with cashing and NOSQL solutions (Redis, druid, Elastic) 
+Good English verbal and written communication skills. 
+
+Good to have: 
+
+Experience with PySparks 
+Experience in large messaging infrastructures (Kafka, RabbitMQ) 
+Experience with DevOps tasks. 
+
+ 
+
+Responsibilities: 
+
+Build a generic environment for our measurement solution 
+Build a cloud base, distributed computing environment 
+Build a unified way to work with many API’s in parallel 
+Build a big data solution to manage and process tens of TB a day 
+You will also participate in important decisions around the product, our strategy as well as have the opportunity to choose the areas you work on based on what you want or like to do the most. We believe in helping each other get most of ourselves rather than do what we’re not interested in doing. 
+
+We offer:  
+
+Work at a new startup with a lot of supporters and positive attention from investors, press and customers, great team spirit 
+Flexible working schedule, paid vacations and sick leaves 
+Medical insurance 
+English courses  
+Great office location near subway Maidan Nezalezhnosti/Remote work.",,,,,,
+d690a8e4f1603f81,91b204bb-8f0d-5667-8036-a6c2db822726,a24eb507-9b97-5959-ba62-3194d616e9b8,Python,BORDERLINE_RUNNER_UP_PROPOSAL,Senior Python Developer,Senior Python Developer,4.0,5y,fluent,intermediate,"Languages:
+
+Ukrainian - Mother tongue
+English - Advanced
+German - Advanced
+Russian - Expert
+
+Previous 3 workplaces:
+
+Smart cities industry
+While working for a company in smart cities industry, I was involved in the integration of various devices and systems into the overall ecosystem of a smart city. I've been helping with requirements analysis and building a backend for a mobile app. I have developed a room reservation system that is synchronized with the calendar and displays on the rooms. A backend was developed for an internal mini-messenger that allows residents of a smart city to exchange messages that last only a day. I helped improve the existing virtual assistant by bringing new approaches and practices to the company. I also wrote few libraries and packages for Python and SDK for Corezoid that allowed working with one third-party IOT systems, distributed all over the place, which greatly simplified the integration process for Corezoid and Python developers.
+
+Liberty Report
+At Liberty Report, I was developing a platform for automated sociology and opinion analysis. I took the main architectural decisions, managed the integration with banking systems, graphical presentation of data for the broadcasts of ""Freedom of Speech by Savik Shuster"". I led the implementation of new features in the virtual assistant and helped the marketing department make the right decisions to expand our auditory and research panel. Developed a unique system for analyzing responses that allows real-time representative viewing of respondents' opinions for a specific region or any other resolution and automatically regulates the collection of new questionnaires.
+
+Handy.ai
+At Handy.ai I have been involved in the development of an enterprise platform for marketing and internal communication. I took part in the platform modules responsible for scheduling mailings, integrations with instant messengers and SMS delivery systems. I also took part in the development of the platform for analytics of the success of marketing campaigns created through our platform, including audience coverage, percentages of successful deliveries and recommendations for improving existing campaigns.
+Main Skills:
+
+Senior Python Developer
+4+ years of experience in Python Web Services (Flask, FastAPI)
+
+Data processing (Pandas)
+Image Processing (PIL, OpenCV)
+NLP (Dialogflow, NLTK, RASA)
+Audio Processing (PyAudio, ffmpeg)
+Telegram (AiOgram, Pyrogram)
+
+Low-Code Expertise
+2+ years of developing solutions using Corezoid & Node-Red Low-Code engines.
+
+MongoDB knowledge
+Advanced mongodb knowledge, experience in creating complex aggregations, and search optimization.
+","Our client is a tech startup, launched at 2020. Their platform uses the marketing data to perform on-going measurements while campaigns and channels run uninterrupted. It provides you with the tools to uncover the causality behind your marketing activities.  
+The platform is completely self-service and hands-free giving marketers' control over recommended tests and actionable insights to get even more value out of their marketing spend. Customers can unlock the full value of marketing budget using it. 
+
+
+Experience / Skills required: 
+
+4+ years professional experience in Python software development 
+Knowledge of SQL databases and capable of comfortably crafting queries 
+Experience with cashing and NOSQL solutions (Redis, druid, Elastic) 
+Good English verbal and written communication skills. 
+
+Good to have: 
+
+Experience with PySparks 
+Experience in large messaging infrastructures (Kafka, RabbitMQ) 
+Experience with DevOps tasks. 
+
+ 
+
+Responsibilities: 
+
+Build a generic environment for our measurement solution 
+Build a cloud base, distributed computing environment 
+Build a unified way to work with many API’s in parallel 
+Build a big data solution to manage and process tens of TB a day 
+You will also participate in important decisions around the product, our strategy as well as have the opportunity to choose the areas you work on based on what you want or like to do the most. We believe in helping each other get most of ourselves rather than do what we’re not interested in doing. 
+
+We offer:  
+
+Work at a new startup with a lot of supporters and positive attention from investors, press and customers, great team spirit 
+Flexible working schedule, paid vacations and sick leaves 
+Medical insurance 
+English courses  
+Great office location near subway Maidan Nezalezhnosti/Remote work.",,,,,,
+9af5908e0f490913,544c5168-f1b5-5261-9c35-97cb75c7f7a4,a24eb507-9b97-5959-ba62-3194d616e9b8,Python,BORDERLINE_RUNNER_UP_PROPOSAL,Python Developer,Senior Python Developer,2.0,5y,upper,intermediate,"With nearly 2 years of commercial experience and a track record of success, I believe I would be a valuable addition to your team.
+
+I am proud to have been a member of a startup that secured 3rd place at UCU Incubator, showcasing my ability to thrive in a dynamic and competitive environment. In my current role, I have been actively involved in the development of an ERP product, where I have gained expertise in Python, Odoo, Postgres, and other related technologies. I am also a co-owner of a coworking space, which has given me valuable insights into managing a business and working with diverse teams.
+
+As a Python Developer, I am skilled in designing and implementing efficient and scalable solutions. I am well-versed in developing RESTful APIs, optimizing database queries, and writing clean and maintainable code. I am also experienced in working with libraries and frameworks such as Flask, FastAPI, and SQLAlchemy. I am a fast learner, always eager to stay updated with the latest advancements in the field of Python development
+Implemented ERP, including developing a system for invoice automation, project automation, email notifications, and cron infrastructure.
+Work without any choices. I am highly motivated and can make your business grow, so if you are looking for a dev the will write only code, we will not match","Our client is a tech startup, launched at 2020. Their platform uses the marketing data to perform on-going measurements while campaigns and channels run uninterrupted. It provides you with the tools to uncover the causality behind your marketing activities.  
+The platform is completely self-service and hands-free giving marketers' control over recommended tests and actionable insights to get even more value out of their marketing spend. Customers can unlock the full value of marketing budget using it. 
+
+
+Experience / Skills required: 
+
+4+ years professional experience in Python software development 
+Knowledge of SQL databases and capable of comfortably crafting queries 
+Experience with cashing and NOSQL solutions (Redis, druid, Elastic) 
+Good English verbal and written communication skills. 
+
+Good to have: 
+
+Experience with PySparks 
+Experience in large messaging infrastructures (Kafka, RabbitMQ) 
+Experience with DevOps tasks. 
+
+ 
+
+Responsibilities: 
+
+Build a generic environment for our measurement solution 
+Build a cloud base, distributed computing environment 
+Build a unified way to work with many API’s in parallel 
+Build a big data solution to manage and process tens of TB a day 
+You will also participate in important decisions around the product, our strategy as well as have the opportunity to choose the areas you work on based on what you want or like to do the most. We believe in helping each other get most of ourselves rather than do what we’re not interested in doing. 
+
+We offer:  
+
+Work at a new startup with a lot of supporters and positive attention from investors, press and customers, great team spirit 
+Flexible working schedule, paid vacations and sick leaves 
+Medical insurance 
+English courses  
+Great office location near subway Maidan Nezalezhnosti/Remote work.",,,,,,
+3b8a57a1919e19fa,5bdb4709-f84a-5c66-9424-d876a4aa2824,a24eb507-9b97-5959-ba62-3194d616e9b8,Python_vs_JavaScript,CROSS_DOMAIN_NEGATIVE_CONTROL,Full Stack Web Developer,Senior Python Developer,1.0,5y,upper,intermediate,"
+- Building react applications using JSX, hooks, class and functional components;
+- Creating Pixel Perfect, responsive webpages based on Figma grid layout design using HTML, CSS, SASS, BEM, and JS;
+- Work on a team project based on Node.js;
+- Handling code reviews, investigating, reproducing, and fixing bugs.
+","Our client is a tech startup, launched at 2020. Their platform uses the marketing data to perform on-going measurements while campaigns and channels run uninterrupted. It provides you with the tools to uncover the causality behind your marketing activities.  
+The platform is completely self-service and hands-free giving marketers' control over recommended tests and actionable insights to get even more value out of their marketing spend. Customers can unlock the full value of marketing budget using it. 
+
+
+Experience / Skills required: 
+
+4+ years professional experience in Python software development 
+Knowledge of SQL databases and capable of comfortably crafting queries 
+Experience with cashing and NOSQL solutions (Redis, druid, Elastic) 
+Good English verbal and written communication skills. 
+
+Good to have: 
+
+Experience with PySparks 
+Experience in large messaging infrastructures (Kafka, RabbitMQ) 
+Experience with DevOps tasks. 
+
+ 
+
+Responsibilities: 
+
+Build a generic environment for our measurement solution 
+Build a cloud base, distributed computing environment 
+Build a unified way to work with many API’s in parallel 
+Build a big data solution to manage and process tens of TB a day 
+You will also participate in important decisions around the product, our strategy as well as have the opportunity to choose the areas you work on based on what you want or like to do the most. We believe in helping each other get most of ourselves rather than do what we’re not interested in doing. 
+
+We offer:  
+
+Work at a new startup with a lot of supporters and positive attention from investors, press and customers, great team spirit 
+Flexible working schedule, paid vacations and sick leaves 
+Medical insurance 
+English courses  
+Great office location near subway Maidan Nezalezhnosti/Remote work.",,,,,,
+5d565d57e16a3db7,9f8b7656-c7e5-5d14-90ee-b7c074b1cd0a,a24eb507-9b97-5959-ba62-3194d616e9b8,Python_vs_JavaScript,CROSS_DOMAIN_NEGATIVE_CONTROL,Front-End Developer,Senior Python Developer,0.5,5y,intermediate,intermediate,"Of the achievements, I can boast that for 6 months I worked out for 8-10 hours every day. Completed all assigned projects and homework in IT school. Studied such knowledge as: HTML5, CSS, SAAS, JavaScript, React, redux-toolkit, Figma, git, vs-code, webpack, REST API, node.js, mongoDB, express understood the principles of web development.
+I have experience in educational/home projects.  
+8 months.
+May 2022 - December 2022
+Passed the annual intensive on full-stack development. During my studies, I completed 9 projects (4 team and 5 individual). I was a team leader on one project, a scrum master on another, and a developer on all the others.
+Technologies such as: HTML5, CSS, SAAS, JavaScript, React, redux-toolkit, Figma, git, vs-code, REST API, axios, mongoDB, node.js, express are used.
+
+Front-end Intern in the company January 2023 - March 2023
+Participated in application development
+Performed site markup
+Created components in web applications
+Writing Application Logic
+And other tasks of a junior developer
+
+Provided website development services  December 2022 - February 2023
+Development of layout and site logic, as well as work with styles
+Stack: HTML/CSS, React, JavaScript, Redux.
+
+Work on own projects December 2022 - to now
+Development of own Full-stack applications
+Writing logic, working with design and hosting the application
+
+I wish you to find a dream job/company, start developing in this direction and achieve success and new victories.
+Get as much experience and new knowledge as possible. Take part in interesting projects, work in a cool team and develop together with the company.","Our client is a tech startup, launched at 2020. Their platform uses the marketing data to perform on-going measurements while campaigns and channels run uninterrupted. It provides you with the tools to uncover the causality behind your marketing activities.  
+The platform is completely self-service and hands-free giving marketers' control over recommended tests and actionable insights to get even more value out of their marketing spend. Customers can unlock the full value of marketing budget using it. 
+
+
+Experience / Skills required: 
+
+4+ years professional experience in Python software development 
+Knowledge of SQL databases and capable of comfortably crafting queries 
+Experience with cashing and NOSQL solutions (Redis, druid, Elastic) 
+Good English verbal and written communication skills. 
+
+Good to have: 
+
+Experience with PySparks 
+Experience in large messaging infrastructures (Kafka, RabbitMQ) 
+Experience with DevOps tasks. 
+
+ 
+
+Responsibilities: 
+
+Build a generic environment for our measurement solution 
+Build a cloud base, distributed computing environment 
+Build a unified way to work with many API’s in parallel 
+Build a big data solution to manage and process tens of TB a day 
+You will also participate in important decisions around the product, our strategy as well as have the opportunity to choose the areas you work on based on what you want or like to do the most. We believe in helping each other get most of ourselves rather than do what we’re not interested in doing. 
+
+We offer:  
+
+Work at a new startup with a lot of supporters and positive attention from investors, press and customers, great team spirit 
+Flexible working schedule, paid vacations and sick leaves 
+Medical insurance 
+English courses  
+Great office location near subway Maidan Nezalezhnosti/Remote work.",,,,,,
+3e489e49e7cad252,a48cc5d3-0f0a-5408-af23-e17fa83f379a,aebba151-39cc-5d08-8d89-245ea32ff4d3,Python,HIGH_ALIGNMENT_PROPOSAL,Python Developer,Middle to Senior Python developer,9.0,5y,upper,upper,"
+""Hello! I'm an experienced Python developer and QA/QC Automation Team Lead who is actively seeking new opportunities, including relocation. My areas of expertise include microservices, system design, automation, QA/QC, GitLab pipelines, and Amazon Web Services. I'm passionate about leveraging my skills and knowledge to contribute to innovative projects and help teams achieve their goals. Please feel free to reach out if you have any opportunities that align with my background and experience. Thank you!""
+I believe in the value of long-term commitment and collaboration with companies. Ideally, I'm seeking opportunities that would allow me to contribute my skills and expertise for a period of 2-4 years or longer. This would give me the chance to fully commit to the company and give my best effort towards achieving its goals. I'm excited about the prospect of building a long-term working relationship with a company that shares my values and goals.","We are looking for a subcontracted Python Developer!
+
+👉 Required skills:
+
+— 4+ years of commercial experience with Python;
+— Python AWS CDK, CloudFormation templates;
+— Proficient experience with SQL Databases;
+— Experience with AWS services (lambda, dynamo, appsync);
+— Upper-Intermediate level of English.
+
+👉 As a plus:
+
+— Experience with GraphQL;
+— Knowledge of the Microservices Architecture.
+
+👉 Responsibilities:
+
+— Develop new features in the project;
+— Write reusable, testable code;
+— Reviewing the code of teammates;
+— Reviewing your implemented code in the dev environment;
+— Participate in the grooming process;
+— Tracking your work time by UpWork tracker.
+
+Full-time
+Level - Middle+/Senior
+English - B2+
+RF/RB - No",,,,,,
+4b41ce823ad32e15,919f897f-0391-579f-a91c-3d6d79eaffae,aebba151-39cc-5d08-8d89-245ea32ff4d3,Python,HIGH_ALIGNMENT_PROPOSAL,Software Engineer,Middle to Senior Python developer,8.0,5y,upper,upper,"
+Continuously designed, developed and deployed distributed services (full SDLC)
+with focus on high availability, low latency and scalability.
+Looking for interesting projects to put my expertise to good use.","We are looking for a subcontracted Python Developer!
+
+👉 Required skills:
+
+— 4+ years of commercial experience with Python;
+— Python AWS CDK, CloudFormation templates;
+— Proficient experience with SQL Databases;
+— Experience with AWS services (lambda, dynamo, appsync);
+— Upper-Intermediate level of English.
+
+👉 As a plus:
+
+— Experience with GraphQL;
+— Knowledge of the Microservices Architecture.
+
+👉 Responsibilities:
+
+— Develop new features in the project;
+— Write reusable, testable code;
+— Reviewing the code of teammates;
+— Reviewing your implemented code in the dev environment;
+— Participate in the grooming process;
+— Tracking your work time by UpWork tracker.
+
+Full-time
+Level - Middle+/Senior
+English - B2+
+RF/RB - No",,,,,,
+90c6dcfbdd0e614f,6255c7a6-238e-56b5-a7db-b889fa415714,aebba151-39cc-5d08-8d89-245ea32ff4d3,Python,HIGH_ALIGNMENT_PROPOSAL,Python Software Engineer,Middle to Senior Python developer,5.0,5y,upper,upper,"
+Professional experience: 
+
+Python (Pyramid, Django), Java (Android), Swift(iOS), C#(Windows phone).
+
+Software Engineer with more than 5 years of working in IT industry. 
+Strong system administration experience.
+
+Skills
+Programming Languages: Python/Django, Java (Android), Swift, C#.
+System administration: linux based, FreeBSD, MacOS, Windows Server.
+Tools and technologies: AWS, Git, Apache, Nginx, MySQL, PostgreSQL, NoSQL, Ansible, Docker.
+Virtualisation: XEN, KVM, OpenVZ, Citrix Xenserver, Vagrant, VMware.
+","We are looking for a subcontracted Python Developer!
+
+👉 Required skills:
+
+— 4+ years of commercial experience with Python;
+— Python AWS CDK, CloudFormation templates;
+— Proficient experience with SQL Databases;
+— Experience with AWS services (lambda, dynamo, appsync);
+— Upper-Intermediate level of English.
+
+👉 As a plus:
+
+— Experience with GraphQL;
+— Knowledge of the Microservices Architecture.
+
+👉 Responsibilities:
+
+— Develop new features in the project;
+— Write reusable, testable code;
+— Reviewing the code of teammates;
+— Reviewing your implemented code in the dev environment;
+— Participate in the grooming process;
+— Tracking your work time by UpWork tracker.
+
+Full-time
+Level - Middle+/Senior
+English - B2+
+RF/RB - No",,,,,,
+3371628851807102,91b204bb-8f0d-5667-8036-a6c2db822726,aebba151-39cc-5d08-8d89-245ea32ff4d3,Python,BORDERLINE_RUNNER_UP_PROPOSAL,Senior Python Developer,Middle to Senior Python developer,4.0,5y,fluent,upper,"Languages:
+
+Ukrainian - Mother tongue
+English - Advanced
+German - Advanced
+Russian - Expert
+
+Previous 3 workplaces:
+
+Smart cities industry
+While working for a company in smart cities industry, I was involved in the integration of various devices and systems into the overall ecosystem of a smart city. I've been helping with requirements analysis and building a backend for a mobile app. I have developed a room reservation system that is synchronized with the calendar and displays on the rooms. A backend was developed for an internal mini-messenger that allows residents of a smart city to exchange messages that last only a day. I helped improve the existing virtual assistant by bringing new approaches and practices to the company. I also wrote few libraries and packages for Python and SDK for Corezoid that allowed working with one third-party IOT systems, distributed all over the place, which greatly simplified the integration process for Corezoid and Python developers.
+
+Liberty Report
+At Liberty Report, I was developing a platform for automated sociology and opinion analysis. I took the main architectural decisions, managed the integration with banking systems, graphical presentation of data for the broadcasts of ""Freedom of Speech by Savik Shuster"". I led the implementation of new features in the virtual assistant and helped the marketing department make the right decisions to expand our auditory and research panel. Developed a unique system for analyzing responses that allows real-time representative viewing of respondents' opinions for a specific region or any other resolution and automatically regulates the collection of new questionnaires.
+
+Handy.ai
+At Handy.ai I have been involved in the development of an enterprise platform for marketing and internal communication. I took part in the platform modules responsible for scheduling mailings, integrations with instant messengers and SMS delivery systems. I also took part in the development of the platform for analytics of the success of marketing campaigns created through our platform, including audience coverage, percentages of successful deliveries and recommendations for improving existing campaigns.
+Main Skills:
+
+Senior Python Developer
+4+ years of experience in Python Web Services (Flask, FastAPI)
+
+Data processing (Pandas)
+Image Processing (PIL, OpenCV)
+NLP (Dialogflow, NLTK, RASA)
+Audio Processing (PyAudio, ffmpeg)
+Telegram (AiOgram, Pyrogram)
+
+Low-Code Expertise
+2+ years of developing solutions using Corezoid & Node-Red Low-Code engines.
+
+MongoDB knowledge
+Advanced mongodb knowledge, experience in creating complex aggregations, and search optimization.
+","We are looking for a subcontracted Python Developer!
+
+👉 Required skills:
+
+— 4+ years of commercial experience with Python;
+— Python AWS CDK, CloudFormation templates;
+— Proficient experience with SQL Databases;
+— Experience with AWS services (lambda, dynamo, appsync);
+— Upper-Intermediate level of English.
+
+👉 As a plus:
+
+— Experience with GraphQL;
+— Knowledge of the Microservices Architecture.
+
+👉 Responsibilities:
+
+— Develop new features in the project;
+— Write reusable, testable code;
+— Reviewing the code of teammates;
+— Reviewing your implemented code in the dev environment;
+— Participate in the grooming process;
+— Tracking your work time by UpWork tracker.
+
+Full-time
+Level - Middle+/Senior
+English - B2+
+RF/RB - No",,,,,,
+2cc19662cfd508d9,544c5168-f1b5-5261-9c35-97cb75c7f7a4,aebba151-39cc-5d08-8d89-245ea32ff4d3,Python,BORDERLINE_RUNNER_UP_PROPOSAL,Python Developer,Middle to Senior Python developer,2.0,5y,upper,upper,"With nearly 2 years of commercial experience and a track record of success, I believe I would be a valuable addition to your team.
+
+I am proud to have been a member of a startup that secured 3rd place at UCU Incubator, showcasing my ability to thrive in a dynamic and competitive environment. In my current role, I have been actively involved in the development of an ERP product, where I have gained expertise in Python, Odoo, Postgres, and other related technologies. I am also a co-owner of a coworking space, which has given me valuable insights into managing a business and working with diverse teams.
+
+As a Python Developer, I am skilled in designing and implementing efficient and scalable solutions. I am well-versed in developing RESTful APIs, optimizing database queries, and writing clean and maintainable code. I am also experienced in working with libraries and frameworks such as Flask, FastAPI, and SQLAlchemy. I am a fast learner, always eager to stay updated with the latest advancements in the field of Python development
+Implemented ERP, including developing a system for invoice automation, project automation, email notifications, and cron infrastructure.
+Work without any choices. I am highly motivated and can make your business grow, so if you are looking for a dev the will write only code, we will not match","We are looking for a subcontracted Python Developer!
+
+👉 Required skills:
+
+— 4+ years of commercial experience with Python;
+— Python AWS CDK, CloudFormation templates;
+— Proficient experience with SQL Databases;
+— Experience with AWS services (lambda, dynamo, appsync);
+— Upper-Intermediate level of English.
+
+👉 As a plus:
+
+— Experience with GraphQL;
+— Knowledge of the Microservices Architecture.
+
+👉 Responsibilities:
+
+— Develop new features in the project;
+— Write reusable, testable code;
+— Reviewing the code of teammates;
+— Reviewing your implemented code in the dev environment;
+— Participate in the grooming process;
+— Tracking your work time by UpWork tracker.
+
+Full-time
+Level - Middle+/Senior
+English - B2+
+RF/RB - No",,,,,,
+3a9cadab6aef7b34,5bdb4709-f84a-5c66-9424-d876a4aa2824,aebba151-39cc-5d08-8d89-245ea32ff4d3,Python_vs_JavaScript,CROSS_DOMAIN_NEGATIVE_CONTROL,Full Stack Web Developer,Middle to Senior Python developer,1.0,5y,upper,upper,"
+- Building react applications using JSX, hooks, class and functional components;
+- Creating Pixel Perfect, responsive webpages based on Figma grid layout design using HTML, CSS, SASS, BEM, and JS;
+- Work on a team project based on Node.js;
+- Handling code reviews, investigating, reproducing, and fixing bugs.
+","We are looking for a subcontracted Python Developer!
+
+👉 Required skills:
+
+— 4+ years of commercial experience with Python;
+— Python AWS CDK, CloudFormation templates;
+— Proficient experience with SQL Databases;
+— Experience with AWS services (lambda, dynamo, appsync);
+— Upper-Intermediate level of English.
+
+👉 As a plus:
+
+— Experience with GraphQL;
+— Knowledge of the Microservices Architecture.
+
+👉 Responsibilities:
+
+— Develop new features in the project;
+— Write reusable, testable code;
+— Reviewing the code of teammates;
+— Reviewing your implemented code in the dev environment;
+— Participate in the grooming process;
+— Tracking your work time by UpWork tracker.
+
+Full-time
+Level - Middle+/Senior
+English - B2+
+RF/RB - No",,,,,,
+b9d3e64ec5985493,9f8b7656-c7e5-5d14-90ee-b7c074b1cd0a,aebba151-39cc-5d08-8d89-245ea32ff4d3,Python_vs_JavaScript,CROSS_DOMAIN_NEGATIVE_CONTROL,Front-End Developer,Middle to Senior Python developer,0.5,5y,intermediate,upper,"Of the achievements, I can boast that for 6 months I worked out for 8-10 hours every day. Completed all assigned projects and homework in IT school. Studied such knowledge as: HTML5, CSS, SAAS, JavaScript, React, redux-toolkit, Figma, git, vs-code, webpack, REST API, node.js, mongoDB, express understood the principles of web development.
+I have experience in educational/home projects.  
+8 months.
+May 2022 - December 2022
+Passed the annual intensive on full-stack development. During my studies, I completed 9 projects (4 team and 5 individual). I was a team leader on one project, a scrum master on another, and a developer on all the others.
+Technologies such as: HTML5, CSS, SAAS, JavaScript, React, redux-toolkit, Figma, git, vs-code, REST API, axios, mongoDB, node.js, express are used.
+
+Front-end Intern in the company January 2023 - March 2023
+Participated in application development
+Performed site markup
+Created components in web applications
+Writing Application Logic
+And other tasks of a junior developer
+
+Provided website development services  December 2022 - February 2023
+Development of layout and site logic, as well as work with styles
+Stack: HTML/CSS, React, JavaScript, Redux.
+
+Work on own projects December 2022 - to now
+Development of own Full-stack applications
+Writing logic, working with design and hosting the application
+
+I wish you to find a dream job/company, start developing in this direction and achieve success and new victories.
+Get as much experience and new knowledge as possible. Take part in interesting projects, work in a cool team and develop together with the company.","We are looking for a subcontracted Python Developer!
+
+👉 Required skills:
+
+— 4+ years of commercial experience with Python;
+— Python AWS CDK, CloudFormation templates;
+— Proficient experience with SQL Databases;
+— Experience with AWS services (lambda, dynamo, appsync);
+— Upper-Intermediate level of English.
+
+👉 As a plus:
+
+— Experience with GraphQL;
+— Knowledge of the Microservices Architecture.
+
+👉 Responsibilities:
+
+— Develop new features in the project;
+— Write reusable, testable code;
+— Reviewing the code of teammates;
+— Reviewing your implemented code in the dev environment;
+— Participate in the grooming process;
+— Tracking your work time by UpWork tracker.
+
+Full-time
+Level - Middle+/Senior
+English - B2+
+RF/RB - No",,,,,,
+71a1d51d431e19bb,77c38a98-deea-5fb4-b771-5e882404e667,5532d6d2-1585-5c32-b504-d8d6eb6c5631,Python,HIGH_ALIGNMENT_PROPOSAL,Python Developer,ML Engineer with Python knowledge,3.0,3y,upper,upper,"
+Software engineer with 3 years experience in back-end, took part in the implementation of a reporting automation project in the country's energy sector. I have experience developing Natural Language Processing services and pipelines. Good communications skills. Experience in different software development methodologies.
+","Requirements:
+— 3+ years of Python engineering and experience in research and development of machine learning and deep learning technologies for real-world products
+— Experience of deploying and maintaining machine learning models in production
+— Experience with time series analysis
+— Experience writing, maintainable, testable, production-grade Python code
+— Understanding of different machine learning and deep learning algorithm families and their tradeoffs
+— Experience with deep learning libraries and frameworks (Scikit-learn, XGBoost, TensorFlow, Keras, PyTorch, etc.)
+— Good knowledge of ML/DL theoretical underpinnings
+— Team-player with strong interpersonal skills
+
+Will be a plus:
+— Experience of deploying and maintaining machine learning data pipelines in production
+— Airflow experience will be a big plus
+— Experience with large-scale machine learning (100GB+ datasets)
+— Competitive machine learning experience (e.g. Kaggle) could be a plus
+
+We offer multiple benefits, that include:
+— Challenging work in an international professional environment
+— The long-standing team as this is for a long term project
+— Competitive salary
+— Flexible work-from-home & remote work policy
+— Mastering English language with a native speaker
+— 40-hours working week with flexible working hours
+— PE accounting and support
+— 20 paid vacation days per year
+— 14 paid sick leaves per year
+— Collaborative friendly team environment
+
+Responsibilities:
+— Build, maintain, and improve our price large-scale forecasting algorithms and their underlying systems from scratch. Currently, we are in the process of building a new set of services for our new e-commerce analysis platform built on top of AWS/MWS
+— Implement end-to-end solutions for batch and real-time algorithms
+— Build tooling around monitoring, logging, automated testing, and A/B testing
+— Collaborate with your peers and other teams to teach, learn and execute efficiently
+— Contribute to improving our processes and engineering culture
+
+About the project:
+Thrasio is one of the fastest-growing acquirers of Amazon third-party FBA brands. Amazon has become the most ubiquitous part of the modern shopping experience and our company is positioned to be a leader in this vibrant and evolving marketplace.
+Thrasio was established in 2018 with a clear mission: to become the largest, most profitable seller on Amazon. Since then, our growth has been dramatic; we have over $100MM in committed capital, with an impressive group of investors supporting our success.",,,,,,
+21c17a00fdb988c6,d2c88c0a-79aa-5fb7-9eda-5abb443bb451,5532d6d2-1585-5c32-b504-d8d6eb6c5631,Python,HIGH_ALIGNMENT_PROPOSAL,Python Developer,ML Engineer with Python knowledge,3.0,3y,upper,upper,"
+I am a Python developer with 2 years of experience. I work with Django And create Web and mobile applications of different complexity. I would like to find a new job where I could apply my knowledge and skills.
+","Requirements:
+— 3+ years of Python engineering and experience in research and development of machine learning and deep learning technologies for real-world products
+— Experience of deploying and maintaining machine learning models in production
+— Experience with time series analysis
+— Experience writing, maintainable, testable, production-grade Python code
+— Understanding of different machine learning and deep learning algorithm families and their tradeoffs
+— Experience with deep learning libraries and frameworks (Scikit-learn, XGBoost, TensorFlow, Keras, PyTorch, etc.)
+— Good knowledge of ML/DL theoretical underpinnings
+— Team-player with strong interpersonal skills
+
+Will be a plus:
+— Experience of deploying and maintaining machine learning data pipelines in production
+— Airflow experience will be a big plus
+— Experience with large-scale machine learning (100GB+ datasets)
+— Competitive machine learning experience (e.g. Kaggle) could be a plus
+
+We offer multiple benefits, that include:
+— Challenging work in an international professional environment
+— The long-standing team as this is for a long term project
+— Competitive salary
+— Flexible work-from-home & remote work policy
+— Mastering English language with a native speaker
+— 40-hours working week with flexible working hours
+— PE accounting and support
+— 20 paid vacation days per year
+— 14 paid sick leaves per year
+— Collaborative friendly team environment
+
+Responsibilities:
+— Build, maintain, and improve our price large-scale forecasting algorithms and their underlying systems from scratch. Currently, we are in the process of building a new set of services for our new e-commerce analysis platform built on top of AWS/MWS
+— Implement end-to-end solutions for batch and real-time algorithms
+— Build tooling around monitoring, logging, automated testing, and A/B testing
+— Collaborate with your peers and other teams to teach, learn and execute efficiently
+— Contribute to improving our processes and engineering culture
+
+About the project:
+Thrasio is one of the fastest-growing acquirers of Amazon third-party FBA brands. Amazon has become the most ubiquitous part of the modern shopping experience and our company is positioned to be a leader in this vibrant and evolving marketplace.
+Thrasio was established in 2018 with a clear mission: to become the largest, most profitable seller on Amazon. Since then, our growth has been dramatic; we have over $100MM in committed capital, with an impressive group of investors supporting our success.",,,,,,
+674deec43e9d2e2f,3d68190f-5441-5277-86e9-525b68e42324,5532d6d2-1585-5c32-b504-d8d6eb6c5631,Python,HIGH_ALIGNMENT_PROPOSAL,Middle Python Django Developer,ML Engineer with Python knowledge,4.0,3y,intermediate,upper,"Developed ecommerce project from zero (back-end side)
+Jan 2022 - Present time
+Python Middle Software Engineer
+
+Responsibilities: develop multi services architecture, APIs like GraphQL, REST API, WSDL, support DBs PostgreSQL and MariaDB, work with payments systems, query optimization, pytests, upgrade requirements, split project.
+
+March 2021 - Jan 2022
+Developed the online store project by solo
+Responsibilities: creating DB architecture design, REST
+API, celery tasks, user JWT/social auth, API
+documentations, integrations payment and delivery
+services, logging, writing auto tests, permissions,
+caching, debugging code, sending emails, custom filters,
+deployment, query optimization, internationalization,
+telegram bot notifier, site map, customizing admin panel,
+code refactoring/style, use pre-commit.
+
+Technologies used: Python, Django, Django REST
+framework, Celery, JWT, Swagger, Sentry, django-filters,
+PostgreSQL, Redis, RabbitMQ, Heroku, Git, Trello, Docker,
+boto3, pyTelegramBot, black, isort, flake8, mypy, CI/CD, nginx.
+
+
+February 2019 - March 2020
+Responsibilities: development REST API, user authentication,
+integration payment services, customization admin panel,
+interaction with DBs, creating Celery tasks, unit tests.
+I am looking for a challenging job with a new technologies and rapidly growing organization that can provide me with a range of goals and job objectives within a contemporary and projects setting. 
+English environment will be huge advantage.","Requirements:
+— 3+ years of Python engineering and experience in research and development of machine learning and deep learning technologies for real-world products
+— Experience of deploying and maintaining machine learning models in production
+— Experience with time series analysis
+— Experience writing, maintainable, testable, production-grade Python code
+— Understanding of different machine learning and deep learning algorithm families and their tradeoffs
+— Experience with deep learning libraries and frameworks (Scikit-learn, XGBoost, TensorFlow, Keras, PyTorch, etc.)
+— Good knowledge of ML/DL theoretical underpinnings
+— Team-player with strong interpersonal skills
+
+Will be a plus:
+— Experience of deploying and maintaining machine learning data pipelines in production
+— Airflow experience will be a big plus
+— Experience with large-scale machine learning (100GB+ datasets)
+— Competitive machine learning experience (e.g. Kaggle) could be a plus
+
+We offer multiple benefits, that include:
+— Challenging work in an international professional environment
+— The long-standing team as this is for a long term project
+— Competitive salary
+— Flexible work-from-home & remote work policy
+— Mastering English language with a native speaker
+— 40-hours working week with flexible working hours
+— PE accounting and support
+— 20 paid vacation days per year
+— 14 paid sick leaves per year
+— Collaborative friendly team environment
+
+Responsibilities:
+— Build, maintain, and improve our price large-scale forecasting algorithms and their underlying systems from scratch. Currently, we are in the process of building a new set of services for our new e-commerce analysis platform built on top of AWS/MWS
+— Implement end-to-end solutions for batch and real-time algorithms
+— Build tooling around monitoring, logging, automated testing, and A/B testing
+— Collaborate with your peers and other teams to teach, learn and execute efficiently
+— Contribute to improving our processes and engineering culture
+
+About the project:
+Thrasio is one of the fastest-growing acquirers of Amazon third-party FBA brands. Amazon has become the most ubiquitous part of the modern shopping experience and our company is positioned to be a leader in this vibrant and evolving marketplace.
+Thrasio was established in 2018 with a clear mission: to become the largest, most profitable seller on Amazon. Since then, our growth has been dramatic; we have over $100MM in committed capital, with an impressive group of investors supporting our success.",,,,,,
+e2fccedfccfd26d8,878a3f1d-a7b7-5a91-953f-2f35d4a7b315,5532d6d2-1585-5c32-b504-d8d6eb6c5631,Python,BORDERLINE_RUNNER_UP_PROPOSAL,Python Developer,ML Engineer with Python knowledge,2.5,3y,fluent,upper,"What are the achievements of a front end developer?
+Describe your achievements.
+
+My Accomplishments  include developing user experiences that increased the satisfaction, testing code and ensuring cross-browser compatibility, implementing and  writing front-end code for Django-based apps, and more .and also am  worked in network configuration and installing system.
+I have been working in many projects one of my project was online tutoring system is an application that helps students or any other person to find a tutor based on their requirements. Students can find any type of tutor for subjects (from KG-12, college courses, programming, SAT, TOEFL, IELTS, designing, and so on) according to their needs. On the other hand, tutors can be selected based on their educational background, skills, rating, experience, price, and other statuses.
+and also i am graphics designer and I made company logos and film poster and 
+ I am FULLSTACK web developer.
+here am doing the job not only for money, am going to do the work for increasing my experience and doing the job more effortlessly and passionately.","Requirements:
+— 3+ years of Python engineering and experience in research and development of machine learning and deep learning technologies for real-world products
+— Experience of deploying and maintaining machine learning models in production
+— Experience with time series analysis
+— Experience writing, maintainable, testable, production-grade Python code
+— Understanding of different machine learning and deep learning algorithm families and their tradeoffs
+— Experience with deep learning libraries and frameworks (Scikit-learn, XGBoost, TensorFlow, Keras, PyTorch, etc.)
+— Good knowledge of ML/DL theoretical underpinnings
+— Team-player with strong interpersonal skills
+
+Will be a plus:
+— Experience of deploying and maintaining machine learning data pipelines in production
+— Airflow experience will be a big plus
+— Experience with large-scale machine learning (100GB+ datasets)
+— Competitive machine learning experience (e.g. Kaggle) could be a plus
+
+We offer multiple benefits, that include:
+— Challenging work in an international professional environment
+— The long-standing team as this is for a long term project
+— Competitive salary
+— Flexible work-from-home & remote work policy
+— Mastering English language with a native speaker
+— 40-hours working week with flexible working hours
+— PE accounting and support
+— 20 paid vacation days per year
+— 14 paid sick leaves per year
+— Collaborative friendly team environment
+
+Responsibilities:
+— Build, maintain, and improve our price large-scale forecasting algorithms and their underlying systems from scratch. Currently, we are in the process of building a new set of services for our new e-commerce analysis platform built on top of AWS/MWS
+— Implement end-to-end solutions for batch and real-time algorithms
+— Build tooling around monitoring, logging, automated testing, and A/B testing
+— Collaborate with your peers and other teams to teach, learn and execute efficiently
+— Contribute to improving our processes and engineering culture
+
+About the project:
+Thrasio is one of the fastest-growing acquirers of Amazon third-party FBA brands. Amazon has become the most ubiquitous part of the modern shopping experience and our company is positioned to be a leader in this vibrant and evolving marketplace.
+Thrasio was established in 2018 with a clear mission: to become the largest, most profitable seller on Amazon. Since then, our growth has been dramatic; we have over $100MM in committed capital, with an impressive group of investors supporting our success.",,,,,,
+8456eccb0106cac2,fb2bbc63-8ac2-59e3-ba9d-15477ce6d6ed,5532d6d2-1585-5c32-b504-d8d6eb6c5631,Python,BORDERLINE_RUNNER_UP_PROPOSAL,Python Developer,ML Engineer with Python knowledge,0.5,3y,upper,upper,"
+I'm looking for job opportunities as a Python developer.
+
+I've got non-commercial experience in C, C++, Python, PHP, HTML studying in Unit Factory (https://unit.ua/en/) since 2018. I worked for San Francisco outsourcing company as a full stack developer during 8 months . My current stack includes Python / Flask / PostgreSQL / SQLAlchemy and TypeScript / React.
+
+Now I'm looking for a company where I can work on great projects as a backend developer / data engineer. I choose Python as a main language because it seems like it is one of the most demanded and perspective languages. Moreover, I'd like to be involved in projects related to machine learning and data analysis – now or in the future.
+
+I’m open to new technologies, languages, frameworks and want to grow as a developer.
+
+I am confident that I can quickly become a valuable member of your company. I used to work hard to achieve results and I'm ready for different challenges.
+","Requirements:
+— 3+ years of Python engineering and experience in research and development of machine learning and deep learning technologies for real-world products
+— Experience of deploying and maintaining machine learning models in production
+— Experience with time series analysis
+— Experience writing, maintainable, testable, production-grade Python code
+— Understanding of different machine learning and deep learning algorithm families and their tradeoffs
+— Experience with deep learning libraries and frameworks (Scikit-learn, XGBoost, TensorFlow, Keras, PyTorch, etc.)
+— Good knowledge of ML/DL theoretical underpinnings
+— Team-player with strong interpersonal skills
+
+Will be a plus:
+— Experience of deploying and maintaining machine learning data pipelines in production
+— Airflow experience will be a big plus
+— Experience with large-scale machine learning (100GB+ datasets)
+— Competitive machine learning experience (e.g. Kaggle) could be a plus
+
+We offer multiple benefits, that include:
+— Challenging work in an international professional environment
+— The long-standing team as this is for a long term project
+— Competitive salary
+— Flexible work-from-home & remote work policy
+— Mastering English language with a native speaker
+— 40-hours working week with flexible working hours
+— PE accounting and support
+— 20 paid vacation days per year
+— 14 paid sick leaves per year
+— Collaborative friendly team environment
+
+Responsibilities:
+— Build, maintain, and improve our price large-scale forecasting algorithms and their underlying systems from scratch. Currently, we are in the process of building a new set of services for our new e-commerce analysis platform built on top of AWS/MWS
+— Implement end-to-end solutions for batch and real-time algorithms
+— Build tooling around monitoring, logging, automated testing, and A/B testing
+— Collaborate with your peers and other teams to teach, learn and execute efficiently
+— Contribute to improving our processes and engineering culture
+
+About the project:
+Thrasio is one of the fastest-growing acquirers of Amazon third-party FBA brands. Amazon has become the most ubiquitous part of the modern shopping experience and our company is positioned to be a leader in this vibrant and evolving marketplace.
+Thrasio was established in 2018 with a clear mission: to become the largest, most profitable seller on Amazon. Since then, our growth has been dramatic; we have over $100MM in committed capital, with an impressive group of investors supporting our success.",,,,,,
+7dcdbccf155855fd,5bdb4709-f84a-5c66-9424-d876a4aa2824,5532d6d2-1585-5c32-b504-d8d6eb6c5631,Python_vs_JavaScript,CROSS_DOMAIN_NEGATIVE_CONTROL,Full Stack Web Developer,ML Engineer with Python knowledge,1.0,3y,upper,upper,"
+- Building react applications using JSX, hooks, class and functional components;
+- Creating Pixel Perfect, responsive webpages based on Figma grid layout design using HTML, CSS, SASS, BEM, and JS;
+- Work on a team project based on Node.js;
+- Handling code reviews, investigating, reproducing, and fixing bugs.
+","Requirements:
+— 3+ years of Python engineering and experience in research and development of machine learning and deep learning technologies for real-world products
+— Experience of deploying and maintaining machine learning models in production
+— Experience with time series analysis
+— Experience writing, maintainable, testable, production-grade Python code
+— Understanding of different machine learning and deep learning algorithm families and their tradeoffs
+— Experience with deep learning libraries and frameworks (Scikit-learn, XGBoost, TensorFlow, Keras, PyTorch, etc.)
+— Good knowledge of ML/DL theoretical underpinnings
+— Team-player with strong interpersonal skills
+
+Will be a plus:
+— Experience of deploying and maintaining machine learning data pipelines in production
+— Airflow experience will be a big plus
+— Experience with large-scale machine learning (100GB+ datasets)
+— Competitive machine learning experience (e.g. Kaggle) could be a plus
+
+We offer multiple benefits, that include:
+— Challenging work in an international professional environment
+— The long-standing team as this is for a long term project
+— Competitive salary
+— Flexible work-from-home & remote work policy
+— Mastering English language with a native speaker
+— 40-hours working week with flexible working hours
+— PE accounting and support
+— 20 paid vacation days per year
+— 14 paid sick leaves per year
+— Collaborative friendly team environment
+
+Responsibilities:
+— Build, maintain, and improve our price large-scale forecasting algorithms and their underlying systems from scratch. Currently, we are in the process of building a new set of services for our new e-commerce analysis platform built on top of AWS/MWS
+— Implement end-to-end solutions for batch and real-time algorithms
+— Build tooling around monitoring, logging, automated testing, and A/B testing
+— Collaborate with your peers and other teams to teach, learn and execute efficiently
+— Contribute to improving our processes and engineering culture
+
+About the project:
+Thrasio is one of the fastest-growing acquirers of Amazon third-party FBA brands. Amazon has become the most ubiquitous part of the modern shopping experience and our company is positioned to be a leader in this vibrant and evolving marketplace.
+Thrasio was established in 2018 with a clear mission: to become the largest, most profitable seller on Amazon. Since then, our growth has been dramatic; we have over $100MM in committed capital, with an impressive group of investors supporting our success.",,,,,,
+b884ab7fde99fcd3,9f8b7656-c7e5-5d14-90ee-b7c074b1cd0a,5532d6d2-1585-5c32-b504-d8d6eb6c5631,Python_vs_JavaScript,CROSS_DOMAIN_NEGATIVE_CONTROL,Front-End Developer,ML Engineer with Python knowledge,0.5,3y,intermediate,upper,"Of the achievements, I can boast that for 6 months I worked out for 8-10 hours every day. Completed all assigned projects and homework in IT school. Studied such knowledge as: HTML5, CSS, SAAS, JavaScript, React, redux-toolkit, Figma, git, vs-code, webpack, REST API, node.js, mongoDB, express understood the principles of web development.
+I have experience in educational/home projects.  
+8 months.
+May 2022 - December 2022
+Passed the annual intensive on full-stack development. During my studies, I completed 9 projects (4 team and 5 individual). I was a team leader on one project, a scrum master on another, and a developer on all the others.
+Technologies such as: HTML5, CSS, SAAS, JavaScript, React, redux-toolkit, Figma, git, vs-code, REST API, axios, mongoDB, node.js, express are used.
+
+Front-end Intern in the company January 2023 - March 2023
+Participated in application development
+Performed site markup
+Created components in web applications
+Writing Application Logic
+And other tasks of a junior developer
+
+Provided website development services  December 2022 - February 2023
+Development of layout and site logic, as well as work with styles
+Stack: HTML/CSS, React, JavaScript, Redux.
+
+Work on own projects December 2022 - to now
+Development of own Full-stack applications
+Writing logic, working with design and hosting the application
+
+I wish you to find a dream job/company, start developing in this direction and achieve success and new victories.
+Get as much experience and new knowledge as possible. Take part in interesting projects, work in a cool team and develop together with the company.","Requirements:
+— 3+ years of Python engineering and experience in research and development of machine learning and deep learning technologies for real-world products
+— Experience of deploying and maintaining machine learning models in production
+— Experience with time series analysis
+— Experience writing, maintainable, testable, production-grade Python code
+— Understanding of different machine learning and deep learning algorithm families and their tradeoffs
+— Experience with deep learning libraries and frameworks (Scikit-learn, XGBoost, TensorFlow, Keras, PyTorch, etc.)
+— Good knowledge of ML/DL theoretical underpinnings
+— Team-player with strong interpersonal skills
+
+Will be a plus:
+— Experience of deploying and maintaining machine learning data pipelines in production
+— Airflow experience will be a big plus
+— Experience with large-scale machine learning (100GB+ datasets)
+— Competitive machine learning experience (e.g. Kaggle) could be a plus
+
+We offer multiple benefits, that include:
+— Challenging work in an international professional environment
+— The long-standing team as this is for a long term project
+— Competitive salary
+— Flexible work-from-home & remote work policy
+— Mastering English language with a native speaker
+— 40-hours working week with flexible working hours
+— PE accounting and support
+— 20 paid vacation days per year
+— 14 paid sick leaves per year
+— Collaborative friendly team environment
+
+Responsibilities:
+— Build, maintain, and improve our price large-scale forecasting algorithms and their underlying systems from scratch. Currently, we are in the process of building a new set of services for our new e-commerce analysis platform built on top of AWS/MWS
+— Implement end-to-end solutions for batch and real-time algorithms
+— Build tooling around monitoring, logging, automated testing, and A/B testing
+— Collaborate with your peers and other teams to teach, learn and execute efficiently
+— Contribute to improving our processes and engineering culture
+
+About the project:
+Thrasio is one of the fastest-growing acquirers of Amazon third-party FBA brands. Amazon has become the most ubiquitous part of the modern shopping experience and our company is positioned to be a leader in this vibrant and evolving marketplace.
+Thrasio was established in 2018 with a clear mission: to become the largest, most profitable seller on Amazon. Since then, our growth has been dramatic; we have over $100MM in committed capital, with an impressive group of investors supporting our success.",,,,,,
+ce788e3887da04d6,77c38a98-deea-5fb4-b771-5e882404e667,5c273e08-5de7-598a-a820-b3f4badeb22f,Python,HIGH_ALIGNMENT_PROPOSAL,Python Developer,Python Developer,3.0,3y,upper,fluent,"
+Software engineer with 3 years experience in back-end, took part in the implementation of a reporting automation project in the country's energy sector. I have experience developing Natural Language Processing services and pipelines. Good communications skills. Experience in different software development methodologies.
+","We are looking for a Python Developer to join our dynamic team. The candidate will be responsible for coding trading bots for various CEXes, on-chain transaction parsing/analysis/execution, setting up servers, automating risk management processes, and other coding responsibilities and tasks. The candidate will work directly with the CIO and other investment/development team members. Experience working with centralized and decentralized crypto exchanges is a plus, but we are fully open to teaching the right candidate. The candidate is expected to be fully proficient in English.
+
+Requirements and skills:
+- 3+ years of programming experience
+- strong Python knowledge
+- experience in SQL / NoSQL databases
+- general understanding of the blockchain technology
+- Linux administration skills (Ubuntu/Debian)
+- willingness to write high-quality, mission-critical code
+- comfort and experience working as a remote employee as a part of a distributed team
+
+Nice to have:
+- experience with web3, both as a user and a developer passion for trading or DeFi
+- experience in the configuration of CI/CD
+- Javascript / Rust / Go / C++
+
+We offer:
+- a competitive salary and bonus
+- a remote job with flexible working hours dynamic and challenging working environment
+
+Position: Full time
+
+Location: Any time zone is acceptable, but our team is majority based in the US and Asia and will need support during at least a portion of US trading hours.
+
+About Edge.
+Edge Capital is an innovative alternative hedge fund focused on digital assets, blockchain, and decentralized finance (DeFi) markets. We combine algo trading and macro strategies to
+identify untapped opportunities in these markets based on our multidisciplinary expertise in macro trading and analysis, portfolio, and risk management, combined with our extensive knowledge and experience in fintech, DeFi, and blockchain technologies.",,,,,,

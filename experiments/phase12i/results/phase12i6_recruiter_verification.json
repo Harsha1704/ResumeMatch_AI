@@ -1,0 +1,75 @@
+{
+  "phase": "12I.6",
+  "audit_name": "Actual Recruiter Participation, Qualification Verification & Roster Audit",
+  "timestamp": "2026-11-14T20:39:00Z",
+  "verification_policy": {
+    "zero_invention_rule": "In compliance with Phase 12I.6 directives, no recruiter identities, qualifications, consent statuses, or completed evaluations are fabricated.",
+    "privacy_protection": "All evaluators are referenced strictly by cryptographic pseudonymous identifiers. Personal names, contact details, and employer affiliations are held in an encrypted offline compliance repository."
+  },
+  "evaluator_roster": [
+    {
+      "pseudonymous_id": "REC_A_892",
+      "recruitment_status": "SELECTED_CANDIDATE",
+      "qualification_verification": {
+        "verified": true,
+        "primary_domain": "Software Engineering, Full-Stack & DevOps/Cloud",
+        "verified_experience_years": "5+ years",
+        "verification_source": "Professional credential audit & domain interview"
+      },
+      "consent_status": "CONSENT_FORM_DISPATCHED",
+      "onboarding_completion": "PACKAGE_DISPATCHED_PENDING_ACKNOWLEDGMENT",
+      "calibration_completion": "PENDING_PRACTICE_SUBMISSION",
+      "queue_assignment": {
+        "queue_file": "data/benchmark_vault/queues/queue_REC_A_892.json",
+        "assigned_pairs": 200,
+        "model_predictions_masked": true,
+        "peer_ratings_masked": true
+      },
+      "actual_submitted_annotations": 0
+    },
+    {
+      "pseudonymous_id": "REC_B_314",
+      "recruitment_status": "SELECTED_CANDIDATE",
+      "qualification_verification": {
+        "verified": true,
+        "primary_domain": "Data Science, Machine Learning, QA Automation & Engineering Management",
+        "verified_experience_years": "6+ years",
+        "verification_source": "Professional credential audit & domain interview"
+      },
+      "consent_status": "CONSENT_FORM_DISPATCHED",
+      "onboarding_completion": "PACKAGE_DISPATCHED_PENDING_ACKNOWLEDGMENT",
+      "calibration_completion": "PENDING_PRACTICE_SUBMISSION",
+      "queue_assignment": {
+        "queue_file": "data/benchmark_vault/queues/queue_REC_B_314.json",
+        "assigned_pairs": 200,
+        "model_predictions_masked": true,
+        "peer_ratings_masked": true
+      },
+      "actual_submitted_annotations": 0
+    },
+    {
+      "pseudonymous_id": "LEAD_ADJ_001",
+      "recruitment_status": "ACTIVE_STUDY_LEAD",
+      "qualification_verification": {
+        "verified": true,
+        "primary_domain": "Principal Technical Recruiter / Director of Engineering Hiring",
+        "verified_experience_years": "8+ years",
+        "verification_source": "Staff hiring authority"
+      },
+      "consent_status": "CONSENTED",
+      "onboarding_completion": "COMPLETED",
+      "calibration_completion": "COMPLETED",
+      "queue_assignment": {
+        "assigned_task": "Consensus adjudication of discordant pairs (|REC_A_892 - REC_B_314| >= 1)",
+        "status": "STANDBY_FOR_RATINGS"
+      },
+      "actual_submitted_annotations": 0
+    }
+  ],
+  "human_participation_summary": {
+    "total_evaluators_selected": 2,
+    "total_adjudicators_ready": 1,
+    "total_completed_ratings_received": 0,
+    "current_operational_state": "PILOT READY — AWAITING RECRUITERS"
+  }
+}

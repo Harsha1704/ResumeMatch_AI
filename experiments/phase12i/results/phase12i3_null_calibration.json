@@ -1,0 +1,18 @@
+{
+  "phase": "12I.3",
+  "timestamp": "2026-11-14T08:33:30Z",
+  "null_hypothesis": "H0: Delta = 0.00",
+  "monte_carlo_iterations_B": 5000,
+  "nominal_alpha": 0.05,
+  "empirical_type_I_error": 0.054,
+  "mcse_type_I_error": 0.0032,
+  "ci_95": [
+    0.0477,
+    0.0603
+  ],
+  "mean_delta_hat": 7.8e-05,
+  "mean_se_twoway": 0.013188,
+  "mean_t_stat": 0.0063,
+  "std_t_stat": 1.0029,
+  "calibration_verdict": "WELL-CALIBRATED"
+}

@@ -1,0 +1,242 @@
+[
+  {
+    "threshold": 0.15,
+    "overall_accuracy": 0.1787,
+    "macro_f1": 0.1292,
+    "good_fit_recall": 0.9398,
+    "good_fit_precision": 0.19,
+    "good_fit_f1": 0.3161,
+    "false_positive_rate": 0.8264,
+    "true_positives": 125,
+    "false_positives": 533,
+    "false_negatives": 8,
+    "true_negatives": 112,
+    "confusion_matrix": [
+      [
+        9,
+        87,
+        319
+      ],
+      [
+        11,
+        5,
+        214
+      ],
+      [
+        0,
+        8,
+        125
+      ]
+    ]
+  },
+  {
+    "threshold": 0.2,
+    "overall_accuracy": 0.1838,
+    "macro_f1": 0.148,
+    "good_fit_recall": 0.8872,
+    "good_fit_precision": 0.195,
+    "good_fit_f1": 0.3198,
+    "false_positive_rate": 0.755,
+    "true_positives": 118,
+    "false_positives": 487,
+    "false_negatives": 15,
+    "true_negatives": 158,
+    "confusion_matrix": [
+      [
+        11,
+        117,
+        287
+      ],
+      [
+        16,
+        14,
+        200
+      ],
+      [
+        1,
+        14,
+        118
+      ]
+    ]
+  },
+  {
+    "threshold": 0.25,
+    "overall_accuracy": 0.1889,
+    "macro_f1": 0.1699,
+    "good_fit_recall": 0.7669,
+    "good_fit_precision": 0.191,
+    "good_fit_f1": 0.3058,
+    "false_positive_rate": 0.6698,
+    "true_positives": 102,
+    "false_positives": 432,
+    "false_negatives": 31,
+    "true_negatives": 213,
+    "confusion_matrix": [
+      [
+        16,
+        150,
+        249
+      ],
+      [
+        18,
+        29,
+        183
+      ],
+      [
+        6,
+        25,
+        102
+      ]
+    ]
+  },
+  {
+    "threshold": 0.3,
+    "overall_accuracy": 0.1915,
+    "macro_f1": 0.1849,
+    "good_fit_recall": 0.6241,
+    "good_fit_precision": 0.1874,
+    "good_fit_f1": 0.2882,
+    "false_positive_rate": 0.5581,
+    "true_positives": 83,
+    "false_positives": 360,
+    "false_negatives": 50,
+    "true_negatives": 285,
+    "confusion_matrix": [
+      [
+        22,
+        197,
+        196
+      ],
+      [
+        22,
+        44,
+        164
+      ],
+      [
+        14,
+        36,
+        83
+      ]
+    ]
+  },
+  {
+    "threshold": 0.35,
+    "overall_accuracy": 0.1941,
+    "macro_f1": 0.1928,
+    "good_fit_recall": 0.5188,
+    "good_fit_precision": 0.186,
+    "good_fit_f1": 0.2738,
+    "false_positive_rate": 0.4682,
+    "true_positives": 69,
+    "false_positives": 302,
+    "false_negatives": 64,
+    "true_negatives": 343,
+    "confusion_matrix": [
+      [
+        23,
+        224,
+        168
+      ],
+      [
+        37,
+        59,
+        134
+      ],
+      [
+        19,
+        45,
+        69
+      ]
+    ]
+  },
+  {
+    "threshold": 0.4,
+    "overall_accuracy": 0.2069,
+    "macro_f1": 0.205,
+    "good_fit_recall": 0.4211,
+    "good_fit_precision": 0.183,
+    "good_fit_f1": 0.2551,
+    "false_positive_rate": 0.3876,
+    "true_positives": 56,
+    "false_positives": 250,
+    "false_negatives": 77,
+    "true_negatives": 395,
+    "confusion_matrix": [
+      [
+        25,
+        249,
+        141
+      ],
+      [
+        41,
+        80,
+        109
+      ],
+      [
+        22,
+        55,
+        56
+      ]
+    ]
+  },
+  {
+    "threshold": 0.45,
+    "overall_accuracy": 0.2198,
+    "macro_f1": 0.2178,
+    "good_fit_recall": 0.3759,
+    "good_fit_precision": 0.1992,
+    "good_fit_f1": 0.2604,
+    "false_positive_rate": 0.3116,
+    "true_positives": 50,
+    "false_positives": 201,
+    "false_negatives": 83,
+    "true_negatives": 444,
+    "confusion_matrix": [
+      [
+        29,
+        274,
+        112
+      ],
+      [
+        49,
+        92,
+        89
+      ],
+      [
+        24,
+        59,
+        50
+      ]
+    ]
+  },
+  {
+    "threshold": 0.5,
+    "overall_accuracy": 0.2378,
+    "macro_f1": 0.2275,
+    "good_fit_recall": 0.2556,
+    "good_fit_precision": 0.1899,
+    "good_fit_f1": 0.2179,
+    "false_positive_rate": 0.2248,
+    "true_positives": 34,
+    "false_positives": 145,
+    "false_negatives": 99,
+    "true_negatives": 500,
+    "confusion_matrix": [
+      [
+        41,
+        294,
+        80
+      ],
+      [
+        55,
+        110,
+        65
+      ],
+      [
+        30,
+        69,
+        34
+      ]
+    ]
+  }
+]

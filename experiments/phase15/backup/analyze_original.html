@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% block title %}Resume Analyzer — ResumeMatch AI{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <!-- Header -->
+    <div class="mb-4">
+        <h3 class="fw-bold text-dark mb-1">Resume &amp; Job Description Compatibility Analyzer</h3>
+        <p class="text-muted">Upload a student resume and specify a target job description to evaluate supervised compatibility, extract skill gaps, and receive learning roadmaps.</p>
+    </div>
+
+    <form action="{{ url_for('analyze') }}" method="POST" enctype="multipart/form-data" id="analyzeForm">
+        <div class="row g-4 mb-4">
+            <!-- Left Panel: Resume Upload -->
+            <div class="col-lg-6">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span class="text-dark"><i class="bi bi-file-earmark-arrow-up text-primary me-2"></i>1. Student Resume</span>
+                        <span class="badge bg-light text-muted border">PDF, DOCX, TXT</span>
+                    </div>
+                    <div class="card-body p-4 d-flex flex-column">
+                        <!-- Drag & Drop Zone -->
+                        <div class="dropzone mb-3" id="dropzone">
+                            <i class="bi bi-cloud-arrow-up-fill mb-2"></i>
+                            <h6 class="fw-bold text-dark mb-1">Drag &amp; Drop Resume File Here</h6>
+                            <p class="text-muted small mb-3">Supports PDF, DOCX, or plain text (Max 16 MB)</p>
+                            <button type="button" class="btn btn-sm btn-outline-primary px-3 fw-semibold">
+                                <i class="bi bi-folder2-open me-1"></i>Browse Files
+                            </button>
+                            <input type="file" name="resume_file" id="resume_file" class="d-none" accept=".pdf,.docx,.txt">
+                        </div>
+
+                        <!-- File Selected Preview Card -->
+                        <div id="filePreview" class="p-3 bg-light rounded border mb-3" style="display: none;">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-file-earmark-check-fill text-success fs-3 me-3"></i>
+                                    <div>
+                                        <div class="fw-bold text-dark" id="fileNameDisplay">resume.pdf</div>
+                                        <small class="text-muted" id="fileSizeDisplay">120 KB</small>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-danger" id="removeFileBtn" title="Remove file">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Optional: Paste Text -->
+                        <div class="mt-auto">
+                            <label class="form-label small fw-bold text-muted mb-1">
+                                <i class="bi bi-pencil-square me-1"></i>Or Paste Resume Content Directly:
+                            </label>
+                            <textarea class="form-control" name="resume_text" id="resume_text" rows="5" placeholder="Paste full raw text here if you prefer not uploading a file..."></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Target Job Description -->
+            <div class="col-lg-6">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span class="text-dark"><i class="bi bi-briefcase-fill text-info me-2"></i>2. Target Job Description</span>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-light text-muted border" id="jobCharCount">0 chars</span>
+                            <button type="button" class="btn btn-sm btn-link text-muted p-0 text-decoration-none" id="clearJobBtn" title="Clear Text">
+                                <i class="bi bi-x-circle"></i> Clear
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body p-4 d-flex flex-column">
+                        <textarea class="form-control mb-3 flex-grow-1" name="job_description" id="job_description" rows="10" placeholder="Paste target job posting including required skills, qualifications, responsibilities, and experience prerequisites..." required></textarea>
+
+                        <!-- Sample Job Selector from Real Dataset -->
+                        {% if sample_jobs %}
+                            <div class="p-3 bg-light rounded border">
+                                <small class="fw-bold text-muted text-uppercase d-block mb-2" style="font-size: 0.72rem;">
+                                    <i class="bi bi-lightning-charge-fill text-warning me-1"></i>Quick Test with Real Dataset Job Description:
+                                </small>
+                                <div class="d-flex flex-wrap gap-2">
+                                    {% for job in sample_jobs %}
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('job_description').value = this.getAttribute('data-job'); document.getElementById('job_description').dispatchEvent(new Event('input'));" data-job="{{ job|e }}">
+                                            Sample Position #{{ loop.index }}
+                                        </button>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Button -->
+        <div class="card border-0 shadow-sm p-3">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div class="text-muted small">
+                    <i class="bi bi-shield-check text-success me-1"></i>Private processing &bull; Resumes are parsed in memory and never shared publicly.
+                </div>
+                <button type="submit" class="btn btn-primary btn-lg fw-bold px-5" id="submitAnalysisBtn">
+                    <i class="bi bi-cpu me-2"></i>Run Compatibility &amp; Skill Gap Analysis
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/analyzer.js') }}"></script>
+{% endblock %}

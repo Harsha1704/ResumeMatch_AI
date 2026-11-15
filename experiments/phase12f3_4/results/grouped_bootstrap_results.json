@@ -1,0 +1,28 @@
+{
+  "candidate_cluster_bootstrap_91_clusters": {
+    "clusters": 91,
+    "accuracy_delta_95_ci": [
+      0.0247,
+      0.1388
+    ],
+    "probability_delta_positive": 0.998
+  },
+  "job_cluster_bootstrap_52_clusters": {
+    "clusters": 52,
+    "accuracy_delta_95_ci": [
+      0.012,
+      0.1399
+    ],
+    "probability_delta_positive": 0.9877
+  },
+  "two_way_cluster_bootstrap": {
+    "candidate_clusters": 91,
+    "job_clusters": 52,
+    "accuracy_delta_95_ci": [
+      0.0,
+      0.1531
+    ],
+    "probability_delta_positive": 0.9741
+  },
+  "interpretation": "Accounting for candidate dependence ([+2.47%, +13.85%]) and job dependence ([+1.12%, +13.99%]) widens the confidence intervals compared to i.i.d. row resampling, but the intervals remain strictly positive with >99% probability of positive delta. In the highly conservative two-way cluster bootstrap, the lower bound touches zero ([0.00%, +15.38%]) due to simultaneous thinning of both dimensions."
+}

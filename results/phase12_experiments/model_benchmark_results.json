@@ -1,0 +1,338 @@
+{
+  "1. Logistic Regression (C=1.0, balanced)": {
+    "accuracy": 0.4923,
+    "balanced_accuracy": 0.4098,
+    "macro_precision": 0.4128,
+    "macro_recall": 0.4098,
+    "macro_f1": 0.4052,
+    "weighted_f1": 0.4883,
+    "brier_score": 0.9287,
+    "confusion_matrix": [
+      [
+        256,
+        135,
+        24
+      ],
+      [
+        82,
+        108,
+        40
+      ],
+      [
+        54,
+        60,
+        19
+      ]
+    ],
+    "per_class": {
+      "No Fit": {
+        "precision": 0.6531,
+        "recall": 0.6169,
+        "f1": 0.6344,
+        "support": 415
+      },
+      "Potential Fit": {
+        "precision": 0.3564,
+        "recall": 0.4696,
+        "f1": 0.4053,
+        "support": 230
+      },
+      "Good Fit": {
+        "precision": 0.2289,
+        "recall": 0.1429,
+        "f1": 0.1759,
+        "support": 133
+      }
+    },
+    "train_time_sec": 9.97,
+    "inf_time_sec": 0.0061
+  },
+  "2. Logistic Regression (C=0.25, balanced)": {
+    "accuracy": 0.4871,
+    "balanced_accuracy": 0.4204,
+    "macro_precision": 0.4223,
+    "macro_recall": 0.4204,
+    "macro_f1": 0.417,
+    "weighted_f1": 0.4921,
+    "brier_score": 0.8294,
+    "confusion_matrix": [
+      [
+        242,
+        138,
+        35
+      ],
+      [
+        67,
+        111,
+        52
+      ],
+      [
+        50,
+        57,
+        26
+      ]
+    ],
+    "per_class": {
+      "No Fit": {
+        "precision": 0.6741,
+        "recall": 0.5831,
+        "f1": 0.6253,
+        "support": 415
+      },
+      "Potential Fit": {
+        "precision": 0.3627,
+        "recall": 0.4826,
+        "f1": 0.4142,
+        "support": 230
+      },
+      "Good Fit": {
+        "precision": 0.2301,
+        "recall": 0.1955,
+        "f1": 0.2114,
+        "support": 133
+      }
+    },
+    "train_time_sec": 5.62,
+    "inf_time_sec": 0.0063
+  },
+  "3. Calibrated Linear SVM (Platt Scaling)": {
+    "accuracy": 0.5064,
+    "balanced_accuracy": 0.3444,
+    "macro_precision": 0.3238,
+    "macro_recall": 0.3444,
+    "macro_f1": 0.3077,
+    "weighted_f1": 0.4299,
+    "brier_score": 0.961,
+    "confusion_matrix": [
+      [
+        354,
+        51,
+        10
+      ],
+      [
+        169,
+        38,
+        23
+      ],
+      [
+        114,
+        17,
+        2
+      ]
+    ],
+    "per_class": {
+      "No Fit": {
+        "precision": 0.5557,
+        "recall": 0.853,
+        "f1": 0.673,
+        "support": 415
+      },
+      "Potential Fit": {
+        "precision": 0.3585,
+        "recall": 0.1652,
+        "f1": 0.2262,
+        "support": 230
+      },
+      "Good Fit": {
+        "precision": 0.0571,
+        "recall": 0.015,
+        "f1": 0.0238,
+        "support": 133
+      }
+    },
+    "train_time_sec": 29.25,
+    "inf_time_sec": 0.0195
+  },
+  "4. Random Forest (100 trees, depth=14)": {
+    "accuracy": 0.5398,
+    "balanced_accuracy": 0.4291,
+    "macro_precision": 0.4415,
+    "macro_recall": 0.4291,
+    "macro_f1": 0.4281,
+    "weighted_f1": 0.5186,
+    "brier_score": 0.8269,
+    "confusion_matrix": [
+      [
+        314,
+        91,
+        10
+      ],
+      [
+        101,
+        84,
+        45
+      ],
+      [
+        75,
+        36,
+        22
+      ]
+    ],
+    "per_class": {
+      "No Fit": {
+        "precision": 0.6408,
+        "recall": 0.7566,
+        "f1": 0.6939,
+        "support": 415
+      },
+      "Potential Fit": {
+        "precision": 0.3981,
+        "recall": 0.3652,
+        "f1": 0.381,
+        "support": 230
+      },
+      "Good Fit": {
+        "precision": 0.2857,
+        "recall": 0.1654,
+        "f1": 0.2095,
+        "support": 133
+      }
+    },
+    "train_time_sec": 1.7,
+    "inf_time_sec": 0.0602
+  },
+  "5. LightGBM (Tuned num_leaves=31)": {
+    "accuracy": 0.5257,
+    "balanced_accuracy": 0.4129,
+    "macro_precision": 0.4055,
+    "macro_recall": 0.4129,
+    "macro_f1": 0.4047,
+    "weighted_f1": 0.5066,
+    "brier_score": 1.0048,
+    "confusion_matrix": [
+      [
+        298,
+        99,
+        18
+      ],
+      [
+        89,
+        99,
+        42
+      ],
+      [
+        71,
+        50,
+        12
+      ]
+    ],
+    "per_class": {
+      "No Fit": {
+        "precision": 0.6507,
+        "recall": 0.7181,
+        "f1": 0.6827,
+        "support": 415
+      },
+      "Potential Fit": {
+        "precision": 0.3992,
+        "recall": 0.4304,
+        "f1": 0.4142,
+        "support": 230
+      },
+      "Good Fit": {
+        "precision": 0.1667,
+        "recall": 0.0902,
+        "f1": 0.1171,
+        "support": 133
+      }
+    },
+    "train_time_sec": 27.75,
+    "inf_time_sec": 0.0092
+  },
+  "6. XGBoost (Tuned max_depth=4)": {
+    "accuracy": 0.5116,
+    "balanced_accuracy": 0.416,
+    "macro_precision": 0.4153,
+    "macro_recall": 0.416,
+    "macro_f1": 0.413,
+    "weighted_f1": 0.5066,
+    "brier_score": 0.5786,
+    "confusion_matrix": [
+      [
+        280,
+        112,
+        23
+      ],
+      [
+        79,
+        99,
+        52
+      ],
+      [
+        52,
+        62,
+        19
+      ]
+    ],
+    "per_class": {
+      "No Fit": {
+        "precision": 0.6813,
+        "recall": 0.6747,
+        "f1": 0.678,
+        "support": 415
+      },
+      "Potential Fit": {
+        "precision": 0.3626,
+        "recall": 0.4304,
+        "f1": 0.3936,
+        "support": 230
+      },
+      "Good Fit": {
+        "precision": 0.2021,
+        "recall": 0.1429,
+        "f1": 0.1674,
+        "support": 133
+      }
+    },
+    "train_time_sec": 50.77,
+    "inf_time_sec": 0.0074
+  },
+  "7. CatBoost (Tuned depth=5)": {
+    "accuracy": 0.5154,
+    "balanced_accuracy": 0.4171,
+    "macro_precision": 0.4162,
+    "macro_recall": 0.4171,
+    "macro_f1": 0.4142,
+    "weighted_f1": 0.5083,
+    "brier_score": 0.8356,
+    "confusion_matrix": [
+      [
+        285,
+        108,
+        22
+      ],
+      [
+        81,
+        97,
+        52
+      ],
+      [
+        56,
+        58,
+        19
+      ]
+    ],
+    "per_class": {
+      "No Fit": {
+        "precision": 0.6754,
+        "recall": 0.6867,
+        "f1": 0.681,
+        "support": 415
+      },
+      "Potential Fit": {
+        "precision": 0.3688,
+        "recall": 0.4217,
+        "f1": 0.3935,
+        "support": 230
+      },
+      "Good Fit": {
+        "precision": 0.2043,
+        "recall": 0.1429,
+        "f1": 0.1681,
+        "support": 133
+      }
+    },
+    "train_time_sec": 30.91,
+    "inf_time_sec": 0.0302
+  }
+}

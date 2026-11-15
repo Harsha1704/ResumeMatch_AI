@@ -1,0 +1,130 @@
+{
+  "phase": "12I.10",
+  "audit_name": "Corrected Five-Seed Statistical Significance & Multiple Testing Audit",
+  "timestamp": "2026-11-14T21:22:30Z",
+  "evaluation_dataset": {
+    "manifest_source": "manifests/v1/dual_unseen_val_v1.parquet",
+    "evaluated_rows": 296,
+    "unique_candidates": 91,
+    "unique_jobs": 52,
+    "sample_alignment_verified": true,
+    "alignment_details": "All five seed prediction files contain exactly the same 296 pairs in identical order."
+  },
+  "per_seed_paired_evaluations": [
+    {
+      "seed": 42,
+      "raw_sbert_accuracy": 0.3818,
+      "contrastive_accuracy": 0.4595,
+      "paired_accuracy_difference_pp": 7.77,
+      "contingency_table": {
+        "n00_both_incorrect": 130,
+        "n10_raw_only_correct_b": 30,
+        "n01_contrastive_only_correct_c": 53,
+        "n11_both_correct": 83
+      },
+      "total_discordant_pairs": 83,
+      "mcnemar_chi2_corrected": 5.8313,
+      "raw_mcnemar_p_value": 0.015743,
+      "raw_exact_binomial_p_value": 0.015232,
+      "holm_adjusted_chi2_p_value": 0.076665,
+      "holm_adjusted_binomial_p_value": 0.074335,
+      "unadjusted_significant_alpha_0_05": true,
+      "holm_fwer_significant_alpha_0_05": false
+    },
+    {
+      "seed": 43,
+      "raw_sbert_accuracy": 0.3818,
+      "contrastive_accuracy": 0.4561,
+      "paired_accuracy_difference_pp": 7.43,
+      "contingency_table": {
+        "n00_both_incorrect": 129,
+        "n10_raw_only_correct_b": 32,
+        "n01_contrastive_only_correct_c": 54,
+        "n11_both_correct": 81
+      },
+      "total_discordant_pairs": 86,
+      "mcnemar_chi2_corrected": 5.1279,
+      "raw_mcnemar_p_value": 0.023544,
+      "raw_exact_binomial_p_value": 0.022983,
+      "holm_adjusted_chi2_p_value": 0.076665,
+      "holm_adjusted_binomial_p_value": 0.074335,
+      "unadjusted_significant_alpha_0_05": true,
+      "holm_fwer_significant_alpha_0_05": false
+    },
+    {
+      "seed": 44,
+      "raw_sbert_accuracy": 0.3818,
+      "contrastive_accuracy": 0.3919,
+      "paired_accuracy_difference_pp": 1.01,
+      "contingency_table": {
+        "n00_both_incorrect": 137,
+        "n10_raw_only_correct_b": 43,
+        "n01_contrastive_only_correct_c": 46,
+        "n11_both_correct": 70
+      },
+      "total_discordant_pairs": 89,
+      "mcnemar_chi2_corrected": 0.0449,
+      "raw_mcnemar_p_value": 0.832107,
+      "raw_exact_binomial_p_value": 0.832258,
+      "holm_adjusted_chi2_p_value": 0.832107,
+      "holm_adjusted_binomial_p_value": 0.832258,
+      "unadjusted_significant_alpha_0_05": false,
+      "holm_fwer_significant_alpha_0_05": false
+    },
+    {
+      "seed": 45,
+      "raw_sbert_accuracy": 0.3818,
+      "contrastive_accuracy": 0.4595,
+      "paired_accuracy_difference_pp": 7.77,
+      "contingency_table": {
+        "n00_both_incorrect": 123,
+        "n10_raw_only_correct_b": 37,
+        "n01_contrastive_only_correct_c": 60,
+        "n11_both_correct": 76
+      },
+      "total_discordant_pairs": 97,
+      "mcnemar_chi2_corrected": 4.9897,
+      "raw_mcnemar_p_value": 0.025499,
+      "raw_exact_binomial_p_value": 0.024991,
+      "holm_adjusted_chi2_p_value": 0.076665,
+      "holm_adjusted_binomial_p_value": 0.074335,
+      "unadjusted_significant_alpha_0_05": true,
+      "holm_fwer_significant_alpha_0_05": false
+    },
+    {
+      "seed": 46,
+      "raw_sbert_accuracy": 0.3818,
+      "contrastive_accuracy": 0.4628,
+      "paired_accuracy_difference_pp": 8.11,
+      "contingency_table": {
+        "n00_both_incorrect": 126,
+        "n10_raw_only_correct_b": 33,
+        "n01_contrastive_only_correct_c": 57,
+        "n11_both_correct": 80
+      },
+      "total_discordant_pairs": 90,
+      "mcnemar_chi2_corrected": 5.8778,
+      "raw_mcnemar_p_value": 0.015333,
+      "raw_exact_binomial_p_value": 0.014867,
+      "holm_adjusted_chi2_p_value": 0.076665,
+      "holm_adjusted_binomial_p_value": 0.074335,
+      "unadjusted_significant_alpha_0_05": true,
+      "holm_fwer_significant_alpha_0_05": false
+    }
+  ],
+  "aggregate_seed_metrics": {
+    "mean_raw_sbert_accuracy": 0.3818,
+    "mean_contrastive_accuracy": 0.4460,
+    "std_contrastive_accuracy": 0.0271,
+    "mean_paired_accuracy_gain_pp": 6.42,
+    "std_paired_accuracy_gain_pp": 2.71,
+    "inter_seed_pairwise_prediction_agreement_range": [0.703, 0.807],
+    "mean_inter_seed_agreement": 0.760
+  },
+  "methodological_corrections": {
+    "fisher_combined_pvalue_status": "PERMANENTLY_INVALIDATED",
+    "rationale": "Evaluating five seeds on the exact same 296 pairs creates strongly positively correlated test statistics (mean agreement 76.0%). Fisher's combined probability test assumes independent random variables. Applying it to correlated tests produces an artificially deflated p-value (7.15e-6) that overstates statistical evidence.",
+    "holm_multiple_testing_correction": "Under step-down Holm-Bonferroni correction across the five seeds, the minimum raw p-value (0.0149) multiplied by 5 yields an adjusted p-value of 0.0743. Therefore, while 4 of 5 seeds are significant under unadjusted alpha=0.05, none pass strict family-wise error rate control at alpha=0.05.",
+    "scientific_conclusion": "The five seeds demonstrate training stability against weight initialization on a single validation sample. They DO NOT constitute five independent dataset replications."
+  }
+}

@@ -1,0 +1,837 @@
+{% extends 'base.html' %}
+{% block title %}Model Performance & Evaluation Dashboard — ResumeMatch AI{% endblock %}
+
+{% block extra_head %}
+<style>
+    .kpi-card {
+        background: #ffffff;
+        border-radius: 12px;
+        border: 1px solid var(--border-color, #e2e8f0);
+        padding: 1.25rem;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .kpi-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    .kpi-value {
+        font-size: 1.85rem;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+    .kpi-label {
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        font-weight: 600;
+        color: var(--text-muted, #64748b);
+    }
+    .kpi-context {
+        font-size: 0.72rem;
+        color: #0284c7;
+        font-weight: 500;
+    }
+    .protocol-tab-btn {
+        border-radius: 8px;
+        padding: 0.6rem 1.1rem;
+        font-weight: 600;
+        font-size: 0.88rem;
+        border: 1px solid var(--border-color, #cbd5e1);
+        background: #f8fafc;
+        color: #334155;
+        transition: all 0.15s ease-in-out;
+    }
+    .protocol-tab-btn:hover {
+        background: #e2e8f0;
+        color: #0f172a;
+    }
+    .protocol-tab-btn.active {
+        background: #2563eb;
+        color: #ffffff;
+        border-color: #2563eb;
+        box-shadow: 0 2px 4px rgba(37, 99, 235, 0.25);
+    }
+    .model-tab-btn {
+        border-radius: 6px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        padding: 0.45rem 0.9rem;
+    }
+    .matrix-table {
+        border-collapse: separate;
+        border-spacing: 6px;
+    }
+    .matrix-cell {
+        min-width: 90px;
+        height: 70px;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 1.1rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.15s ease;
+        cursor: default;
+    }
+    .matrix-cell:hover {
+        transform: scale(1.05);
+    }
+    .matrix-cell-sub {
+        font-size: 0.72rem;
+        font-weight: 500;
+        opacity: 0.85;
+    }
+    .audit-badge-invalidated {
+        background-color: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #f87171;
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+    }
+    .audit-badge-verified {
+        background-color: #dcfce7;
+        color: #166534;
+        border: 1px solid #86efac;
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+    }
+    @media print {
+        #sidebar, .no-print {
+            display: none !important;
+        }
+        body {
+            background: #ffffff !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+
+    <!-- 1. PREMIUM HEADER WITH AUDIT & PRODUCTION MODEL STATUS -->
+    <div class="card shadow-sm border-0 mb-4 bg-white">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                <div>
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="badge bg-primary px-3 py-1 text-uppercase fw-semibold" style="font-size: 0.72rem;">
+                            <i class="bi bi-shield-check me-1"></i>Phase 12D Certified
+                        </span>
+                        <span class="badge bg-success-subtle text-success border border-success px-2 py-1" style="font-size: 0.72rem;">
+                            <i class="bi bi-check-circle-fill me-1"></i>Protocol-Specific Leakage Safeguards Active
+                        </span>
+                    </div>
+                    <h2 class="fw-bold text-dark mb-1">Model Performance &amp; Evaluation Dashboard</h2>
+                    <p class="text-muted mb-0" style="font-size: 0.95rem;">
+                        Rigorous empirical benchmarks, protocol-disjoint generalization analysis, and production governance for ResumeMatch AI.
+                    </p>
+                </div>
+
+                <!-- Export & Print Actions -->
+                <div class="d-flex align-items-center gap-2 no-print">
+                    <button class="btn btn-outline-secondary btn-sm px-3" onclick="window.print()">
+                        <i class="bi bi-printer me-1"></i>Print Report
+                    </button>
+                    <div class="dropdown">
+                        <button class="btn btn-primary btn-sm dropdown-toggle px-3" type="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-download me-1"></i>Export CSV
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                            <li><a class="dropdown-item small" href="/api/model-performance/export?type=comparison"><i class="bi bi-table me-2"></i>Model Comparison Table (CSV)</a></li>
+                            <li><a class="dropdown-item small" href="javascript:void(0)" onclick="exportCurrentMetrics()"><i class="bi bi-file-earmark-bar-graph me-2"></i>Current Protocol Metrics (CSV)</a></li>
+                            <li><a class="dropdown-item small" href="javascript:void(0)" onclick="exportCurrentConfusionMatrix()"><i class="bi bi-grid-3x3 me-2"></i>Current Confusion Matrix (CSV)</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Model Identity Strip -->
+            <hr class="my-3 text-muted opacity-25">
+            <div class="row g-3 small text-muted">
+                <div class="col-md-3">
+                    <span class="text-secondary fw-semibold">Active Production Checkpoint:</span><br>
+                    <strong class="text-dark">{{ dashboard.production_model.model_name }}</strong><br>
+                    <span class="text-muted" style="font-size: 0.75rem;">{{ dashboard.production_model.architecture }}</span>
+                </div>
+                <div class="col-md-3">
+                    <span class="text-secondary fw-semibold">Checkpoint &amp; Checksum:</span><br>
+                    <code class="text-dark bg-light px-2 py-1 rounded" style="font-size: 0.75rem;">models/best_model.joblib (SHA256: {{ dashboard.production_model.sha256[:16] }}...)</code>
+                </div>
+                <div class="col-md-3">
+                    <span class="text-secondary fw-semibold">Training &amp; Eval Partition:</span><br>
+                    <span>Train: Phase 1 (N=6,240) &bull; Test: Held-Out (N=1,759)</span>
+                </div>
+                <div class="col-md-3">
+                    <span class="text-secondary fw-semibold">Production Status:</span><br>
+                    <span class="badge bg-success-subtle text-success border border-success fw-bold px-2 py-1">
+                        <i class="bi bi-lock-fill me-1"></i>ACTIVE IN PRODUCTION (Frozen Checkpoint)
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. PROTOCOL SELECTION BAR -->
+    <div class="card shadow-sm border-0 mb-4 bg-white">
+        <div class="card-body p-3">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                    <span class="text-uppercase fw-bold text-muted small me-2">Select Evaluation Protocol:</span>
+                </div>
+                <div class="d-flex flex-wrap gap-2" id="protocolTabs">
+                    <button class="protocol-tab-btn active" data-protocol="job_disjoint_val" onclick="switchProtocol('job_disjoint_val')">
+                        <i class="bi bi-briefcase-fill me-1"></i>Job-Disjoint Val (N=778)
+                    </button>
+                    <button class="protocol-tab-btn" data-protocol="resume_disjoint_val" onclick="switchProtocol('resume_disjoint_val')">
+                        <i class="bi bi-person-badge-fill me-1"></i>Resume-Disjoint Val (N=1,023)
+                    </button>
+                    <button class="protocol-tab-btn" data-protocol="dual_unseen_val" onclick="switchProtocol('dual_unseen_val')">
+                        <i class="bi bi-shield-slash-fill me-1"></i>Dual-Unseen Val (N=297)
+                    </button>
+                    <button class="protocol-tab-btn" data-protocol="held_out_test" onclick="switchProtocol('held_out_test')">
+                        <i class="bi bi-flag-fill me-1"></i>Official Held-Out Test (N=1,759)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dynamic Protocol Context Description Box with Accurate Leakage Guarantee -->
+            <div class="alert alert-light border mt-3 mb-0 p-3" id="protocolContextBanner">
+                <div class="d-flex align-items-start gap-2">
+                    <i class="bi bi-info-circle-fill text-primary fs-5 mt-1"></i>
+                    <div class="w-100">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <h6 class="fw-bold mb-0 text-dark" id="protoName">Job-Disjoint Validation</h6>
+                                <span class="badge bg-primary-subtle text-primary border" id="protoBadge">Primary Validation Protocol</span>
+                                <span class="badge bg-light text-muted border" id="protoSamples">Sample Size: 778 Pairs (42 Unseen Jobs)</span>
+                            </div>
+                            <span class="badge bg-success-subtle text-success border border-success small" id="protoLeakageStatus">
+                                Protocol Guarantee: 0% Job Overlap, 0% Pair Overlap
+                            </span>
+                        </div>
+                        <p class="text-muted small mb-2 mt-1" id="protoDesc">
+                            Evaluates candidate resumes against completely novel employer job descriptions. 
+                            Simulates real-world platform usage where employers post new vacancies never seen during model training.
+                        </p>
+                        <!-- Protocol-Specific Overlap Transparency Grid -->
+                        <div class="bg-white p-2 rounded border small text-muted d-flex flex-wrap gap-4" id="protoLeakageDetails">
+                            <div><strong>Unseen Disjoint Entities:</strong> <span class="text-dark" id="protoDisjointEntities">42 Job Descriptions (0.0% Overlap)</span></div>
+                            <div><strong>Permitted Resampling Overlap:</strong> <span class="text-dark" id="protoPermittedOverlap">364 / 373 Resumes (97.59% Overlap — Allowed for Job Transfer)</span></div>
+                            <div><strong>Exact Pair Overlap:</strong> <span class="text-success fw-bold" id="protoPairOverlap">0 / 778 Pairs (0.0% — Strictly Disjoint)</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. MODEL SELECTOR TABS WITHIN PROTOCOL (DEFAULT: PRODUCTION BASELINE) -->
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-2">
+            <span class="text-uppercase fw-bold text-muted small">Select Model View:</span>
+            <div class="btn-group" role="group" id="modelSelectorGroup">
+                <!-- Default to Classical Baseline / Production Architecture -->
+                <button type="button" class="btn btn-outline-primary model-tab-btn active" data-model="classical_baseline" onclick="switchModel('classical_baseline')">
+                    <i class="bi bi-star-fill text-warning me-1"></i>Classical Baseline (Production Architecture)
+                </button>
+                <button type="button" class="btn btn-outline-primary model-tab-btn" data-model="hybrid_config_d" onclick="switchModel('hybrid_config_d')">
+                    Hybrid Semantic (Config D)
+                </button>
+                <button type="button" class="btn btn-outline-primary model-tab-btn" data-model="sbert_config_b" onclick="switchModel('sbert_config_b')">
+                    SBERT Embeddings (Config B)
+                </button>
+            </div>
+        </div>
+        <div id="modelContextTag">
+            <!-- Clear Indication of Production vs Experimental Status -->
+            <span class="badge bg-success-subtle text-success border border-success px-2 py-1" id="modelStatusBadge">
+                <i class="bi bi-check-circle-fill me-1"></i>Production Baseline (Reference Architecture)
+            </span>
+        </div>
+    </div>
+
+    <!-- 4. EXECUTIVE KPI CARDS -->
+    <div class="row g-3 mb-4">
+        <!-- 1. Accuracy -->
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="kpi-card h-100">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="kpi-label">Accuracy</span>
+                    <i class="bi bi-question-circle text-muted" data-bs-toggle="tooltip" title="Overall percentage of resume-job compatibility predictions matching ground-truth labels."></i>
+                </div>
+                <div class="kpi-value text-dark" id="kpiAccuracy">48.46%</div>
+                <div class="kpi-context mt-1" id="kpiContextAccuracy">Job-Disjoint (N=778)</div>
+            </div>
+        </div>
+
+        <!-- 2. Macro F1 -->
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="kpi-card h-100">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="kpi-label">Macro F1</span>
+                    <i class="bi bi-question-circle text-muted" data-bs-toggle="tooltip" title="Unweighted harmonic mean of precision and recall averaged equally across No Fit, Potential Fit, and Good Fit."></i>
+                </div>
+                <div class="kpi-value text-primary" id="kpiMacroF1">0.4292</div>
+                <div class="kpi-context mt-1" id="kpiContextMacroF1">Unweighted Mean</div>
+            </div>
+        </div>
+
+        <!-- 3. Balanced Accuracy -->
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="kpi-card h-100">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="kpi-label">Balanced Acc</span>
+                    <i class="bi bi-question-circle text-muted" data-bs-toggle="tooltip" title="Average recall per class; penalizes models that favor the majority 'No Fit' class (50% support)."></i>
+                </div>
+                <div class="kpi-value text-dark" id="kpiBalancedAcc">0.4330</div>
+                <div class="kpi-context mt-1" id="kpiContextBalancedAcc">Class-Averaged</div>
+            </div>
+        </div>
+
+        <!-- 4. Weighted F1 -->
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="kpi-card h-100">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="kpi-label">Weighted F1</span>
+                    <i class="bi bi-question-circle text-muted" data-bs-toggle="tooltip" title="Harmonic mean of precision and recall weighted by true class sample support."></i>
+                </div>
+                <div class="kpi-value text-dark" id="kpiWeightedF1">0.5018</div>
+                <div class="kpi-context mt-1" id="kpiContextWeightedF1">Support-Weighted</div>
+            </div>
+        </div>
+
+        <!-- 5. Good Fit Precision -->
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="kpi-card h-100 border-start border-success border-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="kpi-label text-success">Good Fit Precision</span>
+                    <i class="bi bi-question-circle text-muted" data-bs-toggle="tooltip" title="True Good Fits divided by total predicted Good Fits. Critical metric: prevents false positive recommendations to candidates."></i>
+                </div>
+                <div class="kpi-value text-success" id="kpiGoodFitPrec">21.28%</div>
+                <div class="kpi-context text-success mt-1" id="kpiContextGoodFitPrec">Precision Rate</div>
+            </div>
+        </div>
+
+        <!-- 6. Good Fit Recall -->
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="kpi-card h-100 border-start border-info border-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="kpi-label text-info">Good Fit Recall</span>
+                    <i class="bi bi-question-circle text-muted" data-bs-toggle="tooltip" title="True Good Fits divided by total actual Good Fits in ground truth. Measures coverage of qualified applicants."></i>
+                </div>
+                <div class="kpi-value text-info" id="kpiGoodFitRec">30.08%</div>
+                <div class="kpi-context text-info mt-1" id="kpiContextGoodFitRec">40 of 133 Found</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. INTERACTIVE CONFUSION MATRIX & PER-CLASS PERFORMANCE -->
+    <div class="row g-4 mb-4">
+        <!-- Confusion Matrix Heatmap -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-0 h-100 bg-white">
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <span class="fw-bold text-dark"><i class="bi bi-grid-3x3 text-primary me-2"></i>Interactive Confusion Matrix</span>
+                        <span class="badge bg-light text-muted border ms-2" id="cmModelTitle">Classical Baseline</span>
+                    </div>
+                    <!-- Raw vs Normalized Percentage Toggle -->
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-outline-secondary active" id="btnCmRaw" onclick="toggleCmView('raw')">Counts</button>
+                        <button type="button" class="btn btn-outline-secondary" id="btnCmPct" onclick="toggleCmView('pct')">Row %</button>
+                    </div>
+                </div>
+                <div class="card-body p-4 d-flex flex-column justify-content-center">
+                    <div class="text-center mb-2">
+                        <span class="text-uppercase small fw-bold text-muted">Predicted Compatibility Class &rarr;</span>
+                    </div>
+
+                    <div class="d-flex justify-content-center align-items-center">
+                        <!-- Y-Axis Label -->
+                        <div class="text-uppercase small fw-bold text-muted text-center me-2" style="writing-mode: vertical-rl; transform: rotate(180deg);">
+                            &larr; Actual Ground Truth Class
+                        </div>
+
+                        <!-- 3x3 Heatmap Grid -->
+                        <div class="table-responsive">
+                            <table class="matrix-table text-center align-middle">
+                                <thead>
+                                    <tr class="small text-muted">
+                                        <th style="width: 100px;"></th>
+                                        <th style="width: 110px;">No Fit</th>
+                                        <th style="width: 110px;">Potential</th>
+                                        <th style="width: 110px;">Good Fit</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="text-end pe-2 fw-semibold text-muted small">Actual No Fit</td>
+                                        <td><div class="matrix-cell" id="cell_0_0"><span>241</span><span class="matrix-cell-sub">58.1%</span></div></td>
+                                        <td><div class="matrix-cell" id="cell_0_1"><span>108</span><span class="matrix-cell-sub">26.0%</span></div></td>
+                                        <td><div class="matrix-cell" id="cell_0_2"><span>66</span><span class="matrix-cell-sub">15.9%</span></div></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-end pe-2 fw-semibold text-muted small">Actual Potential</td>
+                                        <td><div class="matrix-cell" id="cell_1_0"><span>52</span><span class="matrix-cell-sub">22.6%</span></div></td>
+                                        <td><div class="matrix-cell" id="cell_1_1"><span>96</span><span class="matrix-cell-sub">41.7%</span></div></td>
+                                        <td><div class="matrix-cell" id="cell_1_2"><span>82</span><span class="matrix-cell-sub">35.7%</span></div></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-end pe-2 fw-semibold text-muted small">Actual Good Fit</td>
+                                        <td><div class="matrix-cell" id="cell_2_0"><span>45</span><span class="matrix-cell-sub">33.8%</span></div></td>
+                                        <td><div class="matrix-cell" id="cell_2_1"><span>48</span><span class="matrix-cell-sub">36.1%</span></div></td>
+                                        <td><div class="matrix-cell" id="cell_2_2"><span>40</span><span class="matrix-cell-sub">30.1%</span></div></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top small text-muted">
+                        <span><i class="bi bi-info-circle me-1"></i>Diagonal cells represent correct classifications.</span>
+                        <span id="cmTotalSamples">Total Samples: 778</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Per-Class Metrics Table & Visual Breakdown -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-0 h-100 bg-white">
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <span class="fw-bold text-dark"><i class="bi bi-bar-chart-steps text-info me-2"></i>Per-Class Precision, Recall &amp; F1-Score</span>
+                    <span class="badge bg-light text-muted border">3-Class Disjoint Evaluation</span>
+                </div>
+                <div class="card-body p-4">
+                    <div class="table-responsive mb-3">
+                        <table class="table table-hover align-middle mb-0 text-center">
+                            <thead class="table-light">
+                                <tr class="small text-muted text-uppercase">
+                                    <th class="text-start ps-3">Class</th>
+                                    <th>Precision</th>
+                                    <th>Recall</th>
+                                    <th>F1-Score</th>
+                                    <th>Support</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="text-start ps-3 fw-bold">
+                                        <span class="badge bg-secondary-subtle text-secondary border me-1">No Fit</span>
+                                    </td>
+                                    <td id="pc_nofit_prec">71.30%</td>
+                                    <td id="pc_nofit_rec">58.07%</td>
+                                    <td><strong id="pc_nofit_f1">0.6401</strong></td>
+                                    <td class="text-muted" id="pc_nofit_sup">415</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-start ps-3 fw-bold">
+                                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning me-1">Potential Fit</span>
+                                    </td>
+                                    <td id="pc_pot_prec">38.10%</td>
+                                    <td id="pc_pot_rec">41.74%</td>
+                                    <td><strong id="pc_pot_f1">0.3983</strong></td>
+                                    <td class="text-muted" id="pc_pot_sup">230</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-start ps-3 fw-bold">
+                                        <span class="badge bg-success-subtle text-success border border-success me-1">Good Fit</span>
+                                    </td>
+                                    <td class="text-success fw-bold" id="pc_good_prec">21.28%</td>
+                                    <td class="text-success fw-bold" id="pc_good_rec">30.08%</td>
+                                    <td><strong class="text-success" id="pc_good_f1">0.2492</strong></td>
+                                    <td class="text-muted" id="pc_good_sup">133</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Visual Performance Bars -->
+                    <div class="mt-4">
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between small fw-semibold mb-1">
+                                <span>No Fit F1-Score (Majority Baseline Class)</span>
+                                <span id="bar_nofit_val">64.0%</span>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-secondary" id="bar_nofit" role="progressbar" style="width: 64.0%;"></div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between small fw-semibold mb-1">
+                                <span>Potential Fit F1-Score (Partial Match Discrimination)</span>
+                                <span id="bar_pot_val">39.8%</span>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-warning" id="bar_pot" role="progressbar" style="width: 39.8%;"></div>
+                            </div>
+                        </div>
+
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between small fw-semibold mb-1">
+                                <span>Good Fit F1-Score (High-Relevance Recommendation)</span>
+                                <span class="text-success" id="bar_good_val">24.9%</span>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-success" id="bar_good" role="progressbar" style="width: 24.9%;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-light border mt-3 p-2 small text-muted mb-0">
+                        <strong>Why Good Fit &amp; Potential Fit Matter:</strong> 
+                        In real talent acquisition, rejecting false positives is paramount. While Classical Baseline achieves 21.28% Good Fit precision on unseen jobs, SBERT raises this to 38.30%–38.97%, reducing false positive applicant surges.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. MASTER MODEL BENCHMARK COMPARISON TABLE -->
+    <div class="card shadow-sm border-0 mb-4 bg-white">
+        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <span class="fw-bold text-dark"><i class="bi bi-table text-primary me-2"></i>Comprehensive Model Benchmark Comparison</span>
+                <span class="badge bg-light text-muted border ms-2">Standardized Benchmark Protocol Comparison</span>
+            </div>
+            <a href="/api/model-performance/export?type=comparison" class="btn btn-outline-secondary btn-sm no-print">
+                <i class="bi bi-file-earmark-spreadsheet me-1"></i>Download CSV
+            </a>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 text-center">
+                    <thead class="table-light">
+                        <tr class="small text-muted text-uppercase">
+                            <th class="text-start ps-4">Model Architecture</th>
+                            <th>Role / Identity</th>
+                            <th>Training Partition</th>
+                            <th>Evaluation Partition</th>
+                            <th>Accuracy</th>
+                            <th>Macro F1</th>
+                            <th>Good Fit Prec</th>
+                            <th>Good Fit Rec</th>
+                            <th>CPU Latency</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in dashboard.comparison_table %}
+                        <tr class="{% if row.is_active %}table-success table-opacity-10{% endif %}">
+                            <td class="text-start ps-4 fw-bold">
+                                {% if row.is_active %}<i class="bi bi-star-fill text-warning me-1"></i>{% endif %}
+                                {{ row.model_name }}
+                            </td>
+                            <td><span class="small text-muted">{{ row.role }}</span></td>
+                            <td><span class="small text-dark">{{ row.training_split }}</span></td>
+                            <td><span class="small text-dark">{{ row.evaluation_split }}</span></td>
+                            <td><strong class="{% if row.is_active %}text-success{% endif %}">{{ "%.2f"|format(row.accuracy * 100) }}%</strong></td>
+                            <td><strong class="text-primary">{{ "%.4f"|format(row.macro_f1) }}</strong></td>
+                            <td><span class="badge {% if row.good_fit_precision >= 0.35 %}bg-success-subtle text-success border border-success{% else %}bg-light text-muted border{% endif %}">{{ "%.2f"|format(row.good_fit_precision * 100) }}%</span></td>
+                            <td>{{ "%.2f"|format(row.good_fit_recall * 100) }}%</td>
+                            <td><code class="small text-dark">{{ row.latency_ms }}</code></td>
+                            <td>
+                                {% if row.verdict == "ACTIVE PRODUCTION" %}
+                                <span class="badge bg-success-subtle text-success border border-success">ACTIVE PRODUCTION</span>
+                                {% elif row.verdict == "EVALUATION BASELINE" %}
+                                <span class="badge bg-secondary-subtle text-secondary border">EVALUATION BASELINE</span>
+                                {% elif "EXPERIMENTAL" in row.verdict %}
+                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning">EXPERIMENTAL (NOT DEPLOYED)</span>
+                                {% else %}
+                                <span class="badge bg-light text-muted border">SUPERSEDED</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer bg-light py-2 px-4 small text-muted">
+            <em>Notice: The Active Production Checkpoint is models/best_model.joblib trained in Phase 1 (N=6,240). Retrained baselines and experimental models were fitted strictly on designated Manifest V1 clean training partitions.</em>
+        </div>
+    </div>
+
+    <!-- 7. DATASET FACTS & PREPROCESSING PROVENANCE GRID -->
+    <div class="card shadow-sm border-0 mb-4 bg-white">
+        <div class="card-header bg-white py-3 border-bottom">
+            <span class="fw-bold text-dark"><i class="bi bi-database-check text-success me-2"></i>Verified Source Dataset Facts &amp; Reconciled Counts</span>
+        </div>
+        <div class="card-body p-4">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <div class="border rounded p-3 h-100 bg-light">
+                        <div class="text-uppercase small text-muted fw-bold">Total Source Dataset</div>
+                        <div class="fs-4 fw-bold text-dark">{{ dashboard.dataset_facts.total_source_pairs }} <span class="fs-6 fw-normal text-muted">Pairs</span></div>
+                        <div class="small text-muted mt-1">Source files: <code>resume_job_fit_train.csv</code> (6,241) + <code>resume_job_fit_test.csv</code> (1,759) = exactly 8,000 pairs.</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="border rounded p-3 h-100 bg-light">
+                        <div class="text-uppercase small text-muted fw-bold">Unique Entities</div>
+                        <div class="fs-4 fw-bold text-primary">{{ dashboard.dataset_facts.unique_resumes }} <span class="fs-6 fw-normal text-muted">Resumes</span> &bull; {{ dashboard.dataset_facts.unique_jobs }} <span class="fs-6 fw-normal text-muted">Jobs</span></div>
+                        <div class="small text-muted mt-1">Train: 642 resumes, 280 jobs. Test: 477 resumes, 71 jobs. 0 shared jobs between train and test!</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="border rounded p-3 h-100 bg-light">
+                        <div class="text-uppercase small text-muted fw-bold">Ground-Truth Distribution</div>
+                        <div class="small mt-1">
+                            <div><span class="badge bg-secondary me-1">No Fit</span> 4,000 (50.0%)</div>
+                            <div class="my-1"><span class="badge bg-warning text-dark me-1">Potential</span> 2,000 (25.0%)</div>
+                            <div><span class="badge bg-success me-1">Good Fit</span> 2,000 (25.0%)</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="border rounded p-3 h-100 bg-light">
+                        <div class="text-uppercase small text-muted fw-bold">Contradictory Label Pairs</div>
+                        <div class="fs-5 fw-bold text-danger mt-1"><i class="bi bi-exclamation-triangle-fill me-1"></i>FLAGGED &amp; EXCLUDED</div>
+                        <div class="small text-muted">6 pair hashes (12 conflicting rows) flagged in Phase 12; excluded from clean training splits in Manifest V1 (SHA256: <code>9f2e34b9...</code>).</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 8. RESEARCH INSIGHTS & INDEPENDENT AUDIT FINDINGS -->
+    <div class="card shadow-sm border-0 mb-4 bg-white">
+        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+            <span class="fw-bold text-dark"><i class="bi bi-lightbulb-fill text-warning me-2"></i>Research Insights &amp; Independent ML Evaluation Audit</span>
+            <span class="badge bg-primary-subtle text-primary border">Phase 12C / 12D Findings</span>
+        </div>
+        <div class="card-body p-4">
+            <div class="row g-3">
+                {% for item in dashboard.audit_findings %}
+                <div class="col-md-6">
+                    <div class="border rounded p-3 h-100">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="fw-bold text-dark mb-0">{{ item.title }}</h6>
+                            <span class="badge {% if 'INVALIDATED' in item.title %}audit-badge-invalidated{% else %}bg-light text-muted border{% endif %}">
+                                {{ item.severity }}
+                            </span>
+                        </div>
+                        <p class="small text-muted mb-0" style="line-height: 1.55;">
+                            {{ item.content }}
+                        </p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 9. HISTORICAL BASELINE & TEST SUITE COMPATIBILITY SECTION -->
+    <div class="card shadow-sm border-0 mb-4 bg-light">
+        <div class="card-header bg-light py-2 px-4 border-bottom d-flex justify-content-between align-items-center">
+            <span class="small fw-semibold text-muted"><i class="bi bi-clock-history me-1"></i>Historical Phase 1 Baseline Reference (For Audit &amp; Test Suite Continuity)</span>
+            <span class="small text-muted">Held-Out Test: <strong>{{ dashboard.historical_reference.held_out_test_accuracy }}</strong> &bull; Test Macro F1: <strong>{{ dashboard.historical_reference.held_out_test_macro_f1 }}</strong> &bull; Unseen Resumes: <strong>{{ dashboard.historical_reference.unseen_resumes_accuracy }}</strong></span>
+        </div>
+        <div class="card-body p-3 small text-muted">
+            <div class="row g-3 align-items-center">
+                <div class="col-md-8">
+                    <span>Baseline models documented during initial development: <strong>Logistic Regression</strong> (Selected), <strong>Linear SVM</strong>, and <strong>Random Forest</strong>. Static diagnostic charts archived in <code>static/images/</code>:</span>
+                    <ul class="mb-0 mt-1 list-inline">
+                        <li class="list-inline-item"><a href="{{ url_for('static', filename='images/confusion_matrix.png') }}" target="_blank" class="text-decoration-none"><i class="bi bi-image me-1"></i>confusion_matrix.png</a></li>
+                        <li class="list-inline-item">&bull;</li>
+                        <li class="list-inline-item"><a href="{{ url_for('static', filename='images/model_comparison.png') }}" target="_blank" class="text-decoration-none"><i class="bi bi-image me-1"></i>model_comparison.png</a></li>
+                        <li class="list-inline-item">&bull;</li>
+                        <li class="list-inline-item"><a href="{{ url_for('static', filename='images/per_class_performance.png') }}" target="_blank" class="text-decoration-none"><i class="bi bi-image me-1"></i>per_class_performance.png</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4 text-end">
+                    <span class="badge bg-white text-muted border p-2">Audit Status: Historical Artifacts Preserved</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- 10. JAVASCRIPT DATA & DYNAMIC INTERACTION LOGIC -->
+<script id="dashboard-raw-data" type="application/json">
+{{ dashboard.raw_json | safe }}
+</script>
+
+<script>
+    // Initialize Tooltips
+    document.addEventListener("DOMContentLoaded", function () {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+
+    // Parse Dashboard Data
+    const DASHBOARD_DATA = JSON.parse(document.getElementById("dashboard-raw-data").textContent);
+    
+    // DEFAULT STATE: Job-Disjoint Validation with Classical Baseline (Production Reference Architecture)
+    let currentProtocol = "job_disjoint_val";
+    let currentModel = "classical_baseline";
+    let currentCmView = "raw"; // 'raw' or 'pct'
+
+    function switchProtocol(protocolId) {
+        if (!DASHBOARD_DATA.protocols[protocolId]) return;
+        currentProtocol = protocolId;
+
+        // Update active tab buttons
+        document.querySelectorAll("#protocolTabs .protocol-tab-btn").forEach(btn => {
+            btn.classList.toggle("active", btn.getAttribute("data-protocol") === protocolId);
+        });
+
+        // Update protocol context banner with protocol-specific guarantees
+        const pInfo = DASHBOARD_DATA.protocols[protocolId];
+        document.getElementById("protoName").textContent = pInfo.name;
+        document.getElementById("protoBadge").textContent = pInfo.badge;
+        document.getElementById("protoSamples").textContent = `Sample Size: ${pInfo.sample_count} Pairs`;
+        document.getElementById("protoDesc").textContent = pInfo.description;
+
+        // Leakage Guarantees Transparency
+        document.getElementById("protoLeakageStatus").textContent = pInfo.leakage_guarantee.status;
+        document.getElementById("protoDisjointEntities").textContent = pInfo.leakage_guarantee.job_overlap || pInfo.leakage_guarantee.resume_overlap;
+        document.getElementById("protoPermittedOverlap").textContent = pInfo.leakage_guarantee.resume_overlap || pInfo.leakage_guarantee.job_overlap;
+        document.getElementById("protoPairOverlap").textContent = pInfo.leakage_guarantee.pair_overlap;
+
+        renderDashboard();
+    }
+
+    function switchModel(modelKey) {
+        currentModel = modelKey;
+        document.querySelectorAll("#modelSelectorGroup .model-tab-btn").forEach(btn => {
+            btn.classList.toggle("active", btn.getAttribute("data-model") === modelKey);
+        });
+        renderDashboard();
+    }
+
+    function toggleCmView(viewType) {
+        currentCmView = viewType;
+        document.getElementById("btnCmRaw").classList.toggle("active", viewType === "raw");
+        document.getElementById("btnCmPct").classList.toggle("active", viewType === "pct");
+        renderConfusionMatrix();
+    }
+
+    function renderDashboard() {
+        const protoData = DASHBOARD_DATA.protocols[currentProtocol];
+        if (!protoData || !protoData.models[currentModel]) return;
+
+        const mInfo = protoData.models[currentModel];
+        const m = mInfo.metrics;
+
+        // 1. Update Model Status Badge (Clear distinction of Production vs Experimental)
+        const badgeEl = document.getElementById("modelStatusBadge");
+        badgeEl.textContent = mInfo.status_text;
+        badgeEl.className = "badge px-2 py-1 " + mInfo.status_badge;
+
+        // 2. Update KPI Cards
+        document.getElementById("kpiAccuracy").textContent = (m.accuracy * 100).toFixed(2) + "%";
+        document.getElementById("kpiContextAccuracy").textContent = `${protoData.name} (N=${protoData.sample_count})`;
+
+        document.getElementById("kpiMacroF1").textContent = m.macro_f1.toFixed(4);
+        document.getElementById("kpiBalancedAcc").textContent = m.balanced_accuracy.toFixed(4);
+        document.getElementById("kpiWeightedF1").textContent = m.weighted_f1.toFixed(4);
+
+        const goodP = m.per_class["Good Fit"].precision;
+        const goodR = m.per_class["Good Fit"].recall;
+        const goodSup = m.per_class["Good Fit"].support;
+        const goodFound = Math.round(goodR * goodSup);
+
+        document.getElementById("kpiGoodFitPrec").textContent = (goodP * 100).toFixed(2) + "%";
+        document.getElementById("kpiContextGoodFitPrec").textContent = mInfo.is_production ? "Precision Rate" : "Experimental Rate";
+
+        document.getElementById("kpiGoodFitRec").textContent = (goodR * 100).toFixed(2) + "%";
+        document.getElementById("kpiContextGoodFitRec").textContent = `${goodFound} of ${goodSup} Found`;
+
+        // 3. Update Confusion Matrix Title & Total
+        document.getElementById("cmModelTitle").textContent = `${mInfo.name} • ${protoData.name}`;
+        document.getElementById("cmTotalSamples").textContent = `Total Samples: ${protoData.sample_count}`;
+
+        // 4. Render Matrix & Per-Class Table
+        renderConfusionMatrix();
+        renderPerClassTable(m.per_class);
+    }
+
+    function renderConfusionMatrix() {
+        const protoData = DASHBOARD_DATA.protocols[currentProtocol];
+        const m = protoData.models[currentModel].metrics;
+        const cm = m.confusion_matrix;
+
+        const rowTotals = cm.map(row => row.reduce((a, b) => a + b, 0));
+
+        for (let r = 0; r < 3; r++) {
+            for (let c = 0; c < 3; c++) {
+                const count = cm[r][c];
+                const pct = rowTotals[r] > 0 ? (count / rowTotals[r] * 100).toFixed(1) : "0.0";
+                const cell = document.getElementById(`cell_${r}_${c}`);
+
+                if (cell) {
+                    const isDiagonal = (r === c);
+                    const intensity = rowTotals[r] > 0 ? (count / rowTotals[r]) : 0;
+                    
+                    if (currentCmView === "raw") {
+                        cell.innerHTML = `<span>${count}</span><span class="matrix-cell-sub">${pct}%</span>`;
+                    } else {
+                        cell.innerHTML = `<span>${pct}%</span><span class="matrix-cell-sub">n=${count}</span>`;
+                    }
+
+                    if (isDiagonal) {
+                        cell.style.backgroundColor = `rgba(37, 99, 235, ${0.15 + intensity * 0.75})`;
+                        cell.style.color = intensity > 0.45 ? "#ffffff" : "#0f172a";
+                    } else {
+                        cell.style.backgroundColor = `rgba(239, 68, 68, ${0.05 + intensity * 0.55})`;
+                        cell.style.color = intensity > 0.4 ? "#ffffff" : "#64748b";
+                    }
+                }
+            }
+        }
+    }
+
+    function renderPerClassTable(perClass) {
+        const noFit = perClass["No Fit"];
+        const pot = perClass["Potential Fit"];
+        const good = perClass["Good Fit"];
+
+        // No Fit
+        document.getElementById("pc_nofit_prec").textContent = (noFit.precision * 100).toFixed(2) + "%";
+        document.getElementById("pc_nofit_rec").textContent = (noFit.recall * 100).toFixed(2) + "%";
+        document.getElementById("pc_nofit_f1").textContent = noFit.f1.toFixed(4);
+        document.getElementById("pc_nofit_sup").textContent = noFit.support;
+        document.getElementById("bar_nofit_val").textContent = (noFit.f1 * 100).toFixed(1) + "%";
+        document.getElementById("bar_nofit").style.width = (noFit.f1 * 100).toFixed(1) + "%";
+
+        // Potential Fit
+        document.getElementById("pc_pot_prec").textContent = (pot.precision * 100).toFixed(2) + "%";
+        document.getElementById("pc_pot_rec").textContent = (pot.recall * 100).toFixed(2) + "%";
+        document.getElementById("pc_pot_f1").textContent = pot.f1.toFixed(4);
+        document.getElementById("pc_pot_sup").textContent = pot.support;
+        document.getElementById("bar_pot_val").textContent = (pot.f1 * 100).toFixed(1) + "%";
+        document.getElementById("bar_pot").style.width = (pot.f1 * 100).toFixed(1) + "%";
+
+        // Good Fit
+        document.getElementById("pc_good_prec").textContent = (good.precision * 100).toFixed(2) + "%";
+        document.getElementById("pc_good_rec").textContent = (good.recall * 100).toFixed(2) + "%";
+        document.getElementById("pc_good_f1").textContent = good.f1.toFixed(4);
+        document.getElementById("pc_good_sup").textContent = good.support;
+        document.getElementById("bar_good_val").textContent = (good.f1 * 100).toFixed(1) + "%";
+        document.getElementById("bar_good").style.width = (good.f1 * 100).toFixed(1) + "%";
+    }
+
+    function exportCurrentMetrics() {
+        window.location.href = `/api/model-performance/export?type=metrics&protocol=${currentProtocol}&model=${currentModel}`;
+    }
+
+    function exportCurrentConfusionMatrix() {
+        window.location.href = `/api/model-performance/export?type=confusion&protocol=${currentProtocol}&model=${currentModel}`;
+    }
+
+    // Initial Render on Page Load
+    renderDashboard();
+</script>
+{% endblock %}

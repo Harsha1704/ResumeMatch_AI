@@ -1,0 +1,23 @@
+{
+  "comparison": "Exp 2 (Supervised Hybrid) vs Exp 4 (Pseudo-Augmented Hybrid)",
+  "evaluation_set": "Dual-Unseen Val (296 rows)",
+  "contingency_table": {
+    "both_incorrect": 156,
+    "hybrid_incorrect_pseudo_correct": 16,
+    "hybrid_correct_pseudo_incorrect": 13,
+    "both_correct": 111
+  },
+  "mcnemar_test": {
+    "statistic": 0.1379,
+    "p_value": 0.7103,
+    "statistically_significant_at_alpha_0_05": false
+  },
+  "bootstrap_paired_difference": {
+    "n_bootstraps": 10000,
+    "mean_accuracy_difference": 0.0102,
+    "ci_95_lower": -0.0236,
+    "ci_95_upper": 0.0473,
+    "ci_contains_zero": true
+  },
+  "scientific_conclusion": "The accuracy difference (+1.02%) has a McNemar p-value of 0.7103 and a 95% bootstrap CI of [-0.0236, 0.0473]. Because the confidence interval crosses zero and p > 0.05, the performance difference between the Supervised Hybrid and Pseudo-Augmented Hybrid is NOT statistically significant. The improvement cannot be claimed as scientifically proven."
+}

@@ -1,0 +1,89 @@
+{
+  "phase": "12I.10",
+  "audit_name": "Official Held-Out Test Entity Overlap & Split Provenance Investigation",
+  "timestamp": "2026-11-14T21:23:30Z",
+  "held_out_test_provenance": {
+    "manifest_file": "manifests/v1/held_out_test_v1.parquet",
+    "sha256": "d4319c1fb86f7708ece03ddb361514940f7416b22958ec6d9c94dc09f367d39b",
+    "record_count": 1759,
+    "unique_resumes": 477,
+    "unique_jobs": 71,
+    "source_dataset": "data/raw/resume_job_fit_test.csv (1,759 rows)",
+    "training_reference_dataset": "data/raw/resume_job_fit_train.csv / manifests/v1/job_disjoint_train_v1.parquet"
+  },
+  "exact_overlap_quantification": {
+    "resume_text_hashes": {
+      "test_unique_resumes": 477,
+      "train_unique_resumes": 642,
+      "overlapping_resumes_count": 476,
+      "overlapping_resumes_percentage": 99.79,
+      "unique_to_test_resumes_count": 1
+    },
+    "job_description_hashes": {
+      "test_unique_jobs": 71,
+      "train_unique_jobs": 280,
+      "overlapping_jobs_count": 0,
+      "overlapping_jobs_percentage": 0.00
+    },
+    "exact_resume_job_pair_hashes": {
+      "test_pairs": 1759,
+      "train_pairs": 5462,
+      "overlapping_pairs_count": 0,
+      "overlapping_pairs_percentage": 0.00
+    }
+  },
+  "protocol_classification_verdict": {
+    "protocol_designation": "STRICTLY_JOB_DISJOINT_TEST_SET",
+    "is_dual_unseen": false,
+    "is_resume_disjoint": false,
+    "is_job_disjoint": true,
+    "operational_definition": "The official held-out test evaluates model generalizability to completely novel job specifications (71 unseen jobs, 0% job overlap) when applied to previously profiled candidate resumes (476 shared resumes, 99.79% overlap)."
+  },
+  "resolution_of_historical_contradiction": {
+    "earlier_audit_claim": "PHASE12E_RESEARCH_READINESS_AUDIT.md and Phase 12F reported 476 of 477 test resumes (99.79%) were seen in training.",
+    "phase12i9_report_text": "Phase 12I.8 and Phase 12I.9 summary tables listed 'Entity Separation: 0 Overlap'.",
+    "reconciliation": "The Phase 12E audit was factually correct: 476 of 477 candidate resumes appear in the training CSV. The Phase 12I.8/12I.9 table label '0 Overlap' was an imprecise shorthand intended to indicate '0 Job Overlap and 0 Pair Overlap' (as certified in manifest_v1.json). It caused readers to incorrectly infer zero candidate overlap. This register formally corrects the description: held_out_test_v1.parquet has 0% job overlap and 99.79% candidate overlap."
+  },
+  "canonical_split_provenance_matrix": [
+    {
+      "split_name": "job_disjoint_val_v1.parquet",
+      "rows": 778,
+      "unique_resumes": 373,
+      "unique_jobs": 42,
+      "job_overlap_with_train": "0 / 42 (0.0%)",
+      "resume_overlap_with_train": "373 / 373 (100.0%)",
+      "pair_overlap_with_train": "0 / 778 (0.0%)",
+      "provenance_type": "JOB_DISJOINT"
+    },
+    {
+      "split_name": "resume_disjoint_val_v1.parquet",
+      "rows": 1023,
+      "unique_resumes": 97,
+      "unique_jobs": 219,
+      "job_overlap_with_train": "219 / 219 (100.0%)",
+      "resume_overlap_with_train": "0 / 97 (0.0%)",
+      "pair_overlap_with_train": "0 / 1023 (0.0%)",
+      "provenance_type": "RESUME_DISJOINT"
+    },
+    {
+      "split_name": "dual_unseen_val_v1.parquet",
+      "rows": 296,
+      "unique_resumes": 91,
+      "unique_jobs": 52,
+      "job_overlap_with_train": "0 / 52 (0.0%)",
+      "resume_overlap_with_train": "0 / 91 (0.0%)",
+      "pair_overlap_with_train": "0 / 296 (0.0%)",
+      "provenance_type": "GENUINE_DUAL_UNSEEN"
+    },
+    {
+      "split_name": "held_out_test_v1.parquet",
+      "rows": 1759,
+      "unique_resumes": 477,
+      "unique_jobs": 71,
+      "job_overlap_with_train": "0 / 71 (0.0%)",
+      "resume_overlap_with_train": "476 / 477 (99.79%)",
+      "pair_overlap_with_train": "0 / 1759 (0.0%)",
+      "provenance_type": "JOB_DISJOINT_REFERENCE_TEST"
+    }
+  ]
+}

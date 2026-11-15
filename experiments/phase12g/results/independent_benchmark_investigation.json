@@ -1,0 +1,30 @@
+{
+  "investigated_corpora": {
+    "internal_resumematch_corpus": {
+      "provenance": "Internal proprietary recruiter-labelled dataset (8,000 pairs)",
+      "label_reliability": "6 known annotation contradictions; ~70%-75% inter-annotator ceiling.",
+      "disjoint_split_availability": "Dual-Unseen (clean N=296), Job-Disjoint (N=1,759), Resume-Disjoint (N=862)",
+      "status": "Active primary frozen benchmark"
+    },
+    "djinni_recruitment_corpus": {
+      "provenance": "ACL 2024 English subset (210,250 CVs, 141,897 JDs)",
+      "pairing_status": "UNPAIRED / DUAL-MODALITY ONLY",
+      "label_availability": "ZERO verified candidate-job match labels in source files.",
+      "valid_uses": [
+        "Self-supervised pre-training & domain adaptation",
+        "Vocabulary & co-occurrence modeling",
+        "Recruiter pilot annotation proposal generation"
+      ],
+      "prohibited_uses": [
+        "Synthetic ground-truth label manufacturing",
+        "Unsupervised pseudo-label evaluation benchmark"
+      ]
+    },
+    "pilot_200_annotation_corpus": {
+      "provenance": "Phase 12E-3.1 stratified sample (200 pairs)",
+      "annotation_status": "PILOT EXECUTION PENDING (Zero synthetic labels created)",
+      "requirements_before_use": "Dual independent human recruiter annotation + Cohen's kappa >= 0.70"
+    }
+  },
+  "scientific_conclusion": "No publicly available open-access dataset currently provides verified three-class candidate-job fit labels matching the ResumeMatch AI task definition. Synthetic label generation is strictly rejected. Frozen Dual-Unseen validation remains the sole verified entity-disjoint ground-truth benchmark."
+}

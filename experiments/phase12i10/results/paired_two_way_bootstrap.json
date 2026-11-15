@@ -1,0 +1,68 @@
+{
+  "phase": "12I.10",
+  "audit_name": "Paired Two-Way Crossed Cluster Bootstrap Analysis",
+  "timestamp": "2026-11-14T21:23:00Z",
+  "methodology": {
+    "bootstrap_framework": "Cameron, Gelbach, & Miller (2011) multi-way clustered resampling for crossed grouping factors",
+    "evaluation_pairs_N": 296,
+    "candidate_clusters_C": 91,
+    "job_clusters_J": 52,
+    "replicate_count_B": 10000,
+    "interval_method": "Empirical Percentile Interval [2.5%, 97.5%]",
+    "paired_difference_formula": "Delta_Acc_b = sum(w_i * [I(pred_cont_i == y_i) - I(pred_raw_i == y_i)]) / sum(w_i)",
+    "multiplier_weights": "w_i = c_counts[cand(i)] * j_counts[job(i)] where counts ~ Multinomial(K, 1/K)"
+  },
+  "per_seed_bootstrap_results": [
+    {
+      "seed": 42,
+      "point_estimate_accuracy_gain_pp": 7.77,
+      "bootstrap_standard_error_pp": 5.21,
+      "ci_95_percentile_percentage_points": [-2.28, 18.18],
+      "ci_95_percentile_decimal": [-0.0228, 0.1818],
+      "degenerate_replicates": 0,
+      "zero_included_in_ci": true
+    },
+    {
+      "seed": 43,
+      "point_estimate_accuracy_gain_pp": 7.43,
+      "bootstrap_standard_error_pp": 5.64,
+      "ci_95_percentile_percentage_points": [-3.74, 18.51],
+      "ci_95_percentile_decimal": [-0.0374, 0.1851],
+      "degenerate_replicates": 0,
+      "zero_included_in_ci": true
+    },
+    {
+      "seed": 44,
+      "point_estimate_accuracy_gain_pp": 1.01,
+      "bootstrap_standard_error_pp": 5.50,
+      "ci_95_percentile_percentage_points": [-9.62, 11.98],
+      "ci_95_percentile_decimal": [-0.0962, 0.1198],
+      "degenerate_replicates": 0,
+      "zero_included_in_ci": true
+    },
+    {
+      "seed": 45,
+      "point_estimate_accuracy_gain_pp": 7.77,
+      "bootstrap_standard_error_pp": 5.90,
+      "ci_95_percentile_percentage_points": [-3.61, 19.75],
+      "ci_95_percentile_decimal": [-0.0361, 0.1975],
+      "degenerate_replicates": 0,
+      "zero_included_in_ci": true
+    },
+    {
+      "seed": 46,
+      "point_estimate_accuracy_gain_pp": 8.11,
+      "bootstrap_standard_error_pp": 5.74,
+      "ci_95_percentile_percentage_points": [-2.71, 19.63],
+      "ci_95_percentile_decimal": [-0.0271, 0.1963],
+      "degenerate_replicates": 0,
+      "zero_included_in_ci": true
+    }
+  ],
+  "aggregate_bootstrap_summary": {
+    "mean_point_estimate_pp": 6.42,
+    "mean_bootstrap_standard_error_pp": 5.60,
+    "inter_seed_variance_pp": 7.34,
+    "scientific_limitation_statement": "Under two-way crossed candidate and job clustering, the effective sample size is deflated (N_eff ~ 160). Consequently, the sampling standard error of the paired difference is inflated to ~5.2 - 5.9 percentage points. While all five point estimates are positive and four of five indicate substantial gains (+7.4% to +8.1%), the two-way cluster bootstrap 95% confidence intervals cross zero across all seeds. A larger evaluation sample (e.g. the planned 2,850 pairs) is required to establish two-way cluster-adjusted statistical significance."
+  }
+}

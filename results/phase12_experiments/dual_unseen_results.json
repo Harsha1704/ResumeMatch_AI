@@ -1,0 +1,46 @@
+{
+  "accuracy": 0.4276,
+  "balanced_accuracy": 0.4076,
+  "macro_precision": 0.4094,
+  "macro_recall": 0.4076,
+  "macro_f1": 0.4041,
+  "weighted_f1": 0.4192,
+  "brier_score": 0.8308,
+  "confusion_matrix": [
+    [
+      72,
+      28,
+      24
+    ],
+    [
+      34,
+      29,
+      17
+    ],
+    [
+      42,
+      25,
+      26
+    ]
+  ],
+  "per_class": {
+    "No Fit": {
+      "precision": 0.4865,
+      "recall": 0.5806,
+      "f1": 0.5294,
+      "support": 124
+    },
+    "Potential Fit": {
+      "precision": 0.3537,
+      "recall": 0.3625,
+      "f1": 0.358,
+      "support": 80
+    },
+    "Good Fit": {
+      "precision": 0.3881,
+      "recall": 0.2796,
+      "f1": 0.325,
+      "support": 93
+    }
+  }
+}

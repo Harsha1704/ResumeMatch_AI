@@ -1,0 +1,44 @@
+{
+  "phase": "12I",
+  "audit_date": "2026-11-14",
+  "sampling_architecture": {
+    "target_benchmark_name": "ResumeMatch-IB-2850 (Independent Benchmark)",
+    "target_sample_size": 2850,
+    "pilot_calibration_size": 200,
+    "source_corpus": "Djinni English Recruitment Corpus (ACL/UNLP 2024)",
+    "sampling_principles": [
+      "1. MODEL-BLIND SAMPLING: Pairs must never be selected based on existing model predictions or embedding similarities, avoiding selection bias.",
+      "2. STRATIFIED DOMAIN COVERAGE: Balanced representation across software engineering, data science/ML, DevOps/cloud, product/project management, and QA.",
+      "3. EXPERIENCE SPREAD: Controlled mix of Junior (0-2 yrs), Mid-level (2-5 yrs), Senior (5-8 yrs), and Lead/Staff (8+ yrs).",
+      "4. BOUNDED ENTITY REUSE: Strictly max 5 pairs per candidate, max 10 pairs per job.",
+      "5. STRICT PROTOCOL QUARANTINE: Unseen entities only; zero hash intersection with internal training manifests."
+    ],
+    "strata_allocations": {
+      "software_engineering_backend_frontend_fullstack": {
+        "percentage": 40.0,
+        "target_pairs": 1140
+      },
+      "devops_cloud_infrastructure": {
+        "percentage": 20.0,
+        "target_pairs": 570
+      },
+      "data_analytics_ml_ai": {
+        "percentage": 20.0,
+        "target_pairs": 570
+      },
+      "qa_test_automation": {
+        "percentage": 10.0,
+        "target_pairs": 285
+      },
+      "product_project_management": {
+        "percentage": 10.0,
+        "target_pairs": 285
+      }
+    },
+    "quarantine_and_isolation_rules": {
+      "pre_annotation_deduplication": "Exact and near-duplicate text deduplication using SHA-256 and MinHash LSH (threshold 0.85).",
+      "overlap_audit_with_internal_splits": "Candidate resume texts and job descriptions must have 0% hash intersection with manifests/v1/dual_unseen_train_v1.parquet and held_out_test_v1.parquet.",
+      "access_control": "Benchmark ground-truth labels stored in encrypted/restricted directory; excluded from all training pipelines and model parameter tuning scripts."
+    }
+  }
+}

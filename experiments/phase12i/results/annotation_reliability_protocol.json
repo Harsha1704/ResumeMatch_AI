@@ -1,0 +1,104 @@
+{
+  "phase": "12I.1",
+  "protocol_name": "Independent Recruiter Annotation Reliability & Quality Assurance Specification",
+  "version": "2.0.0",
+  "created_at": "2026-11-14T08:10:30Z",
+  "auditor_roles": [
+    "Principal Statistical Scientist",
+    "Recruitment Annotation Specialist",
+    "Independent ML Evaluation Auditor"
+  ],
+  "independence_architecture": {
+    "workflow_type": "Double-Blind Independent Annotation with Tie-Break Adjudication",
+    "blinded_factors": [
+      "Model predictions (ML outputs strictly masked)",
+      "Peer annotator ratings (Annotators work in isolated queues)",
+      "Candidate PII / Identity (Demographic and direct identifying attributes stripped)",
+      "Job Company PII (Firm names masked to prevent prestige bias)"
+    ],
+    "adjudication_timing": "Post-Independent Assessment Only",
+    "cardinal_rule": "Inter-annotator agreement metrics (Kappa, percent concordance) MUST be computed strictly on pre-adjudication ratings. Computing reliability on adjudicated consensus labels is strictly prohibited."
+  },
+  "metrics_specification": {
+    "unweighted_cohen_kappa": {
+      "formula": "kappa = (P_o - P_e) / (1 - P_e)",
+      "purpose": "Measures exact category concordance corrected for chance agreement",
+      "threshold_acceptable": 0.60,
+      "threshold_target": 0.70
+    },
+    "quadratic_weighted_cohen_kappa": {
+      "formula": "kappa_w = 1 - (sum(w_ij * O_ij) / sum(w_ij * E_ij)) where w_ij = ((i - j) / (k - 1))^2",
+      "purpose": "Primary statistical reliability metric penalizing ordinal discordance (Class 0 vs Class 2 discordance penalized 4x higher than Class 0 vs Class 1)",
+      "threshold_rejection": "< 0.70",
+      "threshold_conditional": "0.70 - 0.75",
+      "threshold_target": ">= 0.75"
+    },
+    "per_class_concordance": {
+      "metric": "Class-specific F1 and recall between raters",
+      "confusion_matrix_shape": [3, 3],
+      "monitored_sub_metrics": [
+        "Class 0 (No Fit) Concordance",
+        "Class 1 (Potential Fit) Concordance (Historically highest variance)",
+        "Class 2 (Good Fit) Concordance"
+      ]
+    },
+    "adjudication_rate": {
+      "definition": "Proportion of pairs where Rater 1 != Rater 2 requiring Senior Lead Adjudication",
+      "expected_baseline": "18% - 28%",
+      "maximum_allowable": "35%",
+      "severe_disagreement_definition": "|Rater 1 - Rater 2| == 2 (Class 0 vs Class 2 discordance)",
+      "max_severe_disagreement_rate": "3.0%"
+    }
+  },
+  "remediation_protocol": {
+    "trigger_conditions": [
+      {
+        "condition": "quadratic_weighted_kappa < 0.70",
+        "action": "Immediate batch halt; freeze annotation queue; mandatory rubric calibration workshop."
+      },
+      {
+        "condition": "severe_disagreement_rate > 3.0%",
+        "action": "Mandatory audit of annotator pairs; check for systematic misunderstandings of mandatory vs preferred criteria."
+      },
+      {
+        "condition": "annotator_specific_kappa < 0.60 across 50 pairs",
+        "action": "Annotator disqualified; past annotations flagged for complete re-rating by alternative qualified recruiter."
+      }
+    ],
+    "corrective_workflow": [
+      "Step 1: Isolate discordance sub-matrix to determine whether ambiguity stems from seniority, tech stack equivalence, or domain boundaries.",
+      "Step 2: Update Annotation Rubric with targeted edge-case clarifications and concrete exemplars.",
+      "Step 3: Conduct a 30-pair consensus calibration exercise.",
+      "Step 4: Discard discordant batch from final benchmark queue; re-annotate fresh sampled pairs."
+    ]
+  },
+  "adjudication_governance": {
+    "adjudicator_profile": "Lead Technical Recruiter or Principal Hiring Manager with >= 7 years domain experience",
+    "adjudication_rules": [
+      "Adjudicator has access to both Rater 1 and Rater 2 evidence quotes and rationales.",
+      "Adjudicator makes independent final classification from {0, 1, 2}.",
+      "Adjudicated labels form the definitive evaluation benchmark ground truth.",
+      "Adjudicated labels are NEVER fed into model training, fine-tuning, or hyperparameter optimization (quarantine enforced)."
+    ]
+  },
+  "audit_trail": {
+    "version": "12I.1-QA-01",
+    "immutable_logging": true,
+    "log_fields": [
+      "pair_id",
+      "rater_1_id",
+      "rater_1_label",
+      "rater_1_confidence",
+      "rater_1_evidence",
+      "rater_2_id",
+      "rater_2_label",
+      "rater_2_confidence",
+      "rater_2_evidence",
+      "is_discordant",
+      "is_severe_discordance",
+      "adjudicator_id",
+      "adjudicated_label",
+      "adjudication_rationale"
+    ]
+  }
+}

@@ -1,0 +1,158 @@
+[
+  {
+    "pair_hash": "11665d9d0e6a41e9aa35f9bf68ec08d1_ec15bf28b30f2c30ac860e1d2ca2840a",
+    "count": 2,
+    "labels": [
+      "No Fit",
+      "Good Fit"
+    ],
+    "row_indices": [
+      381,
+      5152
+    ],
+    "resume_char_len": 2138,
+    "job_char_len": 1076,
+    "resume_skills_count": 20,
+    "job_skills_count": 12,
+    "skill_overlap_count": 3,
+    "skill_overlap": [
+      "accounting",
+      "excel",
+      "finance"
+    ],
+    "resume_snippet": "QUALIFICATIONS\u2022\u00a0\u00a0 Over two years' experience of data analysis at Loyola Chicago University; providing statistical analysis plan and generating report, tables, graphs; proficient in R and SAS.\u2022\u00a0\u00a0 Proficient in Microsoft Office, Word, Excel and Power P",
+    "job_snippet": "Calling all data nerds who love finance!  If you're a data wiz but tired of sitting behind systems 100 percent of the time, this role offers the best of both worlds: 50% technical Tableau ownership and 50% FP&A support. The FP&A component means build"
+  },
+  {
+    "pair_hash": "388dae3fdac9ec08db9f6fe0095602e7_87ad0608defe0e01c4bba1c18c2458b1",
+    "count": 2,
+    "labels": [
+      "No Fit",
+      "Potential Fit"
+    ],
+    "row_indices": [
+      312,
+      3706
+    ],
+    "resume_char_len": 2494,
+    "job_char_len": 1982,
+    "resume_skills_count": 26,
+    "job_skills_count": 21,
+    "skill_overlap_count": 0,
+    "skill_overlap": [],
+    "resume_snippet": "SummaryHighly motivated Sales Associate with extensive customer service and sales experience. Outgoing sales professional with track record of driving increased sales, improving buying experience and elevating company profile with target market. Prof",
+    "job_snippet": "Alexander Technology Group is currently exclusively working with a local Food and Beverage Manufacturer out of the DedhamWestwood are looking for a direct hire ERP Business Analyst. Organization is currently in growth mode.  They are currently in the"
+  },
+  {
+    "pair_hash": "46d1f66aa01ead62b6d9e692e30e61f9_60308260a83c1138dda45b2b92682b59",
+    "count": 2,
+    "labels": [
+      "No Fit",
+      "Potential Fit"
+    ],
+    "row_indices": [
+      520,
+      4492
+    ],
+    "resume_char_len": 7256,
+    "job_char_len": 3261,
+    "resume_skills_count": 54,
+    "job_skills_count": 21,
+    "skill_overlap_count": 9,
+    "skill_overlap": [
+      "cloud services",
+      "data warehousing",
+      "design",
+      "documentation",
+      "engineering",
+      "etl",
+      "integration",
+      "marketing",
+      "python"
+    ],
+    "resume_snippet": "Professional SummaryBusiness Intelligence Consultant with a 10-year career in data warehousing, business intelligence reporting, and data management architecture. Progressive developer and technical team lead with a strength in design & development, ",
+    "job_snippet": "ROR Partners is a rapidly growing, client-driven digital marketing and data company. We offer proven marketing solutions to a variety of vertical industries on a nationwide basis. ROR is seeking a Principal Data Engineer to serve as a key data archit"
+  },
+  {
+    "pair_hash": "6edd1be326604b84a32c195316515d44_23becff435b17ca78e01de5861c64ccd",
+    "count": 2,
+    "labels": [
+      "No Fit",
+      "Good Fit"
+    ],
+    "row_indices": [
+      46,
+      4919
+    ],
+    "resume_char_len": 16072,
+    "job_char_len": 3553,
+    "resume_skills_count": 102,
+    "job_skills_count": 30,
+    "skill_overlap_count": 9,
+    "skill_overlap": [
+      "analytics",
+      "communication",
+      "design",
+      "development",
+      "excel",
+      "git",
+      "integration",
+      "planning",
+      "testing"
+    ],
+    "resume_snippet": "SummaryDynamic and motivated IT professional with around 7 years of experience as a Big Data Engineer with expertise in designing data intensive applications using Hadoop Ecosystem , Big Data Analytical , Cloud Data engineering , Data Warehouse / Dat",
+    "job_snippet": "Business Analyst Location: Remote.Duration: 12 + months.MOI: Skype   About the RoleThe Business Analyst will support a cross-functional project teams focused on driving the end-to-end digital product lifecycle for features and products to improve the"
+  },
+  {
+    "pair_hash": "80641268fd459f1880862e7c2642997e_d910ee3f6af11e98c761552f0446293c",
+    "count": 2,
+    "labels": [
+      "No Fit",
+      "Good Fit"
+    ],
+    "row_indices": [
+      585,
+      4888
+    ],
+    "resume_char_len": 16799,
+    "job_char_len": 3620,
+    "resume_skills_count": 67,
+    "job_skills_count": 19,
+    "skill_overlap_count": 7,
+    "skill_overlap": [
+      "design",
+      "documentation",
+      "driven",
+      "employment",
+      "integration",
+      "planning",
+      "teams"
+    ],
+    "resume_snippet": "SummaryPursue a challenging and rewarding position as a QA Analyst/ Software Quality Assurance Specialist in the competitive information technology industry where I can utilize my technical skills and abilities to accomplish professional growth while",
+    "job_snippet": "Cloud and Things is a leading provider of IT solutions in the public sector. We are dedicated to delivering results and solving complex challenges for our clients. We are looking for individuals who are passionate about making a difference in the wor"
+  },
+  {
+    "pair_hash": "e10d5bf070a51cead1d894b66a30f85e_37c711dcd7f0ca387b74abceb2b944b3",
+    "count": 2,
+    "labels": [
+      "No Fit",
+      "Good Fit"
+    ],
+    "row_indices": [
+      377,
+      5903
+    ],
+    "resume_char_len": 8850,
+    "job_char_len": 2189,
+    "resume_skills_count": 63,
+    "job_skills_count": 20,
+    "skill_overlap_count": 3,
+    "skill_overlap": [
+      "business analysis",
+      "excel",
+      "testing"
+    ],
+    "resume_snippet": "ProfileOver 4 Years of Business Intelligence /SQL Developer and Data Analyst experience with Bachelors of Computer Science and Information Systems. Extensive background and knowledge in Power BI, Tableau, T-SQL, SSIS, SSRS and many more reporting too",
+    "job_snippet": "Role - Business Analyst - Mobile Location - Louisville, KY (Onsite)  Responsibilities:Evaluating business processes, anticipating requirements, uncovering areas for improvement, and developing and implementing solutions. Leading ongoing reviews of bu"
+  }
+]

@@ -1,0 +1,328 @@
+{
+  "exp1_clean_dual_unseen_baseline_logreg": {
+    "accuracy": 0.3682,
+    "balanced_accuracy": 0.3368,
+    "macro_precision": 0.3222,
+    "macro_recall": 0.3368,
+    "macro_f1": 0.3229,
+    "weighted_f1": 0.3469,
+    "brier_score": 1.3146,
+    "per_class": {
+      "No Fit": {
+        "precision": 0.4688,
+        "recall": 0.6098,
+        "f1": 0.53,
+        "support": 123
+      },
+      "Potential Fit": {
+        "precision": 0.2564,
+        "recall": 0.25,
+        "f1": 0.2532,
+        "support": 80
+      },
+      "Good Fit": {
+        "precision": 0.2414,
+        "recall": 0.1505,
+        "f1": 0.1854,
+        "support": 93
+      }
+    },
+    "confusion_matrix": [
+      [
+        75,
+        27,
+        21
+      ],
+      [
+        37,
+        20,
+        23
+      ],
+      [
+        48,
+        31,
+        14
+      ]
+    ],
+    "training_time_sec": 3.39,
+    "inference_latency_ms": 0.0041
+  },
+  "exp2_clean_dual_unseen_supervised_hybrid": {
+    "accuracy": 0.4189,
+    "balanced_accuracy": 0.399,
+    "macro_precision": 0.3924,
+    "macro_recall": 0.399,
+    "macro_f1": 0.374,
+    "weighted_f1": 0.3939,
+    "brier_score": 0.6839,
+    "per_class": {
+      "No Fit": {
+        "precision": 0.5241,
+        "recall": 0.6179,
+        "f1": 0.5672,
+        "support": 123
+      },
+      "Potential Fit": {
+        "precision": 0.3103,
+        "recall": 0.45,
+        "f1": 0.3673,
+        "support": 80
+      },
+      "Good Fit": {
+        "precision": 0.3429,
+        "recall": 0.129,
+        "f1": 0.1875,
+        "support": 93
+      }
+    },
+    "confusion_matrix": [
+      [
+        76,
+        31,
+        16
+      ],
+      [
+        37,
+        36,
+        7
+      ],
+      [
+        32,
+        49,
+        12
+      ]
+    ],
+    "training_time_sec": 83.68,
+    "inference_latency_ms": 0.0438
+  },
+  "exp3_clean_dual_unseen_weak_hybrid": {
+    "accuracy": 0.402,
+    "balanced_accuracy": 0.3744,
+    "macro_precision": 0.3764,
+    "macro_recall": 0.3744,
+    "macro_f1": 0.3505,
+    "weighted_f1": 0.3748,
+    "brier_score": 0.6844,
+    "per_class": {
+      "No Fit": {
+        "precision": 0.513,
+        "recall": 0.6423,
+        "f1": 0.5704,
+        "support": 123
+      },
+      "Potential Fit": {
+        "precision": 0.2613,
+        "recall": 0.3625,
+        "f1": 0.3037,
+        "support": 80
+      },
+      "Good Fit": {
+        "precision": 0.3548,
+        "recall": 0.1183,
+        "f1": 0.1774,
+        "support": 93
+      }
+    },
+    "confusion_matrix": [
+      [
+        79,
+        35,
+        9
+      ],
+      [
+        40,
+        29,
+        11
+      ],
+      [
+        35,
+        47,
+        11
+      ]
+    ],
+    "training_time_sec": 78.08,
+    "lf_statistics": {
+      "num_lfs": 5,
+      "overall_coverage": 0.9666,
+      "overlap_rate": 0.7568,
+      "conflict_rate": 0.4397,
+      "per_lf_coverage": {
+        "lf_mandatory_skill_coverage": 0.6775,
+        "lf_experience_gap": 0.5105,
+        "lf_veto_disqualification": 0.0775,
+        "lf_transferable_skills": 0.042,
+        "lf_jaccard_similarity": 0.7599
+      }
+    },
+    "consensus_accuracy": 0.404
+  },
+  "exp4_clean_dual_unseen_pseudo_augmented": {
+    "accuracy": 0.4291,
+    "balanced_accuracy": 0.4115,
+    "macro_precision": 0.4217,
+    "macro_recall": 0.4115,
+    "macro_f1": 0.3953,
+    "weighted_f1": 0.4138,
+    "brier_score": 0.6844,
+    "per_class": {
+      "No Fit": {
+        "precision": 0.5324,
+        "recall": 0.6016,
+        "f1": 0.5649,
+        "support": 123
+      },
+      "Potential Fit": {
+        "precision": 0.3077,
+        "recall": 0.45,
+        "f1": 0.3655,
+        "support": 80
+      },
+      "Good Fit": {
+        "precision": 0.425,
+        "recall": 0.1828,
+        "f1": 0.2556,
+        "support": 93
+      }
+    },
+    "confusion_matrix": [
+      [
+        74,
+        35,
+        14
+      ],
+      [
+        35,
+        36,
+        9
+      ],
+      [
+        30,
+        46,
+        17
+      ]
+    ],
+    "pseudo_label_stats": {
+      "total_candidates_screened": 300,
+      "total_admitted": 7,
+      "admission_rate": 0.0233,
+      "class_distribution": {
+        "No Fit": 3,
+        "Potential Fit": 4,
+        "Good Fit": 0
+      },
+      "rejections": {
+        "model_disagreement": 216,
+        "low_confidence": 74,
+        "low_margin": 0,
+        "test_overlap_leakage": 0,
+        "class_cap_exceeded": 3
+      }
+    }
+  },
+  "exp5_contrastive_projector_dual_unseen": {
+    "raw_sbert_separation": 0.0772,
+    "projected_separation": 0.213,
+    "separation_delta": 0.1359,
+    "epochs": 10,
+    "input_dim": 384,
+    "output_dim": 128
+  },
+  "job_disjoint_val_hybrid": {
+    "accuracy": 0.491,
+    "balanced_accuracy": 0.3828,
+    "macro_precision": 0.3424,
+    "macro_recall": 0.3828,
+    "macro_f1": 0.3549,
+    "weighted_f1": 0.4681,
+    "brier_score": 0.6187,
+    "per_class": {
+      "No Fit": {
+        "precision": 0.6617,
+        "recall": 0.641,
+        "f1": 0.6512,
+        "support": 415
+      },
+      "Potential Fit": {
+        "precision": 0.3353,
+        "recall": 0.5,
+        "f1": 0.4014,
+        "support": 230
+      },
+      "Good Fit": {
+        "precision": 0.0303,
+        "recall": 0.0075,
+        "f1": 0.012,
+        "support": 133
+      }
+    },
+    "confusion_matrix": [
+      [
+        266,
+        142,
+        7
+      ],
+      [
+        90,
+        115,
+        25
+      ],
+      [
+        46,
+        86,
+        1
+      ]
+    ]
+  },
+  "held_out_test_official_hybrid": {
+    "accuracy": 0.5156,
+    "balanced_accuracy": 0.4673,
+    "macro_precision": 0.5134,
+    "macro_recall": 0.4673,
+    "macro_f1": 0.4535,
+    "weighted_f1": 0.499,
+    "brier_score": 0.6056,
+    "per_class": {
+      "No Fit": {
+        "precision": 0.6263,
+        "recall": 0.6826,
+        "f1": 0.6533,
+        "support": 857
+      },
+      "Potential Fit": {
+        "precision": 0.3498,
+        "recall": 0.527,
+        "f1": 0.4205,
+        "support": 444
+      },
+      "Good Fit": {
+        "precision": 0.5641,
+        "recall": 0.1921,
+        "f1": 0.2866,
+        "support": 458
+      }
+    },
+    "confusion_matrix": [
+      [
+        585,
+        244,
+        28
+      ],
+      [
+        170,
+        234,
+        40
+      ],
+      [
+        179,
+        191,
+        88
+      ]
+    ]
+  },
+  "rge_document_understanding": {
+    "avg_rge_total_words": 201.1,
+    "raw_truncation_skill_retention": 0.5652,
+    "rge_skill_retention": 0.7668,
+    "skill_retention_gain_pct": 20.16
+  }
+}

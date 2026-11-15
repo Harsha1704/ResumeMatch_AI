@@ -1,0 +1,133 @@
+{
+  "manifest_version": "2.0.0-djinni-acquisition",
+  "phase": "12E-1",
+  "created_at": "2026-11-13T17:05:00Z",
+  "author": "Principal Machine Learning Engineer & Dataset Auditor",
+  "description": "Cryptographic dataset manifest tracking external Djinni recruitment corpora and core ResumeMatch AI datasets",
+  "primary_production_checkpoint": {
+    "artifact_path": "models/best_model.joblib",
+    "sha256": "1001BAAF42DB8832E1BA3E28EE9DA7146E59F1D2D1808C73C4F7587535B2ED4A",
+    "status": "FROZEN_IMMUTABLE"
+  },
+  "core_anchor_dataset": {
+    "train_split": {
+      "file_path": "data/raw/resume_job_fit_train.csv",
+      "sha256": "b86fa488a21258015de1750633a9ac410f701ff96bf533f68978dbe3adec6d40",
+      "record_count": 6241,
+      "unique_resumes": 642,
+      "unique_jobs": 280,
+      "labels": {
+        "No Fit": 3143,
+        "Potential Fit": 1556,
+        "Good Fit": 1542
+      }
+    },
+    "held_out_test_split": {
+      "file_path": "data/raw/resume_job_fit_test.csv",
+      "sha256": "f3c48f4cc3559bf192ebb9c241a30c601b5b8b3eee6f1656dd4d26dfd4b0887a",
+      "record_count": 1759,
+      "unique_resumes": 477,
+      "unique_jobs": 71,
+      "unseen_jobs_overlap_with_train": "0.0%",
+      "labels": {
+        "No Fit": 857,
+        "Potential Fit": 444,
+        "Good Fit": 458
+      }
+    }
+  },
+  "external_djinni_sources": {
+    "candidate_profiles": {
+      "repository": "lang-uk/recruitment-dataset-candidate-profiles-english",
+      "source_url": "https://huggingface.co/datasets/lang-uk/recruitment-dataset-candidate-profiles-english",
+      "paper_citation": "ACL Anthology: 2024.unlp-1.2",
+      "license": "MIT",
+      "local_path": "data/external/djinni/djinni_candidate_profiles_english.parquet",
+      "sha256": "a7b1378e0b231507c377659bf2c80fa4ba60c4e31e1107b13425d103879ecc3b",
+      "file_size_bytes": 237415736,
+      "record_count": 210250,
+      "unique_ids": 210250,
+      "language": "en (100.0%)",
+      "columns": [
+        "Position",
+        "Moreinfo",
+        "Looking For",
+        "Highlights",
+        "Primary Keyword",
+        "English Level",
+        "Experience Years",
+        "CV",
+        "CV_lang",
+        "id",
+        "__index_level_0__"
+      ]
+    },
+    "job_descriptions": {
+      "repository": "lang-uk/recruitment-dataset-job-descriptions-english",
+      "source_url": "https://huggingface.co/datasets/lang-uk/recruitment-dataset-job-descriptions-english",
+      "paper_citation": "ACL Anthology: 2024.unlp-1.2",
+      "license": "MIT",
+      "local_path": "data/external/djinni/djinni_job_descriptions_english.parquet",
+      "sha256": "71dddaf0d9660f34ddf946953b67f54f1e7d60e22dcf9a4b8139b6378b18aab9",
+      "file_size_bytes": 145859589,
+      "record_count": 141897,
+      "unique_ids": 141897,
+      "language": "en (100.0%)",
+      "columns": [
+        "Position",
+        "Long Description",
+        "Company Name",
+        "Exp Years",
+        "Primary Keyword",
+        "English Level",
+        "Published",
+        "Long Description_lang",
+        "id",
+        "__index_level_0__"
+      ]
+    }
+  },
+  "pairing_and_labeling_status": {
+    "direct_matching_table_in_source": false,
+    "shared_identifiers": 0,
+    "pairing_method": "Stratified candidate-pair proposal via domain keywords, experience thresholds, and text alignment",
+    "proposed_pairs_pool": {
+      "file_path": "data/external/djinni/proposed_candidate_pairs_sample.csv",
+      "sha256": "0923f8a779511ba1a3761ac71b8bff963375bbc5004656a6d2fc7c89ba2ef76e",
+      "record_count": 830,
+      "job_coverage": 120,
+      "strata": {
+        "HIGH_ALIGNMENT_PROPOSAL": 360,
+        "BORDERLINE_RUNNER_UP_PROPOSAL": 230,
+        "CROSS_DOMAIN_NEGATIVE_CONTROL": 240
+      },
+      "labeled_status": "UNLABELLED_READY_FOR_HUMAN_ANNOTATION"
+    },
+    "annotation_template": {
+      "file_path": "PHASE12E2_PAIR_ANNOTATION_TEMPLATE.csv",
+      "sha256": "21709044bd4edeefa0a15977f63234b4174f7ae3fcc579067142b4ec2f3f05c2",
+      "sample_size": 50,
+      "annotation_columns": [
+        "pair_id",
+        "candidate_id",
+        "job_id",
+        "domain_keyword",
+        "stratum_type",
+        "candidate_position",
+        "job_position",
+        "candidate_exp_years",
+        "job_exp_years_req",
+        "candidate_english",
+        "job_english_req",
+        "candidate_cv_text",
+        "job_description_text",
+        "annotator_1_label",
+        "annotator_1_evidence",
+        "annotator_2_label",
+        "annotator_2_evidence",
+        "adjudicated_label",
+        "adjudication_notes"
+      ]
+    }
+  }
+}

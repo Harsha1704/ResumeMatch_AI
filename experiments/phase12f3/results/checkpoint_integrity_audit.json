@@ -1,0 +1,35 @@
+{
+  "production_model": {
+    "path": "D:\\skillsync1\\models\\best_model.joblib",
+    "sha256": "1001baaf42db8832e1ba3e28ee9da7146e59f1d2d1808c73c4f7587535b2ed4a",
+    "physical_bytes": 61487,
+    "model_type": "<class 'sklearn.linear_model._logistic.LogisticRegression'>",
+    "classes": [
+      "Good Fit",
+      "No Fit",
+      "Potential Fit"
+    ],
+    "coef_shape": [
+      3,
+      2518
+    ],
+    "intercept_shape": [
+      3
+    ],
+    "n_features_in": 2518,
+    "status": "FROZEN_UNCHANGED"
+  },
+  "challenger_model": {
+    "path": "D:\\skillsync1\\models\\phase12f\\challenger_model_phase12f.joblib",
+    "sha256": "5934990e987abe98223bf790ac9e9a79fb5ec99daac4509093e8eb0036461766",
+    "physical_bytes": 2330440,
+    "model_type": "<class 'src.phase12f.models.HybridStackingClassifier'>",
+    "mtime": "Fri Nov 13 19:25:19 2026",
+    "base_models": [
+      "<class 'lightgbm.sklearn.LGBMClassifier'>",
+      "<class 'catboost.core.CatBoostClassifier'>"
+    ],
+    "meta_learner": "<class 'sklearn.linear_model._logistic.LogisticRegression'>",
+    "status": "EVALUATED_WITHHELD"
+  }
+}

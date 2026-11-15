@@ -1,0 +1,92 @@
+{
+  "total_train_rows": 6241,
+  "duplicate_pair_rows": 14,
+  "duplicate_pair_groups": 7,
+  "conflicting_label_groups": 6,
+  "duplicate_groups_detail": [
+    {
+      "resume_hash": "061424265a1ad033",
+      "job_hash": "174dac792062c8d5",
+      "count": 2,
+      "labels": [
+        "No Fit",
+        "Good Fit"
+      ],
+      "is_conflicting": true,
+      "job_preview": "Cloud and Things is a leading provider of IT solutions in the public sector. We ",
+      "resume_preview": "SummaryPursue a challenging and rewarding position as a QA Analyst/ Software Qua"
+    },
+    {
+      "resume_hash": "15c8b1fdfc8dbcbd",
+      "job_hash": "a89b13093ec66700",
+      "count": 2,
+      "labels": [
+        "No Fit",
+        "Good Fit"
+      ],
+      "is_conflicting": true,
+      "job_preview": "Calling all data nerds who love finance!  If you're a data wiz but tired of sitt",
+      "resume_preview": "QUALIFICATIONS\u2022\u00a0\u00a0 Over two years' experience of data analysis at Loyola Chicago "
+    },
+    {
+      "resume_hash": "31353b84f622f3ab",
+      "job_hash": "de43d930bdf712ac",
+      "count": 2,
+      "labels": [
+        "No Fit",
+        "Potential Fit"
+      ],
+      "is_conflicting": true,
+      "job_preview": "Alexander Technology Group is currently exclusively working with a local Food an",
+      "resume_preview": "SummaryHighly motivated Sales Associate with extensive customer service and sale"
+    },
+    {
+      "resume_hash": "34e6ec8a70607983",
+      "job_hash": "dfd9366467aab817",
+      "count": 2,
+      "labels": [
+        "No Fit",
+        "No Fit"
+      ],
+      "is_conflicting": false,
+      "job_preview": "The Senior Manager, Data Architecture & Data Engineering is responsible for tran",
+      "resume_preview": "SummaryHighly proficient Business Analyst with 5 year experience and technical a"
+    },
+    {
+      "resume_hash": "9d06f02b7d7f8545",
+      "job_hash": "4eda39838f75c343",
+      "count": 2,
+      "labels": [
+        "No Fit",
+        "Potential Fit"
+      ],
+      "is_conflicting": true,
+      "job_preview": "ROR Partners is a rapidly growing, client-driven digital marketing and data comp",
+      "resume_preview": "Professional SummaryBusiness Intelligence Consultant with a 10-year career in da"
+    },
+    {
+      "resume_hash": "9ec670d617d35247",
+      "job_hash": "78a2a1e24cb08975",
+      "count": 2,
+      "labels": [
+        "No Fit",
+        "Good Fit"
+      ],
+      "is_conflicting": true,
+      "job_preview": "Business Analyst Location: Remote.Duration: 12 + months.MOI: Skype   About the R",
+      "resume_preview": "SummaryDynamic and motivated IT professional with around 7 years of experience a"
+    },
+    {
+      "resume_hash": "d18688d1d366b751",
+      "job_hash": "da2867c899132d46",
+      "count": 2,
+      "labels": [
+        "No Fit",
+        "Good Fit"
+      ],
+      "is_conflicting": true,
+      "job_preview": "Role - Business Analyst - Mobile Location - Louisville, KY (Onsite)  Responsibil",
+      "resume_preview": "ProfileOver 4 Years of Business Intelligence /SQL Developer and Data Analyst exp"
+    }
+  ]
+}

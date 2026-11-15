@@ -1,0 +1,121 @@
+{
+  "phase": "12I.9",
+  "audit_name": "Five-Seed Significance & Correlated-Test Forensic Audit",
+  "timestamp": "2026-11-14T21:10:30Z",
+  "validation_dataset": {
+    "manifest_source": "manifests/v1/dual_unseen_val_v1.parquet",
+    "evaluated_rows": 296,
+    "unique_candidates": 91,
+    "unique_jobs": 52,
+    "alignment_verification": "All five seeds evaluate identical 296 pairs with identical resume and job hashes in identical sequence."
+  },
+  "per_seed_evaluations": [
+    {
+      "seed": 42,
+      "raw_sbert_accuracy": 0.3818,
+      "contrastive_accuracy": 0.4595,
+      "accuracy_gain_pp": 7.77,
+      "contingency_table": {
+        "n00_both_incorrect": 130,
+        "n10_raw_only_correct_b": 30,
+        "n01_contrastive_only_correct_c": 53,
+        "n11_both_correct": 83
+      },
+      "total_discordant_pairs": 83,
+      "mcnemar_chi2_corrected": 5.8313,
+      "mcnemar_p_value": 0.015743,
+      "exact_binomial_p_value": 0.015232,
+      "candidate_cluster_bootstrap_95_ci": [0.4051, 0.5238],
+      "job_cluster_bootstrap_95_ci": [0.3883, 0.5343],
+      "twoway_cluster_bootstrap_95_ci": [0.3793, 0.5439]
+    },
+    {
+      "seed": 43,
+      "raw_sbert_accuracy": 0.3818,
+      "contrastive_accuracy": 0.4561,
+      "accuracy_gain_pp": 7.43,
+      "contingency_table": {
+        "n00_both_incorrect": 129,
+        "n10_raw_only_correct_b": 32,
+        "n01_contrastive_only_correct_c": 54,
+        "n11_both_correct": 81
+      },
+      "total_discordant_pairs": 86,
+      "mcnemar_chi2_corrected": 5.1279,
+      "mcnemar_p_value": 0.023544,
+      "exact_binomial_p_value": 0.022983,
+      "candidate_cluster_bootstrap_95_ci": [0.3945, 0.5209],
+      "job_cluster_bootstrap_95_ci": [0.3896, 0.5358],
+      "twoway_cluster_bootstrap_95_ci": [0.3800, 0.5437]
+    },
+    {
+      "seed": 44,
+      "raw_sbert_accuracy": 0.3818,
+      "contrastive_accuracy": 0.3919,
+      "accuracy_gain_pp": 1.01,
+      "contingency_table": {
+        "n00_both_incorrect": 137,
+        "n10_raw_only_correct_b": 43,
+        "n01_contrastive_only_correct_c": 46,
+        "n11_both_correct": 70
+      },
+      "total_discordant_pairs": 89,
+      "mcnemar_chi2_corrected": 0.0449,
+      "mcnemar_p_value": 0.832107,
+      "exact_binomial_p_value": 0.832258,
+      "candidate_cluster_bootstrap_95_ci": [0.3324, 0.4517],
+      "job_cluster_bootstrap_95_ci": [0.3355, 0.4535],
+      "twoway_cluster_bootstrap_95_ci": [0.3211, 0.4655]
+    },
+    {
+      "seed": 45,
+      "raw_sbert_accuracy": 0.3818,
+      "contrastive_accuracy": 0.4595,
+      "accuracy_gain_pp": 7.77,
+      "contingency_table": {
+        "n00_both_incorrect": 123,
+        "n10_raw_only_correct_b": 37,
+        "n01_contrastive_only_correct_c": 60,
+        "n11_both_correct": 76
+      },
+      "total_discordant_pairs": 97,
+      "mcnemar_chi2_corrected": 4.9897,
+      "mcnemar_p_value": 0.025499,
+      "exact_binomial_p_value": 0.024991,
+      "candidate_cluster_bootstrap_95_ci": [0.4027, 0.5356],
+      "job_cluster_bootstrap_95_ci": [0.3946, 0.5268],
+      "twoway_cluster_bootstrap_95_ci": [0.3879, 0.5446]
+    },
+    {
+      "seed": 46,
+      "raw_sbert_accuracy": 0.3818,
+      "contrastive_accuracy": 0.4628,
+      "accuracy_gain_pp": 8.10,
+      "contingency_table": {
+        "n00_both_incorrect": 126,
+        "n10_raw_only_correct_b": 33,
+        "n01_contrastive_only_correct_c": 57,
+        "n11_both_correct": 80
+      },
+      "total_discordant_pairs": 90,
+      "mcnemar_chi2_corrected": 5.8778,
+      "mcnemar_p_value": 0.015333,
+      "exact_binomial_p_value": 0.014867,
+      "candidate_cluster_bootstrap_95_ci": [0.3941, 0.5334],
+      "job_cluster_bootstrap_95_ci": [0.4032, 0.5236],
+      "twoway_cluster_bootstrap_95_ci": [0.3864, 0.5444]
+    }
+  ],
+  "aggregate_seed_statistics": {
+    "mean_contrastive_accuracy": 0.4460,
+    "std_contrastive_accuracy": 0.0271,
+    "mean_accuracy_improvement": 0.0642,
+    "seeds_significant_at_alpha_0_05": "4 out of 5 (Seeds 42, 43, 45, 46 significant; Seed 44 p=0.832)",
+    "inter_seed_prediction_agreement_range": "70.3% to 80.7%"
+  },
+  "fisher_combined_pvalue_investigation": {
+    "previously_reported_pvalue": 7.15e-6,
+    "methodological_flaw": "INVALID_INDEPENDENCE_ASSUMPTION. Fisher's method assumes that p-values arise from independent sample replications. Because all five models were evaluated on the exact same 296 instances, the five test statistics are strongly positively correlated (inter-seed prediction agreement ~76%). Applying Fisher's method under strong positive correlation yields a grossly anti-conservative p-value that overstates statistical evidence.",
+    "scientific_correction": "The five seeds demonstrate algorithm stability against weight initialization on a single validation sample. They DO NOT constitute five independent dataset replications. Replicating on truly independent data is required for external generalization claims."
+  }
+}

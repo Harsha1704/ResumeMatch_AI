@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% block title %}Dataset Explorer — ResumeMatch AI{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <!-- Header -->
+    <div class="mb-4">
+        <h3 class="fw-bold text-dark mb-1">Dataset Explorer &amp; Preprocessing Statistics</h3>
+        <p class="text-muted">Provenance, schema validation, and linguistic properties of the verified public benchmarks.</p>
+    </div>
+
+    <!-- Dataset Cards Row -->
+    <div class="row g-4 mb-4">
+        <!-- Primary Dataset Card -->
+        <div class="col-lg-6">
+            <div class="card h-100 shadow-sm border-0">
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <span class="fw-bold text-primary"><i class="bi bi-file-earmark-spreadsheet me-2"></i>Primary Matching Dataset</span>
+                    <span class="badge bg-primary">7,999 Pairs</span>
+                </div>
+                <div class="card-body p-4">
+                    <h5 class="fw-bold text-dark mb-1">cnamuangtoun/resume-job-description-fit</h5>
+                    <p class="text-muted small mb-3">Hugging Face public research benchmark labeled for resume-to-job compatibility.</p>
+
+                    <ul class="list-group list-group-flush small mb-3">
+                        <li class="list-group-item d-flex justify-content-between px-0">
+                            <span class="text-muted">Total Verified Records:</span>
+                            <strong>7,999 (6,240 Train / 1,759 Held-Out Test)</strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between px-0">
+                            <span class="text-muted">Fields:</span>
+                            <code>resume_text</code>, <code>job_description_text</code>, <code>label</code>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between px-0">
+                            <span class="text-muted">Missing / Null Values:</span>
+                            <span class="text-success fw-bold"><i class="bi bi-check-circle me-1"></i>0 Null Values</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between px-0">
+                            <span class="text-muted">Unique Resumes:</span>
+                            <strong>642 in Train &bull; 477 in Test</strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between px-0">
+                            <span class="text-muted">Unique Job Descriptions:</span>
+                            <strong>280 in Train &bull; 71 in Test (0% Overlap)</strong>
+                        </li>
+                    </ul>
+
+                    <a href="https://huggingface.co/datasets/cnamuangtoun/resume-job-description-fit" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-box-arrow-up-right me-1"></i>View on Hugging Face
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Secondary Skills Dataset Card -->
+        <div class="col-lg-6">
+            <div class="card h-100 shadow-sm border-0">
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <span class="fw-bold text-success"><i class="bi bi-tags me-2"></i>Secondary Skills Dataset</span>
+                    <span class="badge bg-success">1,067 Records</span>
+                </div>
+                <div class="card-body p-4">
+                    <h5 class="fw-bold text-dark mb-1">batuhanmtl/job-skill-set</h5>
+                    <p class="text-muted small mb-3">Hugging Face dataset of LinkedIn job postings with domain-extracted skills by RecAI.</p>
+
+                    <ul class="list-group list-group-flush small mb-3">
+                        <li class="list-group-item d-flex justify-content-between px-0">
+                            <span class="text-muted">Total Verified Postings:</span>
+                            <strong>1,067 Verified Job Profiles</strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between px-0">
+                            <span class="text-muted">Unique Skills Extracted:</span>
+                            <strong>4,476 Canonical Skill Lexicon</strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between px-0">
+                            <span class="text-muted">Fields:</span>
+                            <code>job_id</code>, <code>category</code>, <code>job_title</code>, <code>job_skill_set</code>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between px-0">
+                            <span class="text-muted">Domain Categories:</span>
+                            <span>Business-Dev, Finance, Sales, HR, IT</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between px-0">
+                            <span class="text-muted">Missing Values:</span>
+                            <span class="text-success fw-bold"><i class="bi bi-check-circle me-1"></i>0 Null Records</span>
+                        </li>
+                    </ul>
+
+                    <a href="https://huggingface.co/datasets/batuhanmtl/job-skill-set" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-success">
+                        <i class="bi bi-box-arrow-up-right me-1"></i>View on Hugging Face
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Verified Visualizations Grid -->
+    <div class="row g-4 mb-4">
+        <!-- Top Skills Distribution -->
+        <div class="col-lg-6">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <span class="fw-bold text-dark"><i class="bi bi-bar-chart-steps text-primary me-2"></i>Top 15 Extracted Skills Frequency</span>
+                </div>
+                <div class="card-body text-center p-3">
+                    <img src="{{ url_for('static', filename='images/top_skills_distribution.png') }}" alt="Top Skills Distribution" class="img-fluid rounded border">
+                </div>
+            </div>
+        </div>
+
+        <!-- Text Length Distributions -->
+        <div class="col-lg-6">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <span class="fw-bold text-dark"><i class="bi bi-distribute-vertical text-info me-2"></i>Document Length Characteristics</span>
+                </div>
+                <div class="card-body text-center p-3">
+                    <img src="{{ url_for('static', filename='images/text_length_distributions.png') }}" alt="Text Length Distribution" class="img-fluid rounded border">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preprocessing Summary Visual -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white py-3 border-bottom">
+            <span class="fw-bold text-dark"><i class="bi bi-sliders text-success me-2"></i>Preprocessing &amp; Experience Correlation Summary</span>
+        </div>
+        <div class="card-body text-center p-4">
+            <img src="{{ url_for('static', filename='images/preprocessing_summary.png') }}" alt="Preprocessing Summary" class="img-fluid rounded border" style="max-height: 400px;">
+        </div>
+    </div>
+</div>
+{% endblock %}

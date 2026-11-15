@@ -1,0 +1,43 @@
+{
+  "hardware": {
+    "device": "CPU",
+    "threads": 10,
+    "model_params": 109632771,
+    "ram_mb": 1813.0
+  },
+  "latency_benchmark": [
+    {
+      "sequence_length": 128,
+      "median_ms": 82.07,
+      "mean_ms": 81.97,
+      "p95_ms": 84.65,
+      "throughput_fps": 12.2
+    },
+    {
+      "sequence_length": 256,
+      "median_ms": 149.53,
+      "mean_ms": 150.41,
+      "p95_ms": 155.43,
+      "throughput_fps": 6.7
+    },
+    {
+      "sequence_length": 384,
+      "median_ms": 225.21,
+      "mean_ms": 227.88,
+      "p95_ms": 240.74,
+      "throughput_fps": 4.4
+    },
+    {
+      "sequence_length": 512,
+      "median_ms": 324.79,
+      "mean_ms": 328.84,
+      "p95_ms": 347.81,
+      "throughput_fps": 3.1
+    }
+  ],
+  "truncation_summary": {
+    "legacy_core_truncated_at_512": 98.30155423810287,
+    "djinni_cv_truncated_at_512": 2.6768133174791915,
+    "djinni_jd_truncated_at_512": 16.33931654650909
+  }
+}

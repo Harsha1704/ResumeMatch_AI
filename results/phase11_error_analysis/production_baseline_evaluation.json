@@ -1,0 +1,250 @@
+{
+  "job_disjoint_val": {
+    "split_name": "Job-Disjoint Validation (Dev)",
+    "n_samples": 778,
+    "majority_class": "No Fit",
+    "majority_baseline_accuracy": 0.5334,
+    "accuracy": 0.7416,
+    "balanced_accuracy": 0.7728,
+    "macro_precision": 0.7194,
+    "macro_recall": 0.7728,
+    "macro_f1": 0.7354,
+    "weighted_f1": 0.7443,
+    "confusion_matrix": [
+      [
+        288,
+        83,
+        44
+      ],
+      [
+        33,
+        173,
+        24
+      ],
+      [
+        11,
+        6,
+        116
+      ]
+    ],
+    "label_order": [
+      "No Fit",
+      "Potential Fit",
+      "Good Fit"
+    ],
+    "per_class": {
+      "No Fit": {
+        "precision": 0.8675,
+        "recall": 0.694,
+        "f1": 0.7711,
+        "support": 415
+      },
+      "Potential Fit": {
+        "precision": 0.6603,
+        "recall": 0.7522,
+        "f1": 0.7033,
+        "support": 230
+      },
+      "Good Fit": {
+        "precision": 0.6304,
+        "recall": 0.8722,
+        "f1": 0.7319,
+        "support": 133
+      }
+    },
+    "confidence_stats": {
+      "mean": 0.646,
+      "median": 0.6302,
+      "min": 0.348,
+      "max": 0.9806,
+      "p25": 0.5239,
+      "p75": 0.7625
+    }
+  },
+  "resume_disjoint_val": {
+    "split_name": "Resume-Disjoint Validation (Dev)",
+    "n_samples": 1023,
+    "majority_class": "No Fit",
+    "majority_baseline_accuracy": 0.4751,
+    "accuracy": 0.7771,
+    "balanced_accuracy": 0.8066,
+    "macro_precision": 0.7748,
+    "macro_recall": 0.8066,
+    "macro_f1": 0.7767,
+    "weighted_f1": 0.7746,
+    "confusion_matrix": [
+      [
+        318,
+        81,
+        87
+      ],
+      [
+        23,
+        201,
+        24
+      ],
+      [
+        9,
+        4,
+        276
+      ]
+    ],
+    "label_order": [
+      "No Fit",
+      "Potential Fit",
+      "Good Fit"
+    ],
+    "per_class": {
+      "No Fit": {
+        "precision": 0.9086,
+        "recall": 0.6543,
+        "f1": 0.7608,
+        "support": 486
+      },
+      "Potential Fit": {
+        "precision": 0.7028,
+        "recall": 0.8105,
+        "f1": 0.7528,
+        "support": 248
+      },
+      "Good Fit": {
+        "precision": 0.7132,
+        "recall": 0.955,
+        "f1": 0.8166,
+        "support": 289
+      }
+    },
+    "confidence_stats": {
+      "mean": 0.6512,
+      "median": 0.6413,
+      "min": 0.3428,
+      "max": 0.9847,
+      "p25": 0.5364,
+      "p75": 0.7633
+    }
+  },
+  "dual_unseen_val": {
+    "split_name": "Dual-Unseen Validation (Dev)",
+    "n_samples": 297,
+    "majority_class": "No Fit",
+    "majority_baseline_accuracy": 0.4175,
+    "accuracy": 0.7407,
+    "balanced_accuracy": 0.7572,
+    "macro_precision": 0.7423,
+    "macro_recall": 0.7572,
+    "macro_f1": 0.7382,
+    "weighted_f1": 0.7362,
+    "confusion_matrix": [
+      [
+        74,
+        32,
+        18
+      ],
+      [
+        9,
+        60,
+        11
+      ],
+      [
+        5,
+        2,
+        86
+      ]
+    ],
+    "label_order": [
+      "No Fit",
+      "Potential Fit",
+      "Good Fit"
+    ],
+    "per_class": {
+      "No Fit": {
+        "precision": 0.8409,
+        "recall": 0.5968,
+        "f1": 0.6981,
+        "support": 124
+      },
+      "Potential Fit": {
+        "precision": 0.6383,
+        "recall": 0.75,
+        "f1": 0.6897,
+        "support": 80
+      },
+      "Good Fit": {
+        "precision": 0.7478,
+        "recall": 0.9247,
+        "f1": 0.8269,
+        "support": 93
+      }
+    },
+    "confidence_stats": {
+      "mean": 0.652,
+      "median": 0.6376,
+      "min": 0.3524,
+      "max": 0.9802,
+      "p25": 0.5318,
+      "p75": 0.7697
+    }
+  },
+  "held_out_test": {
+    "split_name": "Held-Out Test (Official)",
+    "n_samples": 1759,
+    "majority_class": "No Fit",
+    "majority_baseline_accuracy": 0.4872,
+    "accuracy": 0.4861,
+    "balanced_accuracy": 0.4638,
+    "macro_precision": 0.4642,
+    "macro_recall": 0.4638,
+    "macro_f1": 0.4501,
+    "weighted_f1": 0.4892,
+    "confusion_matrix": [
+      [
+        485,
+        235,
+        137
+      ],
+      [
+        115,
+        254,
+        75
+      ],
+      [
+        103,
+        239,
+        116
+      ]
+    ],
+    "label_order": [
+      "No Fit",
+      "Potential Fit",
+      "Good Fit"
+    ],
+    "per_class": {
+      "No Fit": {
+        "precision": 0.6899,
+        "recall": 0.5659,
+        "f1": 0.6218,
+        "support": 857
+      },
+      "Potential Fit": {
+        "precision": 0.3489,
+        "recall": 0.5721,
+        "f1": 0.4334,
+        "support": 444
+      },
+      "Good Fit": {
+        "precision": 0.3537,
+        "recall": 0.2533,
+        "f1": 0.2952,
+        "support": 458
+      }
+    },
+    "confidence_stats": {
+      "mean": 0.5933,
+      "median": 0.5678,
+      "min": 0.3384,
+      "max": 0.9888,
+      "p25": 0.479,
+      "p75": 0.6936
+    }
+  }
+}

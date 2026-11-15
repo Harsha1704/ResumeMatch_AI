@@ -1,0 +1,14 @@
+{
+  "cache_file": "D:\\skillsync1\\results\\phase12b_embeddings\\minilm_l6_v2_cache.npz",
+  "cache_size_bytes": 1742736,
+  "total_keys": 996,
+  "num_cached_resumes": 643,
+  "num_cached_jobs": 351,
+  "contains_label_keys": false,
+  "re_encoding_sample_size": 20,
+  "resume_max_l2_distance": 5.334446200322418e-07,
+  "resume_max_cosine_difference": 1.1920928955078125e-07,
+  "job_max_l2_distance": 6.049180569789314e-07,
+  "job_max_cosine_difference": 1.1920928955078125e-07,
+  "cache_matches_raw_model": true
+}

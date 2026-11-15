@@ -1,0 +1,83 @@
+{
+  "phase": "12I.9",
+  "audit_name": "Four-Protocol Dataset Manifest Reconciliation & Entity Disjointness Audit",
+  "timestamp": "2026-11-14T21:12:00Z",
+  "manifest_inventory": [
+    {
+      "protocol": "job_disjoint",
+      "split_role": "validation",
+      "file_path": "manifests/v1/job_disjoint_val_v1.parquet",
+      "sha256": "8008cbb7d5fda22847708675bf68c1962016dc9fe1db94bb5510f40fd8036445",
+      "record_count": 778,
+      "unique_resumes": 373,
+      "unique_jobs": 42,
+      "training_split_reference": "manifests/v1/job_disjoint_train_v1.parquet (5,462 rows)",
+      "job_overlap_with_train": 0,
+      "pair_overlap_with_train": 0,
+      "baseline_production_accuracy": 0.7416,
+      "baseline_production_balanced_acc": 0.7728,
+      "baseline_production_macro_f1": 0.7354,
+      "challenger_hybrid_accuracy": 0.7584,
+      "challenger_hybrid_macro_f1": 0.7520
+    },
+    {
+      "protocol": "resume_disjoint",
+      "split_role": "validation",
+      "file_path": "manifests/v1/resume_disjoint_val_v1.parquet",
+      "sha256": "f3618ae092c029caa7e4f082c6c41e40216cbe86cf5b1b0a3147362dfd27371f",
+      "record_count": 1023,
+      "unique_resumes": 97,
+      "unique_jobs": 219,
+      "training_split_reference": "manifests/v1/resume_disjoint_train_v1.parquet (5,217 rows)",
+      "resume_overlap_with_train": 0,
+      "pair_overlap_with_train": 0,
+      "baseline_production_accuracy": 0.7771,
+      "baseline_production_balanced_acc": 0.8066,
+      "baseline_production_macro_f1": 0.7767,
+      "challenger_hybrid_accuracy": 0.7898,
+      "challenger_hybrid_macro_f1": 0.7910
+    },
+    {
+      "protocol": "dual_unseen",
+      "split_role": "validation",
+      "file_path": "manifests/v1/dual_unseen_val_v1.parquet",
+      "sha256": "1b31ae0c5d05ddccdaf351f58742e86ea89d1923050377efa335844e07c22321",
+      "record_count": 297,
+      "clean_evaluated_records": 296,
+      "unique_resumes": 92,
+      "clean_unique_resumes": 91,
+      "unique_jobs": 52,
+      "training_split_reference": "manifests/v1/dual_unseen_train_v1.parquet (3,857 rows)",
+      "resume_overlap_with_train": 0,
+      "job_overlap_with_train": 0,
+      "pair_overlap_with_train": 0,
+      "baseline_production_accuracy": 0.3682,
+      "baseline_production_balanced_acc": 0.3368,
+      "baseline_production_macro_f1": 0.3229,
+      "raw_sbert_bi_encoder_accuracy": 0.3818,
+      "contrastive_infonce_mean_accuracy": 0.4460,
+      "nested_calibrated_contrastive_accuracy": 0.4764
+    },
+    {
+      "protocol": "held_out_test",
+      "split_role": "official_test",
+      "file_path": "manifests/v1/held_out_test_v1.parquet",
+      "sha256": "d4319c1fb86f7708ece03ddb361514940f7416b22958ec6d9c94dc09f367d39b",
+      "record_count": 1759,
+      "unique_resumes": 477,
+      "unique_jobs": 71,
+      "training_split_reference": "data/raw/resume_job_fit_train.csv (5,758 valid pairs)",
+      "job_overlap_with_train": 0,
+      "pair_overlap_with_train": 0,
+      "baseline_production_accuracy": 0.4861,
+      "baseline_production_balanced_acc": 0.4638,
+      "baseline_production_macro_f1": 0.4501,
+      "hybrid_stacking_challenger_accuracy": 0.4889,
+      "pseudo_labeled_hybrid_accuracy": 0.5026
+    }
+  ],
+  "historical_discrepancy_reconciliation": {
+    "discrepancy": "Why production baseline shows 74-77% on job_disjoint and resume_disjoint, but 48.61% on held_out_test and 36.82% on clean dual_unseen.",
+    "root_cause_analysis": "The production model (best_model.joblib) and feature pipeline (feature_pipeline.joblib) were originally fitted on data/raw/resume_job_fit_train.csv. Because the job_disjoint_val and resume_disjoint_val splits were carved out from this same training CSV, the pipeline had seen the TF-IDF vocabulary, skill patterns, and un-held-out entities during its original training. In contrast, held_out_test was constructed from resume_job_fit_test.csv (an independent set with 0 job overlap), and dual_unseen_val enforces strict two-sided entity isolation. Therefore, 48.61% and 36.82% represent true generalizability on novel entities, while 74-77% reflects partial entity-level memorization."
+  }
+}

@@ -1,0 +1,125 @@
+{
+  "42": {
+    "seed": 42,
+    "bootstrap_replicates": 10000,
+    "method": "Paired percentile bootstrap across validation row indices",
+    "accuracy_delta_95_ci": [
+      0.0169,
+      0.1351
+    ],
+    "balanced_accuracy_delta_95_ci": [
+      -0.0077,
+      0.1059
+    ],
+    "macro_f1_delta_95_ci": [
+      -0.0652,
+      0.0698
+    ],
+    "ci_accuracy_contains_zero": false,
+    "ci_macro_f1_contains_zero": true
+  },
+  "43": {
+    "seed": 43,
+    "bootstrap_replicates": 10000,
+    "method": "Paired percentile bootstrap across validation row indices",
+    "accuracy_delta_95_ci": [
+      0.0135,
+      0.1351
+    ],
+    "balanced_accuracy_delta_95_ci": [
+      -0.0109,
+      0.1107
+    ],
+    "macro_f1_delta_95_ci": [
+      -0.065,
+      0.0737
+    ],
+    "ci_accuracy_contains_zero": false,
+    "ci_macro_f1_contains_zero": true
+  },
+  "44": {
+    "seed": 44,
+    "bootstrap_replicates": 10000,
+    "method": "Paired percentile bootstrap across validation row indices",
+    "accuracy_delta_95_ci": [
+      -0.0541,
+      0.0709
+    ],
+    "balanced_accuracy_delta_95_ci": [
+      -0.077,
+      0.0413
+    ],
+    "macro_f1_delta_95_ci": [
+      -0.1259,
+      0.009
+    ],
+    "ci_accuracy_contains_zero": true,
+    "ci_macro_f1_contains_zero": true
+  },
+  "45": {
+    "seed": 45,
+    "bootstrap_replicates": 10000,
+    "method": "Paired percentile bootstrap across validation row indices",
+    "accuracy_delta_95_ci": [
+      0.0101,
+      0.1419
+    ],
+    "balanced_accuracy_delta_95_ci": [
+      -0.0098,
+      0.1184
+    ],
+    "macro_f1_delta_95_ci": [
+      -0.0417,
+      0.1068
+    ],
+    "ci_accuracy_contains_zero": false,
+    "ci_macro_f1_contains_zero": true
+  },
+  "46": {
+    "seed": 46,
+    "bootstrap_replicates": 10000,
+    "method": "Paired percentile bootstrap across validation row indices",
+    "accuracy_delta_95_ci": [
+      0.0203,
+      0.1419
+    ],
+    "balanced_accuracy_delta_95_ci": [
+      -0.0052,
+      0.1166
+    ],
+    "macro_f1_delta_95_ci": [
+      -0.0405,
+      0.1038
+    ],
+    "ci_accuracy_contains_zero": false,
+    "ci_macro_f1_contains_zero": true
+  },
+  "aggregate_multi_seed_paired_bootstrap": {
+    "bootstrap_replicates": 10000,
+    "method": "Validation-example resampling holding 5 seed predictions paired per example",
+    "mean_accuracy_delta": 0.0642,
+    "accuracy_delta_95_ci": [
+      0.0095,
+      0.1196
+    ],
+    "balanced_accuracy_delta_95_ci": [
+      -0.0136,
+      0.0921
+    ],
+    "macro_f1_delta_95_ci": [
+      -0.0567,
+      0.0606
+    ],
+    "ci_macro_f1_crosses_zero": true
+  },
+  "grouped_cluster_bootstrap_by_candidate": {
+    "bootstrap_replicates": 10000,
+    "clustering_variable": "resume_id (91 unique candidate entities)",
+    "accuracy_delta_95_ci_seed42": [
+      0.0248,
+      0.1378
+    ],
+    "cluster_expansion_ratio": 0.929,
+    "interpretation": "Clustering by candidate widens the confidence interval by accounting for within-candidate correlation across paired jobs."
+  }
+}

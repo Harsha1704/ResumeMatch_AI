@@ -1,0 +1,541 @@
+{% extends "base.html" %}
+
+{% block title %}Interview Intelligence Studio — ResumeMatch AI{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/interview.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <!-- Hero Header -->
+    <div class="interview-hero mb-4">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="badge bg-primary text-uppercase px-2 py-1" style="font-size: 0.72rem;">Module Active</span>
+                    <span class="badge bg-secondary text-uppercase px-2 py-1" style="font-size: 0.72rem;">Zero LLM / 100% Deterministic</span>
+                </div>
+                <h3 class="fw-bold mb-1 text-white">Interview Intelligence Studio</h3>
+                <p class="text-light opacity-75 mb-0" style="font-size: 0.9rem;">
+                    Resume-aware interview preparation, curated computer science question banks, and complete structured answers.
+                </p>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                {% if active_session_id %}
+                <a href="{{ url_for('interview_practice') }}" class="btn btn-warning fw-bold px-3 shadow-sm">
+                    <i class="bi bi-play-circle-fill me-1"></i>Resume Practice Session
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Candidate Profile & Context Card -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-3 p-md-4">
+            <div class="row g-3 align-items-center">
+                <div class="col-md-3 border-end">
+                    <span class="text-muted small text-uppercase fw-bold">Active Resume</span>
+                    <div class="fw-bold text-dark text-truncate mt-1" title="{{ evidence.filename }}">
+                        <i class="bi bi-file-earmark-text text-primary me-1"></i>{{ evidence.filename }}
+                    </div>
+                    {% if evidence.is_edu_verified and evidence.education and "not confirmed" not in evidence.education|lower and "degree not explicitly" not in evidence.education|lower %}
+                    <small class="text-muted"><i class="bi bi-mortarboard me-1"></i>{{ evidence.education }}</small>
+                    {% else %}
+                    <div class="mt-1">
+                        <span class="badge bg-warning text-dark" style="font-size: 0.72rem;"><i class="bi bi-question-circle me-1"></i>Degree qualification not confirmed</span>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="col-md-3 border-end">
+                    <span class="text-muted small text-uppercase fw-bold">Target Job Role</span>
+                    <div class="fw-bold text-dark text-truncate mt-1" title="{{ evidence.job_title }}">
+                        {% if evidence.has_target_role and evidence.job_title and evidence.job_title != "Target role not specified" and evidence.job_title != "unspecified" %}
+                        <i class="bi bi-briefcase-fill text-info me-1"></i>{{ evidence.job_title }}
+                        {% else %}
+                        <span class="badge bg-warning text-dark"><i class="bi bi-exclamation-triangle me-1"></i>Target Role Not Specified</span>
+                        {% endif %}
+                    </div>
+                    <small class="text-muted">{{ evidence.experience_summary }}</small>
+                </div>
+                <div class="col-md-2 border-end text-center">
+                    <span class="text-muted small text-uppercase fw-bold">Projects</span>
+                    <h4 class="fw-bold text-dark mb-0 mt-1">{{ evidence.projects|length }}</h4>
+                    <small class="text-muted">Detected Projects</small>
+                </div>
+                <div class="col-md-2 border-end text-center">
+                    <span class="text-muted small text-uppercase fw-bold">Internships</span>
+                    <h4 class="fw-bold text-dark mb-0 mt-1">{{ evidence.internships|length }}</h4>
+                    <small class="text-muted">Verified Records</small>
+                </div>
+                <div class="col-md-2 text-center">
+                    <span class="text-muted small text-uppercase fw-bold">Candidate Skills</span>
+                    <h4 class="fw-bold text-dark mb-0 mt-1">{{ evidence.skills|length }}</h4>
+                    <small class="text-muted">Technical Skills</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Methodology Transparency Notice -->
+    <div class="alert alert-light border border-info border-start border-4 mb-4 py-2 px-3">
+        <div class="d-flex align-items-center">
+            <i class="bi bi-shield-check text-info me-2 fs-5"></i>
+            <div>
+                <strong class="text-dark small text-uppercase">Methodology Transparency: Deterministic Coaching</strong>
+                <p class="text-muted small mb-0" style="font-size: 0.8rem;">
+                    All interview questions, complete answers, architectural trade-offs, and concept explanations are produced via deterministic NLP and curated expert question banks without generative AI hallucinations. High-level resume matching compatibility scores utilize our trained Supervised ML classifier.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Question Generation Controls -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3 border-bottom">
+            <h6 class="mb-0 fw-bold text-dark">
+                <i class="bi bi-sliders text-primary me-2"></i>Question Generation &amp; Complete Answer Controls
+            </h6>
+        </div>
+        <div class="card-body p-3 p-md-4">
+            <form method="POST" action="{{ url_for('interview_studio_generate') }}" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold text-dark">Interview Category</label>
+                    <select name="category" class="form-select form-select-sm">
+                        <option value="ALL" {% if selected_category == 'ALL' %}selected{% endif %}>All Categories (Balanced Mix)</option>
+                        <option value="A" {% if selected_category == 'A' %}selected{% endif %}>Category A: Resume Profile &amp; Skills</option>
+                        <option value="B" {% if selected_category == 'B' %}selected{% endif %}>Category B: Extracted Projects (Deep-Dive)</option>
+                        <option value="C" {% if selected_category == 'C' %}selected{% endif %}>Category C: Internships &amp; Experience</option>
+                        <option value="D" {% if selected_category == 'D' %}selected{% endif %}>Category D: Target Job &amp; Skill Gaps</option>
+                        <option value="E" {% if selected_category == 'E' %}selected{% endif %}>Category E: Technical Knowledge Bank</option>
+                        <option value="F" {% if selected_category == 'F' %}selected{% endif %}>Category F: HR &amp; Behavioral</option>
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold text-dark">Difficulty Level</label>
+                    <select name="difficulty" class="form-select form-select-sm">
+                        <option value="All" {% if selected_difficulty == 'All' %}selected{% endif %}>All (Balanced Mix)</option>
+                        <option value="Easy" {% if selected_difficulty == 'Easy' %}selected{% endif %}>Easy</option>
+                        <option value="Medium" {% if selected_difficulty == 'Medium' %}selected{% endif %}>Medium</option>
+                        <option value="Hard" {% if selected_difficulty == 'Hard' %}selected{% endif %}>Hard</option>
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold text-dark">Max Questions</label>
+                    <select name="max_questions" class="form-select form-select-sm">
+                        <option value="5" {% if selected_count == 5 %}selected{% endif %}>5 Questions</option>
+                        <option value="10" {% if selected_count == 10 %}selected{% endif %}>10 Questions</option>
+                        <option value="15" {% if selected_count == 15 or not selected_count %}selected{% endif %}>15 Questions</option>
+                        <option value="25" {% if selected_count == 25 %}selected{% endif %}>25 Questions</option>
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold text-dark">Technical Topic (Category E)</label>
+                    <select name="technical_topic" class="form-select form-select-sm">
+                        <option value="All">All 18 CS Domains</option>
+                        {% for top in technical_topics %}
+                        <option value="{{ top }}" {% if selected_topic == top %}selected{% endif %}>{{ top }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" name="action" value="generate" class="btn btn-primary btn-sm w-100 fw-bold py-2">
+                        <i class="bi bi-arrow-repeat me-1"></i>Generate Answers
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Generated Question Cards List -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0 text-dark">
+            Interview Questions &amp; Complete Answers <span class="badge bg-secondary ms-1">{{ questions|length }}</span>
+        </h5>
+        {% if questions %}
+        <form method="POST" action="{{ url_for('interview_studio_generate') }}" class="d-inline">
+            <input type="hidden" name="action" value="practice">
+            <input type="hidden" name="category" value="{{ selected_category }}">
+            <input type="hidden" name="difficulty" value="{{ selected_difficulty }}">
+            <input type="hidden" name="max_questions" value="{{ selected_count }}">
+            <input type="hidden" name="technical_topic" value="{{ selected_topic }}">
+            <button type="submit" class="btn btn-sm btn-outline-success fw-bold">
+                <i class="bi bi-play-circle me-1"></i>Practice This Exact Set
+            </button>
+        </form>
+        {% endif %}
+    </div>
+
+    {% if not questions %}
+    <div class="card border-0 shadow-sm p-5 text-center">
+        <div class="mb-3">
+            <i class="bi bi-question-circle text-muted" style="font-size: 2.5rem;"></i>
+        </div>
+        <h6 class="fw-bold text-dark">No questions generated yet</h6>
+        <p class="text-muted small mb-3">Select your desired categories and difficulty above, then click 'Generate Answers'.</p>
+    </div>
+    {% endif %}
+
+    <div class="row g-4">
+        {% for q in questions %}
+        <div class="col-12">
+            <div class="interview-card">
+                <div class="p-3 p-md-4">
+                    <!-- Badges Header -->
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                        <div class="d-flex flex-wrap align-items-center gap-2">
+                            <span class="badge {{ q.category_badge }} question-badge">{{ q.category_name }}</span>
+                            <span class="badge difficulty-badge-{{ q.difficulty }} question-badge">{{ q.difficulty }}</span>
+                            <span class="framework-pill"><i class="bi bi-diagram-3 me-1"></i>Framework: {{ q.recommended_answer_framework }}</span>
+                        </div>
+                        <span class="text-muted small" style="font-size: 0.75rem;">
+                            <i class="bi bi-pin-angle me-1"></i>{{ q.source_reference }}
+                        </span>
+                    </div>
+
+                    <!-- Question Statement -->
+                    <h5 class="fw-bold text-dark mb-3" style="font-size: 1.1rem; line-height: 1.45;">
+                        {{ loop.index }}. {{ q.question_text }}
+                    </h5>
+
+                    <!-- Complete Answer Container -->
+                    <div class="complete-answer-container" id="ans-box-{{ loop.index }}">
+                        <div class="complete-answer-header">
+                            <div class="d-flex flex-wrap align-items-center gap-2">
+                                <span class="complete-answer-title"><i class="bi bi-check-circle-fill text-primary me-1"></i>Complete Answer</span>
+                                
+                                <!-- Toggle View Mode: Spoken vs Simpler -->
+                                <div class="btn-group btn-group-sm ans-mode-group" role="group">
+                                    <button type="button" class="btn btn-sm btn-primary active ans-toggle-btn" data-mode="detailed" data-index="{{ loop.index }}">
+                                        <i class="bi bi-mic-fill me-1"></i>Spoken Answer
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-primary ans-toggle-btn" data-mode="simpler" data-index="{{ loop.index }}">
+                                        <i class="bi bi-lightbulb-fill me-1"></i>Simpler Explanation
+                                    </button>
+                                </div>
+
+                                {% if q.missing_personal_details and q.missing_personal_details|length > 0 %}
+                                <button type="button" class="btn btn-sm btn-outline-warning text-dark fw-bold px-2 py-1 customize-btn" data-target="cust-form-{{ loop.index }}" style="font-size: 0.74rem;">
+                                    <i class="bi bi-pencil-square me-1"></i>Customize Details ({{ q.missing_personal_details|length }})
+                                </button>
+                                {% endif %}
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-primary copy-answer-btn py-1 px-2" data-target-text="ans-text-{{ loop.index }}" style="font-size: 0.78rem;">
+                                <i class="bi bi-clipboard me-1"></i>Copy Answer
+                            </button>
+                        </div>
+
+                        <!-- Spoken Answer (Default active view) -->
+                        <div id="ans-text-{{ loop.index }}" class="complete-answer-text active-ans" data-raw="{{ q.detailed_answer }}">
+                            {{ q.detailed_answer }}
+                        </div>
+
+                        <!-- Simpler Explanation (Hidden by default, shown on toggle) -->
+                        <div id="ans-simpler-{{ loop.index }}" class="complete-answer-text d-none" data-raw="{{ q.simpler_answer or q.short_answer }}">
+                            {{ q.simpler_answer or q.short_answer }}
+                        </div>
+
+                        <!-- Interactive Customization Panel -->
+                        {% if q.missing_personal_details and q.missing_personal_details|length > 0 %}
+                        <div id="cust-form-{{ loop.index }}" class="customization-panel d-none mt-3 p-3 bg-white rounded border border-warning shadow-sm">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="small fw-bold text-dark"><i class="bi bi-sliders text-warning me-1"></i>Customize Personal Experience &amp; Metrics</span>
+                                <button type="button" class="btn-close btn-sm close-customization-btn" data-target="cust-form-{{ loop.index }}"></button>
+                            </div>
+                            <p class="text-muted small mb-2" style="font-size: 0.78rem;">
+                                Enter your actual project name, metrics, or technical specifics. They will replace the bracketed placeholders in real time.
+                            </p>
+                            {% for ph in q.missing_personal_details %}
+                            <div class="mb-2">
+                                <label class="form-label small mb-1 fw-semibold text-muted" style="font-size: 0.75rem;">{{ ph }}</label>
+                                <input type="text" class="form-control form-control-sm placeholder-input" 
+                                       data-placeholder="{{ ph }}" 
+                                       data-target-text="ans-text-{{ loop.index }}"
+                                       placeholder="Your genuine project metric or detail...">
+                            </div>
+                            {% endfor %}
+                            <button type="button" class="btn btn-sm btn-warning text-dark fw-bold apply-customization-btn mt-1" data-index="{{ loop.index }}">
+                                <i class="bi bi-check-lg me-1"></i>Apply to Spoken Answer
+                            </button>
+                        </div>
+
+                        <div class="mt-2 pt-2 border-top">
+                            <small class="text-muted d-block fw-bold mb-1" style="font-size: 0.72rem;">UNVERIFIED PERSONAL DETAILS TO CUSTOMIZE:</small>
+                            <div class="d-flex flex-wrap gap-1">
+                                {% for ph in q.missing_personal_details %}
+                                <span class="placeholder-highlight">{{ ph }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Section Drawer Accordion Controls -->
+                    <div class="d-flex flex-wrap gap-2 pt-1 border-top align-items-center justify-content-between">
+                        <div class="d-flex flex-wrap gap-2">
+                            {% if q.why_this_works %}
+                            <button type="button" class="drawer-toggle-btn" data-target="why-{{ loop.index }}">
+                                <i class="bi bi-bullseye text-primary me-1"></i>Why This Works <i class="bi bi-chevron-down toggle-icon ms-1"></i>
+                            </button>
+                            {% endif %}
+
+                            {% if q.step_by_step_explanation %}
+                            <button type="button" class="drawer-toggle-btn" data-target="steps-{{ loop.index }}">
+                                <i class="bi bi-list-ol me-1"></i>Step-by-Step Reasoning <i class="bi bi-chevron-down toggle-icon ms-1"></i>
+                            </button>
+                            {% endif %}
+
+                            {% if q.follow_up_questions %}
+                            <button type="button" class="drawer-toggle-btn" data-target="followup-{{ loop.index }}">
+                                <i class="bi bi-arrow-repeat text-success me-1"></i>Follow-Up Questions ({{ q.follow_up_questions|length }}) <i class="bi bi-chevron-down toggle-icon ms-1"></i>
+                            </button>
+                            {% endif %}
+
+                            {% if q.common_mistakes %}
+                            <button type="button" class="drawer-toggle-btn" data-target="mistakes-{{ loop.index }}">
+                                <i class="bi bi-exclamation-triangle text-danger me-1"></i>Mistakes to Avoid <i class="bi bi-chevron-down toggle-icon ms-1"></i>
+                            </button>
+                            {% endif %}
+
+                            {% if q.suggested_improvements %}
+                            <button type="button" class="drawer-toggle-btn" data-target="improvements-{{ loop.index }}">
+                                <i class="bi bi-stars text-info me-1"></i>Improvements <i class="bi bi-chevron-down toggle-icon ms-1"></i>
+                            </button>
+                            {% endif %}
+
+                            {% if q.examples or q.code_snippet %}
+                            <button type="button" class="drawer-toggle-btn" data-target="example-{{ loop.index }}">
+                                <i class="bi bi-code-square me-1"></i>Code / Example <i class="bi bi-chevron-down toggle-icon ms-1"></i>
+                            </button>
+                            {% endif %}
+
+                            <button type="button" class="drawer-toggle-btn" data-target="framework-{{ loop.index }}">
+                                <i class="bi bi-diagram-3 me-1"></i>{{ q.recommended_answer_framework }} Framework <i class="bi bi-chevron-down toggle-icon ms-1"></i>
+                            </button>
+
+                            {% if q.interview_tips %}
+                            <button type="button" class="drawer-toggle-btn" data-target="tips-{{ loop.index }}">
+                                <i class="bi bi-lightbulb me-1"></i>Delivery Tips <i class="bi bi-chevron-down toggle-icon ms-1"></i>
+                            </button>
+                            {% endif %}
+                        </div>
+
+                        <!-- Practice This Question Button -->
+                        <form method="POST" action="{{ url_for('interview_studio_generate') }}" class="d-inline m-0">
+                            <input type="hidden" name="action" value="practice_single">
+                            <input type="hidden" name="question_id" value="{{ q.question_id }}">
+                            <button type="submit" class="btn btn-sm btn-outline-success fw-bold py-1 px-3" style="font-size: 0.8rem;">
+                                <i class="bi bi-play-fill me-1"></i>Practice This Question
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Why This Answer Works Drawer -->
+                {% if q.why_this_works %}
+                <div id="why-{{ loop.index }}" class="guidance-drawer d-none">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="badge bg-primary px-2 py-1" style="font-size: 0.7rem;">Evaluation Criteria</span>
+                        <span class="fw-bold text-dark small">What hiring managers evaluate in this response:</span>
+                    </div>
+                    <div class="p-3 bg-white rounded border border-primary-subtle">
+                        <p class="mb-0 text-dark small" style="line-height: 1.6;">
+                            <i class="bi bi-bullseye text-primary me-2"></i>{{ q.why_this_works }}
+                        </p>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Step-by-Step Explanation Drawer -->
+                {% if q.step_by_step_explanation %}
+                <div id="steps-{{ loop.index }}" class="guidance-drawer d-none">
+                    <h6 class="fw-bold text-dark mb-2" style="font-size: 0.88rem;">
+                        <i class="bi bi-list-ol text-primary me-2"></i>Step-by-Step Explanation &amp; Logical Walkthrough ({{ q.step_by_step_explanation|length }} Steps):
+                    </h6>
+                    <div class="row g-2">
+                        {% for st in q.step_by_step_explanation %}
+                        <div class="col-12">
+                            <div class="step-card p-3 bg-white rounded border">
+                                <div class="d-flex align-items-center gap-2 mb-2">
+                                    <span class="badge bg-primary rounded-pill px-2 py-1">{{ loop.index }}</span>
+                                    <strong class="text-dark small">{{ st.step }}</strong>
+                                </div>
+                                <p class="text-secondary small mb-2" style="line-height: 1.55;">{{ st.complete_explanation or st.detail }}</p>
+                                
+                                {% if st.reasoning or st.concrete_example %}
+                                <div class="d-flex flex-column gap-1 pt-2 border-top border-light-subtle small">
+                                    {% if st.reasoning %}
+                                    <div class="text-muted"><strong class="text-dark"><i class="bi bi-gear-wide-connected text-primary me-1"></i>Engineering Reasoning:</strong> {{ st.reasoning }}</div>
+                                    {% endif %}
+                                    {% if st.concrete_example %}
+                                    <div class="text-muted"><strong class="text-dark"><i class="bi bi-code-slash text-success me-1"></i>Concrete Example:</strong> <code>{{ st.concrete_example }}</code></div>
+                                    {% endif %}
+                                    {% if st.connection_to_question %}
+                                    <div class="text-muted"><strong class="text-dark"><i class="bi bi-check2-circle text-info me-1"></i>Connection to Question:</strong> {{ st.connection_to_question }}</div>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Possible Follow-Up Questions Drawer -->
+                {% if q.follow_up_questions %}
+                <div id="followup-{{ loop.index }}" class="guidance-drawer d-none">
+                    <h6 class="fw-bold text-dark mb-2" style="font-size: 0.88rem;">
+                        <i class="bi bi-arrow-repeat text-success me-2"></i>Interviewer Follow-Up Questions &amp; Model Responses ({{ q.follow_up_questions|length }} Follow-Ups):
+                    </h6>
+                    <div class="row g-2">
+                        {% for fu in q.follow_up_questions %}
+                        <div class="col-12">
+                            <div class="p-3 bg-white rounded border">
+                                <div class="fw-bold text-dark small mb-2">
+                                    <i class="bi bi-question-circle-fill text-primary me-1"></i>{{ fu.question }}
+                                </div>
+                                <div class="text-secondary small ps-3 border-start border-2 border-primary mb-2" style="line-height: 1.55;">
+                                    <strong class="text-dark d-block mb-1"><i class="bi bi-chat-quote-fill text-success me-1"></i>Comprehensive Answer:</strong>
+                                    {{ fu.reference_answer or fu.answer }}
+                                </div>
+                                
+                                {% if fu.technical_justification or fu.interview_takeaway %}
+                                <div class="row g-2 pt-2 border-top border-light-subtle small">
+                                    {% if fu.technical_justification %}
+                                    <div class="col-md-6 text-muted">
+                                        <strong class="text-dark"><i class="bi bi-cpu text-secondary me-1"></i>Technical Justification:</strong> {{ fu.technical_justification }}
+                                    </div>
+                                    {% endif %}
+                                    {% if fu.practical_example %}
+                                    <div class="col-md-6 text-muted">
+                                        <strong class="text-dark"><i class="bi bi-terminal text-secondary me-1"></i>Practical Example:</strong> {{ fu.practical_example }}
+                                    </div>
+                                    {% endif %}
+                                    {% if fu.interview_takeaway %}
+                                    <div class="col-12 mt-1">
+                                        <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle px-2 py-1">
+                                            <i class="bi bi-lightbulb-fill me-1"></i>Interview Takeaway: {{ fu.interview_takeaway }}
+                                        </span>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Common Mistakes to Avoid Drawer -->
+                {% if q.common_mistakes %}
+                <div id="mistakes-{{ loop.index }}" class="guidance-drawer d-none">
+                    <h6 class="fw-bold text-dark mb-2" style="font-size: 0.88rem;">
+                        <i class="bi bi-shield-x text-danger me-2"></i>Common Pitfalls &amp; Mistakes to Avoid:
+                    </h6>
+                    <div class="p-3 bg-white rounded border border-danger-subtle">
+                        <ul class="mb-0 ps-3">
+                            {% for m in q.common_mistakes %}
+                            <li class="small text-danger mb-1" style="line-height: 1.5;">
+                                <i class="bi bi-x-circle me-1"></i><span class="text-dark">{{ m }}</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Suggested Improvements Drawer -->
+                {% if q.suggested_improvements %}
+                <div id="improvements-{{ loop.index }}" class="guidance-drawer d-none">
+                    <h6 class="fw-bold text-dark mb-2" style="font-size: 0.88rem;">
+                        <i class="bi bi-rocket-takeoff text-info me-2"></i>Future Improvements (Hypothetical Proposal):
+                    </h6>
+                    <div class="alert alert-info border-info-subtle small mb-0" style="line-height: 1.55;">
+                        <i class="bi bi-info-circle-fill me-1"></i>{{ q.suggested_improvements }}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Example / Code Drawer -->
+                {% if q.examples or q.code_snippet %}
+                <div id="example-{{ loop.index }}" class="guidance-drawer d-none">
+                    <h6 class="fw-bold text-dark mb-2" style="font-size: 0.88rem;">
+                        <i class="bi bi-code-slash text-primary me-2"></i>Practical Implementation Example / Code Snippet:
+                    </h6>
+                    {% if q.code_snippet %}
+                    <pre class="bg-dark text-light p-3 rounded small mb-0"><code>{{ q.code_snippet }}</code></pre>
+                    {% elif q.examples %}
+                    <div class="alert alert-light border small mb-0">
+                        {{ q.examples }}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <!-- Framework Breakdown Drawer -->
+                <div id="framework-{{ loop.index }}" class="guidance-drawer d-none">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="badge bg-primary px-2 py-1" style="font-size: 0.7rem;">Answering Framework</span>
+                        <span class="text-muted small" style="font-size: 0.75rem;">Follow the {{ q.recommended_answer_framework }} methodology:</span>
+                    </div>
+
+                    {% if q.completed_framework_answer %}
+                    <div class="mb-3">
+                        <span class="small fw-bold text-success text-uppercase d-block mb-2" style="font-size: 0.72rem;">
+                            <i class="bi bi-check2-all me-1"></i>Completed {{ q.recommended_answer_framework }} Answer Demonstration:
+                        </span>
+                        {% for step in q.completed_framework_answer %}
+                        <div class="step-card mb-2 p-2 bg-white rounded border border-success-subtle">
+                            <div class="fw-bold text-primary small mb-1">{{ step.label }}:</div>
+                            <div class="text-dark small">{{ step.demonstration }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    {% if q.framework_template %}
+                    <div>
+                        <span class="small fw-bold text-secondary text-uppercase d-block mb-2" style="font-size: 0.72rem;">
+                            <i class="bi bi-layout-text-sidebar me-1"></i>Framework Structure &amp; Guidance Prompts:
+                        </span>
+                        {% for step in q.framework_template %}
+                        <div class="step-card">
+                            <div class="step-title">{{ step.label }}</div>
+                            <div class="step-prompt mb-1">{{ step.prompt }}</div>
+                            <div class="step-placeholder">{{ step.placeholder }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Interview Delivery Tips Drawer -->
+                {% if q.interview_tips %}
+                <div id="tips-{{ loop.index }}" class="guidance-drawer d-none">
+                    <h6 class="fw-bold text-dark mb-2" style="font-size: 0.88rem;">
+                        <i class="bi bi-lightbulb text-warning me-2"></i>Interview Delivery &amp; Presentation Tips:
+                    </h6>
+                    <ul class="mb-0 ps-3">
+                        {% for tip in q.interview_tips %}
+                        <li class="small text-dark mb-1">{{ tip }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/interview.js') }}"></script>
+{% endblock %}

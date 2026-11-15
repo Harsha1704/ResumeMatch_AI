@@ -1,0 +1,14 @@
+{
+  "phase": "12I.3",
+  "timestamp": "2026-11-14T08:34:00Z",
+  "discrepancy_resolution": {
+    "analytical_latent_power": 0.8069,
+    "simulated_manifest_power": 0.8564,
+    "nominal_latent_deff": 2.05,
+    "realized_manifest_deff": 1.7906,
+    "nominal_latent_se": 0.01415,
+    "realized_manifest_se": 0.01323,
+    "mathematical_explanation": "BIVARIATE TETRACHORIC ATTENUATION EFFECT: In the Monte Carlo thresholding model, latent continuous variables with correlation rho are discretized into ternary paired indicators D in {-1, 0, 1}. Discretization non-linearly attenuates the correlation (Pearson r_discrete < rho_latent) by a factor of ~0.65-0.75 for tail threshold cuts. Consequently, the manifest discrete ICC is ~0.13 (vs latent 0.20) and ~0.065 (vs latent 0.10), reducing realized DEFF from 2.05 to ~1.72. This lower standard error explains why simulated power (85.6%) is higher than asymptotic analytical power (80.7%).",
+    "auditor_recommendation": "The analytical power of 80.7% should be retained as the CONSERVATIVE lower bound, while the simulated 85.6% reflects the manifest thresholding reality. Target N=2,850 safely satisfies both standards."
+  }
+}

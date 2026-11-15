@@ -1,0 +1,5 @@
+Dataset Name,Source,Pairs,Labels,Synthetic / LLM,Label Compatibility,Status,Reason
+cnamuangtoun/resume-job-description-fit,Hugging Face,8000,"3 classes (No Fit, Potential Fit, Good Fit)",No (Real),Exact (3 classes),ACCEPTED,Primary human-labeled benchmark with real resumes and job postings.
+facehuggerapoorv/resume-jd-match,Hugging Face,8000,Binary (Fit / No Fit),No (Real),Incompatible (Binary only),REJECTED,Lacks Potential Fit category; mapping binary to ternary violates project rules.
+callmeech/resume-score-details,Hugging Face,1000,Continuous Scores + Criteria,Yes (GPT-4o),Incompatible,REJECTED,Explicitly generated and labeled via GPT-4o (violates Section 1 rule).
+Sneha-06/Resume-Job-Matcher,Kaggle,1200,None (Unsupervised),No (Real),No ground truth,REJECTED,Contains raw text without supervised ground-truth fit labels.

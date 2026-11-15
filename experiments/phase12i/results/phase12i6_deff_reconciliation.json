@@ -1,0 +1,54 @@
+{
+  "phase": "12I.6",
+  "timestamp": "2026-11-14T20:38:00Z",
+  "audit_name": "Independent Crossed-Cluster DEFF Derivation & Reconciliation",
+  "auditor_roles": [
+    "Principal Biostatistician",
+    "Statistical Simulation Auditor",
+    "Data Governance Engineer"
+  ],
+  "exact_incidence_structure": {
+    "total_pairs_N": 2850,
+    "total_candidates_C": 950,
+    "total_jobs_J": 380,
+    "candidate_pairs_per_cluster": 3,
+    "candidate_size_weighted_mc_star": 3.0,
+    "job_allocation": {
+      "jobs_with_7_pairs": 190,
+      "jobs_with_8_pairs": 190,
+      "sum_pairs_check": 2850,
+      "sum_m_j_sq": 21470,
+      "size_weighted_mj_star": 7.533333,
+      "exact_fraction": "21470 / 2850 = 7.533333..."
+    }
+  },
+  "exact_covariance_parameters": {
+    "manifest_icc_candidate": 0.14261,
+    "manifest_icc_job": 0.075726,
+    "candidate_job_interaction_covariance": 0.0,
+    "unshared_pair_population_covariance": 0.0,
+    "covariance_structure_proof": "Under the crossed random-effects model D_ij = mu + u_i + v_j + e_ij where u_i ~ iid (0, sigma_c^2), v_j ~ iid (0, sigma_j^2), and e_ij ~ iid (0, sigma_e^2) are mutually independent, the true population covariance between any two pairs (i, j) and (l, m) with i != l and j != m is IDENTICALLY ZERO. No interaction or cross-cluster covariance exists in the DGP."
+  },
+  "theoretical_derivation": {
+    "formula": "DEFF = 1 + (mc* - 1)*icc_c + (mj* - 1)*icc_j",
+    "substitution": "1 + (3.0 - 1)*0.14261 + (7.533333 - 1)*0.075726",
+    "calculation_steps": {
+      "candidate_inflation": 0.28522,
+      "job_inflation": 0.494743,
+      "sum": 1.779963
+    },
+    "exact_theoretical_deff": 1.779963,
+    "documented_formula_deff_rounded": 1.78,
+    "theoretical_var_d_bar": 0.0001738743,
+    "theoretical_se_d_bar": 0.013186
+  },
+  "empirical_reconciliation": {
+    "reported_value_phase12i4": 1.7367,
+    "reproduced_value_phase12i6_b10k": 1.7859,
+    "difference_from_theoretical": -0.0433,
+    "standard_error_at_b5000": 0.0356,
+    "z_score": -1.2152,
+    "two_sided_p_value": 0.2243,
+    "reconciliation_verdict": "STATISTICAL RECONCILIATION PASSED: The reported empirical variance ratio of 1.7367 is completely consistent with standard Monte Carlo variability (z = -1.215, p = 0.224). There is no structural defect in the DGP, no negative population covariance, and no missing interaction term. The theoretical population DEFF is exactly 1.7800."
+  }
+}

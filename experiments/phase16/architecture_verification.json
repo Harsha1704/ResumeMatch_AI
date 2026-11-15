@@ -1,0 +1,63 @@
+{
+  "all_passed": true,
+  "tests": {
+    "flask_module_isolation": {
+      "status": "PASS",
+      "torch_imported": false,
+      "sbert_imported": false,
+      "flask_boot_rss_mb": 53.1,
+      "health_latency_ms": 38.79030000007333
+    },
+    "sqlite_wal_mode": {
+      "status": "PASS",
+      "cache_db_wal": "WAL",
+      "queue_db_wal": "WAL"
+    },
+    "non_blocking_cache_miss": {
+      "status": "PASS",
+      "http_status": 202,
+      "latency_ms": 19.770799999605515,
+      "returned_job_ids": {
+        "job_job_id": "088a60bf-9ddd-490f-832e-deb1f052ddb0",
+        "resume_job_id": "bcb53b1b-ad45-48b0-b9fe-cbf3de2fd525"
+      }
+    },
+    "worker_independent_processing": {
+      "status": "PASS",
+      "resume_job_status": "completed",
+      "job_jd_status": "completed",
+      "processing_latency_ms": 17491.17860000024
+    },
+    "cache_hit_fast_path": {
+      "status": "PASS",
+      "latency_ms": 8.092200000646699,
+      "is_challenger": true,
+      "fallback_triggered": false,
+      "target_met": true
+    },
+    "duplicate_job_idempotency": {
+      "status": "PASS",
+      "idempotent": true
+    },
+    "stale_job_crash_recovery": {
+      "status": "PASS",
+      "recovered_count": 1,
+      "final_status": "completed"
+    },
+    "worker_restart_safety": {
+      "status": "PASS",
+      "jobs_enqueued": 5,
+      "jobs_processed_after_restart": 5
+    },
+    "failure_logging_and_dead_letter": {
+      "status": "PASS",
+      "final_status": "failed",
+      "retry_count": 3,
+      "recorded_error": "Simulated CUDA error on attempt 3"
+    },
+    "flask_responsiveness_under_workload": {
+      "status": "PASS",
+      "health_code": 200
+    }
+  }
+}

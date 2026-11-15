@@ -1,0 +1,25 @@
+{
+  "phase": "12I.9",
+  "audit_name": "Cover-Hart Asymptotic Relationship & Bayes Error Ceiling Forensic Audit",
+  "timestamp": "2026-11-14T21:11:00Z",
+  "investigated_claim": {
+    "source_document": "docs/research/PHASE12I8_BENCHMARK_LIMITATIONS.md",
+    "claim_text": "The Bayes error rate of the 3-class problem on this dataset is bounded below by R* >= 28.0%, making 80%+ accuracy mathematically impossible.",
+    "formula_cited": "R* >= (K - 1)/K * [1 - sqrt(1 - K/(K - 1) * R_1NN)]",
+    "input_parameter": "R_1NN = 0.44"
+  },
+  "forensic_audit_findings": {
+    "finding_1_parameter_provenance": "The 0.44 parameter was NOT the error rate of an asymptotic 1-Nearest Neighbor classifier. It was an approximation of the finite-sample empirical accuracy (44.60%) or error (1 - 0.56) of a parametric logistic regression model fitted on contrastive embeddings on N=296 pairs.",
+    "finding_2_cover_hart_assumptions_violated": {
+      "asymptotic_infinite_sample_assumption": "VIOLATED. Cover-Hart (1967) theorem applies strictly in the large-sample limit (N -> infinity). N=296 is a small, finite, clustered sample.",
+      "classifier_identity_assumption": "VIOLATED. The theorem establishes a relationship between the 1-NN risk R_NN and the Bayes risk R*. Substituting the risk of a linear logistic classifier into the 1-NN bound is a severe mathematical category error.",
+      "metric_space_density_assumption": "VIOLATED. Textual pairs embedded via neural networks on discrete vocabulary do not satisfy the required continuous distribution assumptions."
+    },
+    "finding_3_category_error": "An empirical error of a specific candidate classifier cannot be used to bound the Bayes error of the underlying data-generating distribution. An unoptimized or noisy model achieving 56% error implies nothing about the theoretical ceiling of an optimal classifier."
+  },
+  "audit_verdict": "CLAIM_INVALIDATED_AND_RETRACTED",
+  "certified_scientific_corrections": {
+    "retraction_statement": "The mathematical claim that the Bayes error rate is at least 28.0% and that 80%+ accuracy is mathematically impossible is officially retracted as scientifically unfounded.",
+    "scientifically_defensible_limitations_statement": "Empirical results to date peak at 50.26% on the official held-out test and 47.64% on dual-unseen validation. Reaching 80%+ accuracy remains unachieved due to documented empirical factors: (1) high label noise and conflicting annotations in the original Kaggle dataset, (2) severe class boundary ambiguity surrounding Potential Fit, and (3) omission of critical non-resume hiring signals (e.g. interview evaluations, salary alignment, visa eligibility). However, 80%+ accuracy is not proven to be mathematically impossible, and remains an objective for future research with cleaner, multi-modal hiring data."
+  }
+}

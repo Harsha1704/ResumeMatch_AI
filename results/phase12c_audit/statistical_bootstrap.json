@@ -1,0 +1,39 @@
+{
+  "n_bootstraps": 1000,
+  "delta_accuracy (SBERT Config B - Classical Baseline)": {
+    "mean": 0.027908740359897172,
+    "std": 0.024156819007487382,
+    "ci_95": [
+      -0.02188303341902318,
+      0.07455012853470439
+    ],
+    "p_value_two_tailed": 0.258
+  },
+  "delta_macro_f1 (SBERT Config B - Classical Baseline)": {
+    "mean": 0.046958884702760315,
+    "std": 0.024546575995411376,
+    "ci_95": [
+      -0.0057538312836965585,
+      0.09450244411162168
+    ],
+    "p_value_two_tailed": 0.072
+  },
+  "delta_good_fit_recall (SBERT Config B - Classical Baseline)": {
+    "mean": 0.09895678276929248,
+    "std": 0.05633230145654415,
+    "ci_95": [
+      -0.007905361757105949,
+      0.213128765587782
+    ],
+    "p_value_two_tailed": 0.084
+  },
+  "delta_good_fit_precision (SBERT Config B - Classical Baseline)": {
+    "mean": 0.16874917405839326,
+    "std": 0.04159736530915573,
+    "ci_95": [
+      0.09020613262343939,
+      0.2517675955177588
+    ],
+    "p_value_two_tailed": 0.0
+  }
+}

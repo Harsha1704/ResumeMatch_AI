@@ -1,0 +1,198 @@
+{
+  "C_1.0": {
+    "original_train_pairs": 5462,
+    "cleaned_train_pairs": 5450,
+    "original_model": {
+      "accuracy": 0.491,
+      "balanced_accuracy": 0.4083,
+      "macro_precision": 0.4115,
+      "macro_recall": 0.4083,
+      "macro_f1": 0.4039,
+      "weighted_f1": 0.487,
+      "brier_score": 0.9284,
+      "confusion_matrix": [
+        [
+          256,
+          135,
+          24
+        ],
+        [
+          83,
+          107,
+          40
+        ],
+        [
+          54,
+          60,
+          19
+        ]
+      ],
+      "per_class": {
+        "No Fit": {
+          "precision": 0.6514,
+          "recall": 0.6169,
+          "f1": 0.6337,
+          "support": 415
+        },
+        "Potential Fit": {
+          "precision": 0.3543,
+          "recall": 0.4652,
+          "f1": 0.4023,
+          "support": 230
+        },
+        "Good Fit": {
+          "precision": 0.2289,
+          "recall": 0.1429,
+          "f1": 0.1759,
+          "support": 133
+        }
+      }
+    },
+    "cleaned_model": {
+      "accuracy": 0.4923,
+      "balanced_accuracy": 0.4081,
+      "macro_precision": 0.4098,
+      "macro_recall": 0.4081,
+      "macro_f1": 0.4029,
+      "weighted_f1": 0.4876,
+      "brier_score": 0.9278,
+      "confusion_matrix": [
+        [
+          257,
+          134,
+          24
+        ],
+        [
+          82,
+          108,
+          40
+        ],
+        [
+          55,
+          60,
+          18
+        ]
+      ],
+      "per_class": {
+        "No Fit": {
+          "precision": 0.6523,
+          "recall": 0.6193,
+          "f1": 0.6354,
+          "support": 415
+        },
+        "Potential Fit": {
+          "precision": 0.3576,
+          "recall": 0.4696,
+          "f1": 0.406,
+          "support": 230
+        },
+        "Good Fit": {
+          "precision": 0.2195,
+          "recall": 0.1353,
+          "f1": 0.1674,
+          "support": 133
+        }
+      }
+    },
+    "acc_diff": 0.0013,
+    "f1_diff": -0.001
+  },
+  "C_0.25": {
+    "original_train_pairs": 5462,
+    "cleaned_train_pairs": 5450,
+    "original_model": {
+      "accuracy": 0.4897,
+      "balanced_accuracy": 0.422,
+      "macro_precision": 0.4237,
+      "macro_recall": 0.422,
+      "macro_f1": 0.4187,
+      "weighted_f1": 0.4945,
+      "brier_score": 0.8291,
+      "confusion_matrix": [
+        [
+          244,
+          136,
+          35
+        ],
+        [
+          67,
+          111,
+          52
+        ],
+        [
+          50,
+          57,
+          26
+        ]
+      ],
+      "per_class": {
+        "No Fit": {
+          "precision": 0.6759,
+          "recall": 0.588,
+          "f1": 0.6289,
+          "support": 415
+        },
+        "Potential Fit": {
+          "precision": 0.3651,
+          "recall": 0.4826,
+          "f1": 0.4157,
+          "support": 230
+        },
+        "Good Fit": {
+          "precision": 0.2301,
+          "recall": 0.1955,
+          "f1": 0.2114,
+          "support": 133
+        }
+      }
+    },
+    "cleaned_model": {
+      "accuracy": 0.4897,
+      "balanced_accuracy": 0.4227,
+      "macro_precision": 0.4244,
+      "macro_recall": 0.4227,
+      "macro_f1": 0.4191,
+      "weighted_f1": 0.4943,
+      "brier_score": 0.8293,
+      "confusion_matrix": [
+        [
+          243,
+          137,
+          35
+        ],
+        [
+          67,
+          112,
+          51
+        ],
+        [
+          50,
+          57,
+          26
+        ]
+      ],
+      "per_class": {
+        "No Fit": {
+          "precision": 0.675,
+          "recall": 0.5855,
+          "f1": 0.6271,
+          "support": 415
+        },
+        "Potential Fit": {
+          "precision": 0.366,
+          "recall": 0.487,
+          "f1": 0.4179,
+          "support": 230
+        },
+        "Good Fit": {
+          "precision": 0.2321,
+          "recall": 0.1955,
+          "f1": 0.2122,
+          "support": 133
+        }
+      }
+    },
+    "acc_diff": 0.0,
+    "f1_diff": 0.0004
+  }
+}

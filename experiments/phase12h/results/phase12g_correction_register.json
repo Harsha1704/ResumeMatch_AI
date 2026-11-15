@@ -1,0 +1,55 @@
+{
+  "phase": "12H",
+  "audit_date": "2026-11-13",
+  "correction_register_status": "APPROVED_FORENSIC_RECORD",
+  "corrections": [
+    {
+      "item_id": "CORR-01",
+      "target_claim": "Cross-Encoder 47.30% Accuracy and 0.3850 Macro F1 on Dual-Unseen text",
+      "previous_phase12g_statement": "Reported as an experimental result on Dual-Unseen validation text.",
+      "corrected_statement": "The 47.30% accuracy and 0.3850 Macro F1 figures were analytical projections derived from Phase 12B Job-Disjoint section-aware truncation separation ratios, not empirical predictions emitted by a fine-tuned checkpoint on dual_unseen_val_v1. The empirical Dual-Unseen cross-encoder result remains unverified until an active fine-tuned checkpoint is serialized and scored.",
+      "severity": "HIGH (Metric Classification Correction)",
+      "impact": "Production release gate remains blocked; model status remains strictly exploratory research."
+    },
+    {
+      "item_id": "CORR-02",
+      "target_claim": "ModernBERT / DeBERTa-v3 empirical performance",
+      "previous_phase12g_statement": "Labelled as cross_encoder_deberta_modernbert in architecture comparison.",
+      "corrected_statement": "Empirical benchmarks on ModernBERT and DeBERTa-v3 were not established on this repository. The underlying benchmark evaluated ms-marco-MiniLM-L-6-v2 (22.7M parameters) in Phase 12B. MiniLM-L6-v2 must never be presented as ModernBERT or DeBERTa-v3.",
+      "severity": "HIGH (Model Provenance Correction)",
+      "impact": "Clarifies architectural distinction and prevents inflated model capacity claims."
+    },
+    {
+      "item_id": "CORR-03",
+      "target_claim": "Nested Out-of-Fold (OOF) threshold calibration isolation properties",
+      "previous_phase12g_statement": "Cited as candidate-and-job disjoint evaluation.",
+      "corrected_statement": "OOF calibration folds are strictly candidate-disjoint (zero candidate overlap across folds), but jobs are shared across folds (an average of 30 jobs overlap between inner train and outer val). Outer validation labels were strictly excluded from fold threshold tuning, preventing direct label leakage, but the cross-validation is not dual-disjoint.",
+      "severity": "MEDIUM (Isolation Scope Clarification)",
+      "impact": "Transparent reporting of entity clustering boundaries."
+    },
+    {
+      "item_id": "CORR-04",
+      "target_claim": "Out-of-Fold Calibration Exact Metrics",
+      "previous_phase12g_statement": "Acc: 47.97%, Macro F1: 0.3699, Good Fit Recall: 12.90%",
+      "corrected_statement": "Independent recalculation directly from the saved prediction table (oof_calibrated_predictions_seed42.csv) yields Overall Accuracy: 47.64% (141/296), Balanced Accuracy: 41.36%, Macro F1: 0.3638, and Good Fit Recall: 11.83% (11/93).",
+      "severity": "MEDIUM (Numerical Alignment)",
+      "impact": "Authoritative metrics aligned with physical file on disk."
+    },
+    {
+      "item_id": "CORR-05",
+      "target_claim": "Production Baseline Latency",
+      "previous_phase12g_statement": "0.0041 ms per pair",
+      "corrected_statement": "0.0041 ms was a classifier-only forward pass on pre-computed feature vectors. True end-to-end production latency (text cleaning, regex structural parsing, skill extraction, feature pipeline transform, and model inference) has a mean of 39.23 ms (median: 33.86 ms, P95: 62.54 ms).",
+      "severity": "HIGH (Benchmark Boundary Correction)",
+      "impact": "Eliminates misleading comparison between classifier-only and end-to-end latency."
+    },
+    {
+      "item_id": "CORR-06",
+      "target_claim": "Independent External Benchmark Release Gate",
+      "previous_phase12g_statement": "Classified as CONDITIONALLY PASSED",
+      "corrected_statement": "Gate 2 is formally reclassified as NOT PASSED / PENDING. An external benchmark does not exist until verified recruiter labels are obtained under proven inter-annotator agreement (kappa >= 0.70). Djinni remains strictly an unlabelled dual-modality collection.",
+      "severity": "CRITICAL (Governance Gate Alignment)",
+      "impact": "Ensures no premature promotion before genuine external verification."
+    }
+  ]
+}

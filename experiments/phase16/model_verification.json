@@ -1,0 +1,65 @@
+{
+  "all_passed": true,
+  "tests": {
+    "default_model_baseline": {
+      "status": "PASS",
+      "model_backend": "production",
+      "model_used": "Production Baseline (TF-IDF + Logistic Regression)",
+      "is_challenger": false,
+      "fallback_triggered": false
+    },
+    "model5_opt_in_gating": {
+      "status": "PASS",
+      "default_backend": "production",
+      "opt_in_backend_requested": "challenger_m5"
+    },
+    "probability_calibration_and_order": {
+      "status": "PASS",
+      "classes": [
+        "Good Fit",
+        "No Fit",
+        "Potential Fit"
+      ],
+      "probability_sum": 1.0,
+      "probabilities": {
+        "Good Fit": 0.9852,
+        "No Fit": 0.0,
+        "Potential Fit": 0.0148
+      },
+      "predicted_class": "Good Fit"
+    },
+    "explicit_fallback_on_cache_miss": {
+      "status": "PASS",
+      "status_code": 200,
+      "fallback_triggered": true,
+      "model_requested": "challenger_m5",
+      "model_used": "Production Baseline (Fallback: Embeddings Queued for Background Worker)",
+      "fallback_reason": "cache_miss_pending_worker_generation",
+      "pending_jobs": {
+        "job_job_id": "1de164ec-a3cd-47c5-80a1-059c8d0bb41f",
+        "resume_job_id": "2be1fe0d-1ab9-437d-9d81-c8abe450dc3c"
+      }
+    },
+    "challenger_cached_prediction": {
+      "status": "PASS",
+      "is_challenger": true,
+      "fallback_triggered": false,
+      "model_used": "Challenger Model 5 (Semantic & Skill Fusion - Experimental)",
+      "predicted_class": "Potential Fit",
+      "probabilities": {
+        "Good Fit": 0.2964600550912559,
+        "No Fit": 0.019440536922279986,
+        "Potential Fit": 0.6840994079864642
+      }
+    },
+    "strict_rejection_of_silent_fallback": {
+      "status": "PASS",
+      "status_code": 202,
+      "status_message": "processing",
+      "job_ids": {
+        "job_job_id": "b32e9f1c-48dc-44f2-a0c1-70599fd4a84b",
+        "resume_job_id": "f747845b-0c31-4e66-ac51-5a42ac92efeb"
+      }
+    }
+  }
+}

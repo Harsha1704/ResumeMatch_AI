@@ -1,0 +1,242 @@
+{
+  "Logistic Regression (Optimized)": {
+    "accuracy": 0.5437017994858612,
+    "macro_precision": 0.48695720087472666,
+    "macro_recall": 0.4637985744875546,
+    "macro_f1": 0.45718564327762995,
+    "weighted_f1": 0.5351802778335738,
+    "per_class": {
+      "No Fit": {
+        "precision": 0.6881443298969072,
+        "recall": 0.6433734939759036,
+        "f1": 0.6650062266500623,
+        "support": 415
+      },
+      "Good Fit": {
+        "precision": 0.36666666666666664,
+        "recall": 0.16541353383458646,
+        "f1": 0.22797927461139897,
+        "support": 133
+      },
+      "Potential Fit": {
+        "precision": 0.40606060606060607,
+        "recall": 0.5826086956521739,
+        "f1": 0.4785714285714286,
+        "support": 230
+      }
+    },
+    "confusion_matrix": [
+      [
+        267,
+        18,
+        130
+      ],
+      [
+        45,
+        22,
+        66
+      ],
+      [
+        76,
+        20,
+        134
+      ]
+    ],
+    "inference_time": 0.003185272216796875,
+    "training_time": 4.1,
+    "cv_macro_f1": 0.4892,
+    "gpu_used": false
+  },
+  "Linear SVM": {
+    "accuracy": 0.5694087403598972,
+    "macro_precision": 0.4924564610758689,
+    "macro_recall": 0.47633804259207474,
+    "macro_f1": 0.47589434433895733,
+    "weighted_f1": 0.5580371324060373,
+    "per_class": {
+      "No Fit": {
+        "precision": 0.6873563218390805,
+        "recall": 0.7204819277108434,
+        "f1": 0.7035294117647058,
+        "support": 415
+      },
+      "Good Fit": {
+        "precision": 0.35135135135135137,
+        "recall": 0.19548872180451127,
+        "f1": 0.25120772946859904,
+        "support": 133
+      },
+      "Potential Fit": {
+        "precision": 0.43866171003717475,
+        "recall": 0.5130434782608696,
+        "f1": 0.4729458917835671,
+        "support": 230
+      }
+    },
+    "confusion_matrix": [
+      [
+        299,
+        21,
+        95
+      ],
+      [
+        51,
+        26,
+        56
+      ],
+      [
+        85,
+        27,
+        118
+      ]
+    ],
+    "inference_time": 0.002996683120727539,
+    "training_time": 3.2,
+    "cv_macro_f1": 0.442,
+    "gpu_used": false
+  },
+  "XGBoost (GPU RTX 4050)": {
+    "accuracy": 0.5462724935732648,
+    "macro_precision": 0.44177173451128704,
+    "macro_recall": 0.4444387553482974,
+    "macro_f1": 0.435084309983901,
+    "weighted_f1": 0.5341237833262765,
+    "per_class": {
+      "No Fit": {
+        "precision": 0.7038834951456311,
+        "recall": 0.6987951807228916,
+        "f1": 0.7013301088270859,
+        "support": 415
+      },
+      "Good Fit": {
+        "precision": 0.21739130434782608,
+        "recall": 0.11278195488721804,
+        "f1": 0.1485148514851485,
+        "support": 133
+      },
+      "Potential Fit": {
+        "precision": 0.40404040404040403,
+        "recall": 0.5217391304347826,
+        "f1": 0.45540796963946867,
+        "support": 230
+      }
+    },
+    "confusion_matrix": [
+      [
+        290,
+        15,
+        110
+      ],
+      [
+        51,
+        15,
+        67
+      ],
+      [
+        71,
+        39,
+        120
+      ]
+    ],
+    "inference_time": 0.03098011016845703,
+    "training_time": 12.5,
+    "cv_macro_f1": 0.472,
+    "gpu_used": true
+  },
+  "LightGBM (Optimized)": {
+    "accuracy": 0.5308483290488432,
+    "macro_precision": 0.44701108874524415,
+    "macro_recall": 0.44584037358981526,
+    "macro_f1": 0.44203150578965356,
+    "weighted_f1": 0.5289538443694711,
+    "per_class": {
+      "No Fit": {
+        "precision": 0.7043701799485861,
+        "recall": 0.6602409638554216,
+        "f1": 0.681592039800995,
+        "support": 415
+      },
+      "Good Fit": {
+        "precision": 0.24210526315789474,
+        "recall": 0.17293233082706766,
+        "f1": 0.20175438596491227,
+        "support": 133
+      },
+      "Potential Fit": {
+        "precision": 0.3945578231292517,
+        "recall": 0.5043478260869565,
+        "f1": 0.44274809160305345,
+        "support": 230
+      }
+    },
+    "confusion_matrix": [
+      [
+        274,
+        24,
+        117
+      ],
+      [
+        49,
+        23,
+        61
+      ],
+      [
+        66,
+        48,
+        116
+      ]
+    ],
+    "training_time": 9.775403022766113,
+    "inference_time": 0.004161834716796875,
+    "cv_macro_f1": 0.49638236978795947,
+    "gpu_used": false
+  },
+  "CatBoost Classifier": {
+    "accuracy": 0.5141388174807198,
+    "macro_precision": 0.39995901839677844,
+    "macro_recall": 0.42177641589568476,
+    "macro_f1": 0.3964999655390966,
+    "weighted_f1": 0.5067275175906745,
+    "per_class": {
+      "No Fit": {
+        "precision": 0.7583081570996979,
+        "recall": 0.6048192771084338,
+        "f1": 0.6729222520107239,
+        "support": 415
+      },
+      "Good Fit": {
+        "precision": 0.057971014492753624,
+        "recall": 0.03007518796992481,
+        "f1": 0.039603960396039604,
+        "support": 133
+      },
+      "Potential Fit": {
+        "precision": 0.3835978835978836,
+        "recall": 0.6304347826086957,
+        "f1": 0.4769736842105263,
+        "support": 230
+      }
+    },
+    "confusion_matrix": [
+      [
+        251,
+        26,
+        138
+      ],
+      [
+        34,
+        4,
+        95
+      ],
+      [
+        46,
+        39,
+        145
+      ]
+    ],
+    "training_time": 43.802701234817505,
+    "inference_time": 0.026810407638549805,
+    "cv_macro_f1": 0.461,
+    "gpu_used": false
+  }
+}

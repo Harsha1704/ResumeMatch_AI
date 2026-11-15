@@ -1,0 +1,60 @@
+{
+  "phase": "12I.2",
+  "audit_name": "Multi-Layered Data Contamination, Near-Duplicate Detection, and Privacy De-Identification Audit",
+  "version": "2.0.0",
+  "timestamp": "2026-11-14T08:27:45Z",
+  "multi_layered_leakage_detection": {
+    "detection_layers": [
+      {
+        "layer_name": "Exact Pair Identifier Matching",
+        "mechanism": "Direct string match on (candidate_id, job_id) compound keys",
+        "target_manifests": [
+          "manifests/v1/frozen_train_v1.parquet",
+          "manifests/v1/frozen_val_v1.parquet",
+          "manifests/v1/held_out_test_v1.parquet",
+          "manifests/v1/dual_unseen_val_v1.parquet"
+        ],
+        "false_positive_risk": "0.0% (Deterministic match)",
+        "false_negative_risk": "High (Fails if IDs are regenerated or re-indexed across releases)"
+      },
+      {
+        "layer_name": "Normalized Text SHA-256 Hashing",
+        "mechanism": "SHA-256 computed on lowercased, whitespace-stripped text for both resumes and job descriptions",
+        "false_positive_risk": "0.0% (Cryptographic collision probability ~ 1e-77)",
+        "false_negative_risk": "Moderate (Fails if trivial edits, punctuation, or disclaimer footers are modified)"
+      },
+      {
+        "layer_name": "MinHash LSH Near-Duplicate Detection",
+        "mechanism": "128 permutation hashes, character 5-gram shingles, Jaccard similarity threshold = 0.85",
+        "false_positive_risk": "Moderate (~2-5% on short job descriptions sharing boilerplate EEO statements)",
+        "false_negative_risk": "Low (< 1% for substantial textual overlaps)"
+      },
+      {
+        "layer_name": "Manual Review of Suspicious Matches",
+        "mechanism": "Human auditor inspection of all candidate-job pairs exhibiting Jaccard similarity between 0.70 and 0.85",
+        "purpose": "Catches subtle template reuse, shared corporate job templates with differing titles, and localized candidate resume revisions"
+      }
+    ],
+    "quarantine_rule": "Any benchmark pair exhibiting >= 0.85 Jaccard similarity or identical normalized text with ANY historical training, validation, or test split is PERMANENTLY QUARANTINED and EXCLUDED.",
+    "contamination_tolerance": 0
+  },
+  "privacy_and_deidentification_framework": {
+    "philosophical_framing": "PII scrubbing via automated NER and regex is a RISK REDUCTION strategy, NOT a guarantee of mathematical anonymization.",
+    "automated_scrubbing_pipeline": [
+      "Named Entity Recognition (NER) pipeline (Spacy/Transformers) scrubbing candidate names, organization names, and geographic addresses.",
+      "Regex filtering for telephone numbers, email addresses, social security numbers, postal codes, and URLs (GitHub, LinkedIn, personal portfolios).",
+      "Sanitization of recruiter signatures, hiring company contact details, and internal ATS requisition numbers."
+    ],
+    "residual_pii_threat_model": {
+      "threat_1_niche_employer_inference": "A candidate listing a niche startup with < 5 employees can be re-identified via LinkedIn search even without their personal name.",
+      "threat_2_rare_academic_trajectory": "Rare combinations of degrees, thesis titles, and publication years allow indirect demographic re-identification.",
+      "threat_3_boilerplate_omission": "Unusual contact formatting (e.g. phone numbers written as 'call 415 dot 555 dot 0199') may bypass standard regexes."
+    },
+    "defense_in_depth_safeguards": [
+      "Layer 1: Automated NER and Regex Sanitization Pipeline.",
+      "Layer 2: 10% Random Sampling Manual Residual-PII Inspection prior to annotator queue ingestion.",
+      "Layer 3: Restricted Access Control — Raw unscrubbed source datasets stored in an encrypted vault with strict read-only authorization.",
+      "Layer 4: Annotator Non-Disclosure Agreement (NDA) and Terms of Service prohibiting reverse-engineering candidate identities."
+    ]
+  }
+}

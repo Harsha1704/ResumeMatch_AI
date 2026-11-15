@@ -1,0 +1,20 @@
+{
+  "best_model.joblib": {
+    "path": "D:\\skillsync1\\models\\best_model.joblib",
+    "sha256": "1001baaf42db8832e1ba3e28ee9da7146e59f1d2d1808c73c4f7587535b2ed4a",
+    "size_bytes": 61487,
+    "status": "PRESERVED_INTACT_VERIFIED"
+  },
+  "feature_pipeline.joblib": {
+    "path": "D:\\skillsync1\\models\\feature_pipeline.joblib",
+    "sha256": "2ebf209f691b7084decb5d3a183b82e9b425fe89335345a4af661fed2fc88ae6",
+    "size_bytes": 270105,
+    "status": "PRESERVED_INTACT_VERIFIED"
+  },
+  "challenger_model_phase12f.joblib": {
+    "path": "D:\\skillsync1\\models\\phase12f\\challenger_model_phase12f.joblib",
+    "sha256": "5934990e987abe98223bf790ac9e9a79fb5ec99daac4509093e8eb0036461766",
+    "size_bytes": 2330440,
+    "status": "PRESERVED_INTACT_VERIFIED"
+  }
+}

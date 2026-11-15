@@ -1,0 +1,107 @@
+{
+  "phase": "12I.3",
+  "timestamp": "2026-11-14T08:34:30Z",
+  "quadratic_weights_clarification": {
+    "agreement_weights_formula": "w_ij = 1 - ((i - j)/(K - 1))^2",
+    "disagreement_weights_formula": "v_ij = ((i - j)/(K - 1))^2",
+    "mathematical_equivalence_proof": "kappa_w = (P_o_w - P_e_w)/(1 - P_e_w) == 1 - sum(v_ij*O_ij)/sum(v_ij*E_ij). Both formulations are mathematically identical. Verified computationally with machine precision error < 1e-15."
+  },
+  "test_cases": {
+    "perfect_agreement": {
+      "N": 200,
+      "observed_agreement_P_o": 1.0,
+      "unweighted_kappa": 1.0,
+      "quadratic_weighted_kappa": 1.0,
+      "gwet_ac1": 1.0,
+      "per_class_specific_agreement": {
+        "class_0": 1.0,
+        "class_1": 1.0,
+        "class_2": 1.0
+      },
+      "severe_disagreement_rate": 0.0,
+      "adjudication_rate": 0.0,
+      "rater_1_marginal": [
+        0.5,
+        0.3,
+        0.2
+      ],
+      "rater_2_marginal": [
+        0.5,
+        0.3,
+        0.2
+      ]
+    },
+    "complete_disagreement": {
+      "N": 300,
+      "observed_agreement_P_o": 0.0,
+      "unweighted_kappa": -0.49999999999999994,
+      "quadratic_weighted_kappa": -0.49999999999999933,
+      "gwet_ac1": -0.5000000000000001,
+      "per_class_specific_agreement": {
+        "class_0": 0.0,
+        "class_1": 0.0,
+        "class_2": 0.0
+      },
+      "severe_disagreement_rate": 0.3333333333333333,
+      "adjudication_rate": 1.0,
+      "rater_1_marginal": [
+        0.3333333333333333,
+        0.3333333333333333,
+        0.3333333333333333
+      ],
+      "rater_2_marginal": [
+        0.3333333333333333,
+        0.3333333333333333,
+        0.3333333333333333
+      ]
+    },
+    "skewed_prevalence_paradox": {
+      "N": 200,
+      "observed_agreement_P_o": 0.9500000000000001,
+      "unweighted_kappa": 0.63963963963964,
+      "quadratic_weighted_kappa": 0.639639639639644,
+      "gwet_ac1": 0.9462726662189389,
+      "per_class_specific_agreement": {
+        "class_0": 0.972972972972973,
+        "class_1": 0.6666666666666666,
+        "class_2": 1.0
+      },
+      "severe_disagreement_rate": 0.0,
+      "adjudication_rate": 0.05,
+      "rater_1_marginal": [
+        0.925,
+        0.07500000000000001,
+        0.0
+      ],
+      "rater_2_marginal": [
+        0.925,
+        0.07500000000000001,
+        0.0
+      ]
+    },
+    "marginal_asymmetry": {
+      "N": 200,
+      "observed_agreement_P_o": 0.765,
+      "unweighted_kappa": 0.5638051044083526,
+      "quadratic_weighted_kappa": 0.7036569987389667,
+      "gwet_ac1": 0.6796974162826159,
+      "per_class_specific_agreement": {
+        "class_0": 0.851063829787234,
+        "class_1": 0.656934306569343,
+        "class_2": 0.5714285714285714
+      },
+      "severe_disagreement_rate": 0.0,
+      "adjudication_rate": 0.235,
+      "rater_1_marginal": [
+        0.65,
+        0.3,
+        0.05
+      ],
+      "rater_2_marginal": [
+        0.525,
+        0.385,
+        0.09
+      ]
+    }
+  }
+}
