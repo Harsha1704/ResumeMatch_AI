@@ -35,7 +35,17 @@
       "mean": 2731.1,
       "min": 72,
       "max": 7669
-    }
+    },
+    "raw_train_row_count": 6241,
+    "raw_test_row_count": 1759,
+    "raw_total_pairs": 8000,
+    "duplicate_train_rows_removed": 1,
+    "duplicate_test_rows_removed": 0,
+    "train_null_cells": 0,
+    "test_null_cells": 0,
+    "verified_total_pairs": 7999,
+    "resume_overlap_pct": 99.79,
+    "job_overlap_pct": 0
   },
   "secondary_skills_dataset": {
     "source": "batuhanmtl/job-skill-set",
@@ -48,6 +58,7 @@
       "HR": 220,
       "INFORMATION-TECHNOLOGY": 140
     },
-    "unique_extracted_skills": 4476
+    "unique_extracted_skills": 4476,
+    "null_cells": 0
   }
 }
