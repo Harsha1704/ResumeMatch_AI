@@ -138,7 +138,7 @@ def test_parser_rejects_wrong_file_signature():
 
 
 def test_parser_rejects_binary_txt_content():
-    result = parse_resume(b"resume\\x00binary", filename="resume.txt")
+    result = parse_resume(b"resume\x00binary", filename="resume.txt")
     assert result["status"] == "error"
     assert "null bytes" in result["error_message"]
 
