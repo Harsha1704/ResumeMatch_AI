@@ -139,7 +139,7 @@ class HeuristicAnswerEvaluator:
         normalized = re.sub(r"[^a-z0-9+#. ]", " ", text.lower())
         normalized = re.sub(r"\s+", " ", normalized).strip()
         placeholder_only = bool(re.fullmatch(
-            r"(?:[a-z]{1,2}|test|testing|answer|n/?a|none|skip|placeholder|lorem ipsum)(?:\s+\1)*",
+            r"([a-z]{1,2}|test|testing|answer|n/?a|none|skip|placeholder|lorem ipsum)(?:\s+\1)*",
             normalized
         )) if normalized else True
         meaningful_tokens = self._tokens(text)
