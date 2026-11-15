@@ -110,3 +110,41 @@ def test_scanned_pdf_detection(tmp_path):
     res = parse_resume(scanned_pdf, filename="scanned_invoice.pdf")
     assert res["status"] == "scanned_pdf"
     assert "scanned" in res["error_message"].lower()
+
+
+
+def test_docx_preserves_interleaved_paragraph_and_table_order(tmp_path):
+    """DOCX extraction must not move tables after all paragraphs."""
+    docx_path = tmp_path / "ordered_resume.docx"
+    document = docx.Document()
+    document.add_paragraph("EXPERIENCE")
+    table = document.add_table(rows=1, cols=1)
+    table.cell(0, 0).text = "Example Corp — Software Engineer"
+    document.add_paragraph("PROJECTS")
+    document.save(str(docx_path))
+
+    parsed = parse_resume(docx_path, filename="ordered_resume.docx")
+    assert parsed["status"] == "success"
+    text = parsed["raw_text"]
+    assert text.index("EXPERIENCE") < text.index("Example Corp")
+    assert text.index("Example Corp") < text.index("PROJECTS")
+
+
+def test_parser_rejects_wrong_file_signature():
+    """A valid extension must not allow unrelated content through the parser."""
+    result = parse_resume(b"this is not a pdf document", filename="resume.pdf")
+    assert result["status"] == "error"
+    assert "Invalid PDF" in result["error_message"]
+
+
+def test_parser_rejects_binary_txt_content():
+    result = parse_resume(b"resume\\x00binary", filename="resume.txt")
+    assert result["status"] == "error"
+    assert "null bytes" in result["error_message"]
+
+
+def test_parser_enforces_size_limit_for_bytesio():
+    from src.analysis.resume_parser import MAX_FILE_SIZE
+    result = parse_resume(io.BytesIO(b"x" * (MAX_FILE_SIZE + 1)), filename="large.txt")
+    assert result["status"] == "error"
+    assert "16 MB" in result["error_message"]
