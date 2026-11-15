@@ -49,6 +49,7 @@ def test_analyze_flow_with_pasted_text(client):
     assert b"Matched Skills" in res_resp.data
     assert b"Resume Improvement Recommendations" in res_resp.data
     assert b"Platform Automation Engineer" in res_resp.data
+    assert b"Skill requirements and ML prediction remain based on the supplied job description." in res_resp.data
 
 
 def test_analyze_flow_with_uploaded_file(client):
