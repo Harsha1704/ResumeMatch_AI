@@ -71,6 +71,9 @@
                         </div>
                     </div>
                     <div class="card-body p-4 d-flex flex-column">
+                        <label for="target_role" class="form-label small fw-bold text-muted mb-1">Target Role (Optional)</label>
+                        <input class="form-control mb-3" type="text" name="target_role" id="target_role" maxlength="120" placeholder="e.g., Machine Learning Engineer">
+                        <small class="text-muted mb-2">Use this to clarify the role title. Skill requirements and ML scoring still come from the job description below.</small>
                         <textarea class="form-control mb-3 flex-grow-1" name="job_description" id="job_description" rows="10" placeholder="Paste target job posting including required skills, qualifications, responsibilities, and experience prerequisites..." required></textarea>
 
                         <!-- Sample Job Selector from Real Dataset -->
