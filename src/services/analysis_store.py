@@ -3,6 +3,40 @@ Durable SQLite Storage Service for Resume Analysis Results.
 Stores analyzed resume dossiers, compatibility scores, and skill gap summaries.
 Thread-safe, WAL-enabled, uses strict JSON serialization (zero pickle).
 Configurable storage path via environment variables with automated retention pruning.
+
+=============================================================================
+PRODUCTION ARCHITECTURE & STORAGE TIERS
+=============================================================================
+1. LOCAL / DEVELOPMENT TIER:
+   - Defaults to data/cache/analysis_store.sqlite.
+   - WAL (Write-Ahead Logging) mode allows concurrent readers and single writer.
+
+2. CLOUD PAAS (RENDER FREE TIER):
+   - Ephemeral Filesystem Warning: SQLite databases stored on standard Render
+     free-tier container filesystems are strictly ephemeral. They will reset
+     upon application redeployments, configuration changes, or instance sleeps.
+   - To achieve genuine durable persistence on Render, attach a Render Persistent
+     Disk and configure PERSISTENT_STORAGE_DIR=/var/data (e.g. /var/data/analysis_store.sqlite).
+
+3. ENTERPRISE MULTI-INSTANCE (POSTGRESQL MIGRATION BLUEPRINT):
+   - For horizontally-scaled deployments with multiple Gunicorn/Uvicorn containers,
+     SQLite must NOT be shared over network shares (NFS/CIFS) due to file locking hazards.
+   - PostgreSQL Migration Schema:
+       CREATE TABLE analyses (
+           analysis_id VARCHAR(64) PRIMARY KEY,
+           session_id VARCHAR(64),
+           created_at DOUBLE PRECISION NOT NULL,
+           updated_at DOUBLE PRECISION NOT NULL,
+           analysis_json JSONB NOT NULL
+       );
+       CREATE INDEX idx_analyses_created_at ON analyses(created_at);
+       CREATE INDEX idx_analyses_session_id ON analyses(session_id);
+   - Switch engine by providing DATABASE_URL (postgresql://...) with psycopg3 pool.
+
+4. CANDIDATE DATA PRIVACY:
+   - Resumes and candidate analyses must NEVER be written to public static web directories
+     (e.g., static/, public/, dist/). They are stored exclusively in private L2 SQLite/JSONB.
+=============================================================================
 """
 
 from typing import Dict, Optional, List, Tuple
@@ -25,8 +59,26 @@ class AnalysisStore:
     """
 
     def __init__(self, db_path: Optional[str] = None, max_records: int = 200):
-        env_path = os.environ.get("RESUMEMATCH_ANALYSIS_DB") or os.environ.get("ANALYSIS_DB_PATH")
-        self.db_path = Path(db_path or env_path or DEFAULT_ANALYSIS_DB).resolve()
+        # Resolve path priority:
+        # 1. Explicit argument
+        # 2. RESUMEMATCH_ANALYSIS_DB or ANALYSIS_DB_PATH
+        # 3. PERSISTENT_STORAGE_DIR (for mounted disks on Render / Cloud)
+        # 4. DEFAULT_ANALYSIS_DB (data/cache/analysis_store.sqlite)
+        resolved_path = None
+        if db_path:
+            resolved_path = Path(db_path)
+        else:
+            env_file = os.environ.get("RESUMEMATCH_ANALYSIS_DB") or os.environ.get("ANALYSIS_DB_PATH")
+            if env_file:
+                resolved_path = Path(env_file)
+            else:
+                persistent_dir = os.environ.get("PERSISTENT_STORAGE_DIR")
+                if persistent_dir:
+                    resolved_path = Path(persistent_dir) / "analysis_store.sqlite"
+                else:
+                    resolved_path = DEFAULT_ANALYSIS_DB
+
+        self.db_path = resolved_path.resolve()
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self.max_records = int(os.environ.get("ANALYSIS_MAX_RECORDS", max_records))
         self._init_db()

@@ -8,29 +8,77 @@ import type {
   HeuristicEvaluation
 } from '../types';
 
+export class ApiError extends Error {
+  status: number;
+  data?: any;
+
+  constructor(status: number, message: string, data?: any) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.data = data;
+    Object.setPrototypeOf(this, ApiError.prototype);
+  }
+}
+
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
+let cachedCsrfToken: string | null = null;
+
+export async function fetchCsrfToken(): Promise<string> {
+  if (cachedCsrfToken) return cachedCsrfToken;
+  try {
+    const fullUrl = API_BASE ? `${API_BASE}/api/csrf-token` : '/api/csrf-token';
+    const resp = await fetch(fullUrl, {
+      credentials: 'include',
+      headers: { 'Accept': 'application/json' },
+    });
+    if (resp.ok) {
+      const data = await resp.json();
+      if (data && data.csrf_token) {
+        cachedCsrfToken = data.csrf_token;
+        return data.csrf_token;
+      }
+    }
+  } catch (err) {
+    console.warn('Unable to retrieve CSRF token:', err);
+  }
+  return '';
+}
+
 async function fetchJson<T>(url: string, options: RequestInit = {}): Promise<T> {
+  const method = (options.method || 'GET').toUpperCase();
+  const headers: Record<string, string> = {
+    'Accept': 'application/json',
+    ...(options.headers as Record<string, string> || {}),
+  };
+
+  // Attach X-CSRF-Token on state-changing requests
+  if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method) && !headers['X-CSRF-Token'] && !headers['X-CSRFToken']) {
+    const token = await fetchCsrfToken();
+    if (token) {
+      headers['X-CSRF-Token'] = token;
+    }
+  }
+
   const fullUrl = url.startsWith('http') ? url : `${API_BASE}${url}`;
   const response = await fetch(fullUrl, {
     ...options,
-    headers: {
-      'Accept': 'application/json',
-      ...(options.headers || {}),
-    },
+    headers,
     credentials: 'include', // transmit session cookies for strict session authorization
   });
 
   if (!response.ok) {
     let errorDetail = `HTTP ${response.status}: ${response.statusText}`;
+    let errJson: any = null;
     try {
-      const errJson = await response.json();
+      errJson = await response.json();
       if (errJson.error_message) errorDetail = errJson.error_message;
       else if (errJson.message) errorDetail = errJson.message;
     } catch {
       // ignore
     }
-    throw new Error(errorDetail);
+    throw new ApiError(response.status, errorDetail, errJson);
   }
 
   return response.json() as Promise<T>;
@@ -65,18 +113,28 @@ export const api = {
 
   async analyzeResume(formData: FormData): Promise<{ status: string; analysis_id: string; data: AnalysisResult }> {
     const fullUrl = `${API_BASE}/api/analyze`;
+    const token = await fetchCsrfToken();
+    const headers: Record<string, string> = {
+      'Accept': 'application/json',
+    };
+    if (token) {
+      headers['X-CSRF-Token'] = token;
+    }
+
     const response = await fetch(fullUrl, {
       method: 'POST',
       body: formData,
+      headers,
       credentials: 'include',
     });
     if (!response.ok) {
       let err = `Upload failed (${response.status})`;
+      let j: any = null;
       try {
-        const j = await response.json();
+        j = await response.json();
         if (j.error_message) err = j.error_message;
       } catch {}
-      throw new Error(err);
+      throw new ApiError(response.status, err, j);
     }
     return response.json();
   },

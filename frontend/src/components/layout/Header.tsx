@@ -9,7 +9,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
   const location = useLocation();
-  const { modelBackend, setModelBackend, currentAnalysis, isDemo } = useAnalysis();
+  const { modelBackend, setModelBackend, currentAnalysis, isDemo, error, retryLoad, loadDemoPreview } = useAnalysis();
 
   const getPageTitle = (pathname: string) => {
     switch (pathname) {
@@ -64,6 +64,27 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
             </option>
           </select>
         </div>
+
+        {/* Transient Error & Retry Indicator */}
+        {error && (
+          <div className="flex items-center gap-2 rounded-lg border border-rose-500/30 bg-rose-500/10 px-2.5 py-1 text-xs text-rose-300">
+            <span className="truncate max-w-[140px] sm:max-w-[220px]" title={error}>{error}</span>
+            <button
+              onClick={() => retryLoad()}
+              className="rounded bg-rose-600/30 px-1.5 py-0.5 text-[11px] font-semibold text-rose-200 hover:bg-rose-600/50"
+            >
+              Retry
+            </button>
+            {!currentAnalysis && (
+              <button
+                onClick={() => loadDemoPreview()}
+                className="rounded bg-amber-600/20 px-1.5 py-0.5 text-[11px] font-semibold text-amber-300 hover:bg-amber-600/40"
+              >
+                Demo
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Dossier status badge */}
         {isDemo ? (

@@ -15,6 +15,12 @@ from app import app, ANALYSIS_CACHE
 from src.services.analysis_store import AnalysisStore, get_analysis_store
 
 
+@pytest.fixture(autouse=True)
+def set_testing_mode():
+    app.config["TESTING"] = True
+    yield
+
+
 @pytest.fixture
 def clean_store(tmp_path):
     """Provides a fresh isolated AnalysisStore in a temporary directory."""

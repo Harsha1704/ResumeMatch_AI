@@ -34,6 +34,14 @@ class HeuristicAnswerEvaluator:
         "linear svc", "tf-idf", "rest api", "pytest", "playwright",
     )
 
+    @staticmethod
+    def _clean_stem(w: str) -> str:
+        w = w.lower()
+        for suffix in ["ing", "tion", "ed", "ies", "es", "s"]:
+            if len(w) > len(suffix) + 3 and w.endswith(suffix):
+                return w[:-len(suffix)]
+        return w
+
     def _tokens(self, value: str) -> List[str]:
         return [
             token.lower() for token in re.findall(r"[a-zA-Z][a-zA-Z0-9+#.-]*", value or "")
@@ -190,11 +198,14 @@ class HeuristicAnswerEvaluator:
         covered_points, missing_points = [], []
         for point in expected_points:
             point_tokens = list(dict.fromkeys(self._tokens(str(point))))
-            hits = [t for t in point_tokens if re.search(
-                r"(?<![a-z0-9])" + re.escape(t) + r"(?![a-z0-9])", lower
-            )]
-            threshold = 1 if len(point_tokens) <= 2 else 2
-            if len(hits) >= threshold:
+            hits = []
+            for t in point_tokens:
+                stem = self._clean_stem(t)
+                if re.search(r"(?<![a-z0-9])" + re.escape(t) + r"(?![a-z0-9])", lower):
+                    hits.append(t)
+                elif stem != t and re.search(r"(?<![a-z0-9])" + re.escape(stem), lower):
+                    hits.append(t)
+            if hits:
                 covered_points.append(point)
             else:
                 missing_points.append(point)

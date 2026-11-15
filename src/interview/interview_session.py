@@ -24,10 +24,12 @@ class InterviewSession:
         questions: List[Dict[str, Any]],
         analysis_id: Optional[str] = None,
         candidate_filename: Optional[str] = None,
-        job_title: Optional[str] = None
+        job_title: Optional[str] = None,
+        owner_session_id: Optional[str] = None
     ):
         self.session_id: str = str(uuid.uuid4())
         self.analysis_id: Optional[str] = analysis_id
+        self.owner_session_id: Optional[str] = owner_session_id
         self.candidate_filename: str = candidate_filename or "Candidate Profile"
         self.job_title: str = job_title or "Target Role"
         self.created_at: float = time.time()
@@ -184,13 +186,15 @@ class InterviewSessionManager:
         questions: List[Dict[str, Any]],
         analysis_id: Optional[str] = None,
         candidate_filename: Optional[str] = None,
-        job_title: Optional[str] = None
+        job_title: Optional[str] = None,
+        owner_session_id: Optional[str] = None
     ) -> InterviewSession:
         session = InterviewSession(
             questions=questions,
             analysis_id=analysis_id,
             candidate_filename=candidate_filename,
-            job_title=job_title
+            job_title=job_title,
+            owner_session_id=owner_session_id
         )
         ACTIVE_SESSIONS[session.session_id] = session
         # Keep cache bounded to 50 active sessions
@@ -202,6 +206,16 @@ class InterviewSessionManager:
     @staticmethod
     def get_session(session_id: str) -> Optional[InterviewSession]:
         return ACTIVE_SESSIONS.get(session_id)
+
+    @staticmethod
+    def validate_ownership(session_id: str, owner_id: Optional[str]) -> bool:
+        """Validates that the session belongs to owner_id."""
+        sess = ACTIVE_SESSIONS.get(session_id)
+        if not sess:
+            return False
+        if sess.owner_session_id is None:
+            return True  # Legacy/unattributed session
+        return sess.owner_session_id == owner_id
 
     @staticmethod
     def delete_session(session_id: str):

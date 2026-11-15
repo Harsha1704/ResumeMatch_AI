@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { AnalysisResult } from '../types';
-import { api } from '../services/api';
+import { api, ApiError } from '../services/api';
 
 interface AnalysisContextType {
   activeAnalysisId: string | null;
@@ -12,6 +12,8 @@ interface AnalysisContextType {
   setModelBackend: (backend: 'production' | 'challenger_m5') => void;
   setAnalysisResult: (result: AnalysisResult) => void;
   loadAnalysis: (id?: string) => Promise<AnalysisResult | null>;
+  loadDemoPreview: () => Promise<AnalysisResult | null>;
+  retryLoad: () => Promise<AnalysisResult | null>;
   clearAnalysis: () => void;
 }
 
@@ -27,31 +29,52 @@ export const AnalysisProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [modelBackend, setModelBackend] = useState<'production' | 'challenger_m5'>('production');
 
   const loadAnalysis = useCallback(async (id?: string): Promise<AnalysisResult | null> => {
-    const targetId = id || activeAnalysisId || 'sample-preview';
+    const isExplicitDemo = id === 'sample' || id === 'demo' || id === 'sample-preview';
+    const targetId = id || activeAnalysisId || (localStorage.getItem('rm_active_analysis_id')) || 'sample-preview';
+
     setIsLoading(true);
     setError(null);
+
     try {
       const resp = await api.getAnalysis(targetId);
       if (resp.status === 'success' && resp.analysis) {
         setCurrentAnalysis(resp.analysis);
         setActiveAnalysisId(resp.analysis.analysis_id);
-        localStorage.setItem('rm_active_analysis_id', resp.analysis.analysis_id);
+        if (!isExplicitDemo && resp.analysis.analysis_id !== 'sample-preview') {
+          localStorage.setItem('rm_active_analysis_id', resp.analysis.analysis_id);
+        }
         return resp.analysis;
       }
       throw new Error('Analysis payload was not found.');
     } catch (err: any) {
       console.warn('Could not load analysis ID:', targetId, err.message);
-      // Clean invalid or unauthorized stored ID and fall back to sample preview
-      localStorage.removeItem('rm_active_analysis_id');
-      try {
-        const sampleResp = await api.getAnalysis('sample');
-        if (sampleResp.analysis) {
-          setCurrentAnalysis(sampleResp.analysis);
-          setActiveAnalysisId('sample-preview');
-          return sampleResp.analysis;
+
+      const status = err instanceof ApiError ? err.status : undefined;
+      const isAuthOrNotFound = status === 404 || status === 403;
+
+      if (isAuthOrNotFound) {
+        // Only treat 404 and 403 as expired or unauthorized IDs
+        localStorage.removeItem('rm_active_analysis_id');
+        setActiveAnalysisId(null);
+        setError(`Analysis dossier was not found or is unauthorized (HTTP ${status || 'Error'}). Please upload a new resume or explore the demo preview.`);
+
+        // If an explicit demo request failed, attempt clean sample recovery
+        if (isExplicitDemo || targetId === 'sample-preview') {
+          try {
+            const sampleResp = await api.getAnalysis('sample');
+            if (sampleResp.analysis) {
+              setCurrentAnalysis(sampleResp.analysis);
+              setActiveAnalysisId('sample-preview');
+              return sampleResp.analysis;
+            }
+          } catch (fallbackErr: any) {
+            setError(fallbackErr.message || 'Failed to initialize analysis preview.');
+          }
         }
-      } catch (fallbackErr: any) {
-        setError(fallbackErr.message || 'Failed to initialize analysis preview.');
+      } else {
+        // Network failure, timeout, HTTP 500, or temporary outage
+        // STRICT RULE: DO NOT clear localStorage and DO NOT switch user to demo data!
+        setError(err.message || 'Network error or backend service temporarily unavailable. Please retry.');
       }
       return null;
     } finally {
@@ -74,13 +97,23 @@ export const AnalysisProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setCurrentAnalysis(result);
     setActiveAnalysisId(result.analysis_id);
     localStorage.setItem('rm_active_analysis_id', result.analysis_id);
+    setError(null);
   }, []);
 
   const clearAnalysis = useCallback(() => {
     localStorage.removeItem('rm_active_analysis_id');
     setActiveAnalysisId('sample-preview');
+    setError(null);
     loadAnalysis('sample-preview');
   }, [loadAnalysis]);
+
+  const loadDemoPreview = useCallback(() => {
+    return loadAnalysis('sample');
+  }, [loadAnalysis]);
+
+  const retryLoad = useCallback(() => {
+    return loadAnalysis(activeAnalysisId || localStorage.getItem('rm_active_analysis_id') || undefined);
+  }, [loadAnalysis, activeAnalysisId]);
 
   return (
     <AnalysisContext.Provider
@@ -94,6 +127,8 @@ export const AnalysisProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setModelBackend,
         setAnalysisResult,
         loadAnalysis,
+        loadDemoPreview,
+        retryLoad,
         clearAnalysis,
       }}
     >

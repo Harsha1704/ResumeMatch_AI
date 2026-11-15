@@ -5,15 +5,17 @@ Connects UI to the trained Supervised ML model and deterministic Skill Gap Engin
 """
 
 from pathlib import Path
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional, Tuple, Any
 import os
 import json
+import uuid
+from functools import wraps
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, session
 
 import logging
 from src.security.upload_validator import validate_file_content, sanitize_filename, UploadSecurityError
 from src.security.rate_limiter import SlidingWindowRateLimiter
-from src.security.csrf import generate_csrf_token, validate_csrf_token
+from src.security.csrf import generate_csrf_token, validate_csrf_token, validate_request_csrf, get_submitted_csrf_token
 from src.services.embedding_service import get_embedding_service
 from src.services.analysis_store import get_analysis_store
 from src.mentor import CandidateProgressTracker, CareerMentorEngine
@@ -72,7 +74,7 @@ if frontend_origins:
             r"/health": {"origins": frontend_origins}
         },
         supports_credentials=True,
-        allow_headers=["Content-Type", "X-CSRF-Token"],
+        allow_headers=["Content-Type", "X-CSRF-Token", "X-CSRFToken"],
         methods=["GET", "POST", "OPTIONS"]
     )
 
@@ -86,6 +88,35 @@ def inject_security_context():
     return {
         "csrf_token": generate_csrf_token()
     }
+
+
+def require_browser_csrf(f):
+    """
+    Enforces constant-time CSRF token validation on state-changing browser API endpoints.
+    In testing mode, CSRF is enforced whenever ENFORCE_CSRF_IN_TESTS is configured.
+    """
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        enforce = (not app.config.get("TESTING")) or app.config.get("ENFORCE_CSRF_IN_TESTS", False)
+        if enforce:
+            if not validate_request_csrf():
+                return jsonify({
+                    "status": "error",
+                    "error_message": "CSRF verification failed: security token is missing or invalid."
+                }), 403
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+@app.route("/api/csrf-token", methods=["GET"])
+def api_csrf_token():
+    """Provides active session CSRF token for React client state-changing requests."""
+    token = generate_csrf_token()
+    return jsonify({
+        "status": "success",
+        "csrf_token": token
+    }), 200
+
 
 # In-memory storage for analysis results (keyed by analysis_id) - L1 Fast Cache
 # Secure: does not write private resumes to public static directories
@@ -764,6 +795,83 @@ def get_authorized_analysis(
     return None, "No active analysis found. Please submit a resume for analysis.", 404
 
 
+def _get_browser_session_uid() -> str:
+    """Stable unique identifier for the current browser session."""
+    if "_session_uid" not in session:
+        session["_session_uid"] = str(uuid.uuid4())
+    return session["_session_uid"]
+
+
+def get_authorized_interview_session(
+    session_id: Optional[str] = None,
+    auto_create_if_missing: bool = False
+) -> Tuple[Optional[InterviewSession], Optional[str], int]:
+    """
+    Retrieves and authorizes an InterviewSession.
+    Returns (practice_session, error_message, status_code).
+
+    - If session_id is explicitly provided:
+      * Returns 404 if not found or expired.
+      * Returns 403 if belonging to a different browser session.
+      * Returns 200 and practice_session if authorized.
+    - If session_id is omitted:
+      * Inspects session["active_interview_session_id"].
+      * If active and owned, returns 200.
+      * If auto_create_if_missing is True, generates a new session for the current browser user.
+      * Else returns 404.
+    """
+    browser_uid = _get_browser_session_uid()
+    allowed_sessions = session.get("allowed_interview_sessions", [])
+    active_id = session.get("active_interview_session_id")
+
+    if session_id:
+        clean_id = str(session_id).strip()
+        practice_session = InterviewSessionManager.get_session(clean_id)
+        if not practice_session:
+            return None, "Practice session expired or not found.", 404
+
+        is_owner = (
+            clean_id in allowed_sessions
+            or clean_id == active_id
+            or (practice_session.owner_session_id and practice_session.owner_session_id == browser_uid)
+        )
+        if not is_owner:
+            return None, "Access unauthorized: this interview session belongs to another candidate.", 403
+
+        return practice_session, None, 200
+
+    if active_id:
+        practice_session = InterviewSessionManager.get_session(active_id)
+        if practice_session:
+            is_owner = (
+                active_id in allowed_sessions
+                or (practice_session.owner_session_id and practice_session.owner_session_id == browser_uid)
+            )
+            if is_owner:
+                return practice_session, None, 200
+        session.pop("active_interview_session_id", None)
+
+    if auto_create_if_missing:
+        analysis, _, _ = get_authorized_analysis(allow_demo_default=True)
+        generator = InterviewQuestionGenerator(analysis or _get_active_analysis())
+        questions = generator.generate_questions(category="ALL", difficulty="All", max_questions=10)
+        new_session = InterviewSessionManager.create_session(
+            questions=questions,
+            analysis_id=analysis.get("analysis_id") if analysis else None,
+            candidate_filename=generator.evidence.get("filename"),
+            job_title=generator.evidence.get("job_title"),
+            owner_session_id=browser_uid
+        )
+        session["active_interview_session_id"] = new_session.session_id
+        if new_session.session_id not in allowed_sessions:
+            allowed_sessions.append(new_session.session_id)
+        session["allowed_interview_sessions"] = allowed_sessions
+        return new_session, None, 200
+
+    return None, "No active interview session found for this session.", 404
+
+
+
 
 @app.route("/interview-studio", methods=["GET"])
 def interview_studio():
@@ -826,15 +934,22 @@ def interview_studio_generate():
         candidate_confirmations=session.get("candidate_confirmations", {})
     )
 
+    browser_uid = _get_browser_session_uid()
+    allowed_sessions = session.get("allowed_interview_sessions", [])
+
     if action == "practice":
         # Create fresh practice session
         new_session = InterviewSessionManager.create_session(
             questions=questions,
             analysis_id=analysis.get("analysis_id"),
             candidate_filename=evidence.get("filename"),
-            job_title=evidence.get("job_title")
+            job_title=evidence.get("job_title"),
+            owner_session_id=browser_uid
         )
         session["active_interview_session_id"] = new_session.session_id
+        if new_session.session_id not in allowed_sessions:
+            allowed_sessions.append(new_session.session_id)
+        session["allowed_interview_sessions"] = allowed_sessions
         return redirect(url_for("interview_practice"))
 
     if action == "practice_single":
@@ -848,9 +963,13 @@ def interview_studio_generate():
             questions=practice_qs,
             analysis_id=analysis.get("analysis_id"),
             candidate_filename=evidence.get("filename"),
-            job_title=evidence.get("job_title")
+            job_title=evidence.get("job_title"),
+            owner_session_id=browser_uid
         )
         session["active_interview_session_id"] = new_session.session_id
+        if new_session.session_id not in allowed_sessions:
+            allowed_sessions.append(new_session.session_id)
+        session["allowed_interview_sessions"] = allowed_sessions
         return redirect(url_for("interview_practice"))
 
     active_session_id = session.get("active_interview_session_id")
@@ -871,20 +990,12 @@ def interview_studio_generate():
 def interview_practice():
     """Interactive step-by-step practice mode."""
     session_id = session.get("active_interview_session_id")
-    practice_session = InterviewSessionManager.get_session(session_id) if session_id else None
-
-    # If no active practice session, create one automatically
-    if not practice_session:
-        analysis, _, _ = get_authorized_analysis(allow_demo_default=True)
-        generator = InterviewQuestionGenerator(analysis or _get_active_analysis())
-        questions = generator.generate_questions(category="ALL", difficulty="All", max_questions=10)
-        practice_session = InterviewSessionManager.create_session(
-            questions=questions,
-            analysis_id=analysis.get("analysis_id"),
-            candidate_filename=generator.evidence.get("filename"),
-            job_title=generator.evidence.get("job_title")
-        )
-        session["active_interview_session_id"] = practice_session.session_id
+    practice_session, err_msg, status_code = get_authorized_interview_session(
+        session_id, auto_create_if_missing=True
+    )
+    if err_msg or not practice_session:
+        flash(err_msg or "Failed to load practice session.", "warning")
+        return redirect(url_for("interview_studio"))
 
     question = practice_session.get_current_question()
     if not question:
@@ -902,9 +1013,11 @@ def interview_practice():
 def interview_practice_submit():
     """Saves practice answer and navigates next, prev, or finish."""
     session_id = request.form.get("session_id")
-    practice_session = InterviewSessionManager.get_session(session_id)
-    if not practice_session:
-        flash("Practice session expired or not found.", "warning")
+    practice_session, err_msg, status_code = get_authorized_interview_session(
+        session_id, auto_create_if_missing=False
+    )
+    if err_msg or not practice_session:
+        flash(err_msg or "Practice session expired or unauthorized.", "warning")
         return redirect(url_for("interview_studio"))
 
     q_idx = int(request.form.get("question_index", 0))
@@ -927,11 +1040,12 @@ def interview_practice_submit():
 @app.route("/interview-results", methods=["GET"])
 def interview_results():
     """Results summary and heuristic review dashboard."""
-    session_id = request.args.get("session_id") or session.get("active_interview_session_id")
-    practice_session = InterviewSessionManager.get_session(session_id) if session_id else None
-
-    if not practice_session:
-        flash("No practice results found for this session.", "warning")
+    session_id = request.args.get("session_id")
+    practice_session, err_msg, status_code = get_authorized_interview_session(
+        session_id, auto_create_if_missing=False
+    )
+    if err_msg or not practice_session:
+        flash(err_msg or "No practice results found for this session.", "warning")
         return redirect(url_for("interview_studio"))
 
     results = practice_session.complete_session()
@@ -939,6 +1053,7 @@ def interview_results():
 
 
 @app.route("/api/interview/evaluate", methods=["POST"])
+@require_browser_csrf
 def api_interview_evaluate():
     """AJAX endpoint for instant heuristic answer evaluation."""
     data = request.get_json(silent=True) or {}
@@ -971,6 +1086,7 @@ def api_interview_evaluate():
 
 
 @app.route("/api/interview/confirm-activity", methods=["POST"])
+@require_browser_csrf
 def api_interview_confirm_activity():
     """Records candidate confirmation or refusal of unevidenced skill activity."""
     data = request.get_json(silent=True) or {}
@@ -985,11 +1101,19 @@ def api_interview_confirm_activity():
 
 
 @app.route("/api/interview/reset", methods=["POST"])
+@require_browser_csrf
 def api_interview_reset():
     """Clears the active interview session."""
+    browser_uid = _get_browser_session_uid()
+    allowed_sessions = session.get("allowed_interview_sessions", [])
     session_id = session.pop("active_interview_session_id", None)
     if session_id:
-        InterviewSessionManager.delete_session(session_id)
+        if session_id in allowed_sessions:
+            allowed_sessions.remove(session_id)
+            session["allowed_interview_sessions"] = allowed_sessions
+        practice_session = InterviewSessionManager.get_session(session_id)
+        if practice_session and (not practice_session.owner_session_id or practice_session.owner_session_id == browser_uid):
+            InterviewSessionManager.delete_session(session_id)
     return jsonify({"status": "reset"}), 200
 
 
@@ -1044,6 +1168,7 @@ def career_mentor():
 
 
 @app.route("/api/mentor/update-name", methods=["POST"])
+@require_browser_csrf
 def api_mentor_update_name():
     """Updates candidate's preferred display name in current session."""
     data = request.get_json(silent=True) or {}
@@ -1061,6 +1186,7 @@ def api_mentor_update_name():
 
 
 @app.route("/api/mentor/progress", methods=["POST"])
+@require_browser_csrf
 def api_mentor_progress():
     """Updates status for a specific preparation roadmap milestone."""
     data = request.get_json(silent=True) or {}
@@ -1086,6 +1212,7 @@ def api_mentor_progress():
 
 
 @app.route("/api/mentor/reset-progress", methods=["POST"])
+@require_browser_csrf
 def api_mentor_reset_progress():
     """Resets progress tracker for the current session."""
     sid = session.get("session_tracker_id")
@@ -1095,6 +1222,7 @@ def api_mentor_reset_progress():
 
 
 @app.route("/api/candidate/update-role", methods=["POST"])
+@require_browser_csrf
 def api_candidate_update_role():
     """Updates candidate target role in current session."""
     data = request.get_json(silent=True) or {}
@@ -1106,6 +1234,7 @@ def api_candidate_update_role():
 
 
 @app.route("/api/candidate/confirm-education", methods=["POST"])
+@require_browser_csrf
 def api_candidate_confirm_education():
     """Confirms candidate educational degree qualification in current session."""
     data = request.get_json(silent=True) or {}
@@ -1167,6 +1296,7 @@ def api_sample_jobs():
 
 
 @app.route("/api/analyze", methods=["POST"])
+@require_browser_csrf
 def api_analyze():
     """
     Accepts multipart form data or JSON for resume upload/text analysis.
@@ -1361,8 +1491,10 @@ def api_interview_studio():
     )
 
     active_session_id = session.get("active_interview_session_id")
-    if active_session_id and not InterviewSessionManager.get_session(active_session_id):
-        active_session_id = None
+    if active_session_id:
+        practice_session = InterviewSessionManager.get_session(active_session_id)
+        if not practice_session or not InterviewSessionManager.validate_ownership(active_session_id, _get_browser_session_uid()):
+            active_session_id = None
 
     return jsonify({
         "status": "success",
@@ -1374,6 +1506,7 @@ def api_interview_studio():
 
 
 @app.route("/api/interview-studio/generate", methods=["POST"])
+@require_browser_csrf
 def api_interview_studio_generate():
     """Generates questions dynamically or initiates practice mode."""
     data = request.get_json(silent=True) or request.form.to_dict()
@@ -1404,15 +1537,22 @@ def api_interview_studio_generate():
         candidate_confirmations=session.get("candidate_confirmations", {})
     )
 
+    browser_uid = _get_browser_session_uid()
+    allowed_sessions = session.get("allowed_interview_sessions", [])
     new_session_id = None
+
     if action == "practice":
         new_session = InterviewSessionManager.create_session(
             questions=questions,
             analysis_id=analysis.get("analysis_id"),
             candidate_filename=evidence.get("filename"),
-            job_title=evidence.get("job_title")
+            job_title=evidence.get("job_title"),
+            owner_session_id=browser_uid
         )
         session["active_interview_session_id"] = new_session.session_id
+        if new_session.session_id not in allowed_sessions:
+            allowed_sessions.append(new_session.session_id)
+        session["allowed_interview_sessions"] = allowed_sessions
         new_session_id = new_session.session_id
 
     elif action == "practice_single":
@@ -1426,9 +1566,13 @@ def api_interview_studio_generate():
             questions=practice_qs,
             analysis_id=analysis.get("analysis_id"),
             candidate_filename=evidence.get("filename"),
-            job_title=evidence.get("job_title")
+            job_title=evidence.get("job_title"),
+            owner_session_id=browser_uid
         )
         session["active_interview_session_id"] = new_session.session_id
+        if new_session.session_id not in allowed_sessions:
+            allowed_sessions.append(new_session.session_id)
+        session["allowed_interview_sessions"] = allowed_sessions
         new_session_id = new_session.session_id
 
     return jsonify({
@@ -1443,20 +1587,13 @@ def api_interview_studio_generate():
 @app.route("/api/interview-practice", methods=["GET"])
 def api_interview_practice():
     """Retrieves current practice question and progress."""
-    session_id = request.args.get("session_id") or session.get("active_interview_session_id")
-    practice_session = InterviewSessionManager.get_session(session_id) if session_id else None
-
-    if not practice_session:
-        analysis, _, _ = get_authorized_analysis(allow_demo_default=True)
-        generator = InterviewQuestionGenerator(analysis or _get_active_analysis())
-        questions = generator.generate_questions(category="ALL", difficulty="All", max_questions=10)
-        practice_session = InterviewSessionManager.create_session(
-            questions=questions,
-            analysis_id=analysis.get("analysis_id"),
-            candidate_filename=generator.evidence.get("filename"),
-            job_title=generator.evidence.get("job_title")
-        )
-        session["active_interview_session_id"] = practice_session.session_id
+    session_id = request.args.get("session_id")
+    auto_create = session_id is None
+    practice_session, err_msg, status_code = get_authorized_interview_session(
+        session_id, auto_create_if_missing=auto_create
+    )
+    if err_msg or not practice_session:
+        return jsonify({"status": "error", "message": err_msg or "Practice session not found."}), status_code
 
     question = practice_session.get_current_question()
     return jsonify({
@@ -1469,13 +1606,16 @@ def api_interview_practice():
 
 
 @app.route("/api/interview-practice/submit", methods=["POST"])
+@require_browser_csrf
 def api_interview_practice_submit():
     """Saves practice answer and navigates next, prev, or finish."""
     data = request.get_json(silent=True) or request.form.to_dict()
     session_id = data.get("session_id")
-    practice_session = InterviewSessionManager.get_session(session_id)
-    if not practice_session:
-        return jsonify({"status": "error", "message": "Practice session expired or not found."}), 404
+    practice_session, err_msg, status_code = get_authorized_interview_session(
+        session_id, auto_create_if_missing=False
+    )
+    if err_msg or not practice_session:
+        return jsonify({"status": "error", "message": err_msg or "Practice session not found."}), status_code
 
     q_idx = int(data.get("question_index", 0))
     user_answer = data.get("user_answer", "")
@@ -1492,7 +1632,7 @@ def api_interview_practice_submit():
 
     return jsonify({
         "status": "success",
-        "session_id": session_id,
+        "session_id": practice_session.session_id,
         "current_index": practice_session.current_index,
         "total_questions": len(practice_session.questions),
         "is_finished": direction == "finish" or (practice_session.current_index >= len(practice_session.questions))
@@ -1502,11 +1642,12 @@ def api_interview_practice_submit():
 @app.route("/api/interview-results", methods=["GET"])
 def api_interview_results():
     """Retrieves practice session results and feedback summary."""
-    session_id = request.args.get("session_id") or session.get("active_interview_session_id")
-    practice_session = InterviewSessionManager.get_session(session_id) if session_id else None
-
-    if not practice_session:
-        return jsonify({"status": "error", "message": "No practice results found for this session."}), 404
+    session_id = request.args.get("session_id")
+    practice_session, err_msg, status_code = get_authorized_interview_session(
+        session_id, auto_create_if_missing=False
+    )
+    if err_msg or not practice_session:
+        return jsonify({"status": "error", "message": err_msg or "No practice results found for this session."}), status_code
 
     results = practice_session.complete_session()
     return jsonify({"status": "success", "results": results}), 200
