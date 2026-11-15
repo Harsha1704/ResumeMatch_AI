@@ -312,3 +312,22 @@ def test_03_evidence_traceability_structure():
     assert rec_gap["taxonomy_category"] == "Cloud & DevOps"
     assert rec_gap["evidence_strength"] == "Not evidenced in resume"
     assert rec_gap["evidence_source"] == "Target Job Description"
+
+
+
+def test_resume_analyzer_suppresses_generic_business_jargon():
+    """Only explicit technical competencies should survive generic resume prose."""
+    engine = SkillEngine()
+    text = (
+        "Responsible for customer satisfaction, team management, reporting, scheduling, "
+        "operations, support, quality delivery, learning solutions, travel, Zoom, LinkedIn, "
+        "and cloud environments. Demonstrated Python and SQL query optimization."
+    )
+    extracted = engine.extract_skills(text)
+    assert {"python", "sql"}.issubset(extracted)
+    for generic in {
+        "customer satisfaction", "team", "management", "reporting", "scheduling",
+        "operations", "support", "quality", "learning solutions", "travel",
+        "zoom", "linkedin", "cloud environments"
+    }:
+        assert generic not in extracted
