@@ -77,6 +77,7 @@
 
                 <!-- Answer Input Form -->
                 <form id="practiceAnswerForm" method="POST" action="{{ url_for('interview_practice_submit') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                     <input type="hidden" name="session_id" value="{{ session_id }}">
                     <input type="hidden" name="question_index" value="{{ question.question_number - 1 }}">
                     <input type="hidden" id="elapsedSecondsInput" name="elapsed_seconds" value="0">

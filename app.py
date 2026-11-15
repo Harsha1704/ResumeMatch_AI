@@ -570,150 +570,129 @@ def dataset_explorer():
 # Phase 8: Interview Intelligence Studio Routes
 # =========================================================================
 
-def _get_active_analysis(analysis_id: Optional[str] = None) -> Dict:
-    """Retrieves current authorized analysis or provides an authentic fallback sample."""
-    raw_analysis = None
-    if analysis_id and str(analysis_id).strip().lower() in DEMO_ANALYSIS_IDS:
-        raw_analysis = None
-    elif analysis_id:
-        raw_analysis = _retrieve_analysis(analysis_id)
-    else:
-        active_id = session.get("active_analysis_id")
-        if active_id:
-            raw_analysis = _retrieve_analysis(active_id)
-        if raw_analysis is None:
-            allowed = session.get("allowed_analyses", [])
-            for aid in reversed(allowed):
-                raw_analysis = _retrieve_analysis(aid)
-                if raw_analysis:
-                    break
-        if raw_analysis is None and ANALYSIS_CACHE:
-            raw_analysis = list(ANALYSIS_CACHE.values())[-1]
-    
-    if raw_analysis is None:
-        # Default sample candidate if no resume has been uploaded yet
-        raw_analysis = {
-            "analysis_id": "sample-preview",
-            "is_demo": True,
-            "filename": "Sample_Senior_ML_Candidate.pdf",
-            "job_title": "Machine Learning Engineer / Python Developer",
-            "detected_job_title": "Senior Machine Learning Engineer",
-            "target_role_source": "job_description",
-            "predicted_class": "Good Fit",
-            "model_confidence": 88.2,
-            "compatibility_score": 86.4,
-            "model_used": "Production Baseline (TF-IDF + Logistic Regression)",
-            "model_backend": "production",
-            "is_challenger": False,
-            "inference_latency_ms": 14.8,
-            "cache_status": "hit",
-            "calibration_note": "Production Model: Calibrated probabilities based on TF-IDF baseline.",
-            "class_probabilities": {
-                "Good Fit": 0.882,
-                "Potential Fit": 0.086,
-                "No Fit": 0.032
-            },
-            "skill_gap_summary": {
-                "total_required_count": 4,
-                "matched_required_count": 3,
-                "fully_matched_required_count": 3,
-                "partially_evidenced_required_count": 0,
-                "missing_required_count": 1,
-                "total_preferred_count": 2,
-                "matched_preferred_count": 1,
-                "missing_preferred_count": 1,
-                "total_resume_skills_count": 7,
-                "full_coverage_pct": 75.0,
-                "any_coverage_pct": 87.5,
-                "full_coverage_display": "75.0%",
-                "any_coverage_display": "87.5%",
-                "coverage_status": "Strong Match"
-            },
-            "projects": [
+def _get_sample_analysis() -> Dict:
+    """Returns the authentic default sample candidate when no active analysis exists."""
+    raw_analysis = {
+        "analysis_id": "sample-preview",
+        "is_demo": True,
+        "filename": "Sample_Senior_ML_Candidate.pdf",
+        "job_title": "Machine Learning Engineer / Python Developer",
+        "detected_job_title": "Senior Machine Learning Engineer",
+        "target_role_source": "job_description",
+        "predicted_class": "Good Fit",
+        "model_confidence": 88.2,
+        "compatibility_score": 86.4,
+        "model_used": "Production Baseline (TF-IDF + Logistic Regression)",
+        "model_backend": "production",
+        "is_challenger": False,
+        "inference_latency_ms": 14.8,
+        "cache_status": "hit",
+        "calibration_note": "Production Model: Calibrated probabilities based on TF-IDF baseline.",
+        "class_probabilities": {
+            "Good Fit": 0.882,
+            "Potential Fit": 0.086,
+            "No Fit": 0.032
+        },
+        "skill_gap_summary": {
+            "total_required_count": 4,
+            "matched_required_count": 3,
+            "fully_matched_required_count": 3,
+            "partially_evidenced_required_count": 0,
+            "missing_required_count": 1,
+            "total_preferred_count": 2,
+            "matched_preferred_count": 1,
+            "missing_preferred_count": 1,
+            "total_resume_skills_count": 7,
+            "full_coverage_pct": 75.0,
+            "any_coverage_pct": 87.5,
+            "full_coverage_display": "75.0%",
+            "any_coverage_display": "87.5%",
+            "coverage_status": "Strong Match"
+        },
+        "projects": [
+            {
+                "title": "Multimodal Resume Matching & Skill Gap Analysis System",
+                "technologies": ["Python", "Scikit-Learn", "Flask", "PyTorch"],
+                "description": "End-to-end multimodal matching pipeline with deterministic skill gap analysis."
+            }
+        ],
+        "internships": [
+            {
+                "organization": "Machine Learning Research Lab",
+                "position": "Machine Learning Intern",
+                "dates": "May 2023 - August 2023",
+                "technologies": ["Python", "OpenCV", "PyTorch"],
+                "responsibilities": ["Engineered data preprocessing pipelines and evaluated model latency."]
+            }
+        ],
+        "resume_skills": ["Python", "Flask", "Scikit-Learn", "SQL", "Docker", "Git", "Data Structures"],
+        "matched_skills": ["Python", "Scikit-Learn", "SQL"],
+        "missing_skills": ["Kubernetes", "AWS", "CI/CD"],
+        "required_skills": ["Python", "Scikit-Learn", "Docker", "SQL"],
+        "preferred_skills": ["Kubernetes", "AWS"],
+        "matched_required_skills": ["Python", "Scikit-Learn", "SQL"],
+        "fully_matched_required_skills": ["Python", "Scikit-Learn", "SQL"],
+        "partially_evidenced_required_skills": [],
+        "missing_required_skills": ["Docker"],
+        "matched_preferred_skills": ["AWS"],
+        "missing_preferred_skills": ["Kubernetes"],
+        "education_analysis": {
+            "notes": "B.Tech in Computer Science & Engineering",
+            "degrees": ["B.Tech"],
+            "institutions": ["Institute of Technology"],
+            "highest_degree": "B.Tech"
+        },
+        "experience_summary": {
+            "total_years": 2.5,
+            "display_summary": "1 Internship, 1 Key Project verified"
+        },
+        "experience_analysis": {
+            "total_years_estimate": 2.5,
+            "meets_requirement": True,
+            "required_years": 2.0,
+            "display_summary": "1 Internship, 1 Key Project verified",
+            "detected_projects": [
                 {
                     "title": "Multimodal Resume Matching & Skill Gap Analysis System",
                     "technologies": ["Python", "Scikit-Learn", "Flask", "PyTorch"],
                     "description": "End-to-end multimodal matching pipeline with deterministic skill gap analysis."
                 }
-            ],
-            "internships": [
-                {
-                    "organization": "Machine Learning Research Lab",
-                    "position": "Machine Learning Intern",
-                    "dates": "May 2023 - August 2023",
-                    "technologies": ["Python", "OpenCV", "PyTorch"],
-                    "responsibilities": ["Engineered data preprocessing pipelines and evaluated model latency."]
-                }
-            ],
-            "resume_skills": ["Python", "Flask", "Scikit-Learn", "SQL", "Docker", "Git", "Data Structures"],
-            "matched_skills": ["Python", "Scikit-Learn", "SQL"],
-            "missing_skills": ["Kubernetes", "AWS", "CI/CD"],
-            "required_skills": ["Python", "Scikit-Learn", "Docker", "SQL"],
-            "preferred_skills": ["Kubernetes", "AWS"],
-            "matched_required_skills": ["Python", "Scikit-Learn", "SQL"],
-            "fully_matched_required_skills": ["Python", "Scikit-Learn", "SQL"],
-            "partially_evidenced_required_skills": [],
-            "missing_required_skills": ["Docker"],
-            "matched_preferred_skills": ["AWS"],
-            "missing_preferred_skills": ["Kubernetes"],
-            "education_analysis": {
-                "notes": "B.Tech in Computer Science & Engineering",
-                "degrees": ["B.Tech"],
-                "institutions": ["Institute of Technology"],
-                "highest_degree": "B.Tech"
+            ]
+        },
+        "recommendations": [
+            {
+                "category": "High Priority",
+                "action": "Acquire containerization fundamentals (Docker)",
+                "rationale": "Docker is listed as a mandatory core requirement for deployment.",
+                "severity": "danger"
             },
-            "experience_summary": {
-                "total_years": 2.5,
-                "display_summary": "1 Internship, 1 Key Project verified"
+            {
+                "category": "Medium Priority",
+                "action": "Familiarize with Kubernetes orchestration",
+                "rationale": "Preferred competency to support distributed microservices.",
+                "severity": "warning"
+            }
+        ],
+        "learning_resources": [
+            {
+                "skill": "Docker",
+                "title": "Docker Getting Started Guide",
+                "url": "https://docs.docker.com/get-started/",
+                "provider": "Official Docker Documentation",
+                "level": "Beginner to Intermediate"
             },
-            "experience_analysis": {
-                "total_years_estimate": 2.5,
-                "meets_requirement": True,
-                "required_years": 2.0,
-                "display_summary": "1 Internship, 1 Key Project verified",
-                "detected_projects": [
-                    {
-                        "title": "Multimodal Resume Matching & Skill Gap Analysis System",
-                        "technologies": ["Python", "Scikit-Learn", "Flask", "PyTorch"],
-                        "description": "End-to-end multimodal matching pipeline with deterministic skill gap analysis."
-                    }
-                ]
-            },
-            "recommendations": [
-                {
-                    "category": "High Priority",
-                    "action": "Acquire containerization fundamentals (Docker)",
-                    "rationale": "Docker is listed as a mandatory core requirement for deployment.",
-                    "severity": "danger"
-                },
-                {
-                    "category": "Medium Priority",
-                    "action": "Familiarize with Kubernetes orchestration",
-                    "rationale": "Preferred competency to support distributed microservices.",
-                    "severity": "warning"
-                }
-            ],
-            "learning_resources": [
-                {
-                    "skill": "Docker",
-                    "title": "Docker Getting Started Guide",
-                    "url": "https://docs.docker.com/get-started/",
-                    "provider": "Official Docker Documentation",
-                    "level": "Beginner to Intermediate"
-                },
-                {
-                    "skill": "Kubernetes",
-                    "title": "Kubernetes Basics & Architecture",
-                    "url": "https://kubernetes.io/docs/tutorials/kubernetes-basics/",
-                    "provider": "Kubernetes Foundation",
-                    "level": "Intermediate"
-                }
-            ],
-            "job_description_text": "Seeking a Machine Learning Engineer with strong proficiency in Python, Scikit-Learn, Docker, SQL, Kubernetes, AWS, and CI/CD pipelines.",
-            "raw_jd": "Seeking a Machine Learning Engineer with strong proficiency in Python, Scikit-Learn, Docker, SQL, Kubernetes, AWS, and CI/CD pipelines."
-        }
+            {
+                "skill": "Kubernetes",
+                "title": "Kubernetes Basics & Architecture",
+                "url": "https://kubernetes.io/docs/tutorials/kubernetes-basics/",
+                "provider": "Kubernetes Foundation",
+                "level": "Intermediate"
+            }
+        ],
+        "job_description_text": "Seeking a Machine Learning Engineer with strong proficiency in Python, Scikit-Learn, Docker, SQL, Kubernetes, AWS, and CI/CD pipelines.",
+        "raw_jd": "Seeking a Machine Learning Engineer with strong proficiency in Python, Scikit-Learn, Docker, SQL, Kubernetes, AWS, and CI/CD pipelines."
+    }
 
-    # Shallow copy to allow user runtime overrides without mutating raw global cache
     analysis = dict(raw_analysis)
     user_role = session.get("candidate_target_role")
     if user_role:
@@ -739,7 +718,7 @@ def get_authorized_analysis(
     - Omitted analysis_id -> checks active session analysis; falls back to demo only if allow_demo_default=True.
     """
     if analysis_id and str(analysis_id).strip().lower() in DEMO_ANALYSIS_IDS:
-        return _get_active_analysis("sample"), None, 200
+        return _get_sample_analysis(), None, 200
 
     if analysis_id:
         clean_id = str(analysis_id).strip()
@@ -790,9 +769,19 @@ def get_authorized_analysis(
             return customized, None, 200
 
     if allow_demo_default:
-        return _get_active_analysis("sample"), None, 200
+        return _get_sample_analysis(), None, 200
 
     return None, "No active analysis found. Please submit a resume for analysis.", 404
+
+
+def _get_active_analysis(analysis_id: Optional[str] = None) -> Dict:
+    """
+    Retrieves current authorized analysis for this browser session.
+    Never returns another session's cached analysis.
+    Falls back to the demo candidate only when no authorized analysis exists.
+    """
+    analysis, _, _ = get_authorized_analysis(analysis_id, allow_demo_default=True)
+    return analysis or _get_sample_analysis()
 
 
 def _get_browser_session_uid() -> str:
@@ -909,6 +898,7 @@ def interview_studio():
 
 
 @app.route("/interview-studio/generate", methods=["POST"])
+@require_browser_csrf
 def interview_studio_generate():
     """Generates questions with selected parameters or transitions into Practice Mode."""
     analysis = _get_active_analysis()
@@ -1010,6 +1000,7 @@ def interview_practice():
 
 
 @app.route("/interview-practice/submit", methods=["POST"])
+@require_browser_csrf
 def interview_practice_submit():
     """Saves practice answer and navigates next, prev, or finish."""
     session_id = request.form.get("session_id")

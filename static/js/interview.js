@@ -200,10 +200,13 @@ function initHeuristicEvaluator() {
         evalBtn.disabled = true;
         evalBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span>Analyzing...';
 
+        const csrfToken = document.querySelector('input[name="csrf_token"]')?.value || "";
+
         fetch("/api/interview/evaluate", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
+                ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {})
             },
             body: JSON.stringify({
                 user_answer: text,
