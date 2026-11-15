@@ -5,6 +5,7 @@ Provides transparent predictions, calibrated probabilities, and skill gap insigh
 """
 
 from pathlib import Path
+import os
 import pathlib
 from typing import Dict, List, Optional, Tuple, Union
 import json
@@ -43,22 +44,31 @@ class ModelInferenceEngine:
         self._load_artifacts()
 
     def _load_artifacts(self) -> None:
-        """Loads serialized artifacts, including Windows-trained paths, on Linux.
+        """Load joblib artifacts across Windows/Linux pathlib implementations.
 
-        Joblib artifacts created on Windows can contain pathlib.WindowsPath objects.
-        Linux refuses to instantiate those during unpickling, so temporarily map the
-        pickle reference to PosixPath while loading. Restore the standard pathlib
-        class immediately afterward.
+        Pickled artifacts retain the pathlib class used by the training machine.
+        Windows cannot instantiate a serialized PosixPath, while Linux cannot
+        instantiate a serialized WindowsPath. During unpickling only, map the
+        foreign concrete path class to the current platform's concrete class.
+        Restore both pathlib classes immediately afterward.
         """
         original_windows_path = pathlib.WindowsPath
+        original_posix_path = pathlib.PosixPath
         try:
-            pathlib.WindowsPath = pathlib.PosixPath
+            if os.name == "nt":
+                # Linux-trained artifacts may contain PosixPath objects.
+                pathlib.PosixPath = pathlib.WindowsPath
+            else:
+                # Windows-trained artifacts may contain WindowsPath objects.
+                pathlib.WindowsPath = pathlib.PosixPath
+
             if self.model_path.exists():
                 self.model = joblib.load(self.model_path)
             if self.pipeline_path.exists():
                 self.pipeline = ResumeJobFeaturePipeline.load(self.pipeline_path)
         finally:
             pathlib.WindowsPath = original_windows_path
+            pathlib.PosixPath = original_posix_path
 
     def predict_match(
         self,
