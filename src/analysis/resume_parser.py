@@ -8,8 +8,11 @@ from pathlib import Path
 from typing import Dict, Optional, Tuple, Union
 import io
 import re
+import zipfile
 import pymupdf  # PyMuPDF
 import docx  # python-docx
+from docx.text.paragraph import Paragraph
+from docx.table import Table
 
 from src.preprocessing.text_cleaner import clean_text, parse_structural_features
 
@@ -79,17 +82,21 @@ def extract_text_from_docx(stream_or_path: Union[str, Path, bytes, io.BytesIO]) 
         metadata["paragraph_count"] = len(doc.paragraphs)
         metadata["table_count"] = len(doc.tables)
 
+        # Preserve the original order of paragraphs and tables. Reading all
+        # paragraphs first and all tables second can scramble section boundaries
+        # in resumes that use tables for education or work history.
         text_lines = []
-        for p in doc.paragraphs:
-            if p.text.strip():
-                text_lines.append(p.text.strip())
-
-        # Extract text from tables if any
-        for table in doc.tables:
-            for row in table.rows:
-                row_text = [cell.text.strip() for cell in row.cells if cell.text.strip()]
-                if row_text:
-                    text_lines.append(" | ".join(row_text))
+        for child in doc.element.body.iterchildren():
+            if child.tag.endswith("}p"):
+                paragraph = Paragraph(child, doc)
+                if paragraph.text.strip():
+                    text_lines.append(paragraph.text.strip())
+            elif child.tag.endswith("}tbl"):
+                table = Table(child, doc)
+                for row in table.rows:
+                    row_text = [cell.text.strip() for cell in row.cells if cell.text.strip()]
+                    if row_text:
+                        text_lines.append(" | ".join(row_text))
 
         full_text = "\n".join(text_lines).strip()
         return full_text, metadata
@@ -130,6 +137,30 @@ def extract_text_from_txt(stream_or_path: Union[str, Path, bytes, io.BytesIO]) -
         return "", metadata
 
 
+def _read_resume_bytes(file_input: Union[str, Path, bytes, io.BytesIO]) -> Tuple[Optional[bytes], Optional[str]]:
+    """Read supported input safely, enforcing the size limit before loading paths."""
+    if isinstance(file_input, bytes):
+        payload = file_input
+    elif isinstance(file_input, io.BytesIO):
+        payload = file_input.getvalue()
+    elif isinstance(file_input, (str, Path)):
+        path = Path(file_input)
+        try:
+            if not path.is_file():
+                return None, "Resume file path does not exist or is not a regular file."
+            if path.stat().st_size > MAX_FILE_SIZE:
+                return None, "File size exceeds 16 MB limit."
+            payload = path.read_bytes()
+        except OSError:
+            return None, "Resume file could not be read."
+    else:
+        return None, "Unsupported resume input type."
+
+    if len(payload) > MAX_FILE_SIZE:
+        return None, "File size exceeds 16 MB limit."
+    return payload, None
+
+
 def parse_resume(
     file_input: Union[str, Path, bytes, io.BytesIO],
     filename: Optional[str] = None
@@ -137,9 +168,9 @@ def parse_resume(
     """
     Master parser for uploaded candidate resumes:
     - Identifies document format from filename or file signature
-    - Extracts raw and cleaned text
-    - Identifies structural sections and layout indicators
-    - Returns structured extraction metadata and validation status
+    - Enforces size and content-signature validation for every input type
+    - Preserves interleaved paragraph/table order in DOCX resumes
+    - Extracts raw and cleaned text and structural metadata
     """
     result = {
         "filename": filename or "resume_input",
@@ -152,22 +183,21 @@ def parse_resume(
         "warnings": []
     }
 
-    # Determine extension
-    ext = ""
-    if filename:
-        ext = Path(filename).suffix.lower()
-    elif isinstance(file_input, (str, Path)):
+    ext = Path(filename).suffix.lower() if filename else ""
+    if not ext and isinstance(file_input, (str, Path)):
         ext = Path(file_input).suffix.lower()
 
+    payload, read_error = _read_resume_bytes(file_input)
+    if read_error:
+        result["status"] = "error"
+        result["error_message"] = read_error
+        return result
+
     if not ext:
-        # Try detection from bytes magic numbers if possible
-        if isinstance(file_input, bytes):
-            if file_input.startswith(b"%PDF"):
-                ext = ".pdf"
-            elif file_input.startswith(b"PK\x03\x04"):
-                ext = ".docx"
-            else:
-                ext = ".txt"
+        if payload.startswith(b"%PDF-"):
+            ext = ".pdf"
+        elif payload.startswith(b"PK\\x03\\x04"):
+            ext = ".docx"
         else:
             ext = ".txt"
 
@@ -178,23 +208,37 @@ def parse_resume(
         )
         return result
 
-    # Check size
-    if isinstance(file_input, bytes) and len(file_input) > MAX_FILE_SIZE:
+    # Defense-in-depth format validation also protects direct parser/API use.
+    if ext == ".pdf" and not payload.startswith(b"%PDF-"):
         result["status"] = "error"
-        result["error_message"] = "File size exceeds 16 MB limit."
+        result["error_message"] = "Invalid PDF file: missing the standard %PDF- header."
+        return result
+    if ext == ".docx":
+        if not payload.startswith(b"PK\\x03\\x04"):
+            result["status"] = "error"
+            result["error_message"] = "Invalid DOCX file: missing the standard ZIP/OpenXML header."
+            return result
+        try:
+            with zipfile.ZipFile(io.BytesIO(payload)) as archive:
+                if "word/document.xml" not in archive.namelist():
+                    raise zipfile.BadZipFile("Missing word/document.xml")
+                if archive.testzip() is not None:
+                    raise zipfile.BadZipFile("Corrupt DOCX archive member")
+        except (zipfile.BadZipFile, OSError):
+            result["status"] = "error"
+            result["error_message"] = "Invalid or corrupted DOCX document."
+            return result
+    if ext == ".txt" and b"\\x00" in payload:
+        result["status"] = "error"
+        result["error_message"] = "Invalid TXT file: binary null bytes were detected."
         return result
 
-    # Perform format-specific extraction
     if ext == ".pdf":
-        raw_text, meta = extract_text_from_pdf(file_input)
+        raw_text, meta = extract_text_from_pdf(payload)
     elif ext == ".docx":
-        raw_text, meta = extract_text_from_docx(file_input)
-    elif ext == ".txt":
-        raw_text, meta = extract_text_from_txt(file_input)
+        raw_text, meta = extract_text_from_docx(payload)
     else:
-        result["status"] = "error"
-        result["error_message"] = f"Unsupported file type: {ext}"
-        return result
+        raw_text, meta = extract_text_from_txt(payload)
 
     result["metadata"] = meta
     result["warnings"].extend(meta.get("warnings", []))
@@ -212,7 +256,6 @@ def parse_resume(
         result["error_message"] = "The document is empty or text extraction returned no content."
         return result
 
-    # Clean text and extract structure
     cleaned = clean_text(raw_text)
     struct = parse_structural_features(raw_text)
 
