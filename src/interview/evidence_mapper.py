@@ -250,22 +250,26 @@ def ground_guidance_in_evidence(
         pos = evidence_item.get("position", "Intern")
         dates = evidence_item.get("dates", "during the internship")
         tech_list = evidence_item.get("technologies", [])
-        techs = ", ".join(tech_list) if tech_list else "professional software engineering tools"
+        techs = ", ".join(tech_list) if tech_list else ""
         resp_list = evidence_item.get("responsibilities", [])
         resps = "; ".join(resp_list) if resp_list else ""
         user_confirmed = bool(evidence_item.get("user_confirmed") or evidence_item.get("candidate_confirmed"))
         conf_details = str(evidence_item.get("confirmed_details") or evidence_item.get("user_confirmed_details") or "").strip()
 
-        if resps:
+        if resps and techs:
             sit_intern = f"At {org} ({dates}) as a {pos}, verified contributions centered on: {resps} using {techs}."
-        else:
+        elif resps:
+            sit_intern = f"At {org} ({dates}) as a {pos}, verified contributions centered on: {resps}."
+        elif techs:
             sit_intern = f"At {org} ({dates}) as a {pos} using {techs} [Candidate to specify: Assigned engineering scope; not detailed in resume text]."
+        else:
+            sit_intern = f"At {org} ({dates}) as a {pos} [Candidate to specify: Assigned engineering scope; not detailed in resume text]."
 
         if user_confirmed and conf_details:
             sit_intern += f" [Candidate Confirmed: {conf_details}]"
 
         task_placeholder = f"[Candidate to specify: Specific feature, module, or repository ticket assigned at {org}]"
-        action_placeholder = f"[Candidate to specify: Codebase research, modular implementation using {techs}, and testing steps taken at {org}]"
+        action_placeholder = f"[Candidate to specify: Codebase research, modular implementation" + (f" using {techs}" if techs else "") + f", and testing steps taken at {org}]"
         result_placeholder = f"[Candidate to specify: Code review outcome, merged pull request deliverable, or production impact achieved at {org}]"
 
         if f_id in ["STAR", "STAR+L"]:
@@ -280,29 +284,52 @@ def ground_guidance_in_evidence(
             return res_dict
         elif f_id in ["CAR", "PAR"]:
             key_first = "Challenge" if f_id == "CAR" else "Problem"
-            prob_text = (
-                f"At {org}, the engineering objective was to contribute to {resps} using {techs}." if resps
-                else f"At {org}, engineering contributions utilized {techs} [Candidate to specify: Concrete problem addressed]."
-            )
+            if resps and techs:
+                prob_text = f"At {org}, the engineering objective was to contribute to {resps} using {techs}."
+            elif resps:
+                prob_text = f"At {org}, the engineering objective was to contribute to {resps}."
+            elif techs:
+                prob_text = f"At {org}, engineering contributions utilized {techs} [Candidate to specify: Concrete problem addressed; not detailed in resume text]."
+            else:
+                prob_text = f"At {org} as a {pos} [Candidate to specify: Concrete problem addressed; not detailed in resume text]."
+
             if user_confirmed and conf_details:
                 prob_text += f" [Candidate Confirmed: {conf_details}]"
             return {
                 key_first: prob_text,
-                "Action": f"[Candidate to specify: Implementation methodology, codebase dependencies navigated, and testing executed using {techs}]",
+                "Action": f"[Candidate to specify: Implementation methodology, codebase dependencies navigated, and testing executed" + (f" using {techs}" if techs else "") + "]",
                 "Result": f"[Candidate to specify: Merged deliverable, sprint outcome, or module quality improvements delivered at {org}]"
             }
         elif f_id == "PREP":
+            if resps and techs:
+                prep_pt = f"Work at {org} ({dates}) as a {pos} provided experience contributing to {resps} using {techs}."
+            elif resps:
+                prep_pt = f"Work at {org} ({dates}) as a {pos} provided experience contributing to {resps}."
+            elif techs:
+                prep_pt = f"Work at {org} ({dates}) as a {pos} utilizing {techs} [Candidate to specify: Scope of assigned engineering contributions; not detailed in resume text]."
+            else:
+                prep_pt = f"Work at {org} ({dates}) as a {pos} [Candidate to specify: Scope of assigned engineering contributions; not detailed in resume text]."
+
             return {
-                "Point": f"Work at {org} ({dates}) as a {pos} provided experience contributing to {resps or 'assigned engineering features'} using {techs}.",
+                "Point": prep_pt,
                 "Reason": "[Candidate to specify: Team standards and continuous integration workflows followed]",
                 "Example": f"[Candidate to specify: Concrete code contribution, PR review iteration, or test authored at {org}]",
                 "Point_Conclusion": "[Candidate to specify: How this industry experience prepares you for team-based production delivery]"
             }
         else:
+            if resps and techs:
+                peel_pt = f"During the internship at {org}, work involved {resps} using {techs}."
+            elif resps:
+                peel_pt = f"During the internship at {org}, work involved {resps}."
+            elif techs:
+                peel_pt = f"During the internship at {org} utilizing {techs} [Candidate to specify: Scope of assigned engineering tasks; not detailed in resume text]."
+            else:
+                peel_pt = f"During the internship at {org} as a {pos} [Candidate to specify: Scope of assigned engineering tasks; not detailed in resume text]."
+
             return {
-                "Point": f"During the internship at {org}, work involved {resps or 'software development tasks'} using {techs}.",
+                "Point": peel_pt,
                 "Reason": "[Candidate to specify: Production standards, code reviews, and CI/CD validation experienced]",
-                "Example": f"[Candidate to specify: Concrete feature, refactoring, or test authored using {techs}]",
+                "Example": f"[Candidate to specify: Concrete feature, refactoring, or test authored" + (f" using {techs}" if techs else "") + "]",
                 "Point_Conclusion": "[Candidate to specify: How this demonstrated writing clean, maintainable, and well-tested code]"
             }
 
@@ -372,13 +399,13 @@ def build_grounded_project_answers(
             simpler = (
                 f"In '{title}', the objective was to implement {desc_clean} using {', '.join(tech_list) if tech_list else 'the stack'}. "
                 f"[Candidate to specify: Architectural approach and component boundaries chosen]. "
-                f"In standard architectures using this stack, each component handles a decoupled responsibility ({tech_explanation_str}), "
+                f"[General Technical Guidance]: In standard architectures using this stack, each component handles a decoupled responsibility ({tech_explanation_str}), "
                 f"ensuring data flows through predictable interfaces."
             )
         else:
             simpler = (
-                f"In '{title}' ({', '.join(tech_list) if tech_list else 'the project stack'}), [Candidate to specify: Primary functional scope and architectural design]. "
-                f"In standard architectures using this stack, each component handles a decoupled responsibility ({tech_explanation_str}), "
+                f"In '{title}' ({', '.join(tech_list) if tech_list else 'technologies not specified'}), [Candidate to specify: Primary functional scope and architectural design]. "
+                f"[General Technical Guidance]: In standard architectures using this stack, each component handles a decoupled responsibility ({tech_explanation_str}), "
                 f"ensuring data flows through predictable interfaces."
             )
 
@@ -393,7 +420,7 @@ def build_grounded_project_answers(
             f"To structure an architectural response for '{title}' (utilizing {', '.join(tech_list) if tech_list else 'the project stack'}), frame your explanation around clear engineering design decisions:\n"
             f"1. Problem Scope: " + (f"The project focused on {desc_clean}." if desc else "[Candidate to specify: Specific functional problem and system scope].") + "\n"
             f"2. Component Decomposition: [Candidate to specify: How you structured application layers across the component stack].\n"
-            f"3. Technology Responsibilities: {roles_paragraph}\n"
+            f"3. Technology Responsibilities (General Technical Guidance): In typical architectures using these tools, {roles_paragraph} [Candidate to specify: Why you selected these tools and your actual component boundaries].\n"
             f"4. Interface Contracts: [Candidate to specify: How data contracts and schema validation were enforced at boundaries].\n"
             f"5. Trade-Off Evaluation: [Candidate to specify: Key engineering trade-off evaluated, e.g. operational simplicity vs distributed complexity].\n\n"
             f"[Illustrative Model Scenario — Not candidate resume data]: In an application utilizing modular services, an engineer structures the service into decoupled layers: "
@@ -901,7 +928,13 @@ def build_grounded_project_answers(
         "missing_personal_details": missing_info,
         "verified_evidence": verified_evidence,
         "recommended_framework": framework,
-        "examples": f"In '{title}', {', '.join(tech_list[:2]) if tech_list else 'the stack'} decoupled presentation from backend processing logic."
+        "examples": (
+            f"In '{title}', verified objective: '{desc}'." if desc else (
+                f"Project record '{title}' (technologies: {', '.join(tech_list)}). [Candidate to specify: Architecture and component design]." if tech_list else (
+                    f"Project record '{title}'. [Candidate to specify: Architecture and component design]."
+                )
+            )
+        )
     }
 
 
@@ -918,7 +951,7 @@ def build_grounded_internship_answers(
     pos = internship.get("position", "Intern")
     dates = internship.get("dates", "during my internship")
     tech_list = internship.get("technologies", [])
-    techs = ", ".join(tech_list) if tech_list else "professional software engineering tools"
+    techs = ", ".join(tech_list) if tech_list else ""
     resp_list = internship.get("responsibilities", [])
     resps = "; ".join(resp_list) if resp_list else ""
     resps_display = resps if resps else "[Internship responsibilities not specified in resume]"
@@ -935,19 +968,41 @@ def build_grounded_internship_answers(
     t1 = tech_list[1] if len(tech_list) > 1 else "Git"
 
     if question_kind == "resp":
-        simpler = (
-            f"When discussing your internship at {org} ({dates}) as a {pos}, highlight how you contributed using {techs}. "
-            f"Structure your response: [Candidate to specify: Specific feature or service assigned] -> "
-            f"Adhering to team conventions, modular code design, and testing -> "
-            f"[Candidate to specify: Merged deliverable or outcome]."
-        ) if not resps else (
-            f"When discussing your internship at {org} ({dates}) as a {pos}, highlight how you contributed to {resps} using {techs}. "
-            f"Structure your response: [Candidate to specify: Specific feature or service assigned] -> "
-            f"Adhering to team conventions, modular code design, and testing -> "
-            f"[Candidate to specify: Merged deliverable or outcome]."
-        )
+        if resps and techs:
+            simpler = (
+                f"When discussing your internship at {org} ({dates}) as a {pos}, highlight how you contributed to {resps} using {techs}. "
+                f"Structure your response: [Candidate to specify: Specific feature or service assigned] -> "
+                f"Adhering to team conventions, modular code design, and testing -> "
+                f"[Candidate to specify: Merged deliverable or outcome]."
+            )
+            scope_desc = f"Your contributions centered on {resps} using {techs}"
+        elif resps:
+            simpler = (
+                f"When discussing your internship at {org} ({dates}) as a {pos}, highlight how you contributed to {resps}. "
+                f"Structure your response: [Candidate to specify: Specific feature or service assigned] -> "
+                f"Adhering to team conventions, modular code design, and testing -> "
+                f"[Candidate to specify: Merged deliverable or outcome]."
+            )
+            scope_desc = f"Your contributions centered on {resps}"
+        elif techs:
+            simpler = (
+                f"When discussing your internship at {org} ({dates}) as a {pos}, highlight how you contributed using {techs}: "
+                f"[Candidate to specify: Specific feature or service assigned; not detailed in resume text]. "
+                f"Structure your response: [Candidate to specify: Specific feature or service assigned] -> "
+                f"Adhering to team conventions, modular code design, and testing -> "
+                f"[Candidate to specify: Merged deliverable or outcome]."
+            )
+            scope_desc = f"Your contributions centered on [Candidate to specify: Assigned engineering tasks using {techs}; not detailed in resume text]"
+        else:
+            simpler = (
+                f"When discussing your internship at {org} ({dates}) as a {pos}, focus on: "
+                f"[Candidate to specify: Assigned engineering tasks; not detailed in resume text]. "
+                f"Structure your response: [Candidate to specify: Specific feature or service assigned] -> "
+                f"Adhering to team conventions, modular code design, and testing -> "
+                f"[Candidate to specify: Merged deliverable or outcome]."
+            )
+            scope_desc = "[Candidate to specify: Assigned engineering scope; not detailed in resume text]"
 
-        scope_desc = f"Your contributions centered on {resps} using {techs}" if resps else f"Your contributions centered on assigned tasks using {techs}"
         detailed = (
             f"To present a compelling overview of your internship at {org} ({dates}) as a {pos}, frame your experience around professional software development standards:\n"
             f"1. Context & Scope: {scope_desc} within an established team codebase.\n"
@@ -975,19 +1030,28 @@ def build_grounded_internship_answers(
             },
             {
                 "step": "Step 2: Map Assigned Responsibilities to Production Features",
-                "complete_explanation": f"Core day-to-day engineering responsibilities focused on {resps_display}. Rather than working on disconnected toy scripts, the assignment required authoring modular service code that integrated directly into existing team repositories.",
+                "complete_explanation": (
+                    f"Core day-to-day engineering responsibilities focused on {resps}." if resps
+                    else "Core day-to-day engineering responsibilities should be clearly defined: [Candidate to specify: Assigned tasks; not detailed in resume text]."
+                ) + " Rather than working on disconnected toy scripts, the assignment required authoring modular service code that integrated directly into existing team repositories.",
                 "reasoning": "Demonstrating that you contributed to real software repositories proves readiness for full-time engineering duties.",
-                "concrete_example": f"[Candidate to specify: Concrete endpoints, validation schemas, or database query optimizations authored using {techs}].",
+                "concrete_example": (
+                    f"[Candidate to specify: Concrete endpoints, validation schemas, or database query optimizations authored using {techs}]." if techs
+                    else "[Candidate to specify: Concrete endpoints, validation schemas, or database query optimizations authored]."
+                ),
                 "connection_to_question": "Articulates the concrete engineering scope of the internship.",
-                "detail": f"Core day-to-day engineering responsibilities focused on {resps_display}. Rather than working on disconnected toy scripts, the assignment required authoring modular service code that integrated directly into existing team repositories."
+                "detail": (
+                    f"Core day-to-day engineering responsibilities focused on {resps}." if resps
+                    else "Core day-to-day engineering responsibilities should be clearly defined: [Candidate to specify: Assigned tasks; not detailed in resume text]."
+                ) + " Rather than working on disconnected toy scripts, the assignment required authoring modular service code that integrated directly into existing team repositories."
             },
             {
-                "step": f"Step 3: Technical Execution & Implementation with {techs}",
-                "complete_explanation": f"Utilize {techs} to build modular, maintainable software components following team design patterns. Focus on clean function decomposition, descriptive variable naming, and strict adherence to repository coding conventions.",
+                "step": "Step 3: Technical Execution & Implementation" + (f" with {techs}" if techs else ""),
+                "complete_explanation": (f"Utilize {techs}" if techs else "Utilize assigned engineering tools") + " to build modular, maintainable software components following team design patterns. Focus on clean function decomposition, descriptive variable naming, and strict adherence to repository coding conventions.",
                 "reasoning": "Engineering teams value consistency, clean architecture, and adherence to existing patterns over idiosyncratic coding styles.",
-                "concrete_example": f"[Candidate to specify: Utility functions or schema models adhering to enterprise style guides using {techs}].",
+                "concrete_example": (f"[Candidate to specify: Utility functions or schema models adhering to enterprise style guides using {techs}]." if techs else "[Candidate to specify: Utility functions or schema models adhering to enterprise style guides]."),
                 "connection_to_question": "Explains hands-on tool mastery and software implementation craft.",
-                "detail": f"Utilize {techs} to build modular, maintainable software components following team design patterns. Focus on clean function decomposition, descriptive variable naming, and strict adherence to repository coding conventions."
+                "detail": (f"Utilize {techs}" if techs else "Utilize assigned engineering tools") + " to build modular, maintainable software components following team design patterns. Focus on clean function decomposition, descriptive variable naming, and strict adherence to repository coding conventions."
             },
             {
                 "step": "Step 4: Author Unit Tests & Verify Local Regression Freedom",
@@ -1340,5 +1404,13 @@ def build_grounded_internship_answers(
         "missing_personal_details": missing_info,
         "verified_evidence": verified_evidence,
         "recommended_framework": framework,
-        "examples": f"At {org}, verified responsibilities ({resps}) using {techs}." if resps else f"At {org}, verified internship as {pos} using {techs}."
+        "examples": (
+            f"At {org}, verified responsibilities ({resps}) using {techs}." if (resps and techs) else (
+                f"At {org}, verified responsibilities ({resps})." if resps else (
+                    f"At {org}, verified internship as {pos} using {techs}." if techs else (
+                        f"At {org}, verified internship as {pos}."
+                    )
+                )
+            )
+        )
     }

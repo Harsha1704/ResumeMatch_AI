@@ -917,9 +917,16 @@ class InterviewQuestionGenerator:
         for idx, it in enumerate(internships):
             org = it["organization"]
             dates = it["dates"]
-            techs = ", ".join(it["technologies"]) or "practical engineering tools"
+            techs = ", ".join(it["technologies"]) if it.get("technologies") else ""
             resps = "; ".join(it["responsibilities"]) if it.get("responsibilities") else ""
-            resps_guidance = f"Focus on {resps} and how you applied {techs}." if resps else f"Specify your assigned tasks and how you applied {techs}."
+            if resps and techs:
+                resps_guidance = f"Focus on {resps} and how you applied {techs}."
+            elif resps:
+                resps_guidance = f"Focus on {resps}."
+            elif techs:
+                resps_guidance = f"Specify your assigned tasks and how you applied {techs}."
+            else:
+                resps_guidance = "Specify your assigned tasks and the technical tools you used."
 
             # C1: Core Internship Contribution
             q1_text = f"During your internship at {org} ({dates}), what were your primary technical responsibilities and contributions?"
@@ -928,6 +935,10 @@ class InterviewQuestionGenerator:
             grounded_resp = build_grounded_internship_answers(it, "resp")
             if preferred_framework:
                 grounded_resp["recommended_framework"] = preferred_framework
+
+            ev_sources_c1 = [f"Internship Record: {org} ({dates})"]
+            if techs:
+                ev_sources_c1.append(f"Technologies: {techs}")
 
             questions.append({
                 "question_id": self._make_id(f"qc_resp_{idx}", q1_text),
@@ -959,11 +970,11 @@ class InterviewQuestionGenerator:
                 "important_concepts": grounded_resp["important_concepts"],
                 "interview_tips": grounded_resp["interview_tips"],
                 "missing_personal_details": grounded_resp["missing_personal_details"],
-                "evidence_sources": [f"Internship Record: {org} ({dates})", f"Technologies: {techs}"],
+                "evidence_sources": ev_sources_c1,
                 "answer_guidance": f"Describe your specific deliverables at {org}. {resps_guidance}",
                 "expected_key_points": [
                     f"Team context and objective at {org}",
-                    f"Hands-on contributions using {techs}",
+                    f"Hands-on contributions" + (f" using {techs}" if techs else ""),
                     "Verified deliverables and team impact"
                 ],
                 "framework_template": format_answer_template(grounded_resp["recommended_framework"], notes1)
@@ -1018,7 +1029,10 @@ class InterviewQuestionGenerator:
             })
 
             # C3: Technical Problem Solving at Organization
-            q3_text = f"Can you walk me through a specific engineering problem you solved while working at {org} using {techs}?"
+            q3_text = (
+                f"Can you walk me through a specific engineering problem you solved while working at {org} using {techs}?" if techs
+                else f"Can you walk me through a specific engineering problem you solved while working at {org}?"
+            )
             fw3 = preferred_framework or "CAR"
             notes3 = ground_guidance_in_evidence(fw3, "internship", it)
             grounded_solve = build_grounded_internship_answers(it, "solve")
