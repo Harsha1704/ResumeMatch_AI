@@ -288,7 +288,7 @@ class TestPhase214ClaimLevelEvidenceValidation:
         """Illustrative scenario marker must not suppress an unsupported deployment claim following it."""
         text = (
             "[Illustrative Scenario — Not candidate resume data]: When scaling backend services, "
-            "rate limiting protects internal endpoints. I coordinated deployment."
+            "rate limiting protects internal endpoints. [/Illustrative Scenario] I coordinated deployment."
         )
         cls_res = AnswerQualityValidator.classify_statement(text)
         assert cls_res["is_illustrative_scenario"] is True, "Illustrative scenario must be recognized"
@@ -315,7 +315,7 @@ class TestPhase214ClaimLevelEvidenceValidation:
         """Unsupported personal claim before an illustrative scenario must be flagged."""
         text = (
             "I coordinated deployment. [Illustrative Scenario — Not candidate resume data]: "
-            "When scaling backend services, rate limiting protects internal endpoints."
+            "When scaling backend services, rate limiting protects internal endpoints. [/Illustrative Scenario]"
         )
         cls_res = AnswerQualityValidator.classify_statement(text)
         assert cls_res["is_illustrative_scenario"] is True
@@ -329,10 +329,10 @@ class TestPhase214ClaimLevelEvidenceValidation:
     # 11. Unsupported claim entirely inside a clearly labeled illustrative block
     # -------------------------------------------------------------------------
     def test_11_unsupported_claim_entirely_inside_illustrative_block(self):
-        """Claims inside an illustrative block are not candidate achievements and not falsely flagged."""
+        """Claims inside a properly closed illustrative block are not candidate achievements and not falsely flagged."""
         text = (
             "[Illustrative Scenario — Not candidate resume data]: In this hypothetical model scenario, "
-            "the engineer deployed the service to production."
+            "I coordinated deployment and deployed the service to production. [/Illustrative Scenario]"
         )
         cls_res = AnswerQualityValidator.classify_statement(text)
         assert cls_res["is_illustrative_scenario"] is True
@@ -349,7 +349,7 @@ class TestPhase214ClaimLevelEvidenceValidation:
         """Valid illustrative guidance remains valid and unflagged."""
         text = (
             "[Illustrative Model Scenario — Not candidate resume data]: In distributed systems, "
-            "consensus mechanisms like Raft maintain replica state consistency."
+            "consensus mechanisms like Raft maintain replica state consistency. [/Illustrative Model Scenario]"
         )
         cls_res = AnswerQualityValidator.classify_statement(text)
         assert cls_res["is_illustrative_scenario"] is True
@@ -366,7 +366,7 @@ class TestPhase214ClaimLevelEvidenceValidation:
         """Preserves all applicable classifications when valid marker, scenario, and claim mix."""
         text = (
             "Verified Organization: Acme Corp. [Illustrative Scenario — Not candidate resume data]: "
-            "In production code reviews, teams follow git conventions. I coordinated deployment."
+            "In production code reviews, teams follow git conventions. [/Illustrative Scenario] I coordinated deployment."
         )
         evidence = {"organization": "Acme Corp"}
 
@@ -385,8 +385,8 @@ class TestPhase214ClaimLevelEvidenceValidation:
     # 14. Illustrative block boundary preserves: I led the deployment.
     # -------------------------------------------------------------------------
     def test_14_illustrative_block_boundary_preserves_i_led_the_deployment(self):
-        """Block boundary does not depend on a fixed verb list; 'I led' is preserved and flagged."""
-        text = "[Illustrative Scenario]: A sample deployment workflow. I led the deployment."
+        """Explicit closing delimiter preserves outside claim 'I led the deployment'."""
+        text = "[Illustrative Scenario]: A sample deployment workflow. [/Illustrative Scenario] I led the deployment."
         cls_res = AnswerQualityValidator.classify_statement(text)
         assert cls_res["is_illustrative_scenario"] is True
         assert cls_res["is_unsupported_personal_claim"] is True, "Outside claim 'I led the deployment' must be flagged"
@@ -399,8 +399,8 @@ class TestPhase214ClaimLevelEvidenceValidation:
     # 15. Illustrative block boundary preserves: I managed the production database.
     # -------------------------------------------------------------------------
     def test_15_illustrative_block_boundary_preserves_i_managed_the_production_database(self):
-        """Block boundary preserves and flags ungrounded database management."""
-        text = "[Illustrative Scenario]: A sample deployment workflow. I managed the production database."
+        """Explicit closing delimiter preserves and flags outside database management."""
+        text = "[Illustrative Scenario]: A sample deployment workflow. [/Illustrative Scenario] I managed the production database."
         cls_res = AnswerQualityValidator.classify_statement(text)
         assert cls_res["is_illustrative_scenario"] is True
         assert cls_res["is_unsupported_personal_claim"] is True, "Outside claim 'I managed the production database' must be flagged"
@@ -413,8 +413,8 @@ class TestPhase214ClaimLevelEvidenceValidation:
     # 16. Illustrative block boundary preserves: I supervised the engineering team.
     # -------------------------------------------------------------------------
     def test_16_illustrative_block_boundary_preserves_i_supervised_the_engineering_team(self):
-        """Block boundary preserves and flags ungrounded engineering team supervision."""
-        text = "[Illustrative Scenario]: A sample deployment workflow. I supervised the engineering team."
+        """Explicit closing delimiter preserves and flags outside engineering team supervision."""
+        text = "[Illustrative Scenario]: A sample deployment workflow. [/Illustrative Scenario] I supervised the engineering team."
         cls_res = AnswerQualityValidator.classify_statement(text)
         assert cls_res["is_illustrative_scenario"] is True
         assert cls_res["is_unsupported_personal_claim"] is True, "Outside claim 'I supervised the engineering team' must be flagged"
@@ -427,8 +427,8 @@ class TestPhase214ClaimLevelEvidenceValidation:
     # 17. Illustrative block boundary preserves: I owned the architecture decisions.
     # -------------------------------------------------------------------------
     def test_17_illustrative_block_boundary_preserves_i_owned_the_architecture_decisions(self):
-        """Block boundary preserves and flags ungrounded architecture ownership."""
-        text = "[Illustrative Scenario]: A sample deployment workflow. I owned the architecture decisions."
+        """Explicit closing delimiter preserves and flags outside architecture ownership."""
+        text = "[Illustrative Scenario]: A sample deployment workflow. [/Illustrative Scenario] I owned the architecture decisions."
         cls_res = AnswerQualityValidator.classify_statement(text)
         assert cls_res["is_illustrative_scenario"] is True
         assert cls_res["is_unsupported_personal_claim"] is True, "Outside claim 'I owned the architecture decisions' must be flagged"
@@ -443,9 +443,9 @@ class TestPhase214ClaimLevelEvidenceValidation:
     def test_18_illustrative_block_boundary_preserves_passive_voice_unsupported_claims(self):
         """Passive-voice unsupported claims following an illustrative block remain visible to the auditor."""
         passive_cases = [
-            ("[Illustrative Scenario]: A sample deployment workflow. Deployment was led by our team.", "deployment"),
-            ("[Illustrative Scenario]: A sample deployment workflow. Production database was managed without downtime.", "database"),
-            ("[Illustrative Scenario]: A sample deployment workflow. Architecture decisions were owned by me.", "architecture")
+            ("[Illustrative Scenario]: A sample deployment workflow. [/Illustrative Scenario] Deployment was led by our team.", "deployment"),
+            ("[Illustrative Scenario]: A sample deployment workflow. [/Illustrative Scenario] Production database was managed without downtime.", "database"),
+            ("[Illustrative Scenario]: A sample deployment workflow. [/Illustrative Scenario] Architecture decisions were owned by me.", "architecture")
         ]
 
         for text, keyword in passive_cases:
@@ -464,7 +464,7 @@ class TestPhase214ClaimLevelEvidenceValidation:
         """Genuine marker inside an illustrative block cannot establish resume support."""
         text = (
             "[Illustrative Scenario — Not candidate resume data]: In this hypothetical model scenario, "
-            "Verified Organization: Acme Corp is a sample company."
+            "Verified Organization: Acme Corp is a sample company. [/Illustrative Scenario]"
         )
         evidence = {"organization": "Acme Corp"}
 
@@ -483,7 +483,7 @@ class TestPhase214ClaimLevelEvidenceValidation:
         """Fabricated marker inside an illustrative block is not treated as a candidate claim."""
         text = (
             "[Illustrative Scenario — Not candidate resume data]: In this hypothetical model scenario, "
-            "Verified Organization: Fabricated Corp was simulated."
+            "Verified Organization: Fabricated Corp was simulated. [/Illustrative Scenario]"
         )
         evidence = {"organization": "Acme Corp"}
 
@@ -502,7 +502,7 @@ class TestPhase214ClaimLevelEvidenceValidation:
         """Genuine marker outside an illustrative block establishes resume support."""
         text = (
             "Verified Organization: Acme Corp. [Illustrative Scenario — Not candidate resume data]: "
-            "In distributed systems, consensus mechanisms maintain replica state consistency."
+            "In distributed systems, consensus mechanisms maintain replica state consistency. [/Illustrative Scenario]"
         )
         evidence = {"organization": "Acme Corp"}
 
@@ -521,7 +521,7 @@ class TestPhase214ClaimLevelEvidenceValidation:
         """Genuine marker outside plus unsupported claim after illustrative block preserves both classifications."""
         text = (
             "Verified Organization: Acme Corp. [Illustrative Scenario — Not candidate resume data]: "
-            "A sample deployment workflow. I led the deployment."
+            "A sample deployment workflow. [/Illustrative Scenario] I led the deployment."
         )
         evidence = {"organization": "Acme Corp"}
 
@@ -533,3 +533,58 @@ class TestPhase214ClaimLevelEvidenceValidation:
         issues = AnswerQualityValidator.audit_answer_for_unsupported_first_person_claims(text, verified_evidence=evidence)
         assert len(issues) > 0
         assert any("led" in iss.lower() or "deployment" in iss.lower() for iss in issues)
+
+    # -------------------------------------------------------------------------
+    # 23. Missing closing delimiter cannot hide an unsupported claim
+    # -------------------------------------------------------------------------
+    def test_23_missing_closing_delimiter_cannot_hide_an_unsupported_claim(self):
+        """When an illustrative block is unclosed, its content is not exempt and claims are caught."""
+        text = (
+            "[Illustrative Scenario]: When scaling backend services, rate limiting protects endpoints. "
+            "I coordinated deployment."
+        )
+        cls_res = AnswerQualityValidator.classify_statement(text)
+        assert cls_res["is_illustrative_scenario"] is True
+        assert cls_res["is_unsupported_personal_claim"] is True, "Unclosed block must not hide deployment claim"
+
+        issues = AnswerQualityValidator.audit_answer_for_unsupported_first_person_claims(text)
+        assert len(issues) > 0
+        assert any("malformed" in iss.lower() or "unclosed" in iss.lower() for iss in issues), "Must flag malformed illustrative markup"
+        assert any("deployment" in iss.lower() for iss in issues), "Must catch the unsupported deployment claim"
+
+    # -------------------------------------------------------------------------
+    # 24. Repeated illustrative markers handled safely
+    # -------------------------------------------------------------------------
+    def test_24_repeated_illustrative_markers_handled_safely(self):
+        """Multiple explicit illustrative blocks in the same text are cleanly stripped, preserving intermediate claims."""
+        text = (
+            "[Illustrative Scenario]: First model scenario for background. [/Illustrative Scenario] "
+            "I maintained the production database. "
+            "[Illustrative Scenario]: Second model scenario for follow-up. [/Illustrative Scenario]"
+        )
+        cls_res = AnswerQualityValidator.classify_statement(text)
+        assert cls_res["is_illustrative_scenario"] is True
+        assert cls_res["is_unsupported_personal_claim"] is True, "Intermediate claim between blocks must be flagged"
+
+        issues = AnswerQualityValidator.audit_answer_for_unsupported_first_person_claims(text)
+        assert len(issues) > 0
+        assert any("database" in iss.lower() or "managed" in iss.lower() for iss in issues)
+
+    # -------------------------------------------------------------------------
+    # 25. Nested illustrative markers handled safely
+    # -------------------------------------------------------------------------
+    def test_25_nested_illustrative_markers_handled_safely(self):
+        """Nested illustrative blocks are stripped iteratively without leaking or hiding outside claims."""
+        text = (
+            "[Illustrative Scenario]: Outer scenario context "
+            "[Illustrative Scenario]: Inner nested scenario [/Illustrative Scenario] "
+            "Outer scenario continuation [/Illustrative Scenario] "
+            "I supervised the engineering team."
+        )
+        cls_res = AnswerQualityValidator.classify_statement(text)
+        assert cls_res["is_illustrative_scenario"] is True
+        assert cls_res["is_unsupported_personal_claim"] is True, "Claim outside nested blocks must be flagged"
+
+        issues = AnswerQualityValidator.audit_answer_for_unsupported_first_person_claims(text)
+        assert len(issues) > 0
+        assert any("supervised" in iss.lower() or "team" in iss.lower() for iss in issues)

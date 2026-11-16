@@ -424,7 +424,7 @@ def build_grounded_project_answers(
             f"4. Interface Contracts: [Candidate to specify: How data contracts and schema validation were enforced at boundaries].\n"
             f"5. Trade-Off Evaluation: [Candidate to specify: Key engineering trade-off evaluated, e.g. operational simplicity vs distributed complexity].\n\n"
             f"[Illustrative Model Scenario — Not candidate resume data]: In an application utilizing modular services, an engineer structures the service into decoupled layers: "
-            f"transport controllers handle HTTP routing and validation, domain modules process business rules, and repository abstractions manage database transactions."
+            f"transport controllers handle HTTP routing and validation, domain modules process business rules, and repository abstractions manage database transactions. [/Illustrative Model Scenario]"
         )
 
         why_this_works = (
@@ -517,7 +517,7 @@ def build_grounded_project_answers(
                     f"At the base, unit tests evaluate computational helper functions and data transformation logic using synthetic test fixtures. "
                     f"For the service layer, mocking external network calls and persistence drivers asserts that business logic executes correctly across happy and edge-case paths. "
                     f"At the integration level, ephemeral test containers run database migration scripts and verify that SQL queries function against real schemas. "
-                    f"Finally, API integration tests using test clients verify HTTP status codes, headers, and error response contracts. "
+                    f"Finally, API integration tests using test clients verify HTTP status codes, headers, and error response contracts. [/Illustrative Scenario] "
                     f"[Candidate to specify: Automated testing strategy implemented for '{title}']."
                 ),
                 "technical_justification": "Isolated unit tests provide instant sub-second feedback, while integration tests verify that interface contracts and database drivers execute properly.",
@@ -554,7 +554,7 @@ def build_grounded_project_answers(
             f"5. Regression Prevention: Author automated unit and integration tests asserting expected behavior across boundary cases to ensure the issue is permanently resolved.\n\n"
             f"[Illustrative Model Scenario — Not candidate resume data]: During payload processing, unhandled Unicode characters in input strings caused 500 exceptions in downstream parsers. "
             f"The engineer reproduced the exception with a targeted Pytest fixture, refactored the ingestion boundary to sanitize encodings using explicit UTF-8 validation, "
-            f"and committed the test case to the CI pipeline to permanently prevent regressions."
+            f"and committed the test case to the CI pipeline to permanently prevent regressions. [/Illustrative Model Scenario]"
         )
 
         why_this_works = (
@@ -620,7 +620,7 @@ def build_grounded_project_answers(
                 "reference_answer": (
                     f"[Illustrative Scenario — Not candidate resume data]: To verify performance neutrality, an engineer executes automated benchmark runs comparing processing throughput before and after the patch. "
                     f"Utilizing profiler modules such as Python's timeit and cProfile on synthetic benchmark datasets verifies latency budgets. "
-                    f"Profiling confirms whether introducing schema validation adds negligible latency overhead [Candidate to specify: e.g. < 1ms per payload], while verifying that memory allocations remain stable across prolonged runs. "
+                    f"Profiling confirms whether introducing schema validation adds negligible latency overhead [Candidate to specify: e.g. < 1ms per payload], while verifying that memory allocations remain stable across prolonged runs. [/Illustrative Scenario] "
                     f"[Candidate to specify: Profiling or benchmarking methods used in '{title}']."
                 ),
                 "technical_justification": "Defensive input validation must be profiled to ensure sanitization loops do not introduce O(N^2) bottlenecks.",
@@ -682,7 +682,7 @@ def build_grounded_project_answers(
             f"3. Test Isolation & Mocking: Detail how external dependencies (such as {t2} databases or network services) were decoupled using mock fixtures for fast, deterministic execution.\n"
             f"4. Continuous Verification: Describe how tests were executed in automated workflows to maintain reproducible verification across feature iterations.\n\n"
             f"[Illustrative Model Scenario — Not candidate resume data]: In a service using {t0} and {t1}, an engineer defines parametrized unit tests in Pytest covering normal inputs and malformed payloads, "
-            f"uses unittest.mock to simulate database responses, and enforces branch coverage thresholds in continuous integration."
+            f"uses unittest.mock to simulate database responses, and enforces branch coverage thresholds in continuous integration. [/Illustrative Model Scenario]"
         )
 
         why_this_works = (
@@ -747,7 +747,7 @@ def build_grounded_project_answers(
                 "reference_answer": (
                     f"[Illustrative Scenario — Not candidate resume data]: In software architectures like '{title}', unit tests focus on isolated individual functions—such as data parsers or scoring calculations—with all external dependencies mocked, executing in milliseconds. "
                     f"Integration tests verify the boundaries between connected subsystems, such as confirming that API routes interact properly with the database and execute migration scripts accurately. "
-                    f"End-to-end tests simulate the complete user journey from HTTP request to persisted database output, verifying that the entire system functions coherently in a production-like environment. "
+                    f"End-to-end tests simulate the complete user journey from HTTP request to persisted database output, verifying that the entire system functions coherently in a production-like environment. [/Illustrative Scenario] "
                     f"[Candidate to specify: Testing layers implemented or planned for '{title}']."
                 ),
                 "technical_justification": "The testing pyramid allocates the majority of tests to fast unit tests, with targeted integration and E2E tests verifying boundary contracts.",
@@ -1010,7 +1010,7 @@ def build_grounded_internship_answers(
             f"3. Verification & Testing: Detail how you verified functionality with automated tests before opening pull requests.\n"
             f"4. Peer Review & Integration: [Candidate to specify: Iterating on code reviews with senior engineers to deliver merged, production-ready code].\n\n"
             f"[Illustrative Model Scenario — Not candidate resume data]: An intern contributing to backend services reads existing codebase abstractions, "
-            f"implements modular endpoint handlers in feature branches, authors Pytest fixtures for boundary cases, and refactors code based on peer review before merging to main."
+            f"implements modular endpoint handlers in feature branches, authors Pytest fixtures for boundary cases, and refactors code based on peer review before merging to main. [/Illustrative Model Scenario]"
         )
 
         why_this_works = (
@@ -1087,7 +1087,7 @@ def build_grounded_internship_answers(
                     f"When legacy module documentation is incomplete, an engineer can trace execution flow using interactive debuggers to understand data dependencies. "
                     f"Reviewing existing unit tests and call hierarchies reveals implicit architectural contracts and boundary validation requirements. "
                     f"Drafting a concise design proposal and discussing it with a senior mentor aligns the engineering approach before writing implementation code. "
-                    f"Delivering the solution backed by automated regression tests ensures that new functionality integrates without introducing regressions across dependent services. "
+                    f"Delivering the solution backed by automated regression tests ensures that new functionality integrates without introducing regressions across dependent services. [/Illustrative Scenario] "
                     f"[Candidate to specify: The specific challenging technical problem assigned to you at {org}]."
                 ),
                 "technical_justification": "Navigating legacy code and tracing dependencies without breaking backwards compatibility is the primary daily challenge in enterprise engineering.",
@@ -1101,7 +1101,7 @@ def build_grounded_internship_answers(
                     "When encountering a technical blocker, spend dedicated time reading documentation, inspecting logs, and attempting minimal reproductions independently. "
                     "If still blocked after focused troubleshooting, reach out to a senior teammate with a structured technical summary. "
                     "Clearly state what you are trying to accomplish, the exact error encountered, the hypotheses tested, and why each failed. "
-                    "Senior engineers appreciate this approach because it shows initiative, respects team focus time, and enables rapid resolution. "
+                    "Senior engineers appreciate this approach because it shows initiative, respects team focus time, and enables rapid resolution. [/Illustrative Scenario] "
                     f"[Candidate to specify: How you structured asking questions and working autonomously at {org}]."
                 ),
                 "technical_justification": "Senior engineers want junior developers who attempt independent troubleshooting but know when to seek guidance before wasting hours.",
@@ -1115,7 +1115,7 @@ def build_grounded_internship_answers(
                     "First, making atomic Git commits with focused, single-purpose changes and descriptive Conventional Commit messages. "
                     "Second, enforcing defensive boundary validation by validating all inputs at system entry points using explicit type contracts. "
                     "Third, authoring automated regression tests alongside feature code rather than treating testing as a rushed post-development afterthought. "
-                    "These disciplined habits reduce debugging time and keep shared repositories maintainable for all teammates. "
+                    "These disciplined habits reduce debugging time and keep shared repositories maintainable for all teammates. [/Illustrative Scenario] "
                     f"[Candidate to specify: Key software engineering practices you adopted during your time at {org}]."
                 ),
                 "technical_justification": "Atomic commits and automated testing are industry standards that ensure long-term codebase maintainability and bisectability.",
@@ -1146,7 +1146,7 @@ def build_grounded_internship_answers(
             f"2. Collaborative Review Culture: [Candidate to specify: Key constructive feedback received from senior mentors that refined your craft].\n"
             f"3. Proactive Clarification: Eliminating requirement ambiguity through early technical discussions.\n\n"
             f"[Illustrative Model Scenario — Not candidate resume data]: A software engineer learns that writing defensive unit tests and asking clarifying questions during sprint planning "
-            f"saves days of refactoring compared to making unverified assumptions."
+            f"saves days of refactoring compared to making unverified assumptions. [/Illustrative Model Scenario]"
         )
 
         why_this_works = (
@@ -1214,7 +1214,7 @@ def build_grounded_internship_answers(
                     "Catching generic `Exception` masks underlying bugs like syntax errors or memory issues, while silent logs make production failures impossible to detect. "
                     "Refactoring to catch specific exceptions—like `KeyError` or `ValueError`—preserves system observability and deterministic error handling. "
                     "Handling distinct error types with appropriate logging and fallback defaults ensures defensive error resilience. "
-                    "This mindset shift reinforces that robust software must fail loudly and informatively rather than hiding anomalies. "
+                    "This mindset shift reinforces that robust software must fail loudly and informatively rather than hiding anomalies. [/Illustrative Scenario] "
                     f"[Candidate to specify: A concrete code review critique or technical guidance received at {org}]."
                 ),
                 "technical_justification": "Catching generic exceptions hides critical programming bugs, swallows keyboard interrupts, and makes root-cause analysis nearly impossible in production.",
@@ -1228,7 +1228,7 @@ def build_grounded_internship_answers(
                     "Engineers maintain atomic Git commits focused on a single logical change with clear summary descriptions. "
                     "Authoring informative Conventional Commit messages explains the underlying 'why' behind architectural decisions. "
                     "Rebasing feature branches cleanly against main before opening pull requests keeps commit history linear and bisectable. "
-                    "This discipline makes code reviews significantly faster and simplifies pinpointing regressions if unexpected defects emerge. "
+                    "This discipline makes code reviews significantly faster and simplifies pinpointing regressions if unexpected defects emerge. [/Illustrative Scenario] "
                     f"[Candidate to specify: How your Git and branch management habits developed at {org}]."
                 ),
                 "technical_justification": "Atomic commits and clean Git history enable automated changelog generation and simplify pinpointing regressions via git bisect.",
@@ -1242,7 +1242,7 @@ def build_grounded_internship_answers(
                     "Best practice is to avoid unverified assumptions by drafting a brief technical summary or RFC outlining identified edge cases and proposed implementation options. "
                     "Reaching out to the product owner or technical lead confirms testable acceptance criteria before writing feature code. "
                     "This structured communication ensures full team alignment across edge cases and prevents misaligned deliverables. "
-                    "Documenting agreed constraints directly in task tickets or test specifications creates permanent clarity for reviewers. "
+                    "Documenting agreed constraints directly in task tickets or test specifications creates permanent clarity for reviewers. [/Illustrative Scenario] "
                     f"[Candidate to specify: How you resolved requirement ambiguity or unblocking at {org}]."
                 ),
                 "technical_justification": "Aligning on testable acceptance criteria before writing code eliminates miscommunication and prevents costly downstream architectural rewrites.",
@@ -1276,7 +1276,7 @@ def build_grounded_internship_answers(
             f"3. Testing & Edge Cases: [Candidate to specify: Unit or integration tests authored to verify edge cases].\n"
             f"4. Code Review & Delivery: Incorporating peer review feedback to deliver merged, production-ready code [Candidate to specify: Delivered outcome].\n\n"
             f"[Illustrative Model Scenario — Not candidate resume data]: Given a task to optimize payload processing, an engineer profiles execution paths, "
-            f"introduces modular schema validation, adds Pytest test cases covering boundary inputs, and submits a documented pull request that passes CI."
+            f"introduces modular schema validation, adds Pytest test cases covering boundary inputs, and submits a documented pull request that passes CI. [/Illustrative Model Scenario]"
         )
 
         why_this_works = (
@@ -1342,7 +1342,7 @@ def build_grounded_internship_answers(
                     "Interactive IDE debuggers allow stepping through execution lines to inspect local variable states, call stacks, and return values at each pipeline stage. "
                     "For asynchronous tasks or background jobs, injecting structured JSON log statements with execution timestamps and task IDs enables offline analysis. "
                     "This dual strategy allows tracing the exact path data traveled through the system and pinpointing anomalies rapidly. "
-                    "Systematic logging also creates an audit trail that simplifies reproducing transient defects in staging environments. "
+                    "Systematic logging also creates an audit trail that simplifies reproducing transient defects in staging environments. [/Illustrative Scenario] "
                     f"[Candidate to specify: Diagnostic tools and debugging methods used at {org}]."
                 ),
                 "technical_justification": "Interactive debuggers provide fine-grained variable inspection, while structured logging is essential for tracing asynchronous distributed pipelines.",
@@ -1356,7 +1356,7 @@ def build_grounded_internship_answers(
                     "First, developers follow additive change rules: introducing optional parameters with sensible defaults rather than altering existing function signatures or payload keys. "
                     "Second, running the entire pre-existing integration test suite locally verifies that existing behaviors remain completely unaffected. "
                     "Finally, authoring negative tests confirms that clients calling endpoints with legacy payloads continue to receive expected responses. "
-                    "This defensive compatibility approach ensures microservices can deploy independently without breaking dependent consumer systems. "
+                    "This defensive compatibility approach ensures microservices can deploy independently without breaking dependent consumer systems. [/Illustrative Scenario] "
                     f"[Candidate to specify: Backward compatibility measures applied at {org}]."
                 ),
                 "technical_justification": "Additive changes and default parameters preserve API contract compatibility, preventing cascading client breaks across distributed microservices.",
@@ -1370,7 +1370,7 @@ def build_grounded_internship_answers(
                     "Rather than manually testing payloads through the full application stack, isolating problems into fast unit tests provides instantaneous feedback. "
                     "Developing against automated tests eliminates slow deployment cycles and allows rapid iteration on complex logic [Candidate to specify: Iteration time reduction, e.g. 40%]. "
                     "This test-driven approach guarantees that boundary cases are covered and defect resolution is provably verified. "
-                    "Investing in isolated test harnesses upfront consistently yields faster delivery and fewer production regressions. "
+                    "Investing in isolated test harnesses upfront consistently yields faster delivery and fewer production regressions. [/Illustrative Scenario] "
                     f"[Candidate to specify: What you would do differently based on your experience at {org}]."
                 ),
                 "technical_justification": "Isolated unit test fixtures provide sub-second feedback loops, eliminating the latency of full-stack redeployments during development.",

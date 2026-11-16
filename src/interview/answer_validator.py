@@ -129,12 +129,20 @@ class AnswerQualityValidator:
     @classmethod
     def _strip_exempt_blocks(cls, text: str) -> str:
         """
-        Strips explicitly exempt blocks (candidate-specifying placeholders, candidate confirmations,
-        and accurately scoped illustrative model scenarios and general technical guidance).
-        Scopes illustrative exemptions strictly to the scenario block, ensuring unsupported
-        personal claims before or after the scenario are preserved for auditing.
-        Does not rely on a fixed verb list; recognizes first-person, candidate, third-person,
-        and passive-voice assertion boundaries.
+        Strips explicitly exempt blocks:
+        1. Bracketed candidate placeholders: [Candidate to specify: ...]
+        2. Candidate confirmations: [Candidate Confirmed: ...]
+        3. Properly matched explicit illustrative scenario blocks:
+           [Illustrative Scenario]: ... [/Illustrative Scenario]
+           [Illustrative Model Scenario]: ... [/Illustrative Model Scenario]
+        4. General technical guidance blocks: [General Technical Guidance]: ...
+
+        Key Invariants:
+        - Only content inside a properly matched illustrative block is stripped.
+        - First-person wording inside the block does not terminate it early.
+        - Unsupported claims outside the block (including immediately after its closing delimiter) are preserved.
+        - Missing or malformed closing delimiters never silently exempt content.
+        - Nested or repeated illustrative blocks are handled iteratively.
         """
         if not text:
             return ""
@@ -145,26 +153,20 @@ class AnswerQualityValidator:
         cleaned = re.sub(r"\[Candidate to specify:[^\]]*\]", "", cleaned, flags=re.IGNORECASE)
         cleaned = re.sub(r"\[Candidate Confirmed[^\]]*\]", "", cleaned, flags=re.IGNORECASE)
 
-        # 2. Illustrative scenario blocks scoped strictly to their block boundaries
-        # Boundaries: next bracketed block, double newline, or sentence boundary preceding a personal or passive claim
-        illustrative_pattern = re.compile(
-            r"\[Illustrative (?:Model )?Scenario[^\]]*\]:?\s*.*?"
-            r"(?="
-            r"\[Candidate to specify:|"
-            r"\[Candidate Confirmed|"
-            r"\[General Technical Guidance|"
-            r"\n\n|"
-            r"(?:\.|\;|\n)\s*(?=(?:I|we|my|our|the candidate)\b)|"
-            r"(?:\.|\;|\n)\s*(?=(?:he|she|they)\s+(?:have\s+|had\s+)?[a-z]+(?:ed|t)\b)|"
-            r"(?:\.|\;|\n)\s*(?=[^.\n;]*?\b(?:was|were)\s+(?:[a-z]+ed|led|built|run|written|chosen|owned)\b)|"
-            r"(?:\.|\;|\n)\s*(?=[^.\n;]*?\b(?:deployment|database|team|architecture|features?|tests?|services?|components?|workflow|defect|code|pipeline)\s+(?:was|were)\b)|"
-            r"(?:\.|\;|\n)\s*(?=[^.\n;]*?\bby\s+(?:me|us|our\s+team|the\s+candidate)\b)|"
-            r"(?:\.|\;|\n)\s*(?=\b(?:software engineering duties|software development duties|software development tasks|assigned engineering features|practical engineering tools)\b)|"
-            r"$"
-            r")",
+        # 2. Explicitly delimited illustrative scenario blocks
+        # Supports [Illustrative Scenario]: ... [/Illustrative Scenario] and [Illustrative Model Scenario]: ... [/Illustrative Model Scenario]
+        # Iteratively strips innermost/single blocks so nested or repeated blocks are handled cleanly
+        explicit_illustrative_pattern = re.compile(
+            r"\[Illustrative\s+(?:Model\s+)?Scenario[^\]]*\]:?"
+            r"(?:(?!\[Illustrative\s+(?:Model\s+)?Scenario).)*?"
+            r"\[/\s*Illustrative\s+(?:Model\s+)?Scenario\s*:?\]",
             flags=re.IGNORECASE | re.DOTALL
         )
-        cleaned = illustrative_pattern.sub("", cleaned)
+        while True:
+            new_cleaned = explicit_illustrative_pattern.sub("", cleaned)
+            if new_cleaned == cleaned:
+                break
+            cleaned = new_cleaned
 
         # 3. General technical guidance blocks scoped strictly to their block boundaries
         guidance_pattern = re.compile(
@@ -188,7 +190,7 @@ class AnswerQualityValidator:
         cleaned = re.sub(r"\(General Technical Guidance\):[^\n.]*", "", cleaned, flags=re.IGNORECASE)
         cleaned = re.sub(r"\[(?!Verified\s)[^\]]*\]", "", cleaned)
         cleaned = re.sub(r"\s*([.;])\s*([.;])+", r"\1", cleaned)
-        cleaned = re.sub(r"^[\s.;]+", "", cleaned)
+        cleaned = re.sub(r"^[\s.:;]+", "", cleaned)
         return cleaned.strip()
 
     @classmethod
@@ -229,7 +231,13 @@ class AnswerQualityValidator:
         cleaned = cls._strip_exempt_blocks(t)
 
         # Check evidence markers in cleaned text outside illustrative blocks
-        # Invariant: Markers inside illustrative blocks are stripped and cannot set marker_verified, has_fabricated_marker, or is_resume_supported
+        # Invariant: Markers inside illustrative blocks cannot set marker_verified, has_fabricated_marker, or is_resume_supported
+        text_for_markers = re.sub(
+            r"\[Illustrative\s+(?:Model\s+)?Scenario[^\]]*\]:?.*?(?=\[/\s*Illustrative\s+(?:Model\s+)?Scenario\s*:?\]|\n\n|$)",
+            "",
+            cleaned,
+            flags=re.IGNORECASE | re.DOTALL
+        )
         marker_pattern = re.compile(
             r"Verified (?:Project Title|Organization|Position|Dates|Responsibilities|Tools|Objective|Stack|Technologies):\s*['\"]?(.*?)(?=['\"]?(?:;|\.|\n|\]|$|\s+Verified ))",
             re.IGNORECASE
@@ -238,7 +246,7 @@ class AnswerQualityValidator:
         has_fabricated_marker = False
         marker_verified = False
 
-        for m in marker_pattern.finditer(cleaned):
+        for m in marker_pattern.finditer(text_for_markers):
             has_ev_marker = True
             claimed_val = m.group(1).strip()
             if claimed_val.lower() in ["not explicitly enumerated", "none", "not specified", "unspecified", ""]:
@@ -393,15 +401,30 @@ class AnswerQualityValidator:
 
         ev_texts = cls._extract_evidence_text_set(verified_evidence)
 
-        # Strip out bracketed placeholders, candidate confirmations, and accurately scoped illustrative scenarios
+        # Flag malformed illustrative markup for review (unclosed opening tag or orphaned closing delimiter)
+        open_count = len(re.findall(r"\[Illustrative\s+(?:Model\s+)?Scenario[^\]]*\]", text, re.IGNORECASE))
+        close_count = len(re.findall(r"\[/\s*Illustrative\s+(?:Model\s+)?Scenario\s*:?\]", text, re.IGNORECASE))
+        if open_count != close_count:
+            if open_count > close_count:
+                issues.append("Found malformed illustrative block: opening delimiter without matching [/Illustrative Scenario] closing delimiter")
+            else:
+                issues.append("Found malformed illustrative block: orphaned [/Illustrative Scenario] closing delimiter without opening delimiter")
+
+        # Strip out bracketed placeholders, candidate confirmations, and properly matched illustrative scenarios
         cleaned = cls._strip_exempt_blocks(text)
 
-        # Check verified markers against actual evidence
+        # Check verified markers against actual evidence outside illustrative blocks
+        text_for_markers = re.sub(
+            r"\[Illustrative\s+(?:Model\s+)?Scenario[^\]]*\]:?.*?(?=\[/\s*Illustrative\s+(?:Model\s+)?Scenario\s*:?\]|\n\n|$)",
+            "",
+            cleaned,
+            flags=re.IGNORECASE | re.DOTALL
+        )
         marker_pattern = re.compile(
             r"Verified (?:Project Title|Organization|Position|Dates|Responsibilities|Tools|Objective|Stack|Technologies):\s*['\"]?(.*?)(?=['\"]?(?:;|\.|\n|\]|$|\s+Verified ))",
             re.IGNORECASE
         )
-        for m in marker_pattern.finditer(cleaned):
+        for m in marker_pattern.finditer(text_for_markers):
             claimed_val = m.group(1).strip()
             if claimed_val.lower() in ["not explicitly enumerated", "none", "not specified", "unspecified", ""]:
                 continue

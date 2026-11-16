@@ -32004,7 +32004,7 @@ HR_QUESTION_BANK: List[Dict[str, Any]] = [   {   'answer_guidance': 'Structure c
                                                                   'emotional '
                                                                   'composure.'}],
         'id': 'hr_10',
-        'illustrative_example': "[Illustrative Model Scenario — Not candidate resume data]: 'An engineer might describe building an automated data processing pipeline from scratch, implementing custom regex extractors and machine learning scoring that ran 100% locally with sub-second response times.'",
+        'illustrative_example': "[Illustrative Model Scenario — Not candidate resume data]: 'An engineer might describe building an automated data processing pipeline from scratch, implementing custom regex extractors and machine learning scoring that ran 100% locally with sub-second response times.' [/Illustrative Model Scenario]",
         'important_concepts': [   'End-to-End Ownership',
                                   'System Architecture',
                                   'Technical Validation',
@@ -32057,7 +32057,7 @@ HR_QUESTION_BANK: List[Dict[str, Any]] = [   {   'answer_guidance': 'Structure c
                                                                       'the '
                                                                       'behavioral '
                                                                       'prompt.',
-                                            'detail': 'Begin by establishing a concrete professional context and the objective at hand: [Illustrative Model Scenario — Not candidate resume data]: An engineer might describe structuring a modular pipeline to process inputs and compute results. Giving clear background upfront immediately provides the interviewer with operational scope and anchors your answer in real experience.',
+                                            'detail': 'Begin by establishing a concrete professional context and the objective at hand: [Illustrative Model Scenario — Not candidate resume data]: An engineer might describe structuring a modular pipeline to process inputs and compute results. [/Illustrative Model Scenario] Giving clear background upfront immediately provides the interviewer with operational scope and anchors your answer in real experience.',
                                             'reasoning': 'Clear contextual '
                                                          'framing prevents '
                                                          'rambling and '
