@@ -51,18 +51,18 @@ def generate_resume_improvement_suggestions(
     if not has_metrics or unquantified_bullets or len(projects) == 0:
         sample_before = unquantified_bullets[0][1] if unquantified_bullets else "Built a backend service using Python and Flask to process customer telemetry data."
         sample_title = unquantified_bullets[0][0] if unquantified_bullets else "Engineering Project"
-        sample_after = f"Engineered low-latency {sample_title} service, improving request throughput by 35% and reducing response latency to under 45ms."
+        sample_after = f"Engineered {sample_title} service, improving request throughput by [measured throughput, e.g. +X%] and reducing response latency to [verified latency, e.g. <Y ms] (Insert only measured, verifiable values from your testing or production logs)."
 
         before_after_list = [
             {
                 "original": sample_before,
                 "suggested": sample_after,
-                "rationale": "Quantifies technical scope, throughput improvement, and latency benchmarks."
+                "rationale": "Demonstrates how to frame technical scope with measured scale and latency benchmarks using verifiable placeholders."
             },
             {
                 "original": "Worked on REST APIs and database queries.",
-                "suggested": "Architected 12 REST API endpoints handling 5,000+ daily requests with 99.9% uptime SLA.",
-                "rationale": "Demonstrates specific volume, scale, and operational reliability."
+                "suggested": "Architected [count] REST API endpoints handling [volume] requests with [measured uptime/availability] SLA (Insert only measured, verifiable values).",
+                "rationale": "Illustrates how to add quantifiable scope and reliability metrics using your actual verified measurements without inventing unmeasured claims."
             }
         ]
 
@@ -72,12 +72,13 @@ def generate_resume_improvement_suggestions(
             "priority": "High",
             "reason": "Engineering hiring managers look for measurable scale and business impact rather than passive task descriptions.",
             "evidence_context": f"Bullet points in '{sample_title}' describe technical activities without explicit percentage, latency, or throughput figures." if unquantified_bullets else "Current project bullet points describe technical activities without explicit percentage, latency, or throughput figures.",
+            "instruction": "Insert only measured, verifiable values from your actual project benchmarks, telemetry, or production metrics. Never fabricate performance or scale statistics.",
             "actionable_example": {
                 "before": sample_before,
                 "after": sample_after
             },
             "before_after_examples": before_after_list,
-            "practical_next_action": "Audit your project bullets and add at least one concrete metric (e.g., query latency reduction, test coverage %, or data volume processed)."
+            "practical_next_action": "Audit your project bullets and replace template placeholders with concrete, measured metrics (e.g., query latency reduction, test coverage %, or data volume processed)."
         })
 
     # 2. Public Repository Traceability
@@ -156,13 +157,14 @@ def generate_resume_improvement_suggestions(
             "suggestion_id": "credential_reinforcement",
             "category": "Credential Differentiation",
             "priority": "Low",
-            "reason": "Industry-recognized vendor certifications (AWS Certified Developer, CKA, Google Cloud Associate) validate standardized competencies.",
+            "reason": "Industry-recognized vendor certifications (e.g. AWS, Linux Foundation, Google Cloud) validate standardized competencies.",
             "evidence_context": "No formal industry certifications currently documented in resume.",
+            "instruction": "Only list certifications and credentials that you have officially completed and can verify via certificate ID or digital badge.",
             "actionable_example": {
                 "before": "Certifications section omitted.",
-                "after": "Certifications: AWS Certified Solutions Architect - Associate (2025) | Docker Certified Associate"
+                "after": "Certifications: [Earned Certification Name, e.g. AWS Certified Developer] ([Year]) (Include only credentials officially earned)."
             },
-            "practical_next_action": "Target one foundational cloud or engineering certification aligned with your desired career roadmap."
+            "practical_next_action": "If applicable to your target role, prepare for an industry certification aligned with your desired career roadmap."
         })
 
     return suggestions

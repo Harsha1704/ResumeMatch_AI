@@ -1,24 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import {
   GraduationCap,
-  Sparkles,
   Edit2,
   Check,
   X,
-  ShieldCheck,
-  Award,
   AlertTriangle,
   Calendar,
   Clock,
   ChevronDown,
   ChevronUp,
-  Layers,
   ArrowRight,
-  ExternalLink,
   BookOpen,
   CheckCircle2,
-  ListTodo,
   Briefcase,
   Target,
   TrendingUp,

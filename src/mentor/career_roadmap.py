@@ -46,25 +46,39 @@ def generate_structured_career_roadmap(
     short_term_milestones = []
     medium_term_milestones = []
 
+    identity = career_profile.get("identity", {})
+    has_github = identity.get("has_github", False) or identity.get("has_portfolio", False)
+    certs = career_profile.get("certifications", [])
+    has_explicit_role = bool(target_role and target_role not in ("Target Engineering Role", "Target Technical Role"))
+
+    short_term_milestones = []
+    medium_term_milestones = []
+
     # -------------------------------------------------------------------------
     # Short-Term Milestones (1–3 Months / 14–30 Days)
     # -------------------------------------------------------------------------
     if top_gaps:
         primary_gap = top_gaps[0]
         deliv1 = gap_deliverables[0] if gap_deliverables else f"Standalone, tested {primary_gap} portfolio module with automated test coverage."
+        reason_text = (
+            f"Employer requirement for {role_title} prioritizes {primary_gap}, which currently lacks verifiable implementation evidence in your resume."
+            if has_explicit_role else
+            f"Closing competency gap in {primary_gap} expands verifiable project qualifications."
+        )
         short_term_milestones.append({
             "milestone_id": "st_close_primary_gap",
             "phase": "Short-Term (1-3 Months)",
             "timeframe": "Weeks 1–3",
             "estimated_timeline": "Weeks 1–3",
             "title": f"Master Core Prerequisite: {primary_gap}",
-            "goal": f"Close the highest-priority competency gap ({primary_gap}) required by target employers.",
-            "reason": f"Employer requirement for {role_title} prioritizes {primary_gap}, which currently lacks verifiable implementation evidence in your resume.",
-            "supporting_evidence_or_gap": f"Missing evidence for mandatory skill '{primary_gap}'.",
+            "goal": f"Close the prioritized competency gap ({primary_gap}) through hands-on implementation.",
+            "reason": reason_text,
+            "supporting_evidence_or_gap": f"Missing evidence for requirement '{primary_gap}'.",
+            "guidance_type": "candidate_specific",
             "priority": "Critical",
             "deliverable": deliv1,
             "deliverables": [deliv1],
-            "verification_criteria": f"Code compiles and passes unit test suite; GitHub repository contains clear architectural README."
+            "verification_criteria": f"Code compiles and passes unit test suite; repository contains clear architectural documentation."
         })
 
     if len(top_gaps) > 1:
@@ -77,47 +91,67 @@ def generate_structured_career_roadmap(
             "estimated_timeline": "Weeks 4–6",
             "title": f"Reinforce Applied Tooling: {secondary_gap}",
             "goal": f"Develop working proficiency in {secondary_gap} and integrate with existing engineering foundations.",
-            "reason": f"{secondary_gap} differentiates strong candidates for {role_title} and builds upon your existing verified skills.",
+            "reason": f"Reinforces competency profile for {role_title} by connecting {secondary_gap} to existing verified skills.",
             "supporting_evidence_or_gap": f"Partial or missing evidence for '{secondary_gap}'.",
+            "guidance_type": "candidate_specific",
             "priority": "High",
             "deliverable": deliv2,
             "deliverables": [deliv2],
             "verification_criteria": f"Working end-to-end integration verified locally without runtime errors."
         })
 
-    deliv_resume = "Updated 1-page PDF resume with metric bullets and clickable GitHub repository links."
+    # Portfolio & Resume Grounding Milestone
+    if has_github:
+        resume_gap_note = "Candidate profile has verifiable repository links; keep documentation aligned with newly built deliverables."
+        resume_deliv = "Updated technical resume documenting recent project outcomes with verifiable repository links."
+        resume_goal = "Update resume experience bullet points with measured deliverables and updated repository documentation."
+    else:
+        resume_gap_note = "Profile currently lacks public repository links for direct source code inspection."
+        resume_deliv = "Updated 1-page PDF resume with measured project bullets and clickable public repository links."
+        resume_goal = "Publish a public GitHub repository and update resume bullets with verifiable implementation links."
+
     short_term_milestones.append({
         "milestone_id": "st_resume_and_github_polish",
         "phase": "Short-Term (1-3 Months)",
         "timeframe": "Weeks 7–8",
         "estimated_timeline": "Weeks 7–8",
         "title": "Evidence-Grounded Resume & Portfolio Publishing",
-        "goal": "Update resume bullets with newly created deliverables, quantifiable metrics, and public repository links.",
-        "reason": "Recruiters evaluate substantiated outcomes. Documenting your newly verified deliverables with metrics increases interview callback rates.",
-        "supporting_evidence_or_gap": "Resume bullets currently lack quantifiable scale metrics and public GitHub links.",
+        "goal": resume_goal,
+        "reason": "Clear technical documentation and verifiable code links allow engineering evaluators to directly review implementation scope and code quality.",
+        "supporting_evidence_or_gap": resume_gap_note,
+        "guidance_type": "candidate_specific" if not has_github else "general_career_development",
         "priority": "High",
-        "deliverable": deliv_resume,
-        "deliverables": [deliv_resume],
-        "verification_criteria": "Resume parsed through ResumeMatch AI achieves 100% demonstrated evidence for completed project competencies."
+        "deliverable": resume_deliv,
+        "deliverables": [resume_deliv],
+        "verification_criteria": "Resume parsed through ResumeMatch AI achieves verified demonstrated evidence for completed project competencies."
     })
 
     # -------------------------------------------------------------------------
     # Medium-Term Milestones (3–6 Months)
     # -------------------------------------------------------------------------
+    # Cloud Deployment Milestone
+    has_cloud_skill = any(s.lower() in ["docker", "kubernetes", "aws", "gcp", "azure", "ci/cd"] for s in demonstrated_skills)
     deliv_cloud = "Publicly hosted service running on cloud infrastructure (AWS/GCP/Render) with automated test pipeline."
+    cloud_gap_note = (
+        f"Builds upon verified project '{primary_proj_title}' to demonstrate modern automated deployment and containerization practices."
+        if has_cloud_skill else
+        f"Optional development: deploy '{primary_proj_title}' using containerization if targeting cloud or backend deployment roles."
+    )
+
     medium_term_milestones.append({
         "milestone_id": "mt_cloud_and_cicd_deployment",
         "phase": "Medium-Term (3-6 Months)",
         "timeframe": "Months 3–4",
         "estimated_timeline": "Months 3–4",
         "title": "Production Deployment & Automated CI/CD Pipeline",
-        "goal": "Deploy your primary project to a cloud runtime environment using containerization and automated GitHub Actions CI/CD.",
-        "reason": "Transitioning from local code execution to automated cloud deployment demonstrates production-readiness to senior hiring committees.",
-        "supporting_evidence_or_gap": f"Builds upon verified project '{primary_proj_title}' to demonstrate modern DevOps workflows.",
+        "goal": "Deploy your primary project to a cloud runtime environment using containerization and automated CI/CD workflows.",
+        "reason": "Transitioning from local code execution to automated cloud deployment demonstrates production readiness for engineering roles.",
+        "supporting_evidence_or_gap": cloud_gap_note,
+        "guidance_type": "candidate_specific" if any("ci/cd" in g.lower() or "docker" in g.lower() or "cloud" in g.lower() for g in top_gaps) else "general_career_development",
         "priority": "High",
         "deliverable": deliv_cloud,
         "deliverables": [deliv_cloud],
-        "verification_criteria": "Pull request triggers automated build, test matrix passes, and container deploys to production staging."
+        "verification_criteria": "Automated build and test suite executes successfully upon pull request; service responds to health-check endpoints."
     })
 
     deliv_design = "Completed 10 mock technical interview question sessions in ResumeMatch AI Interview Studio."
@@ -127,29 +161,41 @@ def generate_structured_career_roadmap(
         "timeframe": "Months 4–5",
         "estimated_timeline": "Months 4–5",
         "title": "Technical Interview Loops & System Design Preparation",
-        "goal": "Master technical interview questions, architecture trade-offs, and behavioral STAR stories for target role.",
-        "reason": "Senior engineering loops evaluate system design scalability, data modeling choices, and clear communication under pressure.",
+        "goal": "Prepare for technical interview questions, architecture trade-offs, and behavioral STAR stories for target role.",
+        "reason": "Engineering interview loops assess structured problem-solving, architectural trade-offs, and clear communication.",
         "supporting_evidence_or_gap": f"Leverages verified competencies in {', '.join(demonstrated_skills[:3]) if demonstrated_skills else 'software engineering'}.",
+        "guidance_type": "general_career_development",
         "priority": "High",
         "deliverable": deliv_design,
         "deliverables": [deliv_design],
         "verification_criteria": "Interview studio scoring confirms verified answers without ungrounded factual claims."
     })
 
-    deliv_cert = "Earned certification badge published on LinkedIn and added to resume header."
+    # Certification Milestone (Grounded in Actual Credentials)
+    if certs:
+        existing_cert_title = certs[0].get("title", "Technical Certification")
+        cert_gap_note = f"Candidate holds verified credential '{existing_cert_title}'; optional advanced specialization can deepen domain expertise if desired."
+        cert_goal = f"Optionally pursue advanced specialization building upon {existing_cert_title} if aligned with target career path."
+        cert_deliv = "Advanced credential badge or specialized portfolio domain module."
+    else:
+        cert_gap_note = "No formal industry certifications currently documented in profile; vendor certification is optional unless explicitly required by employers."
+        cert_goal = "Optionally attain a recognized industry certification if seeking third-party validation for target cloud or systems roles."
+        cert_deliv = "Optional earned certification badge published on professional profile."
+
     medium_term_milestones.append({
         "milestone_id": "mt_industry_certification",
         "phase": "Medium-Term (3-6 Months)",
         "timeframe": "Months 5–6",
         "estimated_timeline": "Months 5–6",
-        "title": "Formal Industry Certification & Domain Authority",
-        "goal": "Attain a recognized industry credential (e.g., AWS Certified Developer, CKA, or Azure Developer Associate).",
-        "reason": "Provides independent third-party verification of your technical capabilities, distinguishing your profile in recruiter searches.",
-        "supporting_evidence_or_gap": "No formal industry certifications currently documented in resume.",
+        "title": "Formal Industry Certification (Optional Domain Validation)",
+        "goal": cert_goal,
+        "reason": "Where explicitly required by employers, third-party vendor credentials validate standardized competencies in cloud and infrastructure domains.",
+        "supporting_evidence_or_gap": cert_gap_note,
+        "guidance_type": "general_career_development",
         "priority": "Medium",
-        "deliverable": deliv_cert,
-        "deliverables": [deliv_cert],
-        "verification_criteria": "Official verification URL from certifying vendor (Amazon, Linux Foundation, Google)."
+        "deliverable": cert_deliv,
+        "deliverables": [cert_deliv],
+        "verification_criteria": "Official verification URL or digital badge from certifying vendor."
     })
 
     all_milestones = short_term_milestones + medium_term_milestones

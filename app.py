@@ -519,18 +519,20 @@ def dataset_explorer():
 def _get_active_analysis(analysis_id: Optional[str] = None) -> Dict:
     """Retrieves current authorized analysis or provides an authentic fallback sample."""
     raw_analysis = None
-    if analysis_id and analysis_id in ANALYSIS_CACHE:
-        raw_analysis = ANALYSIS_CACHE[analysis_id]
-    elif analysis_id in ("sample", "demo", "sample-preview"):
+    if analysis_id in ("sample", "demo", "sample-preview"):
         raw_analysis = None
+    elif analysis_id and analysis_id in ANALYSIS_CACHE:
+        allowed = session.get("allowed_analyses", [])
+        if analysis_id in allowed:
+            raw_analysis = ANALYSIS_CACHE[analysis_id]
+        else:
+            raw_analysis = None
     else:
         allowed = session.get("allowed_analyses", [])
         for aid in reversed(allowed):
             if aid in ANALYSIS_CACHE:
                 raw_analysis = ANALYSIS_CACHE[aid]
                 break
-        if raw_analysis is None and ANALYSIS_CACHE:
-            raw_analysis = list(ANALYSIS_CACHE.values())[-1]
     
     if raw_analysis is None:
         # Default sample candidate if no resume has been uploaded yet
@@ -1221,7 +1223,20 @@ def api_datasets():
 def api_career_mentor():
     """Returns the Personalized Career Mentor dossier for active analysis."""
     aid = request.args.get("id")
-    analysis = _get_active_analysis(aid)
+    if aid and aid.strip() not in ("sample", "demo", "sample-preview"):
+        aid_clean = aid.strip()
+        if aid_clean not in ANALYSIS_CACHE:
+            return jsonify({"status": "error", "message": f"Analysis ID '{aid_clean}' not found"}), 404
+        allowed = session.get("allowed_analyses", [])
+        if aid_clean not in allowed:
+            return jsonify({"status": "error", "message": "Unauthorized access to requested analysis ID"}), 403
+        analysis = ANALYSIS_CACHE[aid_clean]
+    elif aid and aid.strip() in ("sample", "demo", "sample-preview"):
+        analysis = _get_active_analysis("sample")
+    else:
+        # Use session's latest authorized analysis if available, otherwise sample preview
+        analysis = _get_active_analysis(None)
+
     user_override_name = session.get("candidate_preferred_name")
 
     timeline_days = int(request.args.get("timeline_days", 14))
@@ -1248,19 +1263,49 @@ def api_career_mentor():
 @app.route("/api/career-mentor/evaluate-role", methods=["POST"])
 def api_career_mentor_evaluate_role():
     """Evaluates candidate profile suitability against a specific target role."""
-    data = request.get_json(silent=True) or {}
-    role_name = data.get("role_name", "").strip()
-    if not role_name:
-        return jsonify({"status": "error", "message": "Missing role_name parameter"}), 400
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return jsonify({"status": "error", "message": "Invalid JSON body: expected an object"}), 400
+
+    # CSRF Protection for state-changing POST requests
+    csrf_token = request.headers.get("X-CSRF-Token") or data.get("csrf_token")
+    if not app.config.get("TESTING") and session.get("csrf_token"):
+        if not validate_csrf_token(csrf_token):
+            return jsonify({"status": "error", "message": "CSRF token missing or invalid"}), 403
+    elif csrf_token is not None and not validate_csrf_token(csrf_token):
+        return jsonify({"status": "error", "message": "CSRF token missing or invalid"}), 403
+
+    role_name = data.get("role_name")
+    if not isinstance(role_name, str) or not role_name.strip():
+        return jsonify({"status": "error", "message": "Missing role_name parameter: must be a non-empty string"}), 400
+
+    clean_role_name = role_name.strip()
+    if len(clean_role_name) > 100:
+        return jsonify({"status": "error", "message": "Role name exceeds maximum allowable length of 100 characters"}), 400
 
     aid = data.get("analysis_id") or request.args.get("id")
-    analysis = _get_active_analysis(aid)
+    if aid and aid.strip() not in ("sample", "demo", "sample-preview"):
+        aid_clean = aid.strip()
+        if aid_clean not in ANALYSIS_CACHE:
+            return jsonify({"status": "error", "message": f"Analysis ID '{aid_clean}' not found"}), 404
+        allowed = session.get("allowed_analyses", [])
+        if aid_clean not in allowed:
+            return jsonify({"status": "error", "message": "Unauthorized access to requested analysis ID"}), 403
+        analysis = ANALYSIS_CACHE[aid_clean]
+    elif aid and aid.strip() in ("sample", "demo", "sample-preview"):
+        analysis = _get_active_analysis("sample")
+    else:
+        analysis = _get_active_analysis(None)
 
     from src.mentor.career_profile import build_structured_career_profile
     from src.mentor.role_recommender import evaluate_specific_role
 
     profile = build_structured_career_profile(analysis)
-    role_eval = evaluate_specific_role(role_name, profile, analysis)
+    custom_reqs = data.get("custom_requirements")
+    try:
+        role_eval = evaluate_specific_role(clean_role_name, profile, analysis, custom_role_requirements=custom_reqs)
+    except ValueError as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
 
     return jsonify({
         "status": "success",

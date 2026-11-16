@@ -1,19 +1,20 @@
-# Phase 4 Changed Files Breakdown
+# Phase 4 & Phase 4.1 Changed Files Breakdown
 
-The following files were created or modified as part of Phase 4 (Career Mentor Implementation):
+The following files were created or modified as part of Phase 4 (Career Mentor Implementation) and Phase 4.1 (Security & Evidence-Grounding Corrections):
 
-| File Path | Type | Description / Responsibilities |
+| File Path | Type | Phase 4 & 4.1 Description & Responsibilities |
 | :--- | :--- | :--- |
-| `src/mentor/career_profile.py` | New | Builds structured career profile extracting identity, education, experience, demonstrated competencies (confidence $\ge 0.90$), candidate-confirmed skills (confidence $0.75$), partially evidenced skills, missing info gaps, and chronology conflicts. |
-| `src/mentor/role_recommender.py` | New | Evaluates candidate competencies against 8 industry archetypes; computes deterministic weighted match %, assigns fit tiers, identifies matching skills and primary gaps, provides practical next actions, and supplies heuristic methodology notes. |
-| `src/mentor/resume_advisor.py` | New | Analyzes resume descriptions for quantifiable metrics, repository traceability, active action verbs, and skill grounding; generates before/after bullet rewrites with rationale. |
-| `src/mentor/career_roadmap.py` | New | Synthesizes Short-Term (Weeks 1–8) and Medium-Term (Months 3–6) milestones with concrete deliverables, verification criteria, and timelines. |
-| `src/mentor/mentor_engine.py` | Modified | Integrates `build_structured_career_profile`, `recommend_suitable_roles`, `generate_resume_improvement_suggestions`, and `generate_structured_career_roadmap` into `CareerMentorEngine.build_mentor_dossier()`; adds `category_breakdown` mapping. |
-| `src/mentor/__init__.py` | Modified | Exports all new Phase 4 modules, functions, and archetypes. |
-| `app.py` | Modified | Adds `POST /api/career-mentor/evaluate-role` endpoint for dynamic role evaluation. |
-| `frontend/src/types/index.ts` | Modified | Defines TypeScript interfaces for `CareerProfile`, `CareerProfileIdentity`, `CareerProfileCompetency`, `CareerProfileMissingInfo`, `RecommendedRole`, `ResumeImprovementSuggestion`, `CareerMilestone`, `CareerRoadmap`, and updates `MentorDossier`. |
-| `frontend/src/services/api.ts` | Modified | Adds `evaluateRole(roleName, analysisId)` method to API client. |
-| `frontend/src/pages/CareerMentorPage.tsx` | Modified | Implements 5-tab responsive UI: Profile Overview, Recommended Roles, Skill-Gap Intelligence, Learning Roadmaps & Study Plan, Actionable Guidance & Resume Advisor. |
-| `tests/test_phase4_career_mentor.py` | New | Comprehensive 10-point test suite for Phase 4 covering extraction, zero hallucination, evidence separation, role scoring, custom role endpoint, skill gaps, roadmaps, resume advice, incomplete profiles, and API contracts. |
-| `reports/phase4/PHASE4_CAREER_MENTOR_REPORT.md` | New | Comprehensive Phase 4 audit and verification report. |
-| `reports/phase4/CHANGED_FILES_PHASE4.md` | New | Inventory of created and modified files with purpose descriptions. |
+| `src/mentor/career_profile.py` | Created | Builds structured career profile extracting identity, education, experience, demonstrated competencies, candidate-confirmed skills, partially evidenced skills, missing info gaps, and chronology conflicts. **Phase 4.1**: Removed synthetic excerpt filler; searches real text or marks provenance as `registry_derived` with `excerpt_status: "unavailable"`; strictly enforces candidate confirmation separation. |
+| `src/mentor/role_recommender.py` | Created | Evaluates candidate competencies against 8 industry archetypes; computes deterministic weighted match %, assigns fit tiers, identifies matching skills and primary gaps. **Phase 4.1**: Replaced arbitrary 50% score fallback with `evaluation_status: "unevaluated"` and `fit_tier: "Unevaluated"` for unlisted roles lacking structured requirements; added input validation rejecting empty, non-string, or $> 100$ character role names. |
+| `src/mentor/resume_advisor.py` | Created | Analyzes resume descriptions for quantifiable metrics, repository traceability, active action verbs, and skill grounding. **Phase 4.1**: Completely purged hardcoded fabricated numbers (35%, 45ms, 12 API, 5,000+, 99.9%); introduced verifiable template placeholders (`[measured throughput]`, `[verified latency]`) and mandatory measurement instructions. |
+| `src/mentor/career_roadmap.py` | Created | Synthesizes Short-Term (Weeks 1–8) and Medium-Term (Months 3–6) milestones with deliverables and verification criteria. **Phase 4.1**: Purged ungrounded universal claims regarding callback rates; inspects candidate's actual profile (e.g., existing GitHub links and certifications) before claiming missing elements; tags each milestone with `guidance_type` (`"candidate_specific"` vs `"general_career_development"`). |
+| `src/mentor/mentor_engine.py` | Modified | Integrates career profile, role recommendations, resume suggestions, and career roadmaps into `CareerMentorEngine.build_mentor_dossier()`. **Phase 4.1**: Uses structured `candidate_profile.name` when available for candidate name extraction. |
+| `src/mentor/__init__.py` | Modified | Exports all Career Mentor modules, functions, and archetypes. |
+| `app.py` | Modified | Adds `POST /api/career-mentor/evaluate-role`. **Phase 4.1**: Removed silent fallback to last cache entry in `_get_active_analysis()`; enforces strict session ownership (`session["allowed_analyses"]`) across `GET /api/career-mentor` and `POST /api/career-mentor/evaluate-role`, returning `403 Forbidden` for cross-user requests and `404 Not Found` for unknown analysis IDs; validates CSRF and input length ($\le 100$). |
+| `frontend/src/types/index.ts` | Modified | Defines TypeScript interfaces for `CareerProfile`, `RecommendedRole`, `ResumeImprovementSuggestion`, `CareerMilestone`, `CareerRoadmap`, and updates `MentorDossier`. |
+| `frontend/src/services/api.ts` | Modified | Adds `evaluateRole(roleName, analysisId)` to API client. |
+| `frontend/src/pages/CareerMentorPage.tsx` | Modified | 5-tab responsive UI: Profile Overview, Recommended Roles, Skill-Gap Intelligence, Learning Roadmaps & Study Plan, Actionable Guidance & Resume Advisor. **Phase 4.1**: Cleaned unused icons and imports. |
+| `tests/test_phase4_career_mentor.py` | Created | 10-point test suite for Phase 4 baseline validation. **Phase 4.1**: Updated authorized session tests. |
+| `tests/test_phase4_1_security_and_evidence.py` | Created | Dedicated Phase 4.1 test suite covering session ownership isolation, unknown IDs, sample behavior, zero fabricated metrics, unevaluated custom roles, input validation, genuine evidence provenance, and grounded roadmaps. |
+| `reports/phase4/PHASE4_CAREER_MENTOR_REPORT.md` | Created | Comprehensive Phase 4 & Phase 4.1 audit, architecture, security policies, and test verification report. |
+| `reports/phase4/CHANGED_FILES_PHASE4.md` | Created | Inventory of created and modified files across Phase 4 and Phase 4.1. |

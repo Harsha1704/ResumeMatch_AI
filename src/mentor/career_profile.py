@@ -98,16 +98,19 @@ def build_structured_career_profile(analysis_data: Optional[Dict[str, Any]]) -> 
 
     for p in projects:
         p_title = p.get("title") or p.get("project_title", "Project")
-        p_desc = p.get("description", "")
+        p_desc = (p.get("description") or "").strip()
         for t in p.get("technologies", []):
             canon = resolve_canonical_skill(t)
             if canon.lower() not in demonstrated_set:
                 demonstrated_set.add(canon.lower())
+                has_excerpt = bool(p_desc)
                 demonstrated_skills.append({
                     "skill": canon,
                     "evidence_source": "project",
                     "provenance_title": p_title,
-                    "excerpt": p_desc[:140] + ("..." if len(p_desc) > 140 else "") if p_desc else f"Demonstrated in {p_title}",
+                    "excerpt": p_desc[:140] + ("..." if len(p_desc) > 140 else "") if has_excerpt else None,
+                    "excerpt_status": "available" if has_excerpt else "unavailable",
+                    "provenance_note": None if has_excerpt else f"Technology listed in project '{p_title}' without descriptive excerpt.",
                     "confidence": 0.95
                 })
 
@@ -115,16 +118,19 @@ def build_structured_career_profile(analysis_data: Optional[Dict[str, Any]]) -> 
         org = intern.get("organization") or "Internship"
         pos = intern.get("position") or "Intern"
         resp = intern.get("responsibilities") or []
-        resp_text = "; ".join(resp[:2])
+        resp_text = "; ".join([r.strip() for r in resp if r.strip()][:2])
         for t in intern.get("technologies", []):
             canon = resolve_canonical_skill(t)
             if canon.lower() not in demonstrated_set:
                 demonstrated_set.add(canon.lower())
+                has_excerpt = bool(resp_text)
                 demonstrated_skills.append({
                     "skill": canon,
                     "evidence_source": "internship",
                     "provenance_title": f"{pos} at {org}",
-                    "excerpt": resp_text[:140] + ("..." if len(resp_text) > 140 else "") if resp_text else f"Applied during {pos} at {org}",
+                    "excerpt": resp_text[:140] + ("..." if len(resp_text) > 140 else "") if has_excerpt else None,
+                    "excerpt_status": "available" if has_excerpt else "unavailable",
+                    "provenance_note": None if has_excerpt else f"Technology listed in internship '{pos} at {org}' without descriptive responsibilities.",
                     "confidence": 0.90
                 })
 
@@ -134,13 +140,67 @@ def build_structured_career_profile(analysis_data: Optional[Dict[str, Any]]) -> 
         canon = resolve_canonical_skill(s)
         if canon.lower() not in demonstrated_set:
             demonstrated_set.add(canon.lower())
-            demonstrated_skills.append({
-                "skill": canon,
-                "evidence_source": "professional_experience",
-                "provenance_title": "Documented Work Experience",
-                "excerpt": f"Demonstrated application of {canon} documented in candidate resume experience.",
-                "confidence": 0.90
-            })
+            
+            # Search for genuine textual excerpt in matches, work experience, or resume text
+            real_excerpt = None
+            
+            # Check matches table
+            for m in data.get("matches", []):
+                if isinstance(m, dict):
+                    m_skill = m.get("skill") or m.get("skill_name") or ""
+                    if resolve_canonical_skill(m_skill).lower() == canon.lower():
+                        ex = m.get("resume_evidence") or m.get("evidence") or m.get("excerpt")
+                        if ex and isinstance(ex, str) and len(ex.strip()) > 5:
+                            real_excerpt = ex.strip()
+                            break
+
+            # Check professional experience
+            if not real_excerpt:
+                for pe in prof_exp:
+                    if isinstance(pe, dict):
+                        desc = pe.get("description") or pe.get("responsibilities") or ""
+                        if isinstance(desc, list):
+                            desc = " ".join(desc)
+                        if canon.lower() in desc.lower():
+                            sentences = re.split(r"(?<=[.!?])\s+", desc)
+                            for sent in sentences:
+                                if canon.lower() in sent.lower():
+                                    real_excerpt = sent.strip()
+                                    break
+                    if real_excerpt:
+                        break
+
+            # Check raw resume text
+            if not real_excerpt and data.get("raw_text"):
+                raw_t = data.get("raw_text")
+                if canon.lower() in raw_t.lower():
+                    lines = re.split(r"[\r\n]+", raw_t)
+                    for l in lines:
+                        cl = l.strip()
+                        if len(cl) >= 15 and canon.lower() in cl.lower() and not cl.lower().startswith("skills:"):
+                            real_excerpt = cl[:140] + ("..." if len(cl) > 140 else "")
+                            break
+
+            if real_excerpt:
+                demonstrated_skills.append({
+                    "skill": canon,
+                    "evidence_source": "professional_experience",
+                    "provenance_title": "Documented Work Experience",
+                    "excerpt": real_excerpt[:140] + ("..." if len(real_excerpt) > 140 else ""),
+                    "excerpt_status": "available",
+                    "confidence": 0.90
+                })
+            else:
+                # Skill is in registry without a traceable source excerpt; preserve skill but mark provenance honestly
+                demonstrated_skills.append({
+                    "skill": canon,
+                    "evidence_source": "registry_derived",
+                    "provenance_title": "Evidence Registry (Derived)",
+                    "excerpt": None,
+                    "excerpt_status": "unavailable",
+                    "provenance_note": "Registry-derived competency; specific textual excerpt unavailable from source resume.",
+                    "confidence": 0.85
+                })
 
     # Candidate Self-Confirmed: explicitly confirmed via candidate portal/attestation
     user_confirmations = ev_registry.get("user_confirmations") or data.get("user_confirmations") or {}
@@ -153,11 +213,13 @@ def build_structured_career_profile(analysis_data: Optional[Dict[str, Any]]) -> 
             is_conf = v
         if is_conf:
             canon = resolve_canonical_skill(k)
-            # Only list under candidate_confirmed if not already independently demonstrated
+            # Never upgrade candidate self-attestation into resume-demonstrated evidence
             if canon.lower() not in demonstrated_set:
                 candidate_confirmed_skills.append({
                     "skill": canon,
                     "evidence_source": "candidate_confirmed",
+                    "excerpt": None,
+                    "excerpt_status": "unavailable",
                     "notes": "Candidate self-attestation; not independently evidenced in uploaded resume text.",
                     "confidence": 0.75
                 })
@@ -171,6 +233,8 @@ def build_structured_career_profile(analysis_data: Optional[Dict[str, Any]]) -> 
             partially_evidenced_skills.append({
                 "skill": canon,
                 "evidence_source": "skills_section",
+                "excerpt": None,
+                "excerpt_status": "unavailable",
                 "notes": "Listed in candidate profile/skills section without contextual project implementation details.",
                 "confidence": 0.50
             })

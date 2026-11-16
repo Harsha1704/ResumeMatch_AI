@@ -284,6 +284,8 @@ def test_role_evaluation_custom_endpoint():
     # Setup active analysis in cache
     test_aid = "test_eval_session_001"
     ANALYSIS_CACHE[test_aid] = SAMPLE_FULL_ANALYSIS
+    with client.session_transaction() as sess:
+        sess["allowed_analyses"] = [test_aid]
 
     # 1. Missing role_name -> 400 Bad Request
     resp_empty = client.post("/api/career-mentor/evaluate-role",
@@ -454,6 +456,8 @@ def test_api_career_mentor_contract_and_session_isolation():
 
     aid = "test_phase4_dossier_session"
     ANALYSIS_CACHE[aid] = SAMPLE_FULL_ANALYSIS
+    with client.session_transaction() as sess:
+        sess["allowed_analyses"] = [aid]
 
     # Request dossier via query param
     resp = client.get(f"/api/career-mentor?id={aid}")
@@ -480,6 +484,11 @@ def test_api_career_mentor_contract_and_session_isolation():
     # Verify session isolation between clients
     client_a = app.test_client()
     client_b = app.test_client()
+
+    with client_a.session_transaction() as sess:
+        sess["allowed_analyses"] = [aid]
+    with client_b.session_transaction() as sess:
+        sess["allowed_analyses"] = [aid]
 
     client_a.post("/api/mentor/update-name",
                   data=json.dumps({"preferred_name": "Alice"}),

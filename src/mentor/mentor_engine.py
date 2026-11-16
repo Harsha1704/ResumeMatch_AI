@@ -417,7 +417,18 @@ class CareerMentorEngine:
         raw_text = self.analysis_data.get("raw_text") or ""
         
         # 1. Candidate Name Extraction & Identity Formatting
-        extracted_name_info = extract_candidate_name(raw_text)
+        cand_name_info = self.analysis_data.get("candidate_profile", {}).get("name")
+        if cand_name_info and isinstance(cand_name_info, dict) and cand_name_info.get("preferred_name"):
+            p_name = cand_name_info["preferred_name"]
+            extracted_name_info = {
+                "preferred_name": p_name,
+                "full_name": cand_name_info.get("full_name") or p_name,
+                "mentor_title": f"{p_name}'s Career Mentor",
+                "is_confident": True,
+                "extraction_method": "candidate_profile"
+            }
+        else:
+            extracted_name_info = extract_candidate_name(raw_text)
         self.identity = format_mentor_identity(user_override_name, extracted_name_info)
         
         # 2. Extract Verified Strengths

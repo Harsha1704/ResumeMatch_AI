@@ -234,43 +234,112 @@ def recommend_suitable_roles(
 def evaluate_specific_role(
     role_name_or_id: str,
     career_profile: Dict[str, Any],
-    analysis_data: Optional[Dict[str, Any]] = None
+    analysis_data: Optional[Dict[str, Any]] = None,
+    custom_role_requirements: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
-    """Evaluates candidate against a specific chosen target role."""
+    """
+    Evaluates candidate against a specific chosen target role.
+    For standard archetypes, returns deterministic match metrics.
+    For unlisted custom roles without structured requirements, returns an 'unevaluated'
+    status without inventing scores or fit tiers.
+    """
+    if not isinstance(role_name_or_id, str) or not role_name_or_id.strip():
+        raise ValueError("Invalid role name: must be a non-empty string.")
+    
+    clean_role = role_name_or_id.strip()
+    if len(clean_role) > 100:
+        raise ValueError("Role name exceeds maximum allowable length of 100 characters.")
+
     all_recs = recommend_suitable_roles(career_profile, analysis_data, limit=None)
-    target = (role_name_or_id or "").lower().strip()
+    target = clean_role.lower()
 
     for r in all_recs:
         if r["role_id"] == target or r["title"].lower() == target or target in r["title"].lower() or r["title"].lower() in target:
             return r
 
-    # If custom role name not in standard archetypes, build dynamic assessment
-    demonstrated = career_profile.get("demonstrated_competencies", [])
-    matching_names = [s["skill"] for s in demonstrated[:5]]
-    heuristic = "Custom target role evaluation based on candidate's current documented skills profile."
-    next_action = "Align resume experience bullet points with target role responsibilities."
+    # Check if structured requirements were provided for this custom role
+    reqs = custom_role_requirements or {}
+    if not reqs and analysis_data:
+        # Check if analysis_data contains specific custom role requirements
+        if analysis_data.get("job_title", "").strip().lower() == target and analysis_data.get("required_skills"):
+            reqs = {
+                "core_skills": analysis_data.get("required_skills", []),
+                "secondary_skills": analysis_data.get("preferred_skills", [])
+            }
+
+    core_reqs = reqs.get("core_skills") or reqs.get("required_skills") or []
+    if core_reqs:
+        # Evaluate dynamically against the provided structured requirements
+        candidate_demonstrated = {s["skill"].lower(): s for s in career_profile.get("demonstrated_competencies", [])}
+        candidate_confirmed = {s["skill"].lower(): s for s in career_profile.get("candidate_confirmed_competencies", [])}
+        all_candidate = set(candidate_demonstrated.keys()) | set(candidate_confirmed.keys())
+
+        matched_core = [s for s in core_reqs if s.lower() in all_candidate]
+        missing_core = [s for s in core_reqs if s.lower() not in all_candidate]
+        score = round((len(matched_core) / len(core_reqs)) * 100, 1)
+
+        tier = "Strong Fit" if score >= 60.0 else ("Potential Fit" if score >= 35.0 else "Growth Fit")
+        badge = "emerald" if score >= 60.0 else ("amber" if score >= 35.0 else "blue")
+        reason = f"Evaluated against {len(core_reqs)} custom role requirements: matched {len(matched_core)} verified skills."
+        next_act = f"Address primary gap in {missing_core[0]}." if missing_core else "Prepare for domain-specific interview loops."
+
+        return {
+            "role_id": "custom_role",
+            "title": clean_role.title(),
+            "role_title": clean_role.title(),
+            "category": "Custom Target Role",
+            "description": f"Custom evaluation for target role '{clean_role}' based on provided requirements.",
+            "primary_focus": "Custom role requirements alignment.",
+            "evaluation_status": "evaluated",
+            "match_score": score,
+            "match_score_pct": score,
+            "fit_tier": tier,
+            "fit_badge": badge,
+            "fit_reason": reason,
+            "evidence_grounded_fit_reason": reason,
+            "matching_skills": matched_core,
+            "matching_competencies": matched_core,
+            "matching_core_count": len(matched_core),
+            "missing_core_skills": missing_core,
+            "missing_secondary_skills": [],
+            "primary_gaps": missing_core[:3],
+            "practical_next_action": next_act,
+            "recommended_actions": [next_act],
+            "market_intelligence_note": "Evaluated against user-provided custom role requirements.",
+            "heuristic_note": "Evaluated against user-provided custom role requirements."
+        }
+
+    # If no structured role requirements are available, return 'unevaluated' without fabricating scores
+    un_eval_msg = (
+        f"Role '{clean_role}' is not one of the 8 standard engineering archetypes, "
+        "and no structured requirement criteria (core skills/tools) were provided for evaluation. "
+        "A reliable competency assessment requires role-specific skills and requirements."
+    )
+    un_eval_action = "Provide structured job requirements or select a standard engineering archetype to generate an evidence-grounded fit score."
+    market_note = "Evaluation requires structured role requirements to compute evidence-grounded alignment without hallucination."
 
     return {
         "role_id": "custom_role",
-        "title": role_name_or_id.title(),
-        "role_title": role_name_or_id.title(),
-        "category": "Custom Target Role",
-        "description": f"Custom evaluation for target role '{role_name_or_id}'.",
-        "primary_focus": "Target role requirements alignment.",
-        "match_score": 50.0,
-        "match_score_pct": 50.0,
-        "fit_tier": "Potential Fit",
-        "fit_badge": "warning",
-        "fit_reason": "Evaluated against candidate's current documented skills profile.",
-        "evidence_grounded_fit_reason": "Evaluated against candidate's current documented skills profile.",
-        "matching_skills": matching_names,
-        "matching_competencies": matching_names,
-        "matching_core_count": len(demonstrated),
+        "title": clean_role.title(),
+        "role_title": clean_role.title(),
+        "category": "Custom / Unlisted Role",
+        "description": f"Target role evaluation for '{clean_role}'.",
+        "primary_focus": "Requires structured target role requirement specification.",
+        "evaluation_status": "unevaluated",
+        "match_score": None,
+        "match_score_pct": None,
+        "fit_tier": "Unevaluated",
+        "fit_badge": "slate",
+        "fit_reason": un_eval_msg,
+        "evidence_grounded_fit_reason": un_eval_msg,
+        "matching_skills": [],
+        "matching_competencies": [],
+        "matching_core_count": 0,
         "missing_core_skills": [],
         "missing_secondary_skills": [],
         "primary_gaps": [],
-        "practical_next_action": next_action,
-        "recommended_actions": [next_action],
-        "market_intelligence_note": heuristic,
-        "heuristic_note": heuristic
+        "practical_next_action": un_eval_action,
+        "recommended_actions": [un_eval_action],
+        "market_intelligence_note": market_note,
+        "heuristic_note": market_note
     }
