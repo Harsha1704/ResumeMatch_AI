@@ -380,3 +380,156 @@ class TestPhase214ClaimLevelEvidenceValidation:
         )
         assert len(issues) > 0
         assert any("deployment" in iss.lower() for iss in issues)
+
+    # -------------------------------------------------------------------------
+    # 14. Illustrative block boundary preserves: I led the deployment.
+    # -------------------------------------------------------------------------
+    def test_14_illustrative_block_boundary_preserves_i_led_the_deployment(self):
+        """Block boundary does not depend on a fixed verb list; 'I led' is preserved and flagged."""
+        text = "[Illustrative Scenario]: A sample deployment workflow. I led the deployment."
+        cls_res = AnswerQualityValidator.classify_statement(text)
+        assert cls_res["is_illustrative_scenario"] is True
+        assert cls_res["is_unsupported_personal_claim"] is True, "Outside claim 'I led the deployment' must be flagged"
+
+        issues = AnswerQualityValidator.audit_answer_for_unsupported_first_person_claims(text)
+        assert len(issues) > 0, "Auditor must see the outside claim"
+        assert any("led" in iss.lower() or "deployment" in iss.lower() for iss in issues)
+
+    # -------------------------------------------------------------------------
+    # 15. Illustrative block boundary preserves: I managed the production database.
+    # -------------------------------------------------------------------------
+    def test_15_illustrative_block_boundary_preserves_i_managed_the_production_database(self):
+        """Block boundary preserves and flags ungrounded database management."""
+        text = "[Illustrative Scenario]: A sample deployment workflow. I managed the production database."
+        cls_res = AnswerQualityValidator.classify_statement(text)
+        assert cls_res["is_illustrative_scenario"] is True
+        assert cls_res["is_unsupported_personal_claim"] is True, "Outside claim 'I managed the production database' must be flagged"
+
+        issues = AnswerQualityValidator.audit_answer_for_unsupported_first_person_claims(text)
+        assert len(issues) > 0
+        assert any("database" in iss.lower() or "managed" in iss.lower() for iss in issues)
+
+    # -------------------------------------------------------------------------
+    # 16. Illustrative block boundary preserves: I supervised the engineering team.
+    # -------------------------------------------------------------------------
+    def test_16_illustrative_block_boundary_preserves_i_supervised_the_engineering_team(self):
+        """Block boundary preserves and flags ungrounded engineering team supervision."""
+        text = "[Illustrative Scenario]: A sample deployment workflow. I supervised the engineering team."
+        cls_res = AnswerQualityValidator.classify_statement(text)
+        assert cls_res["is_illustrative_scenario"] is True
+        assert cls_res["is_unsupported_personal_claim"] is True, "Outside claim 'I supervised the engineering team' must be flagged"
+
+        issues = AnswerQualityValidator.audit_answer_for_unsupported_first_person_claims(text)
+        assert len(issues) > 0
+        assert any("supervised" in iss.lower() or "team" in iss.lower() for iss in issues)
+
+    # -------------------------------------------------------------------------
+    # 17. Illustrative block boundary preserves: I owned the architecture decisions.
+    # -------------------------------------------------------------------------
+    def test_17_illustrative_block_boundary_preserves_i_owned_the_architecture_decisions(self):
+        """Block boundary preserves and flags ungrounded architecture ownership."""
+        text = "[Illustrative Scenario]: A sample deployment workflow. I owned the architecture decisions."
+        cls_res = AnswerQualityValidator.classify_statement(text)
+        assert cls_res["is_illustrative_scenario"] is True
+        assert cls_res["is_unsupported_personal_claim"] is True, "Outside claim 'I owned the architecture decisions' must be flagged"
+
+        issues = AnswerQualityValidator.audit_answer_for_unsupported_first_person_claims(text)
+        assert len(issues) > 0
+        assert any("architecture" in iss.lower() or "owned" in iss.lower() for iss in issues)
+
+    # -------------------------------------------------------------------------
+    # 18. Illustrative block boundary preserves passive-voice unsupported claims
+    # -------------------------------------------------------------------------
+    def test_18_illustrative_block_boundary_preserves_passive_voice_unsupported_claims(self):
+        """Passive-voice unsupported claims following an illustrative block remain visible to the auditor."""
+        passive_cases = [
+            ("[Illustrative Scenario]: A sample deployment workflow. Deployment was led by our team.", "deployment"),
+            ("[Illustrative Scenario]: A sample deployment workflow. Production database was managed without downtime.", "database"),
+            ("[Illustrative Scenario]: A sample deployment workflow. Architecture decisions were owned by me.", "architecture")
+        ]
+
+        for text, keyword in passive_cases:
+            cls_res = AnswerQualityValidator.classify_statement(text)
+            assert cls_res["is_illustrative_scenario"] is True
+            assert cls_res["is_unsupported_personal_claim"] is True, f"Passive claim '{text}' must be flagged as unsupported"
+
+            issues = AnswerQualityValidator.audit_answer_for_unsupported_first_person_claims(text)
+            assert len(issues) > 0, f"Auditor must catch passive claim in: {text}"
+            assert any(keyword in iss.lower() for iss in issues), f"Expected '{keyword}' in auditor issues for: {text}"
+
+    # -------------------------------------------------------------------------
+    # 19. Genuine marker entirely inside an illustrative block must not authenticate
+    # -------------------------------------------------------------------------
+    def test_19_genuine_marker_entirely_inside_illustrative_block_must_not_authenticate(self):
+        """Genuine marker inside an illustrative block cannot establish resume support."""
+        text = (
+            "[Illustrative Scenario — Not candidate resume data]: In this hypothetical model scenario, "
+            "Verified Organization: Acme Corp is a sample company."
+        )
+        evidence = {"organization": "Acme Corp"}
+
+        cls_res = AnswerQualityValidator.classify_statement(text, evidence=evidence)
+        assert cls_res["is_illustrative_scenario"] is True
+        assert cls_res["is_resume_supported"] is False, "Genuine marker inside illustrative block must NOT establish resume support"
+        assert cls_res["is_unsupported_personal_claim"] is False
+
+        issues = AnswerQualityValidator.audit_answer_for_unsupported_first_person_claims(text, verified_evidence=evidence)
+        assert len(issues) == 0, f"Expected no issues for marker inside illustrative block, got: {issues}"
+
+    # -------------------------------------------------------------------------
+    # 20. Fabricated marker inside an illustrative block not treated as candidate claim
+    # -------------------------------------------------------------------------
+    def test_20_fabricated_marker_inside_illustrative_block_not_treated_as_candidate_claim(self):
+        """Fabricated marker inside an illustrative block is not treated as a candidate claim."""
+        text = (
+            "[Illustrative Scenario — Not candidate resume data]: In this hypothetical model scenario, "
+            "Verified Organization: Fabricated Corp was simulated."
+        )
+        evidence = {"organization": "Acme Corp"}
+
+        cls_res = AnswerQualityValidator.classify_statement(text, evidence=evidence)
+        assert cls_res["is_illustrative_scenario"] is True
+        assert cls_res["is_unsupported_personal_claim"] is False, "Fabricated marker inside illustrative block must NOT be treated as candidate claim"
+        assert cls_res["is_resume_supported"] is False
+
+        issues = AnswerQualityValidator.audit_answer_for_unsupported_first_person_claims(text, verified_evidence=evidence)
+        assert len(issues) == 0, f"Expected no issues for fabricated marker inside illustrative block, got: {issues}"
+
+    # -------------------------------------------------------------------------
+    # 21. Genuine marker outside an illustrative block establishes resume support
+    # -------------------------------------------------------------------------
+    def test_21_genuine_marker_outside_illustrative_block_establishes_resume_support(self):
+        """Genuine marker outside an illustrative block establishes resume support."""
+        text = (
+            "Verified Organization: Acme Corp. [Illustrative Scenario — Not candidate resume data]: "
+            "In distributed systems, consensus mechanisms maintain replica state consistency."
+        )
+        evidence = {"organization": "Acme Corp"}
+
+        cls_res = AnswerQualityValidator.classify_statement(text, evidence=evidence)
+        assert cls_res["is_resume_supported"] is True, "Genuine marker outside illustrative block must establish resume support"
+        assert cls_res["is_illustrative_scenario"] is True
+        assert cls_res["is_unsupported_personal_claim"] is False
+
+        issues = AnswerQualityValidator.audit_answer_for_unsupported_first_person_claims(text, verified_evidence=evidence)
+        assert len(issues) == 0
+
+    # -------------------------------------------------------------------------
+    # 22. Genuine marker outside plus unsupported claim after illustrative block preserves both
+    # -------------------------------------------------------------------------
+    def test_22_genuine_marker_outside_plus_unsupported_claim_after_illustrative_block_preserves_both(self):
+        """Genuine marker outside plus unsupported claim after illustrative block preserves both classifications."""
+        text = (
+            "Verified Organization: Acme Corp. [Illustrative Scenario — Not candidate resume data]: "
+            "A sample deployment workflow. I led the deployment."
+        )
+        evidence = {"organization": "Acme Corp"}
+
+        cls_res = AnswerQualityValidator.classify_statement(text, evidence=evidence)
+        assert cls_res["is_resume_supported"] is True, "Acme Corp marker must establish resume support"
+        assert cls_res["is_illustrative_scenario"] is True, "Illustrative scenario recognized"
+        assert cls_res["is_unsupported_personal_claim"] is True, "Outside deployment claim must be flagged"
+
+        issues = AnswerQualityValidator.audit_answer_for_unsupported_first_person_claims(text, verified_evidence=evidence)
+        assert len(issues) > 0
+        assert any("led" in iss.lower() or "deployment" in iss.lower() for iss in issues)

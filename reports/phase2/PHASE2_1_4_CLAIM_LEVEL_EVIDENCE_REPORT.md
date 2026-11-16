@@ -1,117 +1,113 @@
-# ResumeMatch AI — Phase 2.1.4: Claim-Level Evidence Validation & Illustrative Scoping Report
+# ResumeMatch AI — Phase 2.1.4: Claim-Level Evidence Validation & Illustrative Boundary Hardening Report
 
 ## 1. Executive Summary
 
-Phase 2.1.4 resolves two related evidence-validation vulnerabilities in ResumeMatch AI's interview intelligence and quality audit subsystem:
-1. **Mutual Suppression & Coexistence Defect**: `classify_statement()` in `src/interview/answer_validator.py` allowed a single matching evidence item to authenticate an entire compound statement, suppressing unsupported claims with `and not is_resume`.
-2. **Illustrative Scenario Suppression Defect**: `classify_statement()` used `and not is_illustrative` across the whole statement, allowing an illustrative scenario marker to mask unsupported personal assertions outside the scenario block.
-3. **Short-Token Collisions**: Boundary-unaware string containment allowed short tokens like `SQL` to match inside `NoSQL`, `Java` inside `JavaScript`, `C` inside `C++`/`CSS`, `Go` inside `Django`, and `Rust` inside `trust`.
+Phase 2.1.4 resolves claim-level evidence validation and illustrative block boundary scoping vulnerabilities in ResumeMatch AI's interview intelligence and quality audit subsystem (`src/interview/answer_validator.py`):
 
-In this phase:
-- Implemented `AnswerQualityValidator._token_matches()` providing boundary-aware, token-specific matching.
-- Implemented `AnswerQualityValidator._strip_exempt_blocks()` scoping illustrative exemptions strictly to the scenario block.
-- Removed `and not is_illustrative` and `and not is_resume` from `is_unsupported` determination, ensuring valid markers, illustrative scenarios, and unsupported personal claims coexist and preserve all applicable classifications.
-- Prevented claims inside illustrative blocks from authenticating as candidate achievements (`is_resume_supported: False`).
-- Expanded `tests/test_phase2_1_4_claim_level_evidence.py` to 13 comprehensive test scenarios (100% passing).
-- Verified all 101 cumulative phase tests across 7 suites (100% pass rate).
-- Full backend regression suite and frontend production build/lint verified with 0 errors.
+1. **Mutual Suppression & Coexistence Defect**: `classify_statement()` allowed a single matching evidence item to authenticate an entire compound statement, suppressing unsupported claims with `and not is_resume`.
+2. **Short-Token Collisions**: Boundary-unaware string containment allowed short tokens like `SQL` to match inside `NoSQL`, `Java` inside `JavaScript`, `C` inside `C++`/`CSS`, `Go` inside `Django`, and `Rust` inside `trust`.
+3. **Illustrative Scenario Suppression Defect**: `classify_statement()` previously used `and not is_illustrative` across the whole statement, allowing an illustrative scenario marker to mask unsupported personal assertions outside the scenario block.
+4. **Illustrative Block Boundary Verb Restriction Defect**: `_strip_exempt_blocks()` relied on a fixed list of verbs when identifying the boundary of an illustrative block, hiding claims like `I led the deployment`, `I managed the production database`, `I supervised the engineering team`, and `I owned the architecture decisions`.
+5. **Marker Self-Authentication Inside Illustrative Blocks**: `classify_statement()` scanned marker values on raw text before stripping illustrative blocks, allowing markers inside illustrative blocks to falsely establish resume support or trigger fabricated marker flags.
 
 ---
 
 ## 2. Root Cause Analysis & Architectural Diagnosis
 
-### 2.1 Mutual Suppression in Compound Statements
-Previously, `classify_statement()` evaluated:
+### 2.1 Fixed Verb List Dependency in Illustrative Block Boundary
+Previously, `_strip_exempt_blocks()` delimited illustrative blocks using:
 ```python
-is_unsupported = (...) and not is_illustrative and not is_resume
+r"(?:\.|\;|\n)\s*(?=(?:I|we|my|our|the candidate|he|she|they)\s+(?:have\s+)?(?:coordinated|deployed|implemented|designed|built|maintained|debugged|contributed|collaborated|authored|created|developed)\b)"
 ```
-For compound statements such as:
-```python
-evidence = {"organization": "Acme Corp"}
-text = "Verified Organization: Acme Corp; I coordinated deployment."
-```
-1. `marker_verified` was `True`, so `is_resume` was `True`.
-2. `and not is_resume` forced `is_unsupported` to `False`, suppressing the ungrounded deployment assertion.
-3. Conversely, if a fabricated marker was present, it forced `is_resume` to `False`, suppressing valid markers.
+This hardcoded list of verbs failed to recognize sentences starting with verbs like `led`, `managed`, `supervised`, `owned`, or passive-voice constructions. As a result, the regex swallowed the following sentence all the way to `$`, stripping ungrounded candidate claims from the text evaluated by the auditor.
 
-### 2.2 Illustrative-Scenario Suppression Defect
-Similarly, because of `and not is_illustrative`:
-For compound statements such as:
+### 2.2 Marker Verification on Raw Text
+Previously, `classify_statement()` executed:
 ```python
-text = "[Illustrative Scenario — Not candidate resume data]: When scaling backend services, rate limiting protects endpoints. I coordinated deployment."
+for m in marker_pattern.finditer(t):  # t is raw statement
 ```
-1. `is_illustrative` was `True`.
-2. `and not is_illustrative` forced `is_unsupported` to `False`, completely suppressing `"I coordinated deployment"`!
-3. Furthermore, previous regex stripping used `r"\[Illustrative (?:Model )?Scenario[^\]]*\]:.*?(?=\[Candidate to specify:|\n\n|$)"`, which matched to end-of-string `$` when double newlines were absent, erasing subsequent sentences.
+prior to stripping exempt blocks. When an illustrative block contained a marker (e.g. `[Illustrative Scenario]: In this hypothetical model scenario, Verified Organization: Acme Corp is a sample company.`), `marker_pattern` matched `Acme Corp`, validated it against candidate evidence, and marked `marker_verified = True` and `is_resume_supported = True`. Conversely, if the marker value was fabricated, it set `has_fabricated_marker = True` and flagged the statement as an unsupported candidate claim.
 
 ---
 
 ## 3. Implementation Details
 
-### 3.1 Boundary-Aware Token Matching (`_token_matches`)
-- Uses alphanumeric boundary assertions: `(?<![A-Za-z0-9_])` on the left and `(?![A-Za-z0-9_+#])` on the right.
-- Handles technical tokens like `C++`, `C#`, and `.NET` cleanly.
-- Rejects `SQL` inside `NoSQL`, `PostgreSQL`, or `MySQL`.
-
-### 3.2 Scoped Illustrative Exemption (`_strip_exempt_blocks`)
-- `_strip_exempt_blocks(cls, text: str) -> str` isolates non-exempt text.
-- Delimits illustrative scenario blocks at:
-  - Another bracketed marker (`[Candidate to specify:`, `[Candidate Confirmed:`, `[Verified `, `[General Technical Guidance`).
+### 3.1 Hardened Illustrative Block Boundaries (`_strip_exempt_blocks`)
+- Removed reliance on a hardcoded verb list.
+- Scoped illustrative block boundary lookaheads to terminate on:
+  - Another bracketed marker (`[Candidate to specify:`, `[Candidate Confirmed:`, `[General Technical Guidance`, `[Illustrative`).
   - Paragraph breaks (`\n\n`).
-  - Sentence boundaries (`.`, `;`, `\n`) followed by first-person or candidate assertions (`I `, `we `, `the candidate `).
-- Any personal assertion outside the illustrative block is preserved for auditing.
-- Claims entirely inside the illustrative block are removed from cleaned text, ensuring they are not falsely flagged and never authenticate as candidate achievements.
+  - Sentence boundaries (`.`, `;`, `\n`) followed by any first-person or candidate assertions (`(?=(?:I|we|my|our|the candidate)\b)`).
+  - Sentence boundaries followed by third-person candidate actions (`(?=(?:he|she|they)\s+(?:have\s+|had\s+)?[a-z]+(?:ed|t)\b)`).
+  - Sentence boundaries followed by passive-voice engineering claims (`(?=[^.\n;]*?\b(?:was|were)\s+(?:[a-z]+ed|led|built|run|written|chosen|owned)\b)`).
+  - Sentence boundaries followed by agent attributions (`(?=[^.\n;]*?\bby\s+(?:me|us|our\s+team|the\s+candidate)\b)`).
+  - Sentence boundaries followed by generic fallbacks.
+- Corrected bracket stripping to preserve `[Verified ...]` outside scenario blocks (`re.sub(r"\[(?!Verified\s)[^\]]*\]", "", cleaned)`).
 
-### 3.3 Statement Classification Coexistence
-- `is_resume_supported` evaluates whether genuine resume evidence exists on cleaned text or verified markers.
-- `is_unsupported_personal_claim` evaluates whether unevidenced assertions exist on cleaned text.
-- `is_illustrative_scenario` evaluates whether an illustrative block is present.
-All three classifications can independently coexist.
+### 3.2 Cleaned-Text Marker Scanning (`classify_statement`)
+- Evaluates `cleaned = cls._strip_exempt_blocks(t)` prior to marker scanning.
+- Runs `marker_pattern.finditer(cleaned)` on `cleaned` text.
+- Any marker inside an illustrative block is stripped and never seen by marker verification, preventing it from setting `marker_verified`, `has_fabricated_marker`, or `is_resume_supported`.
+- Markers outside illustrative blocks remain in `cleaned` and authenticate or flag as expected.
+
+### 3.3 Expanded Claim Auditing & Classification
+- Added leadership, management, supervision, ownership, and passive-voice claims to `unsupported_claim_patterns` in `classify_statement()`.
+- Added leadership, management, supervision, ownership, and passive-voice with agent patterns to `unsupported_patterns` in `audit_answer_for_unsupported_first_person_claims()`.
 
 ---
 
 ## 4. Verification and Test Results
 
 ### 4.1 Phase 2.1.4 Dedicated Test Suite (`tests/test_phase2_1_4_claim_level_evidence.py`)
-13 tests executed and passed:
-- `test_01_genuine_organization_plus_unsupported_deployment_claim`: PASS (both classifications coexist; deployment flagged).
-- `test_02_genuine_project_title_plus_unsupported_architecture_claim`: PASS (architecture choice flagged).
-- `test_03_genuine_technology_evidence_plus_unsupported_testing_claim`: PASS (testing claim flagged).
-- `test_04_multiple_valid_markers_alongside_one_fabricated_marker`: PASS (valid markers and fabricated marker coexist).
-- `test_05_short_token_false_matches_prevented`: PASS (SQL vs NoSQL, Java vs JS, C vs CSS, Go vs Django, Rust vs trust).
-- `test_06_mixed_candidate_confirmed_and_unsupported_claims`: PASS (candidate confirmation preserved, unsupported claim flagged).
-- `test_07_unsupported_claims_in_every_audited_output_field`: PASS (flags all 13 core output fields).
-- `test_08_existing_valid_generated_interview_answers_remain_valid`: PASS (end-to-end generation valid, scores >= 80).
-- `test_09_illustrative_scenario_followed_by_unsupported_deployment_claim`: PASS (deployment claim flagged).
-- `test_10_unsupported_personal_claim_followed_by_illustrative_scenario`: PASS (preceding personal claim flagged).
-- `test_11_unsupported_claim_entirely_inside_illustrative_block`: PASS (not classified as candidate achievement, not falsely flagged).
-- `test_12_valid_illustrative_guidance_without_personal_claims`: PASS (valid scenario remains unflagged).
-- `test_13_mixed_valid_resume_marker_illustrative_block_and_unsupported_claim`: PASS (preserves all 3 classifications).
+22 tests executed and passed (100% pass rate):
+- `test_01_genuine_organization_plus_unsupported_deployment_claim`: PASS
+- `test_02_genuine_project_title_plus_unsupported_architecture_claim`: PASS
+- `test_03_genuine_technology_evidence_plus_unsupported_testing_claim`: PASS
+- `test_04_multiple_valid_markers_alongside_one_fabricated_marker`: PASS
+- `test_05_short_token_false_matches_prevented`: PASS
+- `test_06_mixed_candidate_confirmed_and_unsupported_claims`: PASS
+- `test_07_unsupported_claims_in_every_audited_output_field`: PASS
+- `test_08_existing_valid_generated_interview_answers_remain_valid`: PASS
+- `test_09_illustrative_scenario_followed_by_unsupported_deployment_claim`: PASS
+- `test_10_unsupported_personal_claim_followed_by_illustrative_scenario`: PASS
+- `test_11_unsupported_claim_entirely_inside_illustrative_block`: PASS
+- `test_12_valid_illustrative_guidance_without_personal_claims`: PASS
+- `test_13_mixed_valid_resume_marker_illustrative_block_and_unsupported_claim`: PASS
+- `test_14_illustrative_block_boundary_preserves_i_led_the_deployment`: PASS
+- `test_15_illustrative_block_boundary_preserves_i_managed_the_production_database`: PASS
+- `test_16_illustrative_block_boundary_preserves_i_supervised_the_engineering_team`: PASS
+- `test_17_illustrative_block_boundary_preserves_i_owned_the_architecture_decisions`: PASS
+- `test_18_illustrative_block_boundary_preserves_passive_voice_unsupported_claims`: PASS
+- `test_19_genuine_marker_entirely_inside_illustrative_block_must_not_authenticate`: PASS
+- `test_20_fabricated_marker_inside_illustrative_block_not_treated_as_candidate_claim`: PASS
+- `test_21_genuine_marker_outside_illustrative_block_establishes_resume_support`: PASS
+- `test_22_genuine_marker_outside_plus_unsupported_claim_after_illustrative_block_preserves_both`: PASS
 
-### 4.2 Cumulative Phase Suites (101/101 Passed)
+### 4.2 Cumulative Phase Suites (110/110 Passed)
 - `tests/test_phase1_extraction_repair.py`: 20/20 passed
 - `tests/test_phase2_evidence_engine.py`: 26/26 passed
 - `tests/test_phase2_1_interview_grounding.py`: 10/10 passed
 - `tests/test_phase2_1_1_final_grounding.py`: 12/12 passed
 - `tests/test_phase2_1_2_evidence_validator.py`: 12/12 passed
 - `tests/test_phase2_1_3_validator_import_evidence.py`: 8/8 passed
-- `tests/test_phase2_1_4_claim_level_evidence.py`: 13/13 passed
-**Total Phase Tests: 101 passed in 8.31s (100% pass rate).**
+- `tests/test_phase2_1_4_claim_level_evidence.py`: 22/22 passed
+**Total Phase Tests: 110 passed in 9.47s (100% pass rate).**
 
 ### 4.3 Full Backend Regression Suite
 - Test command: `pytest tests/ -q`
-- Result: **529 passed, 0 failed, 1 warning in 105.69s (100% pass rate)**.
+- Result: **538 passed, 0 failed, 1 warning in 107.89s (100% pass rate)**.
 
 ### 4.4 Frontend Verification
-- Vite production build (`npm run build`): Completed in 513ms with 0 errors.
-- Oxlint static analysis (`npm run lint`): Completed with 0 errors (62 pre-existing style/unused-var warnings).
+- Vite production build (`npm run build --prefix frontend`): Completed in 570ms with 0 errors.
+- Oxlint static analysis (`npm run lint --prefix frontend`): Completed with 0 errors (62 pre-existing style/unused-var warnings).
 
 ---
 
 ## 5. Git Safety & Integrity
 
 - **Branch**: `fix/resumematch-final-repair`
-- **Commit Message**: `fix(phase2.1.4): scope illustrative exemptions to scenario blocks`
+- **Base Commit**: `a2f4d1f`
+- **Commit Message**: `fix(phase2.1.4): harden illustrative block evidence boundaries`
 - No branches merged into `main`.
 - No deployment configuration touched; no deployments triggered.
 - ML algorithms, TF-IDF vectorizers, logistic regression models, and React UI components remain completely preserved.

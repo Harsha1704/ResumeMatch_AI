@@ -133,6 +133,8 @@ class AnswerQualityValidator:
         and accurately scoped illustrative model scenarios and general technical guidance).
         Scopes illustrative exemptions strictly to the scenario block, ensuring unsupported
         personal claims before or after the scenario are preserved for auditing.
+        Does not rely on a fixed verb list; recognizes first-person, candidate, third-person,
+        and passive-voice assertion boundaries.
         """
         if not text:
             return ""
@@ -144,18 +146,20 @@ class AnswerQualityValidator:
         cleaned = re.sub(r"\[Candidate Confirmed[^\]]*\]", "", cleaned, flags=re.IGNORECASE)
 
         # 2. Illustrative scenario blocks scoped strictly to their block boundaries
-        # Boundaries: next bracketed block, double newline, or sentence boundary preceding a personal claim
+        # Boundaries: next bracketed block, double newline, or sentence boundary preceding a personal or passive claim
         illustrative_pattern = re.compile(
             r"\[Illustrative (?:Model )?Scenario[^\]]*\]:?\s*.*?"
             r"(?="
             r"\[Candidate to specify:|"
             r"\[Candidate Confirmed|"
-            r"\[Verified\s|"
             r"\[General Technical Guidance|"
             r"\n\n|"
-            r"(?:\.|\;|\n)\s*(?=(?:I|we|my|our|the candidate|he|she|they)\s+(?:have\s+)?(?:coordinated|deployed|implemented|designed|built|maintained|debugged|contributed|collaborated|authored|created|developed)\b)|"
-            r"(?:\.|\;|\n)\s*(?=(?:production\s+)?features?\s+(?:were|was)\s+contributed\b)|"
-            r"(?:\.|\;|\n)\s*(?=(?:the\s+)?(?:payment\s+workflow|production\s+database|deployment)\s+(?:was|were)\s+(?:debugged|maintained|coordinated)\b)|"
+            r"(?:\.|\;|\n)\s*(?=(?:I|we|my|our|the candidate)\b)|"
+            r"(?:\.|\;|\n)\s*(?=(?:he|she|they)\s+(?:have\s+|had\s+)?[a-z]+(?:ed|t)\b)|"
+            r"(?:\.|\;|\n)\s*(?=[^.\n;]*?\b(?:was|were)\s+(?:[a-z]+ed|led|built|run|written|chosen|owned)\b)|"
+            r"(?:\.|\;|\n)\s*(?=[^.\n;]*?\b(?:deployment|database|team|architecture|features?|tests?|services?|components?|workflow|defect|code|pipeline)\s+(?:was|were)\b)|"
+            r"(?:\.|\;|\n)\s*(?=[^.\n;]*?\bby\s+(?:me|us|our\s+team|the\s+candidate)\b)|"
+            r"(?:\.|\;|\n)\s*(?=\b(?:software engineering duties|software development duties|software development tasks|assigned engineering features|practical engineering tools)\b)|"
             r"$"
             r")",
             flags=re.IGNORECASE | re.DOTALL
@@ -168,19 +172,22 @@ class AnswerQualityValidator:
             r"(?="
             r"\[Candidate to specify:|"
             r"\[Candidate Confirmed|"
-            r"\[Verified\s|"
             r"\[Illustrative|"
             r"\n\n|"
-            r"(?:\.|\;|\n)\s*(?=(?:I|we|my|our|the candidate|he|she|they)\s+(?:have\s+)?(?:coordinated|deployed|implemented|designed|built|maintained|debugged|contributed|collaborated|authored|created|developed)\b)|"
-            r"(?:\.|\;|\n)\s*(?=(?:production\s+)?features?\s+(?:were|was)\s+contributed\b)|"
-            r"(?:\.|\;|\n)\s*(?=(?:the\s+)?(?:payment\s+workflow|production\s+database|deployment)\s+(?:was|were)\s+(?:debugged|maintained|coordinated)\b)|"
+            r"(?:\.|\;|\n)\s*(?=(?:I|we|my|our|the candidate)\b)|"
+            r"(?:\.|\;|\n)\s*(?=(?:he|she|they)\s+(?:have\s+|had\s+)?[a-z]+(?:ed|t)\b)|"
+            r"(?:\.|\;|\n)\s*(?=[^.\n;]*?\b(?:was|were)\s+(?:[a-z]+ed|led|built|run|written|chosen|owned)\b)|"
+            r"(?:\.|\;|\n)\s*(?=[^.\n;]*?\b(?:deployment|database|team|architecture|features?|tests?|services?|components?|workflow|defect|code|pipeline)\s+(?:was|were)\b)|"
+            r"(?:\.|\;|\n)\s*(?=[^.\n;]*?\bby\s+(?:me|us|our\s+team|the\s+candidate)\b)|"
+            r"(?:\.|\;|\n)\s*(?=\b(?:software engineering duties|software development duties|software development tasks|assigned engineering features|practical engineering tools)\b)|"
             r"$"
             r")",
             flags=re.IGNORECASE | re.DOTALL
         )
         cleaned = guidance_pattern.sub("", cleaned)
         cleaned = re.sub(r"\(General Technical Guidance\):[^\n.]*", "", cleaned, flags=re.IGNORECASE)
-        cleaned = re.sub(r"\[[^\]]*\]", "", cleaned)
+        cleaned = re.sub(r"\[(?!Verified\s)[^\]]*\]", "", cleaned)
+        cleaned = re.sub(r"\s*([.;])\s*([.;])+", r"\1", cleaned)
         cleaned = re.sub(r"^[\s.;]+", "", cleaned)
         return cleaned.strip()
 
@@ -202,6 +209,7 @@ class AnswerQualityValidator:
 
         Key Invariants:
         - Valid markers and unsupported personal claims can coexist; both classifications are preserved.
+        - Markers inside illustrative blocks cannot authenticate as resume evidence or candidate claims.
         - A verified organization or title does not authenticate unrelated engineering/deployment claims.
         - Evidence matching is token- and boundary-aware, avoiding unsafe substring matches (e.g. SQL inside NoSQL).
         - Candidate confirmation is NEVER treated as independent resume evidence.
@@ -217,7 +225,11 @@ class AnswerQualityValidator:
         # Extract genuine evidence
         ev_texts = cls._extract_evidence_text_set(evidence)
 
-        # Check evidence markers in text
+        # Cleaned text outside exempt blocks (placeholders, candidate confirmations, properly scoped illustrative scenarios)
+        cleaned = cls._strip_exempt_blocks(t)
+
+        # Check evidence markers in cleaned text outside illustrative blocks
+        # Invariant: Markers inside illustrative blocks are stripped and cannot set marker_verified, has_fabricated_marker, or is_resume_supported
         marker_pattern = re.compile(
             r"Verified (?:Project Title|Organization|Position|Dates|Responsibilities|Tools|Objective|Stack|Technologies):\s*['\"]?(.*?)(?=['\"]?(?:;|\.|\n|\]|$|\s+Verified ))",
             re.IGNORECASE
@@ -226,7 +238,7 @@ class AnswerQualityValidator:
         has_fabricated_marker = False
         marker_verified = False
 
-        for m in marker_pattern.finditer(t):
+        for m in marker_pattern.finditer(cleaned):
             has_ev_marker = True
             claimed_val = m.group(1).strip()
             if claimed_val.lower() in ["not explicitly enumerated", "none", "not specified", "unspecified", ""]:
@@ -243,9 +255,6 @@ class AnswerQualityValidator:
                 marker_verified = True
             else:
                 has_fabricated_marker = True
-
-        # Cleaned text outside exempt blocks (placeholders, candidate confirmations, properly scoped illustrative scenarios)
-        cleaned = cls._strip_exempt_blocks(t)
 
         # Check if text matches actual evidence directly using boundary-aware token matching
         # Evaluated on cleaned text so claims inside illustrative blocks cannot authenticate as resume evidence
@@ -287,9 +296,22 @@ class AnswerQualityValidator:
             r"\b(?:I|we|the candidate|he|she|they)?\s*(?:have\s+)?coordinated\s+deployment\b",
             r"\bdeployment\s+(?:was|were)\s+coordinated\b",
             r"\bcoordinated\s+deployment\b",
+            # Leadership, management, supervision, ownership
+            r"\b(?:I|we|the candidate|he|she|they)?\s*(?:have\s+)?led\s+(?:the\s+)?(?:deployment|team|engineering\s+team|project)\b",
+            r"\b(?:deployment|team|engineering\s+team)\s+(?:was|were)\s+led\b",
+            r"\bled\s+(?:the\s+)?deployment\b",
+            r"\b(?:I|we|the candidate|he|she|they)?\s*(?:have\s+)?managed\s+(?:the\s+)?(?:production\s+)?database\b",
+            r"\b(?:the\s+)?(?:production\s+)?database\s+(?:was|were)\s+managed\b",
+            r"\bmanaged\s+the\s+production\s+database\b",
+            r"\b(?:I|we|the candidate|he|she|they)?\s*(?:have\s+)?supervised\s+(?:the\s+)?(?:engineering\s+)?team\b",
+            r"\b(?:the\s+)?(?:engineering\s+)?team\s+(?:was|were)\s+supervised\b",
+            r"\bsupervised\s+the\s+engineering\s+team\b",
+            r"\b(?:I|we|the candidate|he|she|they)?\s*(?:have\s+)?owned\s+(?:the\s+)?(?:architecture\s+decisions?|architecture|system)\b",
+            r"\b(?:architecture\s+decisions?|architecture)\s+(?:were|was)\s+owned\b",
+            r"\bowned\s+the\s+architecture\s+decisions?\b",
             # General personal action verbs
-            r"\b(?:I|we|my|our)\s+(?:have\s+)?(?:designed|built|implemented|engineered|deployed|created|maintained|refactored|tested|optimized|authored|delivered|chose|decided|adhered|reached|contributed|collaborated|debugged|coordinated)\b",
-            r"\b(?:the candidate|he|she|they)\s+(?:contributed\s+to|collaborated\s+with|debugged|maintained|coordinated|designed|implemented|built|engineered|deployed|authored|created|developed)\b",
+            r"\b(?:I|we|my|our)\s+(?:have\s+)?(?:led|managed|supervised|owned|designed|built|implemented|engineered|deployed|created|maintained|refactored|tested|optimized|authored|delivered|chose|decided|adhered|reached|contributed|collaborated|debugged|coordinated)\b",
+            r"\b(?:the candidate|he|she|they)\s+(?:led|managed|supervised|owned|contributed\s+to|collaborated\s+with|debugged|maintained|coordinated|designed|implemented|built|engineered|deployed|authored|created|developed)\b",
             r"\b(?:My pull requests were reviewed|Successfully merged high-quality code|We maintain an extensive base)\b",
             # Architecture claims
             r"\b(?:decoupled presentation from backend processing logic|implemented a modular layered architecture|designed modular software components|deliberately chose a modular monolithic architecture|designed the architecture|chose microservices)\b",
@@ -420,6 +442,24 @@ class AnswerQualityValidator:
             (r"\b(?:I|we|the candidate|he|she|they)?\s*(?:have\s+)?coordinated\s+deployment\b", "Claims ungrounded deployment coordination"),
             (r"\bdeployment\s+(?:was|were)\s+coordinated\b", "Claims ungrounded deployment coordination (passive voice)"),
             (r"\bcoordinated\s+deployment\b", "Claims ungrounded deployment coordination"),
+
+            (r"\b(?:I|we|the candidate|he|she|they)?\s*(?:have\s+)?led\s+(?:the\s+)?(?:deployment|team|engineering\s+team|project)\b", "Claims ungrounded deployment or team leadership (led)"),
+            (r"\b(?:deployment|team|engineering\s+team)\s+(?:was|were)\s+led\b", "Claims ungrounded deployment or team leadership (led in passive voice)"),
+            (r"\bled\s+(?:the\s+)?deployment\b", "Claims ungrounded deployment leadership (led)"),
+
+            (r"\b(?:I|we|the candidate|he|she|they)?\s*(?:have\s+)?managed\s+(?:the\s+)?(?:production\s+)?database\b", "Claims ungrounded production database management"),
+            (r"\b(?:the\s+)?(?:production\s+)?database\s+(?:was|were)\s+managed\b", "Claims ungrounded database management (passive voice)"),
+            (r"\bmanaged\s+the\s+production\s+database\b", "Claims ungrounded database management"),
+
+            (r"\b(?:I|we|the candidate|he|she|they)?\s*(?:have\s+)?supervised\s+(?:the\s+)?(?:engineering\s+)?team\b", "Claims ungrounded engineering team supervision"),
+            (r"\b(?:the\s+)?(?:engineering\s+)?team\s+(?:was|were)\s+supervised\b", "Claims ungrounded engineering team supervision (passive voice)"),
+            (r"\bsupervised\s+the\s+engineering\s+team\b", "Claims ungrounded engineering team supervision"),
+
+            (r"\b(?:I|we|the candidate|he|she|they)?\s*(?:have\s+)?owned\s+(?:the\s+)?(?:architecture\s+decisions?|architecture|system)\b", "Claims ungrounded architecture ownership"),
+            (r"\b(?:the\s+)?(?:architecture\s+decisions?|architecture)\s+(?:were|was)\s+owned\b", "Claims ungrounded architecture ownership (passive voice)"),
+            (r"\bowned\s+the\s+architecture\s+decisions?\b", "Claims ungrounded architecture ownership"),
+
+            (r"\b(?:\w+\s+)?(?:was|were)\s+(?:led|managed|supervised|owned|deployed|coordinated|maintained|debugged|contributed|designed|implemented|architected|authored|created|written)\s+by\s+(?:me|us|our\s+team|the\s+candidate)\b", "Claims ungrounded candidate engineering action (passive with agent)"),
 
             # 3. Unsupported Architecture & Design Claims
             (r"\bdecoupled presentation from backend processing logic\b", "Claims ungrounded architecture decoupling for project without evidence"),
