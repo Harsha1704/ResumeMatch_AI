@@ -49,19 +49,36 @@ def generate_resume_improvement_suggestions(
                 unquantified_bullets.append((exp.get("organization") or "Experience", resp))
 
     if not has_metrics or unquantified_bullets or len(projects) == 0:
-        sample_before = unquantified_bullets[0][1] if unquantified_bullets else "Built a backend service using Python and Flask to process customer telemetry data."
-        sample_title = unquantified_bullets[0][0] if unquantified_bullets else "Engineering Project"
-        sample_after = f"Engineered {sample_title} service, improving request throughput by [measured throughput, e.g. +X%] and reducing response latency to [verified latency, e.g. <Y ms] (Insert only measured, verifiable values from your testing or production logs)."
+        if unquantified_bullets:
+            sample_title = unquantified_bullets[0][0]
+            sample_before = unquantified_bullets[0][1]
+            sample_after = (
+                f"[Strong Action Verb, e.g. Engineered / Built / Automated] [{sample_title}: Describe the actual project or task you completed], "
+                f"[Explain your genuine contribution] achieving [Add a measured result only if you have verified evidence, e.g. [measured throughput, e.g. +X%] or [verified latency, e.g. <Y ms]] "
+                f"(Template only: Insert only measured, verifiable values from your testing or production logs; never fabricate performance statistics)."
+            )
+        else:
+            sample_title = "Project / Technical Task"
+            sample_before = "[Template Example]: Completed project deliverables according to technical specifications."
+            sample_after = (
+                "[Strong Action Verb, e.g. Engineered / Built / Automated] [Describe the actual project or task you completed], "
+                "[Explain your genuine contribution] handling [count, e.g. verified volume] requests and achieving [Add a measured result only if you have verified evidence, e.g. [measured throughput, e.g. +X%]] "
+                "(Template only: Insert only measured, verifiable values from your actual work; never fabricate performance statistics)."
+            )
 
         before_after_list = [
             {
                 "original": sample_before,
                 "suggested": sample_after,
-                "rationale": "Demonstrates how to frame technical scope with measured scale and latency benchmarks using verifiable placeholders."
+                "rationale": "Demonstrates how to frame technical scope with measurable outcomes using neutral template placeholders."
             },
             {
-                "original": "Worked on REST APIs and database queries.",
-                "suggested": "Architected [count] REST API endpoints handling [volume] requests with [measured uptime/availability] SLA (Insert only measured, verifiable values).",
+                "original": "[Template Example]: Handled project assignments and updates.",
+                "suggested": (
+                    "[Strong Action Verb] [Describe the actual project or task you completed], [Explain your genuine contribution] "
+                    "resulting in [Add a measured result only if you have verified evidence] "
+                    "(Template only: Insert only measured, verifiable values; state only work actually performed)."
+                ),
                 "rationale": "Illustrates how to add quantifiable scope and reliability metrics using your actual verified measurements without inventing unmeasured claims."
             }
         ]
@@ -91,12 +108,12 @@ def generate_resume_improvement_suggestions(
             "evidence_context": "No public GitHub or personal portfolio URL was detected in candidate contact information.",
             "actionable_example": {
                 "before": "Header lists: email and phone number only.",
-                "after": "Header lists: email | phone | github.com/username | linkedin.com/in/username"
+                "after": "Header lists: [Contact Information] | [Link to verifiable public repository, e.g. github.com/username]"
             },
             "before_after_examples": [
                 {
-                    "original": "Header: email@example.com | +1 555-0100",
-                    "suggested": "Header: email@example.com | +1 555-0100 | github.com/username | linkedin.com/in/username",
+                    "original": "[Template Header]: email@example.com | +1 555-0100",
+                    "suggested": "[Template Header]: email@example.com | +1 555-0100 | github.com/username | linkedin.com/in/username",
                     "rationale": "Provides immediate code verifiability for technical recruiters."
                 }
             ],
@@ -117,12 +134,12 @@ def generate_resume_improvement_suggestions(
             "instruction": f"Ground '{sample_skill}' by describing how you applied it in your actual work or projects. Describe only features, tasks, or modules you genuinely built.",
             "actionable_example": {
                 "before": f"Technical Skills: {', '.join(sample_skills)} (never mentioned in project descriptions).",
-                "after": f"Project bullet: Applied {sample_skill} to [describe specific problem solved, e.g. service integration or data processing] (Describe only work actually performed)."
+                "after": f"[Template Project Bullet]: Utilized {sample_skill} to [Describe the actual project or task you completed], [Explain your genuine contribution] (Describe only work actually performed)."
             },
             "before_after_examples": [
                 {
-                    "original": f"Technical Skills: {', '.join(sample_skills)}",
-                    "suggested": f"Project bullet: Utilized {sample_skill} to [describe genuine feature or deliverable] (State only actual responsibilities and outcomes).",
+                    "original": f"[Template Skills List]: {', '.join(sample_skills)}",
+                    "suggested": f"[Template Project Bullet]: Utilized {sample_skill} to [Describe the actual project or task you completed] [Explain your genuine contribution] (State only actual responsibilities and outcomes).",
                     "rationale": "Transforms abstract skill claims into verifiable project evidence without inventing unperformed tasks."
                 }
             ],
@@ -141,13 +158,13 @@ def generate_resume_improvement_suggestions(
             "evidence_context": f"Found {len(passive_verbs)} instances of passive wording like '{passive_verbs[0]}'.",
             "instruction": "Replace passive introductory wording with strong engineering action verbs that accurately reflect your actual level of contribution.",
             "actionable_example": {
-                "before": f"{found_verb} application components.",
-                "after": f"[Strong Action Verb, e.g. Architected / Engineered / Automated] [actual component or task] to [achieve verified objective] (Describe only genuine ownership)."
+                "before": f"[Template Example]: {found_verb} project components.",
+                "after": f"[Strong Action Verb, e.g. Architected / Engineered / Automated] [Describe the actual project or task you completed] to [Explain your genuine contribution] (Describe only genuine ownership)."
             },
             "before_after_examples": [
                 {
-                    "original": f"{found_verb} application code and database schema.",
-                    "suggested": "Engineered and validated [actual project component] with [verifiable unit tests or documentation] (Describe only work actually performed).",
+                    "original": f"[Template Example]: {found_verb} project components.",
+                    "suggested": f"[Strong Action Verb] [Describe the actual project or task you completed], [Explain your genuine contribution] with [verified unit tests or documentation] (Describe only work actually performed).",
                     "rationale": "Emphasizes technical ownership and engineering rigor without attributing unverified architecture work."
                 }
             ],

@@ -84,12 +84,12 @@ SAMPLE_FULL_ANALYSIS = {
     "projects": [
         {
             "title": "Multimodal Resume Matching Engine",
-            "description": "Architected low-latency microservice with Python, Docker, and Scikit-Learn. Improved matching throughput by 42%.",
+            "description": "Architected low-latency microservice with Python, Docker, Scikit-Learn, and SQL queries for REST APIs. Improved matching throughput by 42%.",
             "technologies": ["Python", "Docker", "Scikit-Learn", "REST APIs", "SQL"]
         },
         {
             "title": "Distributed Task Scheduler",
-            "description": "Developed distributed job queue handling 10,000 tasks/minute using Python, Redis, and PostgreSQL.",
+            "description": "Developed distributed job queue handling 10,000 tasks/minute using Python, Redis, and PostgreSQL with Git on Linux.",
             "technologies": ["Python", "PostgreSQL", "Git", "Linux"]
         }
     ],
@@ -97,7 +97,7 @@ SAMPLE_FULL_ANALYSIS = {
         {
             "organization": "Cognitive AI Labs",
             "position": "Backend & ML Intern",
-            "responsibilities": ["Maintained REST API endpoints", "Containerized pipelines using Docker"],
+            "responsibilities": ["Maintained REST API endpoints with Flask", "Containerized pipelines using Docker"],
             "technologies": ["Python", "Flask", "Docker"]
         }
     ],

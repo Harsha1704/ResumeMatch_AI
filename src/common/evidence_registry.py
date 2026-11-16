@@ -173,10 +173,12 @@ def matches_skill_token(text: str, skill_phrase: str) -> bool:
     if not text or not skill_phrase:
         return False
     phrase_clean = skill_phrase.strip().lower()
-    if phrase_clean in ("c++", "cpp"):
-        return bool(re.search(r"(?<![\w#+])(?:c\+\+|cpp)(?![\w#+])", text, re.I))
-    elif phrase_clean in ("c#", "csharp"):
-        return bool(re.search(r"(?<![\w#+])(?:c#|csharp)(?![\w#+])", text, re.I))
+    if phrase_clean in ("c++", "cpp", "c plus plus"):
+        return bool(re.search(r"(?<![\w#+])(?:c\+\+|cpp|c\s+plus\s+plus)(?![\w#+])", text, re.I))
+    elif phrase_clean in ("c#", "csharp", "c sharp"):
+        return bool(re.search(r"(?<![\w#+])(?:c#|csharp|c\s+sharp)(?![\w#+])", text, re.I))
+    elif phrase_clean == "c":
+        return bool(re.search(r"(?<![\w#+])c(?![\w#+])", text, re.I))
     elif phrase_clean in (".net", "dotnet"):
         return bool(re.search(r"(?<![\w#+])(?:\.net|dotnet)(?![\w#+])", text, re.I))
     elif phrase_clean in ("node.js", "nodejs", "node"):
@@ -185,6 +187,8 @@ def matches_skill_token(text: str, skill_phrase: str) -> bool:
         return bool(re.search(r"\bci/cd\b|\bcicd\b", text, re.I))
     elif phrase_clean in ("pl/sql", "plsql"):
         return bool(re.search(r"\bpl/sql\b|\bplsql\b", text, re.I))
+    elif phrase_clean == "r":
+        return bool(re.search(r"(?<![\w#+])r(?![\w#+])", text, re.I))
     else:
         return bool(re.search(rf"\b{re.escape(phrase_clean)}\b", text, re.I))
 
