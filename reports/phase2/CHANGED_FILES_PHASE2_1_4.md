@@ -2,41 +2,42 @@
 
 **Repository:** `Harsha1704/ResumeMatch_AI`  
 **Branch:** `fix/resumematch-final-repair`  
-**Base Commit:** `220e9bf`  
+**Base Commit:** `7886a91`  
 
 ---
 
 ## 1. Modified Source Files
 
 ### `src/interview/answer_validator.py`
-- **Illustrative Block Scoping (`_strip_illustrative_blocks`)**:
-  - Factored out dedicated iterative stripping of properly matched paired delimiters (`[Illustrative Scenario]: ... [/Illustrative Scenario]` and `[Illustrative Model Scenario]: ... [/Illustrative Model Scenario]`).
-  - Unclosed blocks are preserved so ungrounded candidate claims cannot hide behind malformed markers.
-- **Marker Scope Isolation (`classify_statement`)**:
-  - Calculates `non_illustrative_text = cls._strip_illustrative_blocks(t)` first.
-  - Determines `is_missing` and `is_candidate` exclusively from content outside properly matched illustrative blocks.
-  - Prevents candidate-confirmation or missing-information markers inside illustrative examples from setting `is_candidate_confirmed` or `is_missing_info_placeholder`.
-  - Prevents markers inside illustrative examples from suppressing genuine resume-supported evidence outside the scenario.
-  - Ensures markers outside illustrative blocks continue to authenticate or flag as appropriate.
+- **Strict Matching Delimiter Types (`_strip_illustrative_blocks`)**:
+  - Treats `[Illustrative Scenario]` and `[Illustrative Model Scenario]` as distinct block types.
+  - Matches each opening delimiter only with its corresponding closing delimiter (`[/Illustrative Scenario]` and `[/Illustrative Model Scenario]` respectively).
+  - Rejects cross-paired delimiters, preserving enclosed content for auditing.
+- **Stack-Based Illustrative Markup Validator (`audit_answer_for_unsupported_first_person_claims`)**:
+  - Validates opening and closing tags using a stack in document order.
+  - Detects and reports mismatched delimiter types (`Found malformed illustrative block: mismatched delimiter types ([Illustrative ...] closed by [/Illustrative ...])`), unclosed tags, and orphaned closing delimiters even when total opening and closing counts are equal.
+  - Preserves nested and repeated valid matching blocks.
 
 ---
 
 ## 2. Modified Test Files
 
 ### `tests/test_phase2_1_4_claim_level_evidence.py`
-- Expanded test suite to 30 tests (all passing):
-  - `test_26_candidate_confirmation_marker_inside_illustrative_block_does_not_set_candidate_confirmed`: Confirms candidate-confirmation marker inside an illustrative block does not set `is_candidate_confirmed`.
-  - `test_27_missing_information_marker_inside_illustrative_block_does_not_set_missing_placeholder`: Confirms missing-information placeholder inside an illustrative block does not set `is_missing_info_placeholder`.
-  - `test_28_genuine_verified_evidence_outside_block_remains_resume_supported_despite_candidate_marker_inside_example`: Confirms genuine resume evidence outside the block remains `is_resume_supported = True` even when a candidate-confirmation marker appears inside the example.
-  - `test_29_candidate_confirmation_marker_outside_block_still_works`: Confirms candidate-confirmation marker outside the block continues to set `is_candidate_confirmed = True`.
-  - `test_30_missing_information_marker_outside_block_still_works`: Confirms missing-information marker outside the block continues to set `is_missing_info_placeholder = True`.
+- Expanded test suite to 37 tests (all passing):
+  - `test_31_valid_scenario_opening_and_closing_delimiters_are_stripped`: Verifies Scenario paired delimiters are cleanly stripped and exempt.
+  - `test_32_valid_model_scenario_opening_and_closing_delimiters_are_stripped`: Verifies Model Scenario paired delimiters are cleanly stripped and exempt.
+  - `test_33_scenario_opening_with_model_scenario_closing_is_not_exempted`: Verifies Scenario opening with Model Scenario closing is not exempted.
+  - `test_34_model_scenario_opening_with_scenario_closing_is_not_exempted`: Verifies Model Scenario opening with Scenario closing is not exempted.
+  - `test_35_mismatched_markup_is_reported_by_audit_even_when_counts_equal`: Verifies mismatched pairs are reported by audit even when opening and closing counts happen to be equal.
+  - `test_36_unsupported_personal_claims_inside_malformed_blocks_remain_detectable`: Verifies claims inside malformed or mismatched blocks remain fully detectable.
+  - `test_37_nested_and_repeated_valid_matching_blocks_preserved`: Verifies nested matching blocks (e.g. Model Scenario nested inside Scenario) are handled cleanly without error.
 
 ---
 
 ## 3. Updated Documentation & Reports
 
 ### `reports/phase2/PHASE2_1_4_CLAIM_LEVEL_EVIDENCE_REPORT.md`
-- Detailed audit report documenting marker isolation architecture, failure modes prevented, and comprehensive test metrics.
+- Detailed audit report documenting delimiter type enforcement, stack-based markup parsing, and complete test suite results.
 
 ### `reports/phase2/CHANGED_FILES_PHASE2_1_4.md`
 - Manifest of all modified files for Phase 2.1.4.

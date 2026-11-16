@@ -659,3 +659,138 @@ class TestPhase214ClaimLevelEvidenceValidation:
         cls_res = AnswerQualityValidator.classify_statement(text)
         assert cls_res["is_illustrative_scenario"] is True
         assert cls_res["is_missing_info_placeholder"] is True, "Missing-info placeholder outside block must set missing-placeholder"
+
+    # -------------------------------------------------------------------------
+    # 31. Valid Scenario opening and closing delimiters are stripped
+    # -------------------------------------------------------------------------
+    def test_31_valid_scenario_opening_and_closing_delimiters_are_stripped(self):
+        """Valid Scenario paired delimiters [Illustrative Scenario] ... [/Illustrative Scenario] are stripped cleanly."""
+        text = (
+            "[Illustrative Scenario]: In this hypothetical situation, "
+            "I coordinated deployment. [/Illustrative Scenario]"
+        )
+        stripped = AnswerQualityValidator._strip_illustrative_blocks(text)
+        assert stripped == "", "Valid Scenario block must be completely stripped"
+
+        cls_res = AnswerQualityValidator.classify_statement(text)
+        assert cls_res["is_illustrative_scenario"] is True
+        assert cls_res["is_unsupported_personal_claim"] is False, "Personal claim inside valid Scenario block is exempt"
+
+        issues = AnswerQualityValidator.audit_answer_for_unsupported_first_person_claims(text)
+        assert len(issues) == 0, f"Expected no audit issues for valid Scenario block, got: {issues}"
+
+    # -------------------------------------------------------------------------
+    # 32. Valid Model Scenario opening and closing delimiters are stripped
+    # -------------------------------------------------------------------------
+    def test_32_valid_model_scenario_opening_and_closing_delimiters_are_stripped(self):
+        """Valid Model Scenario paired delimiters [Illustrative Model Scenario] ... [/Illustrative Model Scenario] are stripped cleanly."""
+        text = (
+            "[Illustrative Model Scenario]: In this model architecture walkthrough, "
+            "I owned the architecture decisions. [/Illustrative Model Scenario]"
+        )
+        stripped = AnswerQualityValidator._strip_illustrative_blocks(text)
+        assert stripped == "", "Valid Model Scenario block must be completely stripped"
+
+        cls_res = AnswerQualityValidator.classify_statement(text)
+        assert cls_res["is_illustrative_scenario"] is True
+        assert cls_res["is_unsupported_personal_claim"] is False, "Personal claim inside valid Model Scenario block is exempt"
+
+        issues = AnswerQualityValidator.audit_answer_for_unsupported_first_person_claims(text)
+        assert len(issues) == 0, f"Expected no audit issues for valid Model Scenario block, got: {issues}"
+
+    # -------------------------------------------------------------------------
+    # 33. Scenario opening with Model Scenario closing is not exempted
+    # -------------------------------------------------------------------------
+    def test_33_scenario_opening_with_model_scenario_closing_is_not_exempted(self):
+        """Mismatched block (Scenario opening with Model Scenario closing) is not stripped or exempted."""
+        text = (
+            "[Illustrative Scenario]: A sample deployment procedure. "
+            "I coordinated deployment. [/Illustrative Model Scenario]"
+        )
+        stripped = AnswerQualityValidator._strip_illustrative_blocks(text)
+        assert "I coordinated deployment" in stripped, "Mismatched delimiters must not be stripped"
+
+        cls_res = AnswerQualityValidator.classify_statement(text)
+        assert cls_res["is_unsupported_personal_claim"] is True, "Claim inside mismatched block must be flagged"
+
+        issues = AnswerQualityValidator.audit_answer_for_unsupported_first_person_claims(text)
+        assert len(issues) > 0
+        assert any("mismatched" in iss.lower() or "malformed" in iss.lower() for iss in issues)
+
+    # -------------------------------------------------------------------------
+    # 34. Model Scenario opening with Scenario closing is not exempted
+    # -------------------------------------------------------------------------
+    def test_34_model_scenario_opening_with_scenario_closing_is_not_exempted(self):
+        """Mismatched block (Model Scenario opening with Scenario closing) is not stripped or exempted."""
+        text = (
+            "[Illustrative Model Scenario]: A sample architecture walkthrough. "
+            "I owned the architecture decisions. [/Illustrative Scenario]"
+        )
+        stripped = AnswerQualityValidator._strip_illustrative_blocks(text)
+        assert "I owned the architecture decisions" in stripped, "Mismatched delimiters must not be stripped"
+
+        cls_res = AnswerQualityValidator.classify_statement(text)
+        assert cls_res["is_unsupported_personal_claim"] is True, "Claim inside mismatched block must be flagged"
+
+        issues = AnswerQualityValidator.audit_answer_for_unsupported_first_person_claims(text)
+        assert len(issues) > 0
+        assert any("mismatched" in iss.lower() or "malformed" in iss.lower() for iss in issues)
+
+    # -------------------------------------------------------------------------
+    # 35. Mismatched markup is reported by audit even when counts equal
+    # -------------------------------------------------------------------------
+    def test_35_mismatched_markup_is_reported_by_audit_even_when_counts_equal(self):
+        """Mismatched delimiter pairs are detected and reported even if total opening and closing counts are equal."""
+        text = (
+            "[Illustrative Scenario]: First block. [/Illustrative Model Scenario] "
+            "[Illustrative Model Scenario]: Second block. [/Illustrative Scenario]"
+        )
+        issues = AnswerQualityValidator.audit_answer_for_unsupported_first_person_claims(text)
+        assert len(issues) > 0
+        assert any("mismatched delimiter types" in iss.lower() for iss in issues), f"Expected mismatched delimiter types in: {issues}"
+
+    # -------------------------------------------------------------------------
+    # 36. Unsupported personal claims inside malformed blocks remain detectable
+    # -------------------------------------------------------------------------
+    def test_36_unsupported_personal_claims_inside_malformed_blocks_remain_detectable(self):
+        """Unsupported claims inside malformed blocks (e.g. unclosed or mismatched) remain detectable by both auditor and classifier."""
+        malformed_examples = [
+            ("[Illustrative Scenario]: In this workflow, I led the deployment. [/Illustrative Model Scenario]", "led"),
+            ("[Illustrative Model Scenario]: In this database, I managed the production database. [/Illustrative Scenario]", "database"),
+            ("[Illustrative Scenario]: In this system, I supervised the engineering team.", "team"),
+        ]
+
+        for text, keyword in malformed_examples:
+            cls_res = AnswerQualityValidator.classify_statement(text)
+            assert cls_res["is_unsupported_personal_claim"] is True, f"Claim inside malformed text '{text}' must be classified as unsupported"
+
+            issues = AnswerQualityValidator.audit_answer_for_unsupported_first_person_claims(text)
+            assert len(issues) >= 2, f"Expected both malformed delimiter issue and unsupported claim issue in: {issues}"
+            assert any("malformed" in iss.lower() or "mismatched" in iss.lower() for iss in issues)
+            assert any(keyword in iss.lower() for iss in issues)
+
+    # -------------------------------------------------------------------------
+    # 37. Nested and repeated valid matching blocks preserved
+    # -------------------------------------------------------------------------
+    def test_37_nested_and_repeated_valid_matching_blocks_preserved(self):
+        """Nested and repeated matching blocks are handled cleanly, stripping valid inner/outer blocks."""
+        text = (
+            "[Illustrative Scenario]: Outer scenario context "
+            "[Illustrative Model Scenario]: Inner model scenario [/Illustrative Model Scenario] "
+            "Outer continuation [/Illustrative Scenario] "
+            "I authored automated unit tests."
+        )
+        stripped = AnswerQualityValidator._strip_illustrative_blocks(text)
+        assert "I authored automated unit tests" in stripped
+        assert "Outer scenario context" not in stripped
+        assert "Inner model scenario" not in stripped
+
+        cls_res = AnswerQualityValidator.classify_statement(text)
+        assert cls_res["is_illustrative_scenario"] is True
+        assert cls_res["is_unsupported_personal_claim"] is True, "Outside claim must be detected"
+
+        issues = AnswerQualityValidator.audit_answer_for_unsupported_first_person_claims(text)
+        assert len(issues) > 0
+        assert not any("malformed" in iss.lower() or "mismatched" in iss.lower() for iss in issues), f"Nested properly matched tags must not be flagged malformed: {issues}"
+        assert any("test" in iss.lower() or "authored" in iss.lower() for iss in issues)
+

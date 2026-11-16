@@ -130,16 +130,26 @@ class AnswerQualityValidator:
     def _strip_illustrative_blocks(cls, text: str) -> str:
         """
         Strips only properly matched explicit illustrative scenario blocks.
-        Supports [Illustrative Scenario]: ... [/Illustrative Scenario] and
-        [Illustrative Model Scenario]: ... [/Illustrative Model Scenario].
+        Supports:
+        - [Illustrative Scenario]: ... [/Illustrative Scenario]
+        - [Illustrative Model Scenario]: ... [/Illustrative Model Scenario]
+        Each opening delimiter must match its corresponding closing delimiter.
+        Mismatched delimiters (e.g. Scenario opening with Model Scenario closing)
+        are not matched and remain unstripped for audit inspection.
         Iteratively strips innermost/single blocks so nested or repeated blocks are handled cleanly.
         """
         if not text:
             return ""
         explicit_illustrative_pattern = re.compile(
-            r"\[Illustrative\s+(?:Model\s+)?Scenario[^\]]*\]:?"
+            r"(?:"
+            r"\[Illustrative\s+Scenario[^\]]*\]:?"
             r"(?:(?!\[Illustrative\s+(?:Model\s+)?Scenario).)*?"
-            r"\[/\s*Illustrative\s+(?:Model\s+)?Scenario\s*:?\]",
+            r"\[/\s*Illustrative\s+Scenario\s*:?\]"
+            r"|"
+            r"\[Illustrative\s+Model\s+Scenario[^\]]*\]:?"
+            r"(?:(?!\[Illustrative\s+(?:Model\s+)?Scenario).)*?"
+            r"\[/\s*Illustrative\s+Model\s+Scenario\s*:?\]"
+            r")",
             flags=re.IGNORECASE | re.DOTALL
         )
         cleaned = text
@@ -418,14 +428,35 @@ class AnswerQualityValidator:
 
         ev_texts = cls._extract_evidence_text_set(verified_evidence)
 
-        # Flag malformed illustrative markup for review (unclosed opening tag or orphaned closing delimiter)
-        open_count = len(re.findall(r"\[Illustrative\s+(?:Model\s+)?Scenario[^\]]*\]", text, re.IGNORECASE))
-        close_count = len(re.findall(r"\[/\s*Illustrative\s+(?:Model\s+)?Scenario\s*:?\]", text, re.IGNORECASE))
-        if open_count != close_count:
-            if open_count > close_count:
-                issues.append("Found malformed illustrative block: opening delimiter without matching [/Illustrative Scenario] closing delimiter")
+        # Check for malformed, unclosed, orphaned, or mismatched illustrative delimiters
+        tag_pattern = re.compile(
+            r"\[(/\s*)?Illustrative\s+(Model\s+)?Scenario[^\]]*\]",
+            re.IGNORECASE
+        )
+        stack: List[str] = []
+        for tag_m in tag_pattern.finditer(text):
+            is_close = bool(tag_m.group(1))
+            is_model = bool(tag_m.group(2))
+            tag_type = "Model Scenario" if is_model else "Scenario"
+            if not is_close:
+                stack.append(tag_type)
             else:
-                issues.append("Found malformed illustrative block: orphaned [/Illustrative Scenario] closing delimiter without opening delimiter")
+                if not stack:
+                    issues.append(
+                        f"Found malformed illustrative block: orphaned [/{tag_m.group(0).lstrip('[/')} closing delimiter without opening delimiter"
+                    )
+                else:
+                    open_type = stack.pop()
+                    if open_type != tag_type:
+                        issues.append(
+                            f"Found malformed illustrative block: mismatched delimiter types "
+                            f"([Illustrative {open_type}] closed by [/Illustrative {tag_type}])"
+                        )
+        while stack:
+            unclosed_type = stack.pop()
+            issues.append(
+                f"Found malformed illustrative block: opening delimiter [Illustrative {unclosed_type}] without matching closing delimiter"
+            )
 
         # Strip out bracketed placeholders, candidate confirmations, and properly matched illustrative scenarios
         cleaned = cls._strip_exempt_blocks(text)
