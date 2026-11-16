@@ -30,6 +30,38 @@ class AnswerQualityValidator:
     """
 
     @classmethod
+    def classify_statement(cls, text: str) -> Dict[str, bool]:
+        """
+        Classifies an answer excerpt into distinct evidence and knowledge categories:
+        1. is_resume_supported: Contains verified resume evidence labels or verified facts
+        2. is_candidate_confirmed: Marked explicitly with [Candidate Confirmed: ...]
+        3. is_general_technical: Objective pedagogical or technical description
+        4. is_illustrative_scenario: Marked with [Illustrative Scenario...]
+        5. is_missing_info_placeholder: Marked with [Candidate to specify: ...]
+
+        Never treats candidate confirmation as independent resume evidence.
+        """
+        t = text.strip()
+        is_missing = bool(re.search(r"\[Candidate to specify:[^\]]*\]", t, re.IGNORECASE))
+        is_candidate = bool(re.search(r"\[Candidate Confirmed[^\]]*\]", t, re.IGNORECASE))
+        is_illustrative = bool(re.search(r"\[Illustrative (?:Model )?Scenario[^\]]*\]", t, re.IGNORECASE))
+        is_resume = bool(re.search(r"Verified (?:Organization|Position|Dates|Responsibilities|Tools|Objective):", t, re.IGNORECASE))
+
+        # Candidate confirmation is NOT independent resume evidence
+        if is_candidate:
+            is_resume = False
+
+        is_general = not (is_missing or is_candidate or is_illustrative or is_resume)
+
+        return {
+            "is_resume_supported": is_resume,
+            "is_candidate_confirmed": is_candidate,
+            "is_general_technical": is_general,
+            "is_illustrative_scenario": is_illustrative,
+            "is_missing_info_placeholder": is_missing
+        }
+
+    @classmethod
     def audit_answer_for_unsupported_first_person_claims(
         cls,
         text: str,
@@ -45,13 +77,16 @@ class AnswerQualityValidator:
         if not text:
             return issues
 
-        # Strip out bracketed placeholders, candidate confirmations, and illustrative model scenarios
+        # Strip out bracketed placeholders, candidate confirmations, and illustrative scenarios
         cleaned = re.sub(r"\[Candidate to specify:[^\]]*\]", "", text, flags=re.IGNORECASE)
-        cleaned = re.sub(r"\[Illustrative Model Scenario[^\]]*\]:[^\n.]*", "", cleaned, flags=re.IGNORECASE)
         cleaned = re.sub(r"\[Candidate Confirmed[^\]]*\]", "", cleaned, flags=re.IGNORECASE)
+        cleaned = re.sub(r"\[Illustrative (?:Model )?Scenario[^\]]*\]:.*?(?=\[Candidate to specify:|$)", "", text, flags=re.IGNORECASE | re.DOTALL)
+        cleaned = re.sub(r"\[Illustrative (?:Model )?Scenario[^\]]*\]:[^\n.]*", "", cleaned, flags=re.IGNORECASE)
         cleaned = re.sub(r"\[[^\]]*\]", "", cleaned)
 
         unsupported_patterns = [
+            (r"\bsoftware engineering duties\b", "Uses forbidden generic positive fallback 'software engineering duties'"),
+            (r"\bsoftware development duties\b", "Uses forbidden generic fallback 'software development duties'"),
             (r"\bI designed modular software components\b", "Claims ungrounded modular component design"),
             (r"\bI implemented modular services\b", "Claims ungrounded modular service implementation"),
             (r"\bI authored automated unit tests\b", "Claims ungrounded automated unit test authorship"),
@@ -69,7 +104,12 @@ class AnswerQualityValidator:
             (r"\bI validated '[^']+' by implementing automated\b", "Claims ungrounded automated unit test validation"),
             (r"\bI authored comprehensive unit tests\b", "Claims ungrounded comprehensive unit tests"),
             (r"\bI designed a modular layered architecture\b", "Claims ungrounded layered architecture design"),
-            (r"\bI deliberately chose a modular monolithic architecture\b", "Claims ungrounded architecture choice")
+            (r"\bI deliberately chose a modular monolithic architecture\b", "Claims ungrounded architecture choice"),
+            (r"\bWe maintain an extensive base of unit tests\b", "Claims unevidenced existing testing base"),
+            (r"\bI adhered to a structured ['\"]?30-minute rule\b", "Claims unevidenced 30-minute rule adherence"),
+            (r"\bMy internship permanently instilled\b", "Claims ungrounded personal internship habits"),
+            (r"\bfollowing git and code review conventions\b", "Claims ungrounded adherence to conventions"),
+            (r"\bA senior engineer commented: ['\"]?Catching generic Exception\b", "Claims fabricated code review interaction")
         ]
 
         for pat, desc in unsupported_patterns:
@@ -158,6 +198,35 @@ class AnswerQualityValidator:
             for fpi in fp_issues:
                 issues.append(fpi)
                 score -= 15.0
+
+            # Audit follow-up questions reference answers
+            follow_ups = question_record.get("follow_up_questions", [])
+            if isinstance(follow_ups, list):
+                for idx, fu in enumerate(follow_ups):
+                    if isinstance(fu, dict):
+                        ref_ans = fu.get("reference_answer", "")
+                        fu_issues = cls.audit_answer_for_unsupported_first_person_claims(ref_ans)
+                        for fui in fu_issues:
+                            issues.append(f"Follow-up {idx+1} reference answer: {fui}")
+                            score -= 10.0
+
+            # Audit step concrete examples
+            if isinstance(steps, list):
+                for idx, st in enumerate(steps):
+                    if isinstance(st, dict):
+                        conc_ex = st.get("concrete_example", "")
+                        st_issues = cls.audit_answer_for_unsupported_first_person_claims(conc_ex)
+                        for sti in st_issues:
+                            issues.append(f"Step {idx+1} concrete example: {sti}")
+                            score -= 10.0
+
+            # Audit examples field
+            examples_text = question_record.get("examples", "")
+            if isinstance(examples_text, str):
+                ex_issues = cls.audit_answer_for_unsupported_first_person_claims(examples_text)
+                for exi in ex_issues:
+                    issues.append(f"Examples field: {exi}")
+                    score -= 10.0
 
         # 9. Code snippet syntax check (if present and labeled as Python)
         if code and isinstance(code, str) and len(code.strip()) > 0:

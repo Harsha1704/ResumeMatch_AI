@@ -918,7 +918,8 @@ class InterviewQuestionGenerator:
             org = it["organization"]
             dates = it["dates"]
             techs = ", ".join(it["technologies"]) or "practical engineering tools"
-            resps = "; ".join(it["responsibilities"]) or "software development duties"
+            resps = "; ".join(it["responsibilities"]) if it.get("responsibilities") else ""
+            resps_guidance = f"Focus on {resps} and how you applied {techs}." if resps else f"Specify your assigned tasks and how you applied {techs}."
 
             # C1: Core Internship Contribution
             q1_text = f"During your internship at {org} ({dates}), what were your primary technical responsibilities and contributions?"
@@ -959,7 +960,7 @@ class InterviewQuestionGenerator:
                 "interview_tips": grounded_resp["interview_tips"],
                 "missing_personal_details": grounded_resp["missing_personal_details"],
                 "evidence_sources": [f"Internship Record: {org} ({dates})", f"Technologies: {techs}"],
-                "answer_guidance": f"Describe your specific deliverables at {org}. Focus on {resps} and how you applied {techs}.",
+                "answer_guidance": f"Describe your specific deliverables at {org}. {resps_guidance}",
                 "expected_key_points": [
                     f"Team context and objective at {org}",
                     f"Hands-on contributions using {techs}",
