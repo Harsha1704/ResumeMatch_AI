@@ -132,7 +132,14 @@ class ResumeMatchingEngine:
                 "experience_analysis": {},
                 "education_analysis": {},
                 "recommendations": [],
-                "learning_resources": []
+                "learning_resources": [],
+                "candidate_profile": parsed_resume.get("candidate_profile", {}),
+                "evidence_grounded_matches": [],
+                "scorecard": {},
+                "responsibilities": [],
+                "qualifications": [],
+                "tools_and_technologies": [],
+                "experience_requirements": {}
             }
 
         warnings.extend(parsed_resume.get("warnings", []))
@@ -146,7 +153,14 @@ class ResumeMatchingEngine:
                 "status": "error",
                 "error_message": "Job description input was empty or invalid.",
                 "warnings": warnings,
-                "predicted_class": "No Fit"
+                "predicted_class": "No Fit",
+                "candidate_profile": parsed_resume.get("candidate_profile", {}),
+                "evidence_grounded_matches": [],
+                "scorecard": {},
+                "responsibilities": [],
+                "qualifications": [],
+                "tools_and_technologies": [],
+                "experience_requirements": {}
             }
 
         detected_job_title = job_res["job_title"]
@@ -389,6 +403,105 @@ class ResumeMatchingEngine:
         # Build unified evidence registry
         evidence_reg = build_unified_evidence_registry(result_payload)
         result_payload["evidence_registry"] = evidence_reg.build_summary_dossier()
+
+        # Build unified evidence-grounded matches table
+        evidence_grounded_matches = []
+        for canon_lower, req in evidence_reg.job_requirements.items():
+            canon_skill = req.name
+            tier = req.tier
+            job_sentence = req.supporting_sentence
+
+            rec = evidence_reg.evidence_records.get(canon_lower)
+            if rec and rec.evidence_type in (
+                "demonstrated", "demonstrated_project", "demonstrated_internship",
+                "demonstrated_experience", "user_confirmed"
+            ):
+                source = (
+                    "project" if "project" in rec.evidence_type
+                    else ("internship" if "internship" in rec.evidence_type
+                          else ("professional_experience" if "experience" in rec.evidence_type
+                                else "confirmed"))
+                )
+                classification = "fully_supported"
+                confidence = float(rec.confidence) if rec.confidence else 0.95
+                excerpt = rec.supporting_text
+                explanation = f"Candidate demonstrates verifiable application of {canon_skill} with contextual project or experience details."
+            elif rec and rec.evidence_type == "partially_evidenced":
+                source = "skills_section" if "skills" in rec.supporting_text.lower() else "project"
+                classification = "partially_supported"
+                confidence = 0.65
+                excerpt = rec.supporting_text
+                explanation = f"Candidate mentions {canon_skill} in profile or technical stack without comprehensive implementation context."
+            elif rec and rec.evidence_type in ("explicit_mention", "explicitly_mentioned"):
+                source = "skills_section"
+                classification = "explicitly_mentioned"
+                confidence = 0.50
+                excerpt = rec.supporting_text
+                explanation = f"Candidate explicitly lists {canon_skill} in resume skills inventory."
+            else:
+                source = "none"
+                classification = "missing_evidence"
+                confidence = 0.0
+                excerpt = "No direct evidence documented in candidate resume"
+                explanation = f"No verifiable usage or explicit mention of {canon_skill} documented in candidate resume."
+
+            evidence_grounded_matches.append({
+                "skill": canon_skill,
+                "tier": tier,
+                "job_requirement_sentence": job_sentence,
+                "candidate_evidence": excerpt,
+                "evidence_source": source,
+                "match_classification": classification,
+                "confidence": round(confidence, 2),
+                "explanation": explanation
+            })
+
+        # Scorecard cleanly separating dimensions without double-counting
+        scorecard = {
+            "ml_compatibility": {
+                "predicted_class": predicted_class,
+                "compatibility_score": compatibility_score,
+                "model_confidence": model_confidence,
+                "probabilities": class_probabilities,
+                "model_used": model_used
+            },
+            "skill_coverage": {
+                "full_coverage_pct": full_cov_pct,
+                "any_coverage_pct": any_cov_pct,
+                "matched_required_count": gap_res["matched_required_count"],
+                "total_required_count": gap_res["total_required_count"],
+                "matched_preferred_count": gap_res["matched_preferred_count"],
+                "total_preferred_count": gap_res["total_preferred_count"],
+                "fully_matched_required_count": gap_res["fully_matched_required_count"],
+                "partially_evidenced_required_count": gap_res["partially_evidenced_required_count"]
+            },
+            "experience_coverage": {
+                "job_required_years": job_exp_years,
+                "candidate_experience_years": exp_res.get("resume_years_exp", exp_res.get("experience_summary", {}).get("full_time_years", 0.0)),
+                "meets_experience_requirement": exp_res.get("meets_experience_requirement", False),
+                "has_full_time": exp_res.get("experience_summary", {}).get("has_full_time", False),
+                "has_internships": exp_res.get("experience_summary", {}).get("has_internships", False),
+                "internships_count": exp_res.get("experience_summary", {}).get("internships_count", 0),
+                "has_projects": exp_res.get("experience_summary", {}).get("has_projects", False),
+                "projects_count": exp_res.get("experience_summary", {}).get("projects_count", 0),
+                "primary_classification": exp_res.get("experience_summary", {}).get("primary_classification", "Experience not established"),
+                "display_summary": exp_res.get("experience_summary", {}).get("display_summary", "")
+            },
+            "qualification_coverage": {
+                "detected_job_requirements": job_res.get("education_requirements", []),
+                "candidate_degrees": [e.get("degree_name") for e in parsed_resume.get("candidate_profile", {}).get("education", [])] if parsed_resume.get("candidate_profile", {}).get("education") else [],
+                "education_verified": has_degree_mention,
+                "notes": edu_notes
+            }
+        }
+
+        result_payload["evidence_grounded_matches"] = evidence_grounded_matches
+        result_payload["scorecard"] = scorecard
+        result_payload["candidate_profile"] = parsed_resume.get("candidate_profile", {})
+        result_payload["responsibilities"] = job_res.get("responsibilities", [])
+        result_payload["qualifications"] = job_res.get("qualifications", [])
+        result_payload["tools_and_technologies"] = job_res.get("tools_and_technologies", [])
+        result_payload["experience_requirements"] = job_res.get("experience_requirements", {})
 
         return result_payload
 

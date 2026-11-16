@@ -452,6 +452,95 @@ class JobDescriptionAnalyzer:
 
         return intel_list
 
+    def extract_responsibilities(self, job_text: str) -> List[str]:
+        """Extracts candidate responsibilities and duties listed in job description."""
+        resps = []
+        lines = [l.strip() for l in job_text.splitlines() if l.strip()]
+        in_resp_section = False
+
+        resp_header_re = re.compile(
+            r"(?i)^[#*_\-\s]*(?:key\s+|core\s+|essential\s+|job\s+|primary\s+)?(?:responsibilities|duties|tasks|what\s+you(?:'ll|\s+will)\s+do|role\s+overview)[#*_\-\s]*[:\-–—]?$"
+        )
+        other_header_re = re.compile(
+            r"(?i)^[#*_\-\s]*(?:qualifications|requirements|skills|education|benefits|about\s+us|who\s+we\s+are|perks|how\s+to\s+apply)[#*_\-\s]*[:\-–—]?$"
+        )
+
+        for line in lines:
+            if resp_header_re.match(line):
+                in_resp_section = True
+                continue
+            elif in_resp_section and other_header_re.match(line):
+                in_resp_section = False
+                break
+
+            if in_resp_section:
+                clean_l = re.sub(r"^[\uf0b7\u2022\u25cf\u25aa\u25b6\u25c6\u27a4\u2765\u2023\u2043•*o\-–—\d+\.]\s*", "", line).strip()
+                if len(clean_l) >= 10:
+                    resps.append(clean_l)
+
+        return resps
+
+    def extract_qualifications(self, job_text: str) -> List[str]:
+        """Extracts candidate qualifications and prerequisites listed in job description."""
+        quals = []
+        lines = [l.strip() for l in job_text.splitlines() if l.strip()]
+        in_qual_section = False
+
+        qual_header_re = re.compile(
+            r"(?i)^[#*_\-\s]*(?:minimum\s+|basic\s+|key\s+|preferred\s+|required\s+)?(?:qualifications|requirements|prerequisites|what\s+we(?:'re|\s+are)\s+looking\s+for|what\s+you(?:'ll|\s+will)\s+need)[#*_\-\s]*[:\-–—]?$"
+        )
+        other_header_re = re.compile(
+            r"(?i)^[#*_\-\s]*(?:responsibilities|duties|benefits|about\s+us|who\s+we\s+are|perks|how\s+to\s+apply)[#*_\-\s]*[:\-–—]?$"
+        )
+
+        for line in lines:
+            if qual_header_re.match(line):
+                in_qual_section = True
+                continue
+            elif in_qual_section and other_header_re.match(line):
+                in_qual_section = False
+                break
+
+            if in_qual_section:
+                clean_l = re.sub(r"^[\uf0b7\u2022\u25cf\u25aa\u25b6\u25c6\u27a4\u2765\u2023\u2043•*o\-–—\d+\.]\s*", "", line).strip()
+                if len(clean_l) >= 10:
+                    quals.append(clean_l)
+
+        return quals
+
+    def extract_tools_and_technologies(self, all_skills: Set[str]) -> List[str]:
+        """Extracts concrete tools, platforms, databases, and technologies from extracted skills."""
+        tools = []
+        target_categories = {
+            "Cloud and infrastructure",
+            "Developer tools",
+            "Databases",
+            "Frameworks and libraries",
+            "Productivity software"
+        }
+        for s in all_skills:
+            cat = categorize_competency(s)
+            if cat in target_categories:
+                tools.append(s)
+        return sorted(tools)
+
+    def extract_structured_experience_requirements(self, job_text: str, exp_years: float) -> Dict[str, Any]:
+        """Extracts structured experience requirements with context sentences."""
+        from src.preprocessing.text_cleaner import EXPERIENCE_PATTERN
+        sentences = [s.strip() for s in re.split(r"(?<=[.!?\n])\s+", job_text) if s.strip()]
+        exp_sentence = None
+        for sent in sentences:
+            if EXPERIENCE_PATTERN.search(sent) or re.search(r"\b(?:years|yrs)\s+(?:of\s+)?(?:experience|exp)\b", sent, re.I):
+                exp_sentence = sent
+                break
+
+        return {
+            "min_years": exp_years if exp_years > 0.0 else None,
+            "max_years": None,
+            "context_sentence": exp_sentence or "No explicit experience duration requirement stated in job description.",
+            "is_explicit": exp_years > 0.0
+        }
+
     def analyze(self, job_text: Optional[str]) -> Dict:
         """
         Executes complete deterministic analysis on job description.
@@ -463,8 +552,18 @@ class JobDescriptionAnalyzer:
                 "preferred_skills": [],
                 "unspecified_skills": [],
                 "all_skills": [],
+                "responsibilities": [],
+                "qualifications": [],
+                "tools_and_technologies": [],
                 "requirement_intelligence": [],
                 "required_years_exp": None,
+                "has_explicit_exp": False,
+                "experience_requirements": {
+                    "min_years": None,
+                    "max_years": None,
+                    "context_sentence": "No explicit experience duration requirement stated in job description.",
+                    "is_explicit": False
+                },
                 "education_requirements": [],
                 "total_skills_count": 0,
                 "status": "empty_input"
@@ -474,9 +573,10 @@ class JobDescriptionAnalyzer:
         req_skills, pref_skills, unspec_skills = self.classify_requirement_tiers(job_text)
         all_skills = req_skills.union(pref_skills).union(unspec_skills)
 
-        # Explicit experience years
+        # Explicit experience years and structured experience requirements
         exp_years = extract_explicit_experience_years(job_text)
         has_explicit_exp = exp_years > 0.0
+        exp_req_dict = self.extract_structured_experience_requirements(job_text, exp_years)
 
         # Education requirements
         education = self.extract_education_requirements(job_text)
@@ -487,16 +587,25 @@ class JobDescriptionAnalyzer:
         # Alternative Requirement Groups (e.g. "Power BI or Tableau", "Java or Python")
         alt_groups = self.detect_alternative_skill_groups(job_text, all_skills)
 
+        # Responsibilities, Qualifications, and Tools
+        responsibilities = self.extract_responsibilities(job_text)
+        qualifications = self.extract_qualifications(job_text)
+        tools_and_tech = self.extract_tools_and_technologies(all_skills)
+
         return {
             "job_title": title,
             "required_skills": sorted(list(req_skills)),
             "preferred_skills": sorted(list(pref_skills)),
             "unspecified_skills": sorted(list(unspec_skills)),
             "all_skills": sorted(list(all_skills)),
+            "responsibilities": responsibilities,
+            "qualifications": qualifications,
+            "tools_and_technologies": tools_and_tech,
             "alternative_groups": alt_groups,
             "requirement_intelligence": req_intel,
             "required_years_exp": exp_years if has_explicit_exp else None,
             "has_explicit_exp": has_explicit_exp,
+            "experience_requirements": exp_req_dict,
             "education_requirements": education,
             "total_skills_count": len(all_skills),
             "status": "success"

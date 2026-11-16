@@ -68,6 +68,111 @@ export interface LearningResource {
   level: string;
 }
 
+export interface CandidateName {
+  preferred_name: string;
+  full_name?: string | null;
+  mentor_title: string;
+  is_confident: boolean;
+  extraction_method: string;
+}
+
+export interface CandidateContactInfo {
+  emails: string[];
+  primary_email: string;
+  phones: string[];
+  primary_phone: string;
+  links: {
+    linkedin?: string;
+    github?: string;
+    portfolio?: string;
+    all_links: string[];
+  };
+}
+
+export interface EducationRecord {
+  degree_level: string;
+  degree_name: string;
+  field_of_study: string;
+  institution: string;
+  graduation_year?: number | null;
+  gpa?: string | null;
+  raw_text: string;
+}
+
+export interface CertificationRecord {
+  title: string;
+  issuer: string;
+  year?: string | null;
+  raw_text: string;
+}
+
+export interface CandidateProfile {
+  name: CandidateName;
+  contact_info: CandidateContactInfo;
+  education: EducationRecord[];
+  certifications: CertificationRecord[];
+  duplicate_skills: Array<{ skill: string; sections: string[]; count: number }>;
+  conflicts: Array<{ conflict_type: string; description: string }>;
+  missing_fields: string[];
+}
+
+export interface EvidenceGroundedMatch {
+  skill: string;
+  tier: "Required" | "Preferred" | string;
+  job_requirement_sentence: string;
+  candidate_evidence: string;
+  evidence_source: string;
+  match_classification: "fully_supported" | "partially_supported" | "explicitly_mentioned" | "missing_evidence" | "conflicting_evidence" | string;
+  confidence: number;
+  explanation: string;
+}
+
+export interface MLCompatibilityScorecard {
+  predicted_class: string;
+  compatibility_score: number;
+  model_confidence: number;
+  probabilities: ClassProbabilities;
+  model_used: string;
+}
+
+export interface SkillCoverageScorecard {
+  full_coverage_pct: number;
+  any_coverage_pct: number;
+  matched_required_count: number;
+  total_required_count: number;
+  matched_preferred_count: number;
+  total_preferred_count: number;
+  fully_matched_required_count: number;
+  partially_evidenced_required_count: number;
+}
+
+export interface ExperienceCoverageScorecard {
+  job_required_years?: number | null;
+  candidate_experience_years: number;
+  meets_experience_requirement: boolean;
+  has_full_time: boolean;
+  has_internships: boolean;
+  internships_count: number;
+  has_projects: boolean;
+  projects_count: number;
+  primary_classification: string;
+  display_summary: string;
+}
+
+export interface QualificationCoverageScorecard {
+  detected_job_requirements: string[];
+  candidate_degrees: string[];
+  education_verified: boolean;
+  notes: string;
+}
+
+export interface Scorecard {
+  ml_compatibility: MLCompatibilityScorecard;
+  skill_coverage: SkillCoverageScorecard;
+  experience_coverage: ExperienceCoverageScorecard;
+  qualification_coverage: QualificationCoverageScorecard;
+}
+
 export interface AnalysisResult {
   analysis_id: string;
   filename?: string;
@@ -114,6 +219,18 @@ export interface AnalysisResult {
   };
   fallback_triggered?: boolean;
   fallback_reason?: string;
+  candidate_profile?: CandidateProfile;
+  evidence_grounded_matches?: EvidenceGroundedMatch[];
+  scorecard?: Scorecard;
+  responsibilities?: string[];
+  qualifications?: string[];
+  tools_and_technologies?: string[];
+  experience_requirements?: {
+    min_years?: number | null;
+    max_years?: number | null;
+    context_sentence?: string;
+    is_explicit?: boolean;
+  };
 }
 
 export interface RoadmapMilestone {

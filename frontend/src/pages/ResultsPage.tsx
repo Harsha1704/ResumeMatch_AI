@@ -21,7 +21,11 @@ import {
   Cpu,
   ShieldCheck,
   Zap,
-  Info
+  Info,
+  User,
+  Mail,
+  Phone,
+  Award
 } from 'lucide-react';
 import { Card } from '../components/common/Card';
 import { Badge } from '../components/common/Badge';
@@ -405,6 +409,176 @@ export const ResultsPage: React.FC = () => {
           </div>
         </Card>
       </div>
+
+      {/* Candidate Profile Details (if detected) */}
+      {analysis.candidate_profile && (
+        <Card
+          title="Extracted Candidate Profile"
+          subtitle="Deterministically extracted personal and professional attributes"
+          icon={User}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-3">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Candidate Name</span>
+              <div className="mt-1 flex items-center gap-1.5 text-sm font-semibold text-slate-200">
+                <User className="h-4 w-4 text-indigo-400" />
+                <span>{analysis.candidate_profile.name?.full_name || analysis.candidate_profile.name?.preferred_name || 'Candidate'}</span>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-3">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Email</span>
+              <div className="mt-1 flex items-center gap-1.5 text-sm font-semibold text-slate-200 truncate">
+                <Mail className="h-4 w-4 text-emerald-400 shrink-0" />
+                <span className="truncate">{analysis.candidate_profile.contact_info?.primary_email || 'Not provided'}</span>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-3">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Phone</span>
+              <div className="mt-1 flex items-center gap-1.5 text-sm font-semibold text-slate-200 truncate">
+                <Phone className="h-4 w-4 text-sky-400 shrink-0" />
+                <span>{analysis.candidate_profile.contact_info?.primary_phone || 'Not provided'}</span>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-3">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Links</span>
+              <div className="mt-1 flex flex-wrap gap-2 text-xs">
+                {analysis.candidate_profile.contact_info?.links?.linkedin && analysis.candidate_profile.contact_info.links.linkedin !== 'Not provided' ? (
+                  <a
+                    href={analysis.candidate_profile.contact_info.links.linkedin.startsWith('http') ? analysis.candidate_profile.contact_info.links.linkedin : `https://${analysis.candidate_profile.contact_info.links.linkedin}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-indigo-400 hover:underline flex items-center gap-1"
+                  >
+                    LinkedIn <ExternalLink className="h-3 w-3" />
+                  </a>
+                ) : null}
+                {analysis.candidate_profile.contact_info?.links?.github && analysis.candidate_profile.contact_info.links.github !== 'Not provided' ? (
+                  <a
+                    href={analysis.candidate_profile.contact_info.links.github.startsWith('http') ? analysis.candidate_profile.contact_info.links.github : `https://${analysis.candidate_profile.contact_info.links.github}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-slate-300 hover:underline flex items-center gap-1"
+                  >
+                    GitHub <ExternalLink className="h-3 w-3" />
+                  </a>
+                ) : null}
+                {(!analysis.candidate_profile.contact_info?.links?.linkedin || analysis.candidate_profile.contact_info.links.linkedin === 'Not provided') &&
+                 (!analysis.candidate_profile.contact_info?.links?.github || analysis.candidate_profile.contact_info.links.github === 'Not provided') ? (
+                  <span className="text-slate-400">No links provided</span>
+                ) : null}
+              </div>
+            </div>
+          </div>
+
+          {/* Education & Certifications row */}
+          {((analysis.candidate_profile.education && analysis.candidate_profile.education.length > 0) ||
+            (analysis.candidate_profile.certifications && analysis.candidate_profile.certifications.length > 0)) && (
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-slate-800 pt-4">
+              {analysis.candidate_profile.education && analysis.candidate_profile.education.length > 0 && (
+                <div>
+                  <h5 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 mb-2">
+                    <GraduationCap className="h-3.5 w-3.5 text-indigo-400" />
+                    <span>Education Credentials</span>
+                  </h5>
+                  <div className="space-y-2">
+                    {analysis.candidate_profile.education.map((edu, idx) => (
+                      <div key={idx} className="rounded-lg bg-slate-900/60 p-2 text-xs border border-slate-800">
+                        <div className="font-semibold text-slate-200">{edu.degree_name}</div>
+                        <div className="text-slate-400 text-[11px]">{edu.institution} {edu.graduation_year ? `(${edu.graduation_year})` : ''}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {analysis.candidate_profile.certifications && analysis.candidate_profile.certifications.length > 0 && (
+                <div>
+                  <h5 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 mb-2">
+                    <Award className="h-3.5 w-3.5 text-amber-400" />
+                    <span>Certifications</span>
+                  </h5>
+                  <div className="space-y-2">
+                    {analysis.candidate_profile.certifications.map((cert, idx) => (
+                      <div key={idx} className="rounded-lg bg-slate-900/60 p-2 text-xs border border-slate-800">
+                        <div className="font-semibold text-slate-200">{cert.title}</div>
+                        <div className="text-slate-400 text-[11px]">Issuer: {cert.issuer} {cert.year ? `(${cert.year})` : ''}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </Card>
+      )}
+
+      {/* Unified Evidence-Grounded Requirements Table */}
+      {analysis.evidence_grounded_matches && analysis.evidence_grounded_matches.length > 0 && (
+        <Card
+          title="Evidence-Grounded Requirements Matching"
+          subtitle="Deterministic line-by-line verification of JD requirements against candidate evidence"
+          icon={ShieldCheck}
+        >
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="border-b border-slate-800 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  <th className="py-2.5 px-3">Requirement</th>
+                  <th className="py-2.5 px-3">Tier</th>
+                  <th className="py-2.5 px-3">Classification</th>
+                  <th className="py-2.5 px-3">Candidate Evidence Excerpt</th>
+                  <th className="py-2.5 px-3">Source</th>
+                  <th className="py-2.5 px-3 text-right">Confidence</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/60">
+                {analysis.evidence_grounded_matches.map((item, idx) => {
+                  const isFull = item.match_classification === 'fully_supported';
+                  const isPartial = item.match_classification === 'partially_supported';
+                  const isMention = item.match_classification === 'explicitly_mentioned';
+                  return (
+                    <tr key={idx} className="hover:bg-slate-800/30 transition-colors">
+                      <td className="py-2.5 px-3 font-semibold text-slate-200">{item.skill}</td>
+                      <td className="py-2.5 px-3">
+                        <Badge variant={item.tier === 'Required' ? 'rose' : 'slate'} size="sm">
+                          {item.tier}
+                        </Badge>
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <span
+                          className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                            isFull
+                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                              : isPartial
+                              ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                              : isMention
+                              ? 'bg-sky-500/10 text-sky-400 border border-sky-500/20'
+                              : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                          }`}
+                        >
+                          {item.match_classification.replace('_', ' ')}
+                        </span>
+                      </td>
+                      <td className="py-2.5 px-3 text-slate-300 max-w-xs truncate" title={item.candidate_evidence}>
+                        {item.candidate_evidence}
+                      </td>
+                      <td className="py-2.5 px-3 text-slate-400 text-[11px] capitalize">
+                        {item.evidence_source.replace('_', ' ')}
+                      </td>
+                      <td className="py-2.5 px-3 text-right font-mono font-semibold text-slate-200">
+                        {Math.round(item.confidence * 100)}%
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
 
       {/* Practical Evidence: Projects & Internships */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">

@@ -365,6 +365,13 @@ def api_match():
             target_role_input=target_role
         )
 
+        if result.get("status") != "success":
+            return jsonify({
+                "status": "error",
+                "error_type": result.get("status"),
+                "error_message": result.get("error_message", "Failed to process resume.")
+            }), 400
+
         return jsonify({
             "status": "success",
             "analysis_id": result["analysis_id"],
@@ -385,7 +392,14 @@ def api_match():
             "inference_latency_ms": result.get("inference_latency_ms", 0.0),
             "cache_status": result.get("cache_status"),
             "calibration_note": result.get("calibration_note", ""),
-            "skill_gap_summary": result.get("skill_gap_summary", {})
+            "skill_gap_summary": result.get("skill_gap_summary", {}),
+            "candidate_profile": result.get("candidate_profile", {}),
+            "evidence_grounded_matches": result.get("evidence_grounded_matches", []),
+            "scorecard": result.get("scorecard", {}),
+            "responsibilities": result.get("responsibilities", []),
+            "qualifications": result.get("qualifications", []),
+            "tools_and_technologies": result.get("tools_and_technologies", []),
+            "experience_requirements": result.get("experience_requirements", {})
         }), 200
     except Exception as e:
         logger.exception("Inference processing failed in API match")
@@ -1133,6 +1147,7 @@ def api_analyze():
     if result.get("status") != "success":
         return jsonify({
             "status": "error",
+            "error_type": result.get("status"),
             "error_message": result.get("error_message", "Failed to process resume.")
         }), 400
 

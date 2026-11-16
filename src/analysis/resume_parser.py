@@ -18,15 +18,24 @@ from src.preprocessing.text_cleaner import clean_text, parse_structural_features
 
 
 MAX_FILE_SIZE = 16 * 1024 * 1024  # 16 MB limit
+MAX_PAGE_COUNT = 30  # Maximum allowed PDF page count
 SUPPORTED_EXTENSIONS = {".pdf", ".docx", ".txt"}
 
 
 def extract_text_from_pdf(stream_or_path: Union[str, Path, bytes, io.BytesIO]) -> Tuple[str, Dict]:
     """
     Extracts text and page layout metadata from PDF using PyMuPDF.
-    Detects scanned PDFs with no extractable text.
+    Detects scanned PDFs with no extractable text, password-protected/encrypted PDFs,
+    and enforces page count constraints.
     """
-    metadata = {"format": "PDF", "page_count": 0, "is_scanned": False, "warnings": []}
+    metadata = {
+        "format": "PDF",
+        "page_count": 0,
+        "is_scanned": False,
+        "is_encrypted": False,
+        "warnings": []
+    }
+    doc = None
 
     try:
         if isinstance(stream_or_path, (str, Path)):
@@ -38,10 +47,23 @@ def extract_text_from_pdf(stream_or_path: Union[str, Path, bytes, io.BytesIO]) -
         else:
             raise ValueError("Unsupported input stream type for PDF extraction.")
 
-        metadata["page_count"] = len(doc)
-        text_blocks = []
+        # Check for encrypted or password-protected PDF
+        if getattr(doc, "is_encrypted", False) or getattr(doc, "needs_pass", False):
+            metadata["is_encrypted"] = True
+            metadata["warnings"].append("PDF is encrypted or password-protected.")
+            return "", metadata
 
-        for page_num in range(len(doc)):
+        page_count = len(doc)
+        metadata["page_count"] = page_count
+
+        if page_count > MAX_PAGE_COUNT:
+            metadata["warnings"].append(
+                f"Document exceeds maximum allowable page limit of {MAX_PAGE_COUNT} pages (received {page_count} pages)."
+            )
+            return "", metadata
+
+        text_blocks = []
+        for page_num in range(page_count):
             page = doc[page_num]
             text = page.get_text("text")
             if text:
@@ -49,7 +71,7 @@ def extract_text_from_pdf(stream_or_path: Union[str, Path, bytes, io.BytesIO]) -
 
         full_text = "\n".join(text_blocks).strip()
 
-        # If zero or extremely few characters extracted from a multi-page PDF, flag as scanned
+        # If zero or extremely few characters extracted from a non-empty PDF, flag as scanned
         if len(full_text) < 40 and metadata["page_count"] > 0:
             metadata["is_scanned"] = True
             metadata["warnings"].append(
@@ -61,6 +83,12 @@ def extract_text_from_pdf(stream_or_path: Union[str, Path, bytes, io.BytesIO]) -
     except Exception as e:
         metadata["warnings"].append(f"PDF extraction error: {str(e)}")
         return "", metadata
+    finally:
+        if doc is not None:
+            try:
+                doc.close()
+            except Exception:
+                pass
 
 
 def extract_text_from_docx(stream_or_path: Union[str, Path, bytes, io.BytesIO]) -> Tuple[str, Dict]:
@@ -177,6 +205,7 @@ def parse_resume(
         "raw_text": "",
         "cleaned_text": "",
         "structural_features": {},
+        "candidate_profile": {},
         "metadata": {},
         "status": "success",
         "error_message": None,
@@ -191,6 +220,11 @@ def parse_resume(
     if read_error:
         result["status"] = "error"
         result["error_message"] = read_error
+        return result
+
+    if len(payload) == 0:
+        result["status"] = "empty"
+        result["error_message"] = "The document is empty or contains 0 bytes."
         return result
 
     if not ext:
@@ -243,6 +277,20 @@ def parse_resume(
     result["metadata"] = meta
     result["warnings"].extend(meta.get("warnings", []))
 
+    if meta.get("is_encrypted", False):
+        result["status"] = "password_protected"
+        result["error_message"] = (
+            "The uploaded PDF is password-protected or encrypted. Please provide an unencrypted document."
+        )
+        return result
+
+    if meta.get("page_count", 0) > MAX_PAGE_COUNT:
+        result["status"] = "error"
+        result["error_message"] = (
+            f"Document exceeds maximum allowable page limit of {MAX_PAGE_COUNT} pages (received {meta['page_count']} pages)."
+        )
+        return result
+
     if meta.get("is_scanned", False):
         result["status"] = "scanned_pdf"
         result["error_message"] = (
@@ -259,7 +307,11 @@ def parse_resume(
     cleaned = clean_text(raw_text)
     struct = parse_structural_features(raw_text)
 
+    from src.analysis.candidate_profile_extractor import extract_candidate_profile
+    candidate_profile = extract_candidate_profile(raw_text, cleaned_text=cleaned)
+
     result["raw_text"] = raw_text
     result["cleaned_text"] = cleaned
     result["structural_features"] = struct
+    result["candidate_profile"] = candidate_profile
     return result
