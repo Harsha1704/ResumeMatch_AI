@@ -134,6 +134,14 @@ export const api = {
     });
   },
 
+  async evaluateRole(roleName: string, analysisId?: string) {
+    return fetchJson<{ status: string; role_evaluation: any }>('/api/career-mentor/evaluate-role', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role_name: roleName, analysis_id: analysisId }),
+    });
+  },
+
   async confirmEducation(education: string) {
     return fetchJson<{ status: string; education: string }>('/api/candidate/confirm-education', {
       method: 'POST',

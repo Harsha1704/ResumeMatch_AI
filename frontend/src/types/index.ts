@@ -275,6 +275,126 @@ export interface PrioritizedGap {
   }[];
 }
 
+export interface CareerProfileIdentity {
+  full_name: string;
+  preferred_name: string;
+  email?: string;
+  has_email: boolean;
+  phone?: string;
+  has_phone: boolean;
+  linkedin?: string;
+  has_linkedin: boolean;
+  github?: string;
+  has_github: boolean;
+  portfolio?: string;
+  has_portfolio: boolean;
+  location?: string;
+}
+
+export interface CareerProfileCompetency {
+  skill: string;
+  evidence_source: "project" | "internship" | "professional_experience" | "candidate_confirmed" | "skills_section" | string;
+  provenance_title?: string;
+  excerpt?: string;
+  notes?: string;
+  confidence: number;
+}
+
+export interface CareerProfileMissingInfo {
+  field: string;
+  category: string;
+  impact: "High" | "Moderate" | "Low" | string;
+  detail: string;
+}
+
+export interface CareerProfile {
+  identity: CareerProfileIdentity;
+  education: {
+    records: EducationRecord[];
+    total_degrees_count: number;
+    education_verified: boolean;
+    verification_status: string;
+    notes: string;
+  };
+  certifications: CertificationRecord[];
+  experience: {
+    total_experience_years: number;
+    full_time_years: number;
+    internship_months: number;
+    projects_count: number;
+    internships_count: number;
+    professional_roles_count: number;
+    display_summary: string;
+  };
+  projects: Project[];
+  internships: Internship[];
+  demonstrated_competencies: CareerProfileCompetency[];
+  candidate_confirmed_competencies: CareerProfileCompetency[];
+  partially_evidenced_competencies: CareerProfileCompetency[];
+  missing_or_uncertain_information: CareerProfileMissingInfo[];
+  conflicts_and_inconsistencies: any[];
+  evidence_metrics: {
+    demonstrated_count: number;
+    candidate_confirmed_count: number;
+    partially_evidenced_count: number;
+    missing_items_count: number;
+    has_conflicts: boolean;
+  };
+}
+
+export interface RecommendedRole {
+  role_id: string;
+  title: string;
+  category: string;
+  description: string;
+  primary_focus: string;
+  match_score: number;
+  fit_tier: "Strong Fit" | "Potential Fit" | "Growth Fit" | string;
+  fit_badge: "success" | "warning" | "info" | string;
+  fit_reason: string;
+  matching_skills: string[];
+  matching_core_count: number;
+  missing_core_skills: string[];
+  missing_secondary_skills: string[];
+  primary_gaps: string[];
+  practical_next_action: string;
+  market_intelligence_note: string;
+}
+
+export interface ResumeImprovementSuggestion {
+  suggestion_id: string;
+  category: string;
+  priority: "High" | "Medium" | "Low" | string;
+  reason: string;
+  evidence_context: string;
+  actionable_example: {
+    before: string;
+    after: string;
+  };
+  practical_next_action: string;
+}
+
+export interface CareerMilestone {
+  milestone_id: string;
+  phase: string;
+  timeframe: string;
+  title: string;
+  goal: string;
+  reason: string;
+  supporting_evidence_or_gap: string;
+  priority: "Critical" | "High" | "Medium" | string;
+  deliverable: string;
+  verification_criteria: string;
+}
+
+export interface CareerRoadmap {
+  target_role: string;
+  short_term: CareerMilestone[];
+  medium_term: CareerMilestone[];
+  total_milestones_count: number;
+  guidance_philosophy: string;
+}
+
 export interface MentorDossier {
   [key: string]: any;
   candidate_preferred_name?: string;
@@ -283,6 +403,10 @@ export interface MentorDossier {
   encouragement_message?: string;
   welcome_greeting?: string;
   target_role?: string;
+  career_profile?: CareerProfile;
+  recommended_roles?: RecommendedRole[];
+  resume_improvement_suggestions?: ResumeImprovementSuggestion[];
+  career_roadmap?: CareerRoadmap;
   identity?: {
     preferred_name?: string;
     mentor_title?: string;

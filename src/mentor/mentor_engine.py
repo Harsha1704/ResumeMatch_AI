@@ -19,6 +19,10 @@ from .message_templates import (
     format_gap_explanation,
     build_progress_encouragement
 )
+from .career_profile import build_structured_career_profile
+from .role_recommender import recommend_suitable_roles, evaluate_specific_role
+from .resume_advisor import generate_resume_improvement_suggestions
+from .career_roadmap import generate_structured_career_roadmap
 
 
 def classify_mentor_category(skill_name: str) -> str:
@@ -425,6 +429,19 @@ class CareerMentorEngine:
         # 4. Generate Roadmaps for Prioritized Gaps
         self.roadmaps = self._generate_gap_roadmaps()
 
+        # 5. Build Evidence-Grounded Career Profile
+        self.career_profile = build_structured_career_profile(self.analysis_data)
+
+        # 6. Suitable Role Recommendations
+        self.recommended_roles = recommend_suitable_roles(self.career_profile, self.analysis_data)
+
+        # 7. Actionable Resume Improvement Suggestions
+        self.resume_improvements = generate_resume_improvement_suggestions(self.career_profile, self.analysis_data)
+
+        # 8. Structured Career Roadmap
+        target_role = self.analysis_data.get("job_title") or "Target Technical Role"
+        self.career_roadmap = generate_structured_career_roadmap(self.career_profile, self.gaps, target_role=target_role)
+
     def _extract_verified_strengths(self) -> Dict[str, Any]:
         """
         Extracts candidate's verified strengths from unified evidence registry.
@@ -552,6 +569,20 @@ class CareerMentorEngine:
         prof_behav = [g for g in prioritized if g["category"] == "Professional and Behavioral Competencies"]
         prod_tools = [g for g in prioritized if g["category"] == "Productivity and Business Tools"]
 
+        categories_dict = {
+            "core_technical": core_tech,
+            "tooling_frameworks": eng_tools,
+            "engineering_tools": eng_tools,
+            "architecture_design": [g for g in prioritized if any(w in g["skill_name"].lower() for w in ["design", "architecture", "distributed", "system"])],
+            "soft_skills_practices": prof_behav,
+            "professional_behavioral": prof_behav,
+            "productivity_tools": prod_tools,
+            "Core Technical Skills": core_tech,
+            "Engineering Tools and Practices": eng_tools,
+            "Professional and Behavioral Competencies": prof_behav,
+            "Productivity and Business Tools": prod_tools
+        }
+
         return {
             "missing_required": missing_req,
             "missing_preferred": missing_pref,
@@ -561,16 +592,8 @@ class CareerMentorEngine:
             "prioritized_gaps": prioritized,
             "top_priorities": prioritized[:5],
             "expandable_requirements": prioritized[5:],
-            "categories": {
-                "core_technical": core_tech,
-                "engineering_tools": eng_tools,
-                "professional_behavioral": prof_behav,
-                "productivity_tools": prod_tools,
-                "Core Technical Skills": core_tech,
-                "Engineering Tools and Practices": eng_tools,
-                "Professional and Behavioral Competencies": prof_behav,
-                "Productivity and Business Tools": prod_tools
-            },
+            "categories": categories_dict,
+            "category_breakdown": categories_dict,
             "pathways": pathways
         }
 
@@ -640,6 +663,10 @@ class CareerMentorEngine:
             "target_role": job_title,
             "welcome_greeting": welcome_greeting,
             "encouragement_message": encouragement,
+            "career_profile": self.career_profile,
+            "recommended_roles": self.recommended_roles,
+            "resume_improvement_suggestions": self.resume_improvements,
+            "career_roadmap": self.career_roadmap,
             "strengths": self.strengths,
             "gaps": self.gaps,
             "roadmaps": self.roadmaps,

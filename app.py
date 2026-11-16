@@ -1245,6 +1245,29 @@ def api_career_mentor():
     return jsonify({"status": "success", "dossier": dossier}), 200
 
 
+@app.route("/api/career-mentor/evaluate-role", methods=["POST"])
+def api_career_mentor_evaluate_role():
+    """Evaluates candidate profile suitability against a specific target role."""
+    data = request.get_json(silent=True) or {}
+    role_name = data.get("role_name", "").strip()
+    if not role_name:
+        return jsonify({"status": "error", "message": "Missing role_name parameter"}), 400
+
+    aid = data.get("analysis_id") or request.args.get("id")
+    analysis = _get_active_analysis(aid)
+
+    from src.mentor.career_profile import build_structured_career_profile
+    from src.mentor.role_recommender import evaluate_specific_role
+
+    profile = build_structured_career_profile(analysis)
+    role_eval = evaluate_specific_role(role_name, profile, analysis)
+
+    return jsonify({
+        "status": "success",
+        "role_evaluation": role_eval
+    }), 200
+
+
 @app.route("/api/interview-studio", methods=["GET"])
 def api_interview_studio():
     """Returns candidates evidence profile, questions, and technical topics."""

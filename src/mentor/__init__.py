@@ -19,6 +19,11 @@ from .skill_curricula import (
     build_skill_action_plan
 )
 
+from .career_profile import build_structured_career_profile
+from .role_recommender import recommend_suitable_roles, evaluate_specific_role, ROLE_ARCHETYPES
+from .resume_advisor import generate_resume_improvement_suggestions
+from .career_roadmap import generate_structured_career_roadmap
+
 __all__ = [
     "extract_candidate_name",
     "format_mentor_identity",
@@ -39,4 +44,10 @@ __all__ = [
     "get_domain_for_skill",
     "get_curriculum_for_skill",
     "build_skill_action_plan",
+    "build_structured_career_profile",
+    "recommend_suitable_roles",
+    "evaluate_specific_role",
+    "ROLE_ARCHETYPES",
+    "generate_resume_improvement_suggestions",
+    "generate_structured_career_roadmap",
 ]
