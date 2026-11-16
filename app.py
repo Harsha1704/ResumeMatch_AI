@@ -507,7 +507,7 @@ def _get_active_analysis(analysis_id: Optional[str] = None) -> Dict:
     raw_analysis = None
     if analysis_id and analysis_id in ANALYSIS_CACHE:
         raw_analysis = ANALYSIS_CACHE[analysis_id]
-    elif analysis_id in ("sample", "demo"):
+    elif analysis_id in ("sample", "demo", "sample-preview"):
         raw_analysis = None
     else:
         allowed = session.get("allowed_analyses", [])
@@ -1153,7 +1153,7 @@ def api_get_analysis(analysis_id: str):
     """Retrieves cached analysis result or returns authentic demo sample."""
     if not analysis_id or analysis_id not in ANALYSIS_CACHE:
         if analysis_id in ("sample", "demo", "sample-preview"):
-            sample = _get_active_analysis(None)
+            sample = _get_active_analysis("sample")
             return jsonify({"status": "success", "analysis": sample}), 200
         # If cache contains any entry, offer it
         sample = _get_active_analysis(None)

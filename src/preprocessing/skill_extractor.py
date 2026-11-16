@@ -32,8 +32,8 @@ TAXONOMY_TOOL = TAXONOMY_DEVELOPER_TOOLS
 FILTERED_GENERIC_SKILLS = {
     "applications", "application", "application software", "applications software",
     "software", "hardware", "technology", "technologies", "computer software",
-    "tools", "commitment", "enthusiasm", "ownership",
-    "opportunity", "environment", "responsibilities", "requirements",
+    "tools", "commitment", "commitments", "enthusiasm", "ownership",
+    "opportunity", "environment", "environments", "responsibilities", "requirements",
     "candidate", "role", "team", "experience", "work", "job", "skills",
     "knowledge", "ability", "background", "field", "degree", "solutions",
     "services", "products", "performance", "delivery", "quality", "support",
@@ -43,7 +43,8 @@ FILTERED_GENERIC_SKILLS = {
     "programming", "persistence", "modeling", "dashboards", "execution",
     "writing", "satisfaction", "customer satisfaction", "cloud environments",
     "web applications", "sql queries", "agile scrum", "scripting",
-    "reliability", "microsoft", "networks", "cloud software", "predictive modeling"
+    "reliability", "microsoft", "networks", "cloud software", "predictive modeling",
+    "focus", "responsiveness", "responsive"
 }
 
 # Ambiguous skills requiring contextual verification
@@ -83,6 +84,7 @@ TECHNICAL_ALIAS_MAP: Dict[str, str] = {
     "matlab": "matlab",
     "sql": "sql",
     "pl/sql": "pl/sql",
+    "plsql": "pl/sql",
     "t-sql": "sql",
     "bash": "bash",
     "shell": "shell",
@@ -155,6 +157,7 @@ TECHNICAL_ALIAS_MAP: Dict[str, str] = {
     "ansible": "ansible",
     "jenkins": "jenkins",
     "ci/cd": "ci/cd",
+    "cicd": "ci/cd",
     "git": "git",
     "github": "github",
     "gitlab": "gitlab",
@@ -241,49 +244,52 @@ TECHNICAL_ALIAS_MAP: Dict[str, str] = {
 
 # 8-Category Taxonomy Membership Sets
 KNOWN_PROGRAMMING_LANGUAGES = {
-    "python", "java", "c++", "c#", "c", "go", "rust", "ruby", "php", "swift",
+    "python", "java", "c++", "c#", "c", "go", "golang", "rust", "ruby", "php", "swift",
     "kotlin", "scala", "javascript", "typescript", "r", "matlab", "bash", "shell",
-    "powershell", "pl/sql", "objective-c", "dart", "perl"
+    "powershell", "pl/sql", "plsql", "objective-c", "dart", "perl", "c plus plus", "c sharp", "cpp", "csharp"
 }
 
 KNOWN_FRAMEWORKS_AND_LIBRARIES = {
-    "react", "react native", "angular", "vue.js", "node.js", "express.js",
-    "django", "flask", "fastapi", "spring boot", "ruby on rails", "html", "css",
-    "sass", "bootstrap", "tailwind css", "pandas", "numpy", "scipy",
-    "scikit-learn", "tensorflow", "pytorch", "keras", "jquery", ".net"
+    "react", "react native", "react.js", "reactjs", "angular", "vue.js", "vue", "vuejs",
+    "node.js", "nodejs", "node", "express.js", "express", "expressjs",
+    "django", "flask", "fastapi", "spring boot", "ruby on rails", "rails", "html", "css",
+    "sass", "bootstrap", "tailwind css", "tailwind", "pandas", "numpy", "scipy",
+    "scikit-learn", "sklearn", "tensorflow", "pytorch", "keras", "jquery", ".net", "dotnet",
+    "next.js", "nextjs", "svelte"
 }
 
 KNOWN_DATABASES = {
-    "postgresql", "mysql", "sqlite", "mongodb", "redis", "cassandra",
-    "dynamodb", "elasticsearch", "sql server", "oracle database", "sql",
-    "mariadb", "couchdb", "neo4j"
+    "postgresql", "postgres", "mysql", "sqlite", "mongodb", "redis", "cassandra",
+    "dynamodb", "elasticsearch", "sql server", "oracle database", "oracle", "sql",
+    "mariadb", "couchdb", "neo4j", "snowflake", "bigquery"
 }
 
 KNOWN_DEVELOPER_TOOLS = {
     "git", "github", "gitlab", "jira", "pytest", "rstudio", "postman",
-    "vs code", "vim", "eclipse", "gradle", "maven", "webpack", "npm", "yarn"
+    "vs code", "vim", "eclipse", "gradle", "maven", "webpack", "npm", "yarn",
+    "bitbucket", "intellij"
 }
 
 KNOWN_CLOUD_AND_INFRASTRUCTURE = {
-    "amazon web services", "google cloud platform", "microsoft azure", "docker",
-    "kubernetes", "terraform", "ansible", "jenkins", "ci/cd", "linux", "unix",
-    "aws", "gcp", "azure", "apache spark", "hadoop"
+    "amazon web services", "google cloud platform", "google cloud", "microsoft azure", "docker",
+    "kubernetes", "k8s", "terraform", "ansible", "jenkins", "ci/cd", "cicd", "linux", "unix",
+    "aws", "gcp", "azure", "apache spark", "spark", "hadoop", "nginx"
 }
 
 KNOWN_PRODUCTIVITY_SOFTWARE = {
     "word", "excel", "powerpoint", "office", "outlook", "ms word", "ms excel",
     "ms powerpoint", "ms office", "microsoft word", "microsoft excel",
     "microsoft powerpoint", "microsoft office", "spreadsheets", "google sheets",
-    "google docs", "notion", "slack", "trello", "zoom", "teams"
+    "google docs", "notion", "slack", "trello", "zoom", "teams", "visio", "ms visio"
 }
 
 KNOWN_PROFESSIONAL_SKILLS = {
-    "agile", "scrum", "microservices", "rest api", "graphql", "unit testing",
-    "system architecture", "code review", "quality assurance", "devops",
+    "agile", "scrum", "microservices", "rest api", "rest apis", "restful api", "restful apis",
+    "graphql", "unit testing", "system architecture", "code review", "quality assurance", "devops",
     "user research", "market research", "data analysis", "data visualization",
-    "project management", "product management", "software development lifecycle",
-    "machine learning", "deep learning", "natural language processing",
-    "computer vision", "oop", "tableau", "power bi"
+    "project management", "product management", "software development lifecycle", "sdlc",
+    "machine learning", "ml", "deep learning", "dl", "natural language processing", "nlp",
+    "computer vision", "cv", "ai", "artificial intelligence", "oop", "tableau", "power bi"
 }
 
 KNOWN_SOFT_SKILLS = {
@@ -314,7 +320,7 @@ def categorize_competency(skill_name: str) -> str:
     6. Productivity software
     7. Professional competencies
     8. Soft skills
-    (or Generic / Ambiguous if filtered)
+    (or Generic / Ambiguous if filtered or unknown)
     """
     s = skill_name.strip().lower()
     if s in FILTERED_GENERIC_SKILLS or "application software" in s:
@@ -323,29 +329,31 @@ def categorize_competency(skill_name: str) -> str:
         return TAXONOMY_SOFT
     if s in KNOWN_PRODUCTIVITY_SOFTWARE or any(k in s for k in ["word", "excel", "powerpoint", "office"]):
         return TAXONOMY_PRODUCTIVITY
-    if s in KNOWN_DATABASES:
+    if s in KNOWN_DATABASES or any(k in s for k in ["postgres", "mysql", "mongodb", "sqlite"]) or s == "sql":
         return TAXONOMY_DATABASES
-    if s in KNOWN_CLOUD_AND_INFRASTRUCTURE:
+    if s in KNOWN_CLOUD_AND_INFRASTRUCTURE or any(k in s for k in ["kubernetes", "docker", "terraform", "ansible", "ci/cd", "jenkins"]):
         return TAXONOMY_CLOUD_INFRASTRUCTURE
-    if s in KNOWN_DEVELOPER_TOOLS:
+    if s in KNOWN_DEVELOPER_TOOLS or any(k in s for k in ["git", "github", "gitlab", "jira", "pytest", "postman"]):
         return TAXONOMY_DEVELOPER_TOOLS
-    if s in KNOWN_FRAMEWORKS_AND_LIBRARIES:
+    if s in KNOWN_FRAMEWORKS_AND_LIBRARIES or any(k in s for k in ["react", "angular", "vue", "django", "flask", "fastapi", "spring boot", "pandas", "numpy", "scikit-learn", "pytorch", "tensorflow"]):
         return TAXONOMY_FRAMEWORKS_LIBRARIES
-    if s in KNOWN_PROGRAMMING_LANGUAGES:
+    if s in KNOWN_PROGRAMMING_LANGUAGES or any(s == lang for lang in ["python", "java", "c++", "c#", "c", "go", "golang", "rust", "ruby", "php", "swift", "kotlin", "scala", "javascript", "typescript", "r", "matlab", "bash", "shell", "powershell", "pl/sql", "dart", "perl"]):
         return TAXONOMY_PROGRAMMING_LANGUAGES
-    if s in KNOWN_PROFESSIONAL_SKILLS:
+    if s in KNOWN_PROFESSIONAL_SKILLS or any(k in s for k in ["machine learning", "deep learning", "natural language processing", "computer vision", "microservices", "rest api", "system architecture"]):
         return TAXONOMY_PROFESSIONAL
-    # Language/framework heuristical checks
-    if any(k in s for k in ["python", "java", "c++", "c#", "ruby", "golang", "rust", "php", "swift", "kotlin", "scala"]):
-        return TAXONOMY_PROGRAMMING_LANGUAGES
-    if any(k in s for k in ["learning", "processing", "vision", "analysis", "intelligence", "architecture"]):
+
+    # Fallback heuristic guards:
+    if any(k in s for k in ["learning", "processing", "vision", "analysis", "intelligence", "architecture", "agile", "scrum", "sdlc"]):
         return TAXONOMY_PROFESSIONAL
     if any(k in s for k in ["sql", "database", "query"]):
         return TAXONOMY_DATABASES
-    if any(k in s for k in ["cloud", "server", "deploy"]):
+    if any(k in s for k in ["cloud", "deploy", "container", "infrastructure", "server"]):
         return TAXONOMY_CLOUD_INFRASTRUCTURE
-    # Default to developer tools
-    return TAXONOMY_DEVELOPER_TOOLS
+    if any(k in s for k in ["testing", "debug", "linter", "build tool", "editor"]):
+        return TAXONOMY_DEVELOPER_TOOLS
+
+    # For unknown/unclassified terms, return explicit generic rather than arbitrary developer tools
+    return TAXONOMY_GENERIC
 
 
 CANONICAL_SKILL_NAMES: Dict[str, str] = {
@@ -360,6 +368,9 @@ CANONICAL_SKILL_NAMES: Dict[str, str] = {
     "amazon web services": "AWS",
     "gcp": "GCP",
     "google cloud platform": "GCP",
+    "google cloud": "GCP",
+    "azure": "Azure",
+    "microsoft azure": "Azure",
     "rest api": "REST APIs",
     "restful api": "REST APIs",
     "restful apis": "REST APIs",
@@ -373,37 +384,74 @@ CANONICAL_SKILL_NAMES: Dict[str, str] = {
     "tensorflow": "TensorFlow",
     "fastapi": "FastAPI",
     "javascript": "JavaScript",
+    "js": "JavaScript",
     "typescript": "TypeScript",
+    "ts": "TypeScript",
     "mongodb": "MongoDB",
     "mysql": "MySQL",
     "sqlite": "SQLite",
     "docker": "Docker",
+    "git": "Git",
     "github": "GitHub",
     "gitlab": "GitLab",
+    "jira": "Jira",
     "ci/cd": "CI/CD",
+    "cicd": "CI/CD",
     "html": "HTML",
     "css": "CSS",
     "node.js": "Node.js",
+    "nodejs": "Node.js",
+    "node": "Node.js",
     "react": "React",
+    "reactjs": "React",
+    "react.js": "React",
     "vue.js": "Vue.js",
+    "vue": "Vue.js",
     "power bi": "Power BI",
     "c++": "C++",
+    "cpp": "C++",
+    "c plus plus": "C++",
     "c#": "C#",
+    "csharp": "C#",
+    "c sharp": "C#",
     ".net": ".NET",
+    "dotnet": ".NET",
     "php": "PHP",
     "sql": "SQL",
     "pl/sql": "PL/SQL",
+    "plsql": "PL/SQL",
     "hadoop": "Hadoop",
     "spark": "Spark",
     "kafka": "Kafka",
     "linux": "Linux",
+    "unix": "Unix",
     "python": "Python",
+    "python3": "Python",
+    "py": "Python",
     "java": "Java",
+    "golang": "Go",
+    "go": "Go",
+    "r": "R",
+    "c": "C",
+    "machine learning": "Machine Learning",
+    "ml": "Machine Learning",
+    "deep learning": "Deep Learning",
+    "dl": "Deep Learning",
+    "ai": "AI",
+    "artificial intelligence": "AI",
+    "nlp": "NLP",
+    "natural language processing": "NLP",
+    "computer vision": "Computer Vision",
+    "cv": "Computer Vision",
     "django": "Django",
     "flask": "Flask",
     "spring boot": "Spring Boot",
     "pandas": "Pandas",
-    "numpy": "NumPy"
+    "numpy": "NumPy",
+    "communication": "Communication",
+    "communication skills": "Communication",
+    "leadership": "Leadership",
+    "teamwork": "Teamwork"
 }
 
 
@@ -694,9 +742,33 @@ class SkillEngine:
                 return False
             return bool(context_words.intersection(go_indicators))
 
-        elif skill in {"ai", "ml"}:
-            # Standalone AI/ML should not be parts of other words
-            return True
+        elif skill == "ai":
+            # Valid indicators for AI technical domain
+            ai_indicators = {
+                "artificial", "intelligence", "machine", "learning", "deep", "neural",
+                "models", "model", "data", "python", "nlp", "vision", "generative",
+                "llm", "llms", "engineer", "scientist", "research", "algorithms",
+                "software", "development", "ethics", "solutions", "pipeline",
+                "frameworks", "technologies", "tech", "platform", "cloud",
+                "automation", "agent", "agents", "robotics", "analytics", "computer",
+                "cognitive", "prompt", "pytorch", "tensorflow", "scikit-learn"
+            }
+            return bool(context_words.intersection(ai_indicators))
+
+        elif skill == "ml":
+            # Valid indicators for ML technical domain
+            ml_indicators = {
+                "machine", "learning", "data", "python", "algorithms", "models", "model",
+                "ai", "deep", "statistics", "statistical", "pipeline", "ops", "mlops",
+                "engineer", "scientist", "predictive", "scikit-learn", "sklearn",
+                "tensorflow", "pytorch", "modeling", "evaluation", "training",
+                "inference", "features", "supervised", "unsupervised", "neural",
+                "classification", "regression", "nlp", "vision", "analytics"
+            }
+            # Guard against liquid volume measurement (e.g. "500 ml", "100ml")
+            if word_idx > 0 and (words[word_idx - 1].isdigit() or re.match(r"^\d+$", words[word_idx - 1])):
+                return False
+            return bool(context_words.intersection(ml_indicators))
 
         elif skill == "sql":
             return True
@@ -778,8 +850,9 @@ class SkillEngine:
                         continue
 
                     # Ambiguous skill verification
-                    if canonical in AMBIGUOUS_SKILLS and length == 1:
-                        if self._is_valid_ambiguous_skill(canonical, i, words, cleaned):
+                    if (phrase in AMBIGUOUS_SKILLS or canonical in AMBIGUOUS_SKILLS) and length == 1:
+                        ambig_key = phrase if phrase in AMBIGUOUS_SKILLS else canonical
+                        if self._is_valid_ambiguous_skill(ambig_key, i, words, cleaned):
                             extracted.add(canonical)
                     else:
                         extracted.add(canonical)

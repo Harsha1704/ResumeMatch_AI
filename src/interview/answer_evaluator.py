@@ -190,10 +190,12 @@ class HeuristicAnswerEvaluator:
         covered_points, missing_points = [], []
         for point in expected_points:
             point_tokens = list(dict.fromkeys(self._tokens(str(point))))
-            hits = [t for t in point_tokens if re.search(
-                r"(?<![a-z0-9])" + re.escape(t) + r"(?![a-z0-9])", lower
-            )]
-            threshold = 1 if len(point_tokens) <= 2 else 2
+            hits = []
+            for t in point_tokens:
+                stem = t[:-1] if t.endswith("s") and len(t) > 3 else t
+                if re.search(r"(?<![a-z0-9])" + re.escape(stem) + r"(?:s|es|ed|ing)?(?![a-z0-9])", lower):
+                    hits.append(t)
+            threshold = 1 if len(point_tokens) <= 4 else 2
             if len(hits) >= threshold:
                 covered_points.append(point)
             else:

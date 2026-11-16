@@ -319,6 +319,7 @@ class ResumeMatchingEngine:
             "status": "success",
             "filename": parsed_resume["filename"],
             "job_title": job_title,
+            "target_role": job_title,
             "detected_job_title": detected_job_title,
             "target_role_source": "user_override" if target_role else "job_description",
             "job_description_text": str(job_description_input),
