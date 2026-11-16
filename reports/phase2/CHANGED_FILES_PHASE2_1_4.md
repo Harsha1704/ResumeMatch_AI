@@ -2,50 +2,42 @@
 
 **Repository:** `Harsha1704/ResumeMatch_AI`  
 **Branch:** `fix/resumematch-final-repair`  
-**Base Commit:** `7afec94`  
+**Base Commit:** `a2a064a`  
 
 ---
 
 ## 1. Modified Source Files
 
 ### `src/interview/answer_validator.py`
-- Added `_token_matches(cls, needle: str, haystack: str) -> bool`:
-  - Boundary-aware token matching using alphanumeric and punctuation lookaround assertions (`(?<![A-Za-z0-9_])`, `(?![A-Za-z0-9_+#])`).
-  - Eliminates short-token substring false positives (e.g. `SQL` inside `NoSQL`, `Java` inside `JavaScript`, `C` inside `C++`/`CSS`, `Go` inside `Django`, `Rust` inside `trust`).
+- Added `_strip_exempt_blocks(cls, text: str) -> str`:
+  - Consolidates stripping of bracketed placeholders (`[Candidate to specify: ...]`), candidate confirmations (`[Candidate Confirmed: ...]`), and boundary-scoped illustrative scenario blocks (`[Illustrative Scenario...]: ...`) and general technical guidance blocks (`[General Technical Guidance]: ...`).
+  - Scopes illustrative exemptions strictly to the scenario content by terminating on double newlines (`\n\n`), other bracketed markers (`[Candidate`, `[Verified`, `[General Technical Guidance`), or sentence boundaries (`.`, `;`, `\n`) preceding personal assertions.
+  - Ensures personal claims appearing before or after an illustrative block are preserved for auditing.
 - Refactored `classify_statement()`:
-  - Replaced naive string containment with `_token_matches()` for marker value validation and direct evidence checking.
-  - Removed `and not is_resume` from `is_unsupported` calculation, enabling valid markers and unsupported personal claims to coexist without mutual suppression.
-  - Allowed `is_resume_supported` to remain `True` when valid markers exist, even if a fabricated marker is also present in the statement.
-  - Preserved candidate-confirmed separation (`is_candidate_confirmed: True`, `is_resume_supported: False`).
-- Updated `audit_answer_for_unsupported_first_person_claims()`:
-  - Tokenized marker validation using `_token_matches()`.
-  - Audited personal assertion patterns against individual evidence tokens with `_token_matches()`, ensuring an organization marker (`"Acme Corp"`) cannot authenticate an unrelated engineering action (e.g., `"coordinated deployment"`).
+  - Uses `_strip_exempt_blocks()` to isolate non-exempt statement text.
+  - Removed `and not is_illustrative` from `is_unsupported` determination, preventing illustrative scenarios from suppressing unsupported personal assertions anywhere in the statement.
+  - Evaluates direct evidence matching (`matches_actual_evidence`) strictly on cleaned text so claims inside illustrative blocks cannot authenticate as candidate achievements.
+- Refactored `audit_answer_for_unsupported_first_person_claims()`:
+  - Standardized on `_strip_exempt_blocks(text)` to ensure consistency between classification and full record auditing.
 
 ---
 
-## 2. New Test Files
+## 2. Modified Test Files
 
 ### `tests/test_phase2_1_4_claim_level_evidence.py`
-- Added 8 comprehensive regression tests:
-  1. `test_01_genuine_organization_plus_unsupported_deployment_claim`: Verifies valid marker and unsupported claim coexist, and deployment claim is flagged.
-  2. `test_02_genuine_project_title_plus_unsupported_architecture_claim`: Verifies project title does not authenticate ungrounded architecture choice.
-  3. `test_03_genuine_technology_evidence_plus_unsupported_testing_claim`: Verifies technology tokens do not authenticate ungrounded automated unit testing.
-  4. `test_04_multiple_valid_markers_alongside_one_fabricated_marker`: Verifies multiple valid markers and a fabricated marker coexist with both classifications preserved.
-  5. `test_05_short_token_false_matches_prevented`: Verifies boundary-aware matching for `SQL` vs `NoSQL`, `Java` vs `JavaScript`, `C` vs `CSS`, `Go` vs `Django`, and `Rust` vs `trust`.
-  6. `test_06_mixed_candidate_confirmed_and_unsupported_claims`: Verifies candidate confirmations remain distinct and ungrounded claims are flagged.
-  7. `test_07_unsupported_claims_in_every_audited_output_field`: Verifies audit catches unsupported claims across all 13 core output fields.
-  8. `test_08_existing_valid_generated_interview_answers_remain_valid`: Verifies end-to-end question generation passes quality audit (`is_valid=True`, score >= 80).
+- Expanded test suite from 8 to 13 tests, adding:
+  - `test_09_illustrative_scenario_followed_by_unsupported_deployment_claim`: Confirms deployment claim following an illustrative block is flagged.
+  - `test_10_unsupported_personal_claim_followed_by_illustrative_scenario`: Confirms personal claim preceding an illustrative block is flagged.
+  - `test_11_unsupported_claim_entirely_inside_illustrative_block`: Confirms claims entirely inside an illustrative block are not falsely classified as candidate achievements or flagged.
+  - `test_12_valid_illustrative_guidance_without_personal_claims`: Confirms valid illustrative scenarios remain valid.
+  - `test_13_mixed_valid_resume_marker_illustrative_block_and_unsupported_claim`: Confirms all three classifications (`is_resume_supported`, `is_illustrative_scenario`, `is_unsupported_personal_claim`) coexist and are preserved.
 
 ---
 
-## 3. New Documentation & Reports
+## 3. Updated Documentation & Reports
 
 ### `reports/phase2/PHASE2_1_4_CLAIM_LEVEL_EVIDENCE_REPORT.md`
-- Detailed audit and verification report for Phase 2.1.4:
-  - Executive summary and architectural problem statement.
-  - Root cause analysis of mutual suppression and substring collisions.
-  - Implementation details for `_token_matches()` and claim-level coexistence.
-  - Test verification results across phase suites, full regression suite, and frontend build/lint.
+- Updated audit report documenting the illustrative scenario scoping correction, root cause analysis, test execution counts, and verification results.
 
 ### `reports/phase2/CHANGED_FILES_PHASE2_1_4.md`
-- File-by-file summary of changes for Phase 2.1.4.
+- File-by-file change manifest for Phase 2.1.4.

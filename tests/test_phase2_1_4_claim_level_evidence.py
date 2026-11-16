@@ -280,3 +280,103 @@ class TestPhase214ClaimLevelEvidenceValidation:
             val_res = AnswerQualityValidator.validate_answer(q)
             assert val_res["is_valid"] is True, f"Question failed validation: {val_res['issues']}"
             assert val_res["quality_score"] >= 80.0, f"Quality score too low ({val_res['quality_score']}): {val_res['issues']}"
+
+    # -------------------------------------------------------------------------
+    # 9. Illustrative scenario followed by an unsupported deployment claim
+    # -------------------------------------------------------------------------
+    def test_09_illustrative_scenario_followed_by_unsupported_deployment_claim(self):
+        """Illustrative scenario marker must not suppress an unsupported deployment claim following it."""
+        text = (
+            "[Illustrative Scenario — Not candidate resume data]: When scaling backend services, "
+            "rate limiting protects internal endpoints. I coordinated deployment."
+        )
+        cls_res = AnswerQualityValidator.classify_statement(text)
+        assert cls_res["is_illustrative_scenario"] is True, "Illustrative scenario must be recognized"
+        assert cls_res["is_unsupported_personal_claim"] is True, "Deployment claim outside scenario must be flagged"
+
+        issues = AnswerQualityValidator.audit_answer_for_unsupported_first_person_claims(text)
+        assert len(issues) > 0
+        assert any("deployment" in iss.lower() for iss in issues)
+
+        rec = {
+            "question_text": "How do you handle production scaling?",
+            "detailed_answer": text,
+            "short_answer": "Used rate limiting.",
+            "simpler_answer": "Rate limiting protects services.",
+            "curated_answer": "Standard scaling patterns."
+        }
+        val = AnswerQualityValidator.validate_answer(rec)
+        assert val["is_valid"] is False, "Record with unsupported claim outside scenario must fail validation"
+
+    # -------------------------------------------------------------------------
+    # 10. Unsupported personal claim followed by an illustrative scenario
+    # -------------------------------------------------------------------------
+    def test_10_unsupported_personal_claim_followed_by_illustrative_scenario(self):
+        """Unsupported personal claim before an illustrative scenario must be flagged."""
+        text = (
+            "I coordinated deployment. [Illustrative Scenario — Not candidate resume data]: "
+            "When scaling backend services, rate limiting protects internal endpoints."
+        )
+        cls_res = AnswerQualityValidator.classify_statement(text)
+        assert cls_res["is_illustrative_scenario"] is True
+        assert cls_res["is_unsupported_personal_claim"] is True
+
+        issues = AnswerQualityValidator.audit_answer_for_unsupported_first_person_claims(text)
+        assert len(issues) > 0
+        assert any("deployment" in iss.lower() for iss in issues)
+
+    # -------------------------------------------------------------------------
+    # 11. Unsupported claim entirely inside a clearly labeled illustrative block
+    # -------------------------------------------------------------------------
+    def test_11_unsupported_claim_entirely_inside_illustrative_block(self):
+        """Claims inside an illustrative block are not candidate achievements and not falsely flagged."""
+        text = (
+            "[Illustrative Scenario — Not candidate resume data]: In this hypothetical model scenario, "
+            "the engineer deployed the service to production."
+        )
+        cls_res = AnswerQualityValidator.classify_statement(text)
+        assert cls_res["is_illustrative_scenario"] is True
+        assert cls_res["is_resume_supported"] is False, "Scenario content must NOT be classified as candidate achievement"
+        assert cls_res["is_unsupported_personal_claim"] is False, "Scenario content must not be flagged as candidate claim"
+
+        issues = AnswerQualityValidator.audit_answer_for_unsupported_first_person_claims(text)
+        assert len(issues) == 0, f"Expected no issues for claim inside illustrative block, got {issues}"
+
+    # -------------------------------------------------------------------------
+    # 12. Valid illustrative guidance without personal claims
+    # -------------------------------------------------------------------------
+    def test_12_valid_illustrative_guidance_without_personal_claims(self):
+        """Valid illustrative guidance remains valid and unflagged."""
+        text = (
+            "[Illustrative Model Scenario — Not candidate resume data]: In distributed systems, "
+            "consensus mechanisms like Raft maintain replica state consistency."
+        )
+        cls_res = AnswerQualityValidator.classify_statement(text)
+        assert cls_res["is_illustrative_scenario"] is True
+        assert cls_res["is_unsupported_personal_claim"] is False
+        assert cls_res["is_resume_supported"] is False
+
+        issues = AnswerQualityValidator.audit_answer_for_unsupported_first_person_claims(text)
+        assert len(issues) == 0
+
+    # -------------------------------------------------------------------------
+    # 13. Mixed valid resume marker, illustrative block, and unsupported claim
+    # -------------------------------------------------------------------------
+    def test_13_mixed_valid_resume_marker_illustrative_block_and_unsupported_claim(self):
+        """Preserves all applicable classifications when valid marker, scenario, and claim mix."""
+        text = (
+            "Verified Organization: Acme Corp. [Illustrative Scenario — Not candidate resume data]: "
+            "In production code reviews, teams follow git conventions. I coordinated deployment."
+        )
+        evidence = {"organization": "Acme Corp"}
+
+        cls_res = AnswerQualityValidator.classify_statement(text, evidence=evidence)
+        assert cls_res["is_resume_supported"] is True, "Acme Corp marker must be recognized"
+        assert cls_res["is_illustrative_scenario"] is True, "Illustrative block must be recognized"
+        assert cls_res["is_unsupported_personal_claim"] is True, "Deployment claim must be flagged"
+
+        issues = AnswerQualityValidator.audit_answer_for_unsupported_first_person_claims(
+            text, verified_evidence=evidence
+        )
+        assert len(issues) > 0
+        assert any("deployment" in iss.lower() for iss in issues)

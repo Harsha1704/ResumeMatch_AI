@@ -127,6 +127,64 @@ class AnswerQualityValidator:
         return bool(re.search(pattern, haystack, re.IGNORECASE))
 
     @classmethod
+    def _strip_exempt_blocks(cls, text: str) -> str:
+        """
+        Strips explicitly exempt blocks (candidate-specifying placeholders, candidate confirmations,
+        and accurately scoped illustrative model scenarios and general technical guidance).
+        Scopes illustrative exemptions strictly to the scenario block, ensuring unsupported
+        personal claims before or after the scenario are preserved for auditing.
+        """
+        if not text:
+            return ""
+
+        cleaned = text
+
+        # 1. Bracketed candidate placeholders and confirmations
+        cleaned = re.sub(r"\[Candidate to specify:[^\]]*\]", "", cleaned, flags=re.IGNORECASE)
+        cleaned = re.sub(r"\[Candidate Confirmed[^\]]*\]", "", cleaned, flags=re.IGNORECASE)
+
+        # 2. Illustrative scenario blocks scoped strictly to their block boundaries
+        # Boundaries: next bracketed block, double newline, or sentence boundary preceding a personal claim
+        illustrative_pattern = re.compile(
+            r"\[Illustrative (?:Model )?Scenario[^\]]*\]:?\s*.*?"
+            r"(?="
+            r"\[Candidate to specify:|"
+            r"\[Candidate Confirmed|"
+            r"\[Verified\s|"
+            r"\[General Technical Guidance|"
+            r"\n\n|"
+            r"(?:\.|\;|\n)\s*(?=(?:I|we|my|our|the candidate|he|she|they)\s+(?:have\s+)?(?:coordinated|deployed|implemented|designed|built|maintained|debugged|contributed|collaborated|authored|created|developed)\b)|"
+            r"(?:\.|\;|\n)\s*(?=(?:production\s+)?features?\s+(?:were|was)\s+contributed\b)|"
+            r"(?:\.|\;|\n)\s*(?=(?:the\s+)?(?:payment\s+workflow|production\s+database|deployment)\s+(?:was|were)\s+(?:debugged|maintained|coordinated)\b)|"
+            r"$"
+            r")",
+            flags=re.IGNORECASE | re.DOTALL
+        )
+        cleaned = illustrative_pattern.sub("", cleaned)
+
+        # 3. General technical guidance blocks scoped strictly to their block boundaries
+        guidance_pattern = re.compile(
+            r"\[General Technical Guidance\]:?\s*.*?"
+            r"(?="
+            r"\[Candidate to specify:|"
+            r"\[Candidate Confirmed|"
+            r"\[Verified\s|"
+            r"\[Illustrative|"
+            r"\n\n|"
+            r"(?:\.|\;|\n)\s*(?=(?:I|we|my|our|the candidate|he|she|they)\s+(?:have\s+)?(?:coordinated|deployed|implemented|designed|built|maintained|debugged|contributed|collaborated|authored|created|developed)\b)|"
+            r"(?:\.|\;|\n)\s*(?=(?:production\s+)?features?\s+(?:were|was)\s+contributed\b)|"
+            r"(?:\.|\;|\n)\s*(?=(?:the\s+)?(?:payment\s+workflow|production\s+database|deployment)\s+(?:was|were)\s+(?:debugged|maintained|coordinated)\b)|"
+            r"$"
+            r")",
+            flags=re.IGNORECASE | re.DOTALL
+        )
+        cleaned = guidance_pattern.sub("", cleaned)
+        cleaned = re.sub(r"\(General Technical Guidance\):[^\n.]*", "", cleaned, flags=re.IGNORECASE)
+        cleaned = re.sub(r"\[[^\]]*\]", "", cleaned)
+        cleaned = re.sub(r"^[\s.;]+", "", cleaned)
+        return cleaned.strip()
+
+    @classmethod
     def classify_statement(
         cls,
         text: str,
@@ -186,10 +244,14 @@ class AnswerQualityValidator:
             else:
                 has_fabricated_marker = True
 
+        # Cleaned text outside exempt blocks (placeholders, candidate confirmations, properly scoped illustrative scenarios)
+        cleaned = cls._strip_exempt_blocks(t)
+
         # Check if text matches actual evidence directly using boundary-aware token matching
+        # Evaluated on cleaned text so claims inside illustrative blocks cannot authenticate as resume evidence
         matches_actual_evidence = False
         for ev_item in ev_texts:
-            if len(ev_item.strip()) >= 2 and cls._token_matches(ev_item, t):
+            if len(ev_item.strip()) >= 2 and cls._token_matches(ev_item, cleaned):
                 matches_actual_evidence = True
                 break
 
@@ -205,20 +267,10 @@ class AnswerQualityValidator:
         # 1. Generic positive fallbacks
         has_generic_fallback = bool(re.search(
             r"\b(software engineering duties|software development duties|software development tasks|assigned engineering features|practical engineering tools)\b",
-            t, re.IGNORECASE
+            cleaned, re.IGNORECASE
         ))
 
-        # 2. First person actions or claims not inside placeholders or illustrative scenarios
-        cleaned = re.sub(r"\[Candidate to specify:[^\]]*\]", "", t, flags=re.IGNORECASE)
-        cleaned = re.sub(r"\[Candidate Confirmed[^\]]*\]", "", cleaned, flags=re.IGNORECASE)
-        cleaned = re.sub(r"\[Illustrative (?:Model )?Scenario[^\]]*\]:.*?(?=\[Candidate to specify:|\n\n|$)", "", cleaned, flags=re.IGNORECASE | re.DOTALL)
-        cleaned = re.sub(r"\[Illustrative (?:Model )?Scenario[^\]]*\]:[^\n.]*", "", cleaned, flags=re.IGNORECASE)
-        cleaned = re.sub(r"\[General Technical Guidance\]:.*?(?=\[Candidate to specify:|\n\n|$)", "", cleaned, flags=re.IGNORECASE | re.DOTALL)
-        cleaned = re.sub(r"\[General Technical Guidance\]:[^\n.]*", "", cleaned, flags=re.IGNORECASE)
-        cleaned = re.sub(r"\(General Technical Guidance\):[^\n.]*", "", cleaned, flags=re.IGNORECASE)
-        cleaned = re.sub(r"\[[^\]]*\]", "", cleaned)
-
-        # Check individual claims against evidence using boundary-aware token matching
+        # 2. Check individual claims against evidence using boundary-aware token matching
         unsupported_claim_patterns = [
             # Personal Engineering Contribution & Collaboration Claims
             r"\b(?:I|we|the candidate|he|she|they)?\s*(?:have\s+)?contributed\s+to\s+(?:production\s+)?features?\b",
@@ -273,11 +325,11 @@ class AnswerQualityValidator:
                     has_unsupported_claim = True
                     break
 
-        is_unsupported = (
+        is_unsupported = bool(
             has_generic_fallback
             or has_fabricated_marker
             or has_unsupported_claim
-        ) and not is_illustrative
+        )
 
         # General technical explanation is valid ONLY if it is technical and NOT an unsupported personal claim
         is_labeled_guidance = bool(re.search(r"\[General Technical Guidance\]|\(General Technical Guidance\)", t, re.IGNORECASE))
@@ -319,15 +371,8 @@ class AnswerQualityValidator:
 
         ev_texts = cls._extract_evidence_text_set(verified_evidence)
 
-        # Strip out bracketed placeholders, candidate confirmations, and illustrative scenarios
-        cleaned = re.sub(r"\[Candidate to specify:[^\]]*\]", "", text, flags=re.IGNORECASE)
-        cleaned = re.sub(r"\[Candidate Confirmed[^\]]*\]", "", cleaned, flags=re.IGNORECASE)
-        cleaned = re.sub(r"\[Illustrative (?:Model )?Scenario[^\]]*\]:.*?(?=\[Candidate to specify:|\n\n|$)", "", cleaned, flags=re.IGNORECASE | re.DOTALL)
-        cleaned = re.sub(r"\[Illustrative (?:Model )?Scenario[^\]]*\]:[^\n.]*", "", cleaned, flags=re.IGNORECASE)
-        cleaned = re.sub(r"\[General Technical Guidance\]:.*?(?=\[Candidate to specify:|\n\n|$)", "", cleaned, flags=re.IGNORECASE | re.DOTALL)
-        cleaned = re.sub(r"\[General Technical Guidance\]:[^\n.]*", "", cleaned, flags=re.IGNORECASE)
-        cleaned = re.sub(r"\(General Technical Guidance\):[^\n.]*", "", cleaned, flags=re.IGNORECASE)
-        cleaned = re.sub(r"\[[^\]]*\]", "", cleaned)
+        # Strip out bracketed placeholders, candidate confirmations, and accurately scoped illustrative scenarios
+        cleaned = cls._strip_exempt_blocks(text)
 
         # Check verified markers against actual evidence
         marker_pattern = re.compile(
