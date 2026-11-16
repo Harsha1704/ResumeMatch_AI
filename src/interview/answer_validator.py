@@ -127,14 +127,38 @@ class AnswerQualityValidator:
         return bool(re.search(pattern, haystack, re.IGNORECASE))
 
     @classmethod
+    def _strip_illustrative_blocks(cls, text: str) -> str:
+        """
+        Strips only properly matched explicit illustrative scenario blocks.
+        Supports [Illustrative Scenario]: ... [/Illustrative Scenario] and
+        [Illustrative Model Scenario]: ... [/Illustrative Model Scenario].
+        Iteratively strips innermost/single blocks so nested or repeated blocks are handled cleanly.
+        """
+        if not text:
+            return ""
+        explicit_illustrative_pattern = re.compile(
+            r"\[Illustrative\s+(?:Model\s+)?Scenario[^\]]*\]:?"
+            r"(?:(?!\[Illustrative\s+(?:Model\s+)?Scenario).)*?"
+            r"\[/\s*Illustrative\s+(?:Model\s+)?Scenario\s*:?\]",
+            flags=re.IGNORECASE | re.DOTALL
+        )
+        cleaned = text
+        while True:
+            new_cleaned = explicit_illustrative_pattern.sub("", cleaned)
+            if new_cleaned == cleaned:
+                break
+            cleaned = new_cleaned
+        return cleaned
+
+    @classmethod
     def _strip_exempt_blocks(cls, text: str) -> str:
         """
         Strips explicitly exempt blocks:
-        1. Bracketed candidate placeholders: [Candidate to specify: ...]
-        2. Candidate confirmations: [Candidate Confirmed: ...]
-        3. Properly matched explicit illustrative scenario blocks:
+        1. Properly matched explicit illustrative scenario blocks:
            [Illustrative Scenario]: ... [/Illustrative Scenario]
            [Illustrative Model Scenario]: ... [/Illustrative Model Scenario]
+        2. Bracketed candidate placeholders: [Candidate to specify: ...]
+        3. Candidate confirmations: [Candidate Confirmed: ...]
         4. General technical guidance blocks: [General Technical Guidance]: ...
 
         Key Invariants:
@@ -147,26 +171,12 @@ class AnswerQualityValidator:
         if not text:
             return ""
 
-        cleaned = text
+        # 1. Explicitly delimited illustrative scenario blocks stripped FIRST
+        cleaned = cls._strip_illustrative_blocks(text)
 
-        # 1. Bracketed candidate placeholders and confirmations
+        # 2. Bracketed candidate placeholders and confirmations outside illustrative blocks
         cleaned = re.sub(r"\[Candidate to specify:[^\]]*\]", "", cleaned, flags=re.IGNORECASE)
         cleaned = re.sub(r"\[Candidate Confirmed[^\]]*\]", "", cleaned, flags=re.IGNORECASE)
-
-        # 2. Explicitly delimited illustrative scenario blocks
-        # Supports [Illustrative Scenario]: ... [/Illustrative Scenario] and [Illustrative Model Scenario]: ... [/Illustrative Model Scenario]
-        # Iteratively strips innermost/single blocks so nested or repeated blocks are handled cleanly
-        explicit_illustrative_pattern = re.compile(
-            r"\[Illustrative\s+(?:Model\s+)?Scenario[^\]]*\]:?"
-            r"(?:(?!\[Illustrative\s+(?:Model\s+)?Scenario).)*?"
-            r"\[/\s*Illustrative\s+(?:Model\s+)?Scenario\s*:?\]",
-            flags=re.IGNORECASE | re.DOTALL
-        )
-        while True:
-            new_cleaned = explicit_illustrative_pattern.sub("", cleaned)
-            if new_cleaned == cleaned:
-                break
-            cleaned = new_cleaned
 
         # 3. General technical guidance blocks scoped strictly to their block boundaries
         guidance_pattern = re.compile(
@@ -212,6 +222,7 @@ class AnswerQualityValidator:
         Key Invariants:
         - Valid markers and unsupported personal claims can coexist; both classifications are preserved.
         - Markers inside illustrative blocks cannot authenticate as resume evidence or candidate claims.
+        - Candidate-confirmed and missing-information markers inside illustrative blocks do not influence statement classification.
         - A verified organization or title does not authenticate unrelated engineering/deployment claims.
         - Evidence matching is token- and boundary-aware, avoiding unsafe substring matches (e.g. SQL inside NoSQL).
         - Candidate confirmation is NEVER treated as independent resume evidence.
@@ -220,22 +231,28 @@ class AnswerQualityValidator:
         - If evidence is unavailable, claims are classified as unverified rather than resume-supported.
         """
         t = text.strip()
-        is_missing = bool(re.search(r"\[Candidate to specify:[^\]]*\]", t, re.IGNORECASE))
-        is_candidate = bool(re.search(r"\[Candidate Confirmed[^\]]*\]", t, re.IGNORECASE))
+
+        # 1. Compute cleaned text outside properly matched illustrative blocks first
+        non_illustrative_text = cls._strip_illustrative_blocks(t)
+
+        # 2. Cleaned text outside all exempt blocks (placeholders, candidate confirmations, properly scoped illustrative scenarios)
+        cleaned = cls._strip_exempt_blocks(t)
+
+        # 3. Determine candidate-confirmed and missing-placeholder classifications
+        # ONLY from content outside properly matched illustrative blocks
+        is_missing = bool(re.search(r"\[Candidate to specify:[^\]]*\]", non_illustrative_text, re.IGNORECASE))
+        is_candidate = bool(re.search(r"\[Candidate Confirmed[^\]]*\]", non_illustrative_text, re.IGNORECASE))
         is_illustrative = bool(re.search(r"\[Illustrative (?:Model )?Scenario[^\]]*\]", t, re.IGNORECASE))
 
         # Extract genuine evidence
         ev_texts = cls._extract_evidence_text_set(evidence)
-
-        # Cleaned text outside exempt blocks (placeholders, candidate confirmations, properly scoped illustrative scenarios)
-        cleaned = cls._strip_exempt_blocks(t)
 
         # Check evidence markers in cleaned text outside illustrative blocks
         # Invariant: Markers inside illustrative blocks cannot set marker_verified, has_fabricated_marker, or is_resume_supported
         text_for_markers = re.sub(
             r"\[Illustrative\s+(?:Model\s+)?Scenario[^\]]*\]:?.*?(?=\[/\s*Illustrative\s+(?:Model\s+)?Scenario\s*:?\]|\n\n|$)",
             "",
-            cleaned,
+            non_illustrative_text,
             flags=re.IGNORECASE | re.DOTALL
         )
         marker_pattern = re.compile(

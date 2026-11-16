@@ -588,3 +588,74 @@ class TestPhase214ClaimLevelEvidenceValidation:
         issues = AnswerQualityValidator.audit_answer_for_unsupported_first_person_claims(text)
         assert len(issues) > 0
         assert any("supervised" in iss.lower() or "team" in iss.lower() for iss in issues)
+
+    # -------------------------------------------------------------------------
+    # 26. Candidate confirmation marker inside an illustrative block does not set candidate-confirmed
+    # -------------------------------------------------------------------------
+    def test_26_candidate_confirmation_marker_inside_illustrative_block_does_not_set_candidate_confirmed(self):
+        """Candidate-confirmation marker inside an illustrative block does not set candidate-confirmed classification."""
+        text = (
+            "[Illustrative Scenario — Not candidate resume data]: In this hypothetical model scenario, "
+            "[Candidate Confirmed: Built caching layer in Redis] was simulated. [/Illustrative Scenario]"
+        )
+        cls_res = AnswerQualityValidator.classify_statement(text)
+        assert cls_res["is_illustrative_scenario"] is True
+        assert cls_res["is_candidate_confirmed"] is False, "Candidate confirmation inside illustrative block must NOT set candidate-confirmed"
+        assert cls_res["is_unsupported_personal_claim"] is False
+
+    # -------------------------------------------------------------------------
+    # 27. Missing-information marker inside an illustrative block does not set missing-placeholder
+    # -------------------------------------------------------------------------
+    def test_27_missing_information_marker_inside_illustrative_block_does_not_set_missing_placeholder(self):
+        """Missing-information marker inside an illustrative block does not set missing-placeholder classification."""
+        text = (
+            "[Illustrative Scenario — Not candidate resume data]: In this hypothetical model scenario, "
+            "[Candidate to specify: database indexing strategy] illustrates target tuning. [/Illustrative Scenario]"
+        )
+        cls_res = AnswerQualityValidator.classify_statement(text)
+        assert cls_res["is_illustrative_scenario"] is True
+        assert cls_res["is_missing_info_placeholder"] is False, "Missing-info placeholder inside illustrative block must NOT set missing-placeholder"
+        assert cls_res["is_unsupported_personal_claim"] is False
+
+    # -------------------------------------------------------------------------
+    # 28. Genuine verified evidence outside block remains resume-supported despite candidate marker inside example
+    # -------------------------------------------------------------------------
+    def test_28_genuine_verified_evidence_outside_block_remains_resume_supported_despite_candidate_marker_inside_example(self):
+        """Genuine verified evidence outside block remains resume-supported even when candidate-confirmation appears inside example."""
+        text = (
+            "Verified Organization: Acme Corp. [Illustrative Scenario — Not candidate resume data]: "
+            "For example, [Candidate Confirmed: Built caching layer in Redis] was an illustrative pattern. [/Illustrative Scenario]"
+        )
+        evidence = {"organization": "Acme Corp"}
+
+        cls_res = AnswerQualityValidator.classify_statement(text, evidence=evidence)
+        assert cls_res["is_resume_supported"] is True, "Genuine marker outside must establish resume support despite marker inside example"
+        assert cls_res["is_candidate_confirmed"] is False, "Candidate confirmation inside example must NOT set candidate-confirmed"
+        assert cls_res["is_illustrative_scenario"] is True
+        assert cls_res["is_unsupported_personal_claim"] is False
+
+    # -------------------------------------------------------------------------
+    # 29. Candidate confirmation marker outside block still works
+    # -------------------------------------------------------------------------
+    def test_29_candidate_confirmation_marker_outside_block_still_works(self):
+        """Candidate-confirmation marker outside an illustrative block continues to set candidate-confirmed classification."""
+        text = (
+            "[Illustrative Scenario]: A sample model scenario demonstrating scaling patterns. [/Illustrative Scenario] "
+            "[Candidate Confirmed: Led database migration at StartupX]."
+        )
+        cls_res = AnswerQualityValidator.classify_statement(text)
+        assert cls_res["is_illustrative_scenario"] is True
+        assert cls_res["is_candidate_confirmed"] is True, "Candidate confirmation outside block must set candidate-confirmed"
+
+    # -------------------------------------------------------------------------
+    # 30. Missing-information marker outside block still works
+    # -------------------------------------------------------------------------
+    def test_30_missing_information_marker_outside_block_still_works(self):
+        """Missing-information marker outside an illustrative block continues to set missing-placeholder classification."""
+        text = (
+            "[Illustrative Scenario]: A sample model scenario demonstrating scaling patterns. [/Illustrative Scenario] "
+            "[Candidate to specify: database table name]."
+        )
+        cls_res = AnswerQualityValidator.classify_statement(text)
+        assert cls_res["is_illustrative_scenario"] is True
+        assert cls_res["is_missing_info_placeholder"] is True, "Missing-info placeholder outside block must set missing-placeholder"
