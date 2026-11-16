@@ -45,19 +45,31 @@ class AnswerQualityValidator:
         if not text:
             return issues
 
-        # Strip out bracketed placeholders and illustrative model scenarios
+        # Strip out bracketed placeholders, candidate confirmations, and illustrative model scenarios
         cleaned = re.sub(r"\[Candidate to specify:[^\]]*\]", "", text, flags=re.IGNORECASE)
         cleaned = re.sub(r"\[Illustrative Model Scenario[^\]]*\]:[^\n.]*", "", cleaned, flags=re.IGNORECASE)
+        cleaned = re.sub(r"\[Candidate Confirmed[^\]]*\]", "", cleaned, flags=re.IGNORECASE)
         cleaned = re.sub(r"\[[^\]]*\]", "", cleaned)
 
         unsupported_patterns = [
             (r"\bI designed modular software components\b", "Claims ungrounded modular component design"),
+            (r"\bI implemented modular services\b", "Claims ungrounded modular service implementation"),
+            (r"\bI authored automated unit tests\b", "Claims ungrounded automated unit test authorship"),
+            (r"\bThe completed service verified functional requirements\b", "Claims ungrounded service verification"),
+            (r"\bThe completed system satisfied all acceptance criteria\b", "Claims ungrounded acceptance criteria satisfaction"),
             (r"\bI implemented optimistic locking\b", "Claims ungrounded optimistic locking implementation"),
             (r"\bI discovered the failure was occurring because\b", "Claims ungrounded failure discovery"),
             (r"\bI refactored the module with defensive\b", "Claims ungrounded defensive module refactoring"),
             (r"\bI committed the failing test case\b", "Claims ungrounded test case commit"),
             (r"\bI authored clean, modular code\b", "Claims ungrounded clean modular code authorship"),
-            (r"\bI validated '[^']+' by implementing automated\b", "Claims ungrounded automated unit test validation")
+            (r"\bI authored modular feature code\b", "Claims ungrounded modular feature code authorship"),
+            (r"\bcreated unit and integration test fixtures\b", "Claims ungrounded test fixture creation"),
+            (r"\bMy pull requests were reviewed, approved, and merged\b", "Claims ungrounded pull request review and merge"),
+            (r"\bSuccessfully merged high-quality code\b", "Claims ungrounded production merge"),
+            (r"\bI validated '[^']+' by implementing automated\b", "Claims ungrounded automated unit test validation"),
+            (r"\bI authored comprehensive unit tests\b", "Claims ungrounded comprehensive unit tests"),
+            (r"\bI designed a modular layered architecture\b", "Claims ungrounded layered architecture design"),
+            (r"\bI deliberately chose a modular monolithic architecture\b", "Claims ungrounded architecture choice")
         ]
 
         for pat, desc in unsupported_patterns:

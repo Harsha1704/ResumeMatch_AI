@@ -124,13 +124,13 @@ class InterviewQuestionGenerator:
             q_id = self._make_id("qa_skill_overview", top_skills_str)
             q_text = f"Your resume highlights experience with {top_skills_str}. Walk me through how you have applied these {focus_label} in your software projects."
             fw_id = preferred_framework or "PREP"
-            short_ans = f"I have applied {top_skills_str} across end-to-end software projects, designing modular architectures, writing automated tests, and optimizing performance."
+            short_ans = f"My experience with {top_skills_str} spans software development projects, applying these technologies to implement functional features and solve engineering problems."
             simpler_ans = f"My experience with {top_skills_str} focuses on building modular systems where each technology handles a clear responsibility, from data storage to API delivery."
             detailed_ans = (
                 f"Throughout my development work, I have focused on applying {top_skills_str} as an integrated engineering toolkit. "
                 f"Rather than learning technologies in isolation, I organize applications into decoupled operational layers: using backend frameworks for routing and API validation, "
-                f"relational or document databases for persistent storage, and automated testing suites to verify system behavior. "
-                f"{proj_context_str}, I combined these tools to deliver end-to-end functionality while adhering to clean code standards and automated test coverage. "
+                f"relational or document databases for persistent storage, and systematic validation to verify system behavior. "
+                f"{proj_context_str}, I combined these tools to deliver end-to-end functionality while adhering to clean code standards. "
                 f"This practical experience allows me to understand both the strengths and the operational constraints of each tool in production environments."
             )
             why_this_works = (

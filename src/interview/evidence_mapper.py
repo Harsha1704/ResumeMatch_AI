@@ -34,8 +34,8 @@ def extract_candidate_evidence(analysis_data: Optional[Dict[str, Any]]) -> Dict[
             "missing_skills": [],
             "required_skills": [],
             "preferred_skills": [],
-            "education": "Degree not specified",
-            "experience_summary": "Experience not established"
+            "education": "Education details not established from available resume data.",
+            "experience_summary": "Professional experience not established from available resume data."
         }
 
     projects_raw = analysis_data.get("projects") or analysis_data.get("relevant_projects") or []
@@ -50,10 +50,18 @@ def extract_candidate_evidence(analysis_data: Optional[Dict[str, Any]]) -> Dict[
             if isinstance(p_techs, str):
                 p_techs = [t.strip() for t in p_techs.split(",") if t.strip()]
             p_desc = p.get("description") or p.get("project_description") or ""
+            user_conf = bool(p.get("user_confirmed") or p.get("candidate_confirmed"))
+            conf_details = str(p.get("confirmed_details") or p.get("user_confirmed_details") or "")
             cleaned_projects.append({
                 "title": p_title,
                 "technologies": p_techs,
-                "description": p_desc
+                "description": p_desc,
+                "has_description": bool(p_desc.strip()),
+                "exact_excerpt": p.get("exact_excerpt") or p_desc,
+                "user_confirmed": user_conf,
+                "confirmed_details": conf_details,
+                "has_testing_evidence": bool(re.search(r"\b(?:unit[\s-]tests?|integration[\s-]tests?|pytest|unittest|tdd|ci/cd|automated tests?)\b", p_desc, re.I)),
+                "has_metrics_evidence": bool(re.search(r"\b(?:\d+%\s*|\d+x\s*|\d+\s*(?:ms|sec|users|req/s|qps))\b", p_desc, re.I))
             })
 
     # Clean internships
@@ -69,12 +77,19 @@ def extract_candidate_evidence(analysis_data: Optional[Dict[str, Any]]) -> Dict[
             techs = i.get("technologies") or i.get("tools") or []
             if isinstance(techs, str):
                 techs = [t.strip() for t in techs.split(",") if t.strip()]
+            user_conf = bool(i.get("user_confirmed") or i.get("candidate_confirmed"))
+            conf_details = str(i.get("confirmed_details") or i.get("user_confirmed_details") or "")
             cleaned_internships.append({
                 "organization": org,
                 "position": pos,
                 "dates": dates,
                 "responsibilities": resps,
-                "technologies": techs
+                "technologies": techs,
+                "has_responsibilities": bool(resps and any(r.strip() for r in resps)),
+                "user_confirmed": user_conf,
+                "confirmed_details": conf_details,
+                "has_testing_evidence": bool(any(re.search(r"\b(?:unit[\s-]tests?|integration[\s-]tests?|pytest|unittest|tdd|ci/cd|automated tests?)\b", r, re.I) for r in resps)),
+                "has_metrics_evidence": bool(any(re.search(r"\b(?:\d+%\s*|\d+x\s*|\d+\s*(?:ms|sec|users|req/s|qps))\b", r, re.I) for r in resps))
             })
 
     # Skills
@@ -86,11 +101,28 @@ def extract_candidate_evidence(analysis_data: Optional[Dict[str, Any]]) -> Dict[
     job_title = analysis_data.get("job_title") or "Target Technical Role"
 
     # Education notes
-    edu_info = analysis_data.get("education_analysis", {})
-    edu_text = edu_info.get("notes") or "Verified against degree mentions in parsed resume."
+    edu_info = analysis_data.get("education_analysis") or {}
+    edu_notes = edu_info.get("notes")
+    edu_degrees = edu_info.get("degrees") or analysis_data.get("education_degrees") or []
+    if edu_notes and edu_notes != "Verified against degree mentions in parsed resume." and "not confidently" not in edu_notes.lower() and "not established" not in edu_notes.lower():
+        edu_text = edu_notes
+    elif edu_degrees:
+        edu_text = f"Verified degree: {', '.join(edu_degrees)}"
+    else:
+        edu_text = "Education details not established from available resume data."
 
     # Experience summary
-    exp_summary = analysis_data.get("experience_summary", {}).get("display_summary", "Professional experience verified")
+    exp_info = analysis_data.get("experience_summary") or {}
+    exp_display = exp_info.get("display_summary")
+    work_exp = analysis_data.get("work_experience") or []
+    years = exp_info.get("years", 0)
+
+    if exp_display and exp_display != "Professional experience verified" and "not established" not in exp_display.lower():
+        exp_summary = exp_display
+    elif years > 0 or len(internships_raw) > 0 or len(work_exp) > 0:
+        exp_summary = exp_display or f"Established experience across {len(internships_raw) + len(work_exp)} verified role(s)."
+    else:
+        exp_summary = "Professional experience not established from available resume data."
 
     # Unified evidence registry integration
     ev_dossier = analysis_data.get("evidence_registry") or {}
@@ -130,89 +162,148 @@ def ground_guidance_in_evidence(
     if context_type == "project":
         title = evidence_item.get("title", "your technical project")
         tech_list = evidence_item.get("technologies", [])
-        techs = ", ".join(tech_list) if tech_list else "the verified project stack"
+        techs = ", ".join(tech_list) if tech_list else "the project technology stack"
         desc = evidence_item.get("description", "").strip()
-        desc_brief = f"designed to address: '{desc}'" if desc else "developed as a production-grade software solution"
+        user_confirmed = bool(evidence_item.get("user_confirmed") or evidence_item.get("candidate_confirmed"))
+        conf_details = str(evidence_item.get("confirmed_details") or evidence_item.get("user_confirmed_details") or "").strip()
+
+        if desc:
+            sit_text = f"In '{title}', the verified project objective was: '{desc}', utilizing {techs}."
+        else:
+            sit_text = f"In '{title}', software development centered on {techs} [Candidate to specify: Project objective and problem scope; not detailed in resume text]."
+
+        if user_confirmed and conf_details:
+            sit_text += f" [Candidate Confirmed: {conf_details}]"
+
+        task_placeholder = (
+            f"[Candidate Confirmed Objective: {conf_details}]" if (user_confirmed and conf_details)
+            else f"[Candidate to specify: Specific system objective, functional requirements, or ownership scope for '{title}']"
+        )
+        action_placeholder = f"[Candidate to specify: Concrete architectural design, component decomposition, and implementation steps using {techs}]"
+        result_placeholder = f"[Candidate to specify: Quantifiable outcome or verification metric, e.g. latency, throughput, test coverage, or business deliverable for '{title}']"
 
         if f_id in ["STAR", "STAR+L"]:
-            return {
-                "Situation": f"In '{title}', the engineering goal was to build a reliable solution {desc_brief}, utilizing {techs} to manage core business workflows.",
-                "Task": f"My specific objective was to architect a decoupled, testable system that ingests client inputs, validates payloads, and produces deterministic outputs without runtime crashes.",
-                "Action": f"I designed modular software components separating concerns across {techs}: enforcing explicit data contracts, authoring automated unit tests for edge cases, and profiling execution latency.",
-                "Result": f"The completed service verified functional requirements with reproducible builds, passing automated test suites with verified test execution.",
-                "Learning": f"This project reinforced the architectural value of modular boundary isolation: when data schemas are explicitly validated at system entry points, downstream components remain robust and simple to refactor."
+            res_dict = {
+                "Situation": sit_text,
+                "Task": task_placeholder,
+                "Action": action_placeholder,
+                "Result": result_placeholder,
             }
+            if f_id == "STAR+L":
+                res_dict["Learning"] = f"[Candidate to specify: Key architectural lesson, trade-off, or maintainability insight learned while building '{title}']"
+            return res_dict
         elif f_id in ["PAR", "CAR"]:
             key_first = "Problem" if f_id == "PAR" else "Challenge"
+            prob_text = (
+                f"In '{title}', the verified requirement was: '{desc}', utilizing {techs}." if desc
+                else f"In '{title}', development utilized {techs} [Candidate to specify: Concrete technical challenge or requirement]."
+            )
+            if user_confirmed and conf_details:
+                prob_text += f" [Candidate Confirmed: {conf_details}]"
             return {
-                key_first: f"In '{title}', the engineering requirement was to deliver decoupled, reliable components using {techs}.",
-                "Action": f"I implemented modular services using {techs}, enforcing strict schema validation and automated error handling across all execution paths.",
-                "Result": f"The completed system satisfied all acceptance criteria with reproducible builds and reliable test execution."
+                key_first: prob_text,
+                "Action": f"[Candidate to specify: Concrete implementation steps, service boundaries, and validation logic using {techs}]",
+                "Result": f"[Candidate to specify: Deliverable outcome, verification results, or performance metrics achieved for '{title}']"
             }
         elif f_id == "SOAR":
             return {
-                "Situation": f"Architected '{title}' using {techs} to solve {desc_brief}.",
-                "Obstacles": f"The key engineering constraint was preventing processing latency spikes and maintaining state integrity across unexpected input payloads.",
-                "Actions": f"I structured the application into distinct ingestion, transformation, and persistence layers, integrating input validation and structured logging across {techs}.",
-                "Results": f"Achieved deterministic execution and clean separation of concerns, facilitating continuous testing and safe subsequent feature enhancements."
+                "Situation": sit_text,
+                "Obstacles": f"[Candidate to specify: Key engineering obstacle, processing constraint, or defect encountered in '{title}']",
+                "Actions": f"[Candidate to specify: Architectural layers, data validation, and persistence mechanisms integrated across {techs}]",
+                "Results": f"[Candidate to specify: Verifiable execution results, modularity benefits, or performance metrics achieved]"
             }
         elif f_id == "PEEL":
+            ev_str = f"Verified resume excerpt: '{desc}'" if desc else f"[Candidate to specify: Concrete requirement, benchmark, or functional evidence for selecting {techs}]"
+            if user_confirmed and conf_details:
+                ev_str += f" [Candidate Confirmed: {conf_details}]"
             return {
-                "Point": f"In '{title}', I selected {techs} to ensure architectural modularity, maintainability, and deterministic data flow.",
-                "Evidence": f"[Cite concrete benchmark data, compatibility, or functional evidence for selecting {techs}]",
-                "Explanation": f"This modular decomposition prevented tight coupling, allowing each pipeline stage to be tested in isolation and updated without cascading regression side effects.",
-                "Link": f"[Link this technology choice back to the overall success of '{title}']"
+                "Point": f"In '{title}', {techs} was selected to implement system functionality.",
+                "Evidence": ev_str,
+                "Explanation": f"[Candidate to specify: How component modularity and separation of concerns were established using {techs}]",
+                "Link": f"[Link this technology choice back to the overall deliverable and success of '{title}']"
             }
         elif f_id == "PREP":
+            ex_str = f"Verified resume implementation: '{desc}'" if desc else f"[Candidate to specify: Concrete module or data transformation example using {techs}]"
+            if user_confirmed and conf_details:
+                ex_str += f" [Candidate Confirmed: {conf_details}]"
             return {
-                "Point": f"The architecture of '{title}' prioritizes modular separation of concerns using {techs}.",
-                "Reason": "Monolithic scripts become fragile as requirements grow, whereas decoupled modules allow independent testing and localized error boundaries.",
-                "Example": f"For instance, isolating data transformations from the HTTP transport layer enabled thorough unit testing with mock fixtures before integrating live storage.",
-                "Point_Conclusion": f"This architectural pattern ensures '{title}' remains resilient, maintainable, and straightforward for any engineer to extend."
+                "Point": f"The technical design of '{title}' centers on {techs}.",
+                "Reason": f"[Candidate to specify: Architectural rationale and decoupling benefits for this technology choice]",
+                "Example": ex_str,
+                "Point_Conclusion": f"[Candidate to specify: How this architectural pattern ensures maintainability and extensibility for '{title}']"
             }
         else:  # WHAT-WHY-HOW
+            what_str = (
+                f"'{title}' is a software application utilizing {techs} to address: '{desc}'." if desc
+                else f"'{title}' is a software application built with {techs} [Candidate to specify: Functional scope]."
+            )
+            if user_confirmed and conf_details:
+                what_str += f" [Candidate Confirmed: {conf_details}]"
             return {
-                "What": f"'{title}' is a modular software application built using {techs} to address {desc_brief}.",
-                "Why": f"I initiated this architecture because tightly coupled systems fail unpredictably under edge cases and resist continuous testing.",
-                "How": f"I structured the system into distinct ingestion, processing, and output layers, enforcing interface contracts and verifying each layer through automated unit test suites."
+                "What": what_str,
+                "Why": f"[Candidate to specify: Core motivation and architectural goals behind launching this system]",
+                "How": f"[Candidate to specify: Layered component structure, data flow, and validation logic implemented using {techs}]"
             }
 
     elif context_type == "internship":
         org = evidence_item.get("organization", "your internship organization")
+        pos = evidence_item.get("position", "Intern")
         dates = evidence_item.get("dates", "during the internship")
         tech_list = evidence_item.get("technologies", [])
         techs = ", ".join(tech_list) if tech_list else "professional software engineering tools"
         resp_list = evidence_item.get("responsibilities", [])
-        resps = "; ".join(resp_list) if resp_list else "assigned engineering duties"
+        resps = "; ".join(resp_list) if resp_list else ""
+        user_confirmed = bool(evidence_item.get("user_confirmed") or evidence_item.get("candidate_confirmed"))
+        conf_details = str(evidence_item.get("confirmed_details") or evidence_item.get("user_confirmed_details") or "").strip()
+
+        if resps:
+            sit_intern = f"At {org} ({dates}) as a {pos}, verified contributions centered on: {resps} using {techs}."
+        else:
+            sit_intern = f"At {org} ({dates}) as a {pos} using {techs} [Candidate to specify: Assigned engineering scope; not detailed in resume text]."
+
+        if user_confirmed and conf_details:
+            sit_intern += f" [Candidate Confirmed: {conf_details}]"
+
+        task_placeholder = f"[Candidate to specify: Specific feature, module, or repository ticket assigned at {org}]"
+        action_placeholder = f"[Candidate to specify: Codebase research, modular implementation using {techs}, and testing steps taken at {org}]"
+        result_placeholder = f"[Candidate to specify: Code review outcome, merged pull request deliverable, or production impact achieved at {org}]"
 
         if f_id in ["STAR", "STAR+L"]:
-            return {
-                "Situation": f"During my internship at {org} ({dates}), I worked as part of an engineering team contributing to {resps} using {techs}.",
-                "Task": f"My assignment was to deliver tested, production-ready code modules adhering to the repository's architectural standards.",
-                "Action": f"I analyzed existing codebase conventions, authored modular feature code using {techs}, created unit and integration test fixtures, and iterated on code review feedback from senior engineers.",
-                "Result": f"My pull requests were reviewed, approved, and merged into the main development branch, successfully delivering the feature without introducing regressions.",
-                "Learning": f"The experience taught me that engineering in production requires designing for maintainability, writing defensive tests, and communicating proactively when encountering ambiguity."
+            res_dict = {
+                "Situation": sit_intern,
+                "Task": task_placeholder,
+                "Action": action_placeholder,
+                "Result": result_placeholder,
             }
+            if f_id == "STAR+L":
+                res_dict["Learning"] = f"[Candidate to specify: Key engineering practice, code review takeaway, or operational lesson learned at {org}]"
+            return res_dict
         elif f_id in ["CAR", "PAR"]:
             key_first = "Challenge" if f_id == "CAR" else "Problem"
+            prob_text = (
+                f"At {org}, the engineering objective was to contribute to {resps} using {techs}." if resps
+                else f"At {org}, engineering contributions utilized {techs} [Candidate to specify: Concrete problem addressed]."
+            )
+            if user_confirmed and conf_details:
+                prob_text += f" [Candidate Confirmed: {conf_details}]"
             return {
-                key_first: f"At {org}, the team required reliable implementation of {resps} while maintaining strict backward compatibility with existing services.",
-                "Action": f"I researched the codebase dependencies, developed the solution incrementally using {techs}, authored automated test suites, and addressed senior code review critique.",
-                "Result": f"Successfully merged high-quality code into production repositories, fulfilling sprint deliverables and improving overall module test coverage."
+                key_first: prob_text,
+                "Action": f"[Candidate to specify: Implementation methodology, codebase dependencies navigated, and testing executed using {techs}]",
+                "Result": f"[Candidate to specify: Merged deliverable, sprint outcome, or module quality improvements delivered at {org}]"
             }
         elif f_id == "PREP":
             return {
-                "Point": f"My internship at {org} established my ability to deliver tested, collaborative code within professional engineering environments.",
-                "Reason": "Academic coursework rarely requires adhering to shared codebases, rigorous pull request standards, and continuous integration pipelines.",
-                "Example": f"Contributing to {resps} using {techs} required writing descriptive tests, handling boundary cases, and refining implementations based on senior engineering feedback.",
-                "Point_Conclusion": "This practical experience confirmed my readiness to contribute effectively and reliably to your development team from day one."
+                "Point": f"Work at {org} ({dates}) as a {pos} provided experience contributing to {resps or 'assigned engineering features'} using {techs}.",
+                "Reason": "[Candidate to specify: Team standards and continuous integration workflows followed]",
+                "Example": f"[Candidate to specify: Concrete code contribution, PR review iteration, or test authored at {org}]",
+                "Point_Conclusion": "[Candidate to specify: How this industry experience prepares you for team-based production delivery]"
             }
         else:
             return {
-                "Point": f"During my internship at {org}, I contributed to {resps} using {techs}.",
-                "Reason": "This provided direct exposure to production engineering standards, code reviews, and automated CI/CD validation.",
-                "Example": f"For instance, I authored modular features and unit tests, systematically verifying behavior before submitting pull requests for peer review.",
-                "Point_Conclusion": "This experience demonstrated that I write clean, maintainable, and well-tested code that meets industry quality standards."
+                "Point": f"During the internship at {org}, work involved {resps or 'software development tasks'} using {techs}.",
+                "Reason": "[Candidate to specify: Production standards, code reviews, and CI/CD validation experienced]",
+                "Example": f"[Candidate to specify: Concrete feature, refactoring, or test authored using {techs}]",
+                "Point_Conclusion": "[Candidate to specify: How this demonstrated writing clean, maintainable, and well-tested code]"
             }
 
     elif context_type == "skill_gap":
@@ -221,8 +312,8 @@ def ground_guidance_in_evidence(
         return {
             "Point": f"While my primary portfolio projects emphasize related technologies, I have proactively begun developing practical competence in {skill} for the {job} position.",
             "Reason": f"{skill} is a core requirement for this role, and mastering its architectural patterns ensures I can build reliable production features within your stack.",
-            "Example": f"I have been reviewing official {skill} documentation, completing hands-on labs, and building focused proof-of-concept prototypes to verify implementation mechanics.",
-            "Point_Conclusion": f"My proven track record of rapidly mastering complex frameworks ensures I will ramp up to production velocity in {skill} quickly."
+            "Example": f"[Candidate to specify: Concrete ramp-up actions, e.g. reviewing official {skill} documentation, completing labs, or building a proof-of-concept prototype]",
+            "Point_Conclusion": f"[Candidate to specify: Planned timeline or verified readiness to achieve production velocity in {skill}]"
         }
 
     return {}
@@ -240,6 +331,9 @@ def build_grounded_project_answers(
     title = project.get("title", "Technical Project")
     tech_list = project.get("technologies", [])
     desc = project.get("description", "").strip()
+    user_confirmed = bool(project.get("user_confirmed") or project.get("candidate_confirmed"))
+    confirmed_details = str(project.get("confirmed_details") or project.get("user_confirmed_details") or "").strip()
+
     if desc:
         clean_d = re.sub(
             r"^(?:built|developed|designed|created|engineered|implemented|trained|deployed|constructed|architected)\s+(?:an?|the)?\s*",
@@ -247,9 +341,11 @@ def build_grounded_project_answers(
             desc,
             flags=re.I
         ).strip()
-        desc_clean = f"the implementation of a {clean_d}" if clean_d and not clean_d.startswith(("the ", "a ", "an ")) else (clean_d or "a modular software application")
+        desc_clean = f"the implementation of a {clean_d}" if clean_d and not clean_d.startswith(("the ", "a ", "an ")) else (clean_d or "the project software requirements")
+        verified_obj_note = f"Verified Project Objective: '{desc}'"
     else:
-        desc_clean = "a modular software application"
+        desc_clean = f"software functionality using {', '.join(tech_list) if tech_list else 'the project stack'}"
+        verified_obj_note = "Project objective details not established from available resume text"
 
     # Derive specific technology role statements
     tech_explanations = []
@@ -262,34 +358,46 @@ def build_grounded_project_answers(
     verified_evidence = [
         f"Verified Project Title: '{title}'",
         f"Verified Technologies: {', '.join(tech_list) if tech_list else 'Not explicitly enumerated'}",
-        f"Verified Project Objective: '{desc}'" if desc else "General practical development portfolio"
+        verified_obj_note
     ]
+    if user_confirmed and confirmed_details:
+        verified_evidence.append(f"Candidate Confirmed Details: '{confirmed_details}'")
 
     t0 = tech_list[0] if len(tech_list) > 0 else "Python"
     t1 = tech_list[1] if len(tech_list) > 1 else "Flask"
     t2 = tech_list[2] if len(tech_list) > 2 else "PostgreSQL"
 
     if question_kind == "arch":
-        simpler = (
-            f"In '{title}', I designed a modular layered architecture to solve {desc_clean}. "
-            f"I structured the system so that each technology handled a distinct responsibility: {tech_explanation_str}. "
-            f"This strict separation of concerns ensured that data flowed through predictable interfaces and allowed each module to be tested in isolation."
-        )
+        if desc:
+            simpler = (
+                f"In '{title}', the objective was to implement {desc_clean} using {', '.join(tech_list) if tech_list else 'the stack'}. "
+                f"[Candidate to specify: Architectural approach and component boundaries chosen]. "
+                f"In standard architectures using this stack, each component handles a decoupled responsibility ({tech_explanation_str}), "
+                f"ensuring data flows through predictable interfaces."
+            )
+        else:
+            simpler = (
+                f"In '{title}' ({', '.join(tech_list) if tech_list else 'the project stack'}), [Candidate to specify: Primary functional scope and architectural design]. "
+                f"In standard architectures using this stack, each component handles a decoupled responsibility ({tech_explanation_str}), "
+                f"ensuring data flows through predictable interfaces."
+            )
 
         tech_roles_spoken = []
         for t in tech_list[:3]:
             prof = get_technology_profile(t)
             tech_roles_spoken.append(f"For the {t} component, it {prof['role']}, while it {prof['trade_off']}.")
 
-        roles_paragraph = " ".join(tech_roles_spoken) if tech_roles_spoken else f"I separated {t0} core business logic from {t1} routing and {t2} persistence."
+        roles_paragraph = " ".join(tech_roles_spoken) if tech_roles_spoken else f"Separating {t0} core business logic from {t1} routing and {t2} persistence ensures testability and clean boundaries."
 
         detailed = (
-            f"In '{title}', my primary engineering objective centered on {desc_clean}. "
-            f"When planning the architecture, I structured the system into distinct operational layers rather than building a tightly coupled monolithic script. "
-            f"{roles_paragraph} "
-            f"A core architectural consideration was ensuring that data flowed predictably between components, with clear contract interfaces and automated input validation. "
-            f"One trade-off I evaluated was keeping the service lightweight and fast to iterate on rather than introducing unnecessary distributed infrastructure early. "
-            f"The completed implementation met our functional design criteria, allowing each pipeline stage to be tested in isolation with consistent execution and predictable throughput."
+            f"To structure an architectural response for '{title}' (utilizing {', '.join(tech_list) if tech_list else 'the project stack'}), frame your explanation around clear engineering design decisions:\n"
+            f"1. Problem Scope: " + (f"The project focused on {desc_clean}." if desc else "[Candidate to specify: Specific functional problem and system scope].") + "\n"
+            f"2. Component Decomposition: [Candidate to specify: How you structured application layers across the component stack].\n"
+            f"3. Technology Responsibilities: {roles_paragraph}\n"
+            f"4. Interface Contracts: [Candidate to specify: How data contracts and schema validation were enforced at boundaries].\n"
+            f"5. Trade-Off Evaluation: [Candidate to specify: Key engineering trade-off evaluated, e.g. operational simplicity vs distributed complexity].\n\n"
+            f"[Illustrative Model Scenario — Not candidate resume data]: In an application utilizing modular services, an engineer structures the service into decoupled layers: "
+            f"transport controllers handle HTTP routing and validation, domain modules process business rules, and repository abstractions manage database transactions."
         )
 
         why_this_works = (
@@ -301,11 +409,11 @@ def build_grounded_project_answers(
         steps = [
             {
                 "step": "Step 1: Frame the Functional Problem & System Scope",
-                "complete_explanation": f"In '{title}', the primary software requirement centered on {desc_clean}. Clearly articulating the functional requirements upfront proves that technical decisions were guided by business objectives rather than a desire to experiment with unneeded frameworks.",
+                "complete_explanation": f"In '{title}', clearly frame the system scope: " + (f"centering on {desc_clean}." if desc else "defining the core functional requirements upfront proves that technical decisions were guided by business objectives rather than unneeded frameworks."),
                 "reasoning": "Interviewers need to confirm that you ground architectural design in actual business constraints and user requirements.",
                 "concrete_example": f"Defining clear functional contracts: ingesting input payloads, validating attributes, and outputting structured responses for '{title}'.",
                 "connection_to_question": "Directly explains the core motivation behind launching this project and setting its architectural boundaries.",
-                "detail": f"In '{title}', the primary software requirement centered on {desc_clean}. Clearly articulating the functional requirements upfront proves that technical decisions were guided by business objectives rather than a desire to experiment with unneeded frameworks."
+                "detail": f"In '{title}', clearly frame the system scope: " + (f"centering on {desc_clean}." if desc else "defining the core functional requirements upfront proves that technical decisions were guided by business objectives rather than unneeded frameworks.")
             },
             {
                 "step": f"Step 2: Map {t0} to the Core Computational Layer",
@@ -341,11 +449,11 @@ def build_grounded_project_answers(
             },
             {
                 "step": "Step 6: Evaluate Architectural Trade-Offs & Maintainability",
-                "complete_explanation": "I deliberately chose a modular monolithic architecture over distributed microservices. While microservices offer independent deployment, a modular monolith drastically reduced operational latency, simplified local developer onboarding, and avoided network serialization overhead.",
+                "complete_explanation": "When planning software architectures, engineers evaluate modular architectures against distributed microservices. While microservices offer independent deployment, a modular architecture drastically reduces operational latency, simplifies local developer onboarding, and avoids network serialization overhead.",
                 "reasoning": "Mature engineers choose the simplest architecture that satisfies system requirements rather than prematurely adopting distributed complexity.",
                 "concrete_example": "Structuring the codebase into distinct packages with clear import rules instead of deploying separate distributed services.",
                 "connection_to_question": "Proves architectural maturity and the ability to evaluate real-world engineering trade-offs.",
-                "detail": "I deliberately chose a modular monolithic architecture over distributed microservices. While microservices offer independent deployment, a modular monolith drastically reduced operational latency, simplified local developer onboarding, and avoided network serialization overhead."
+                "detail": "When planning software architectures, engineers evaluate modular architectures against distributed microservices. While microservices offer independent deployment, a modular architecture drastically reduces operational latency, simplifies local developer onboarding, and avoids network serialization overhead."
             }
         ]
 
@@ -430,11 +538,11 @@ def build_grounded_project_answers(
         steps = [
             {
                 "step": "Step 1: Frame the Symptom & Operational Impact",
-                "complete_explanation": f"In '{title}', the failure manifested as intermittent exceptions during payload processing, causing unexpected pipeline interruptions. Defining the failure symptom objectively demonstrates professional composure under technical stress.",
+                "complete_explanation": f"When troubleshooting '{title}', first state the concrete failure symptom objectively—such as unexpected runtime exceptions or pipeline interruptions—to demonstrate professional composure under technical stress.",
                 "reasoning": "Engineers must separate observable symptoms from underlying root causes to avoid premature, ineffective code modifications.",
                 "concrete_example": "Logging 500 Internal Server errors during large JSON batch ingestion with unhandled Unicode characters.",
                 "connection_to_question": "Directly frames the specific roadblock encountered during development.",
-                "detail": f"In '{title}', the failure manifested as intermittent exceptions during payload processing, causing unexpected pipeline interruptions. Defining the failure symptom objectively demonstrates professional composure under technical stress."
+                "detail": f"When troubleshooting '{title}', first state the concrete failure symptom objectively—such as unexpected runtime exceptions or pipeline interruptions—to demonstrate professional composure under technical stress."
             },
             {
                 "step": "Step 2: Reproduce the Failure in an Isolated Environment",
@@ -557,11 +665,11 @@ def build_grounded_project_answers(
         steps = [
             {
                 "step": "Step 1: Establish Reliability Criteria & Test Metrics",
-                "complete_explanation": f"For '{title}', functional correctness required ensuring that every valid payload yielded an expected output, and every invalid payload was rejected cleanly without crashing the process. Defining test criteria upfront establishes measurable verification benchmarks.",
+                "complete_explanation": f"When articulating verification for '{title}', define functional correctness criteria upfront: ensuring valid inputs produce deterministic outputs, and invalid payloads are rejected cleanly without unhandled crashes. Defining test criteria upfront establishes measurable verification benchmarks.",
                 "reasoning": "Clear testing criteria prevent subjective evaluations and establish objective release standards.",
                 "concrete_example": "Targeting 85%+ branch coverage and zero unhandled 500 status codes across test suites.",
                 "connection_to_question": "Sets the baseline definition of correctness and system reliability.",
-                "detail": f"For '{title}', functional correctness required ensuring that every valid payload yielded an expected output, and every invalid payload was rejected cleanly without crashing the process. Defining test criteria upfront establishes measurable verification benchmarks."
+                "detail": f"When articulating verification for '{title}', define functional correctness criteria upfront: ensuring valid inputs produce deterministic outputs, and invalid payloads are rejected cleanly without unhandled crashes. Defining test criteria upfront establishes measurable verification benchmarks."
             },
             {
                 "step": "Step 2: Author Parametrized Unit Tests with Pytest",
@@ -677,11 +785,11 @@ def build_grounded_project_answers(
         steps = [
             {
                 "step": "Step 1: Diagnose Single-Node Architectural Bottlenecks",
-                "complete_explanation": f"In '{title}', compute-heavy data operations currently run synchronously within the HTTP worker process. When concurrent users submit requests simultaneously, worker threads become blocked, causing response queueing and elevating p99 latencies.",
+                "complete_explanation": f"When evaluating scalability for '{title}', analyze single-node architectural limits: identifying whether compute-heavy data operations run synchronously within the HTTP worker process and how concurrent traffic affects response latencies.",
                 "reasoning": "Scaling begins with profiling current resource bottlenecks (CPU, memory, disk I/O, or connection limits) before writing code.",
                 "concrete_example": "Identifying that payload parsing and scoring operations hold HTTP connection threads open for multiple seconds.",
                 "connection_to_question": "Directly analyzes the current architectural scaling limits.",
-                "detail": f"In '{title}', compute-heavy data operations currently run synchronously within the HTTP worker process. When concurrent users submit requests simultaneously, worker threads become blocked, causing response queueing and elevating p99 latencies."
+                "detail": f"When evaluating scalability for '{title}', analyze single-node architectural limits: identifying whether compute-heavy data operations run synchronously within the HTTP worker process and how concurrent traffic affects response latencies."
             },
             {
                 "step": "Step 2: Decouple Compute Tasks via Asynchronous Task Queues",
@@ -890,11 +998,11 @@ def build_grounded_internship_answers(
             },
             {
                 "step": "Step 6: Verified Pull Request Merge & Production Delivery",
-                "complete_explanation": "Once approved, my changes passed continuous integration validation checks and were merged into the main development branch. Delivering verified code into shared team repositories confirmed my ability to deliver production value.",
+                "complete_explanation": "Delivering tested, reviewed, and approved pull requests into the shared development repository confirms an engineer's ability to create production value and align with team delivery standards.",
                 "reasoning": "Merged code represents the ultimate deliverable and proves full alignment with team delivery standards.",
                 "concrete_example": "Merging pull requests that passed all automated CI status checks and deploying to staging environments.",
                 "connection_to_question": "Concludes with verified tangible impact and completed deliverables.",
-                "detail": "Once approved, my changes passed continuous integration validation checks and were merged into the main development branch. Delivering verified code into shared team repositories confirmed my ability to deliver production value."
+                "detail": "Delivering tested, reviewed, and approved pull requests into the shared development repository confirms an engineer's ability to create production value and align with team delivery standards."
             }
         ]
 
@@ -980,43 +1088,43 @@ def build_grounded_internship_answers(
             },
             {
                 "step": "Step 2: Appreciate Code Readability & Descriptive Naming Over Brevity",
-                "complete_explanation": "During code reviews, senior mentors emphasized that concise or clever one-liners are liabilities if they obscure intent. I learned to choose descriptive variable and function names that document their purpose self-evidently.",
+                "complete_explanation": "In professional engineering teams, code readability and descriptive naming take precedence over clever brevity. Descriptive variable and function names document their purpose self-evidently, reducing reviewer cognitive load.",
                 "reasoning": "Readable code decreases cognitive load for reviewers, accelerates onboarding, and reduces bug injection rates.",
                 "concrete_example": "Renaming ambiguous variables like `d` and `res` to `candidate_records` and `parsed_output_envelope`.",
                 "connection_to_question": "Illustrates concrete improvements in code quality standards.",
-                "detail": "During code reviews, senior mentors emphasized that concise or clever one-liners are liabilities if they obscure intent. I learned to choose descriptive variable and function names that document their purpose self-evidently."
+                "detail": "In professional engineering teams, code readability and descriptive naming take precedence over clever brevity. Descriptive variable and function names document their purpose self-evidently, reducing reviewer cognitive load."
             },
             {
                 "step": "Step 3: Internalize Automated Testing as a Living Specification",
-                "complete_explanation": "I learned that unit tests are not just verification tools; they serve as living documentation describing how components are expected to behave. Reading existing tests helped me understand legacy modules faster than reading architecture docs.",
+                "complete_explanation": "Automated tests function as living documentation describing how components are expected to behave. Reading existing tests helps engineers understand legacy modules faster and prevents specification drift.",
                 "reasoning": "Tests cannot drift out of sync with code behavior because failing tests break the continuous integration build.",
                 "concrete_example": "Writing test cases that clearly document expected error behaviors when external APIs return 503 Service Unavailable.",
                 "connection_to_question": "Connects testing discipline to long-term software maintainability.",
-                "detail": "I learned that unit tests are not just verification tools; they serve as living documentation describing how components are expected to behave. Reading existing tests helped me understand legacy modules faster than reading architecture docs."
+                "detail": "Automated tests function as living documentation describing how components are expected to behave. Reading existing tests helps engineers understand legacy modules faster and prevents specification drift."
             },
             {
                 "step": "Step 4: Master Constructive Code Review Etiquette",
-                "complete_explanation": "I learned to approach code reviews as collaborative learning opportunities rather than personal critiques. I actively studied senior engineer comments, asked questions to understand architectural principles, and reviewed teammate PRs to learn new patterns.",
+                "complete_explanation": "Approaching code reviews as collaborative learning opportunities rather than personal critiques fosters collective code ownership and continuous mentorship across engineering teams.",
                 "reasoning": "Healthy code review culture fosters collective code ownership and continuous mentorship across engineering teams.",
                 "concrete_example": "Engaging constructively with PR comments regarding database query performance and updating implementations promptly.",
                 "connection_to_question": "Demonstrates interpersonal maturity and team collaboration.",
-                "detail": "I learned to approach code reviews as collaborative learning opportunities rather than personal critiques. I actively studied senior engineer comments, asked questions to understand architectural principles, and reviewed teammate PRs to learn new patterns."
+                "detail": "Approaching code reviews as collaborative learning opportunities rather than personal critiques fosters collective code ownership and continuous mentorship across engineering teams."
             },
             {
                 "step": "Step 5: Practice Proactive Requirement Clarification",
-                "complete_explanation": "I discovered that ambiguous requirements lead to wasted engineering effort. Clarifying assumptions, edge cases, and acceptance criteria with product managers before writing code prevented days of subsequent refactoring.",
+                "complete_explanation": "Ambiguous requirements lead to wasted engineering effort. Clarifying assumptions, edge cases, and acceptance criteria before writing code prevents costly downstream refactoring.",
                 "reasoning": "Fixing an ambiguous requirement during design costs minutes; fixing it after deployment requires database migrations and rollbacks.",
                 "concrete_example": "Authoring brief implementation summaries outlining proposed API request/response formats before coding.",
                 "connection_to_question": "Highlights proactive communication and engineering efficiency.",
-                "detail": "I discovered that ambiguous requirements lead to wasted engineering effort. Clarifying assumptions, edge cases, and acceptance criteria with product managers before writing code prevented days of subsequent refactoring."
+                "detail": "Ambiguous requirements lead to wasted engineering effort. Clarifying assumptions, edge cases, and acceptance criteria before writing code prevents costly downstream refactoring."
             },
             {
                 "step": "Step 6: Translate Professional Lessons into Ongoing Engineering Craft",
-                "complete_explanation": "This experience permanently elevated how I approach software design. I now structure every project—personal or professional—with clean modularity, automated test coverage, and clear documentation.",
+                "complete_explanation": "Reflecting on industry experience elevates software design craft: structuring code with clean modularity, automated test coverage, and clear documentation by default.",
                 "reasoning": "True learning is reflected in consistent, permanent behavior change across all engineering tasks.",
                 "concrete_example": "Setting up GitHub Actions CI pipelines and linting rules on all new software repositories by default.",
                 "connection_to_question": "Concludes with permanent personal development and value for future employers.",
-                "detail": "This experience permanently elevated how I approach software design. I now structure every project—personal or professional—with clean modularity, automated test coverage, and clear documentation."
+                "detail": "Reflecting on industry experience elevates software design craft: structuring code with clean modularity, automated test coverage, and clear documentation by default."
             }
         ]
 
@@ -1093,51 +1201,51 @@ def build_grounded_internship_answers(
         steps = [
             {
                 "step": "Step 1: Frame the Specific Engineering Assignment",
-                "complete_explanation": f"At {org}, I was assigned a targeted engineering ticket involving {techs}. Clearly framing the specific assignment—such as optimizing an endpoint, fixing a pipeline edge case, or implementing a new data schema—establishes tangible technical focus.",
+                "complete_explanation": f"When discussing assigned work at {org}, frame the specific engineering ticket involving {techs} clearly—such as optimizing an endpoint, fixing an edge case, or implementing a new data schema—to establish tangible technical focus.",
                 "reasoning": "Interviewers want to see how you approach concrete, bounded tickets in production software systems.",
                 "concrete_example": f"Assigned ticket: 'Refactor candidate document parser to handle multi-page PDF tables using {techs}'.",
                 "connection_to_question": "Directly defines the technical problem and assignment scope.",
-                "detail": f"At {org}, I was assigned a targeted engineering ticket involving {techs}. Clearly framing the specific assignment—such as optimizing an endpoint, fixing a pipeline edge case, or implementing a new data schema—establishes tangible technical focus."
+                "detail": f"When discussing assigned work at {org}, frame the specific engineering ticket involving {techs} clearly—such as optimizing an endpoint, fixing an edge case, or implementing a new data schema—to establish tangible technical focus."
             },
             {
                 "step": "Step 2: Research Existing Codebase & Trace Data Flow",
-                "complete_explanation": "Before authoring new code, I spent time studying existing modules, reading unit tests, and tracing execution paths with debuggers. This ensured that my proposed solution adhered to existing architecture and reused existing utility patterns.",
+                "complete_explanation": "Before authoring new code, spend time studying existing modules, reading unit tests, and tracing execution paths with debuggers. This ensures that the proposed solution adheres to existing architecture and reuses existing utility patterns.",
                 "reasoning": "Rushing into coding without understanding existing abstractions often results in redundant functions and broken assumptions.",
                 "concrete_example": "Inspecting existing parser classes and noting how error handlers reported validation failures to the web controller.",
                 "connection_to_question": "Demonstrates thorough engineering due diligence and codebase respect.",
-                "detail": "Before authoring new code, I spent time studying existing modules, reading unit tests, and tracing execution paths with debuggers. This ensured that my proposed solution adhered to existing architecture and reused existing utility patterns."
+                "detail": "Before authoring new code, spend time studying existing modules, reading unit tests, and tracing execution paths with debuggers. This ensures that the proposed solution adheres to existing architecture and reuses existing utility patterns."
             },
             {
                 "step": "Step 3: Develop Incremental Modular Solution in Feature Branch",
-                "complete_explanation": "I created a dedicated Git feature branch and implemented the changes in small, self-contained commits. I structured the solution to isolate new functionality into modular functions, avoiding sprawling modifications to legacy code.",
+                "complete_explanation": "Developing changes on dedicated Git feature branches with small, self-contained commits ensures modifications are modular, digestible for reviewers, and straightforward to roll back if necessary.",
                 "reasoning": "Modular, incremental changes keep pull requests small, digestible for reviewers, and simple to roll back if necessary.",
                 "concrete_example": "Authoring a helper module `table_extractor.py` that processes table boundaries independently from raw text parsing.",
                 "connection_to_question": "Details the technical implementation craft and modular design.",
-                "detail": "I created a dedicated Git feature branch and implemented the changes in small, self-contained commits. I structured the solution to isolate new functionality into modular functions, avoiding sprawling modifications to legacy code."
+                "detail": "Developing changes on dedicated Git feature branches with small, self-contained commits ensures modifications are modular, digestible for reviewers, and straightforward to roll back if necessary."
             },
             {
                 "step": "Step 4: Author Unit Tests & Validate Edge Cases",
-                "complete_explanation": "I authored comprehensive unit tests evaluating the new module against edge cases—including malformed document structures, empty inputs, and unusual encodings—confirming that the module degraded gracefully under all conditions.",
+                "complete_explanation": "Authoring unit tests evaluating the new code against edge cases—including malformed inputs and boundary conditions—confirms that the module degrades gracefully and protects against future regressions.",
                 "reasoning": "Automated tests prove that the new code functions correctly and guarantees against future regression bugs.",
                 "concrete_example": "Creating Pytest test fixtures with sample documents asserting 100% extraction accuracy on tabular data.",
                 "connection_to_question": "Demonstrates testing rigor and functional validation.",
-                "detail": "I authored comprehensive unit tests evaluating the new module against edge cases—including malformed document structures, empty inputs, and unusual encodings—confirming that the module degraded gracefully under all conditions."
+                "detail": "Authoring unit tests evaluating the new code against edge cases—including malformed inputs and boundary conditions—confirms that the module degrades gracefully and protects against future regressions."
             },
             {
                 "step": "Step 5: Consult Senior Mentors on Architectural Edge Cases",
-                "complete_explanation": "When an integration edge case emerged concerning how database transactions interacted with parser retries, I consulted with a senior engineer. I presented the problem, my analysis, and two potential solutions, quickly aligning on the optimal approach.",
+                "complete_explanation": "When an integration edge case emerges concerning how database transactions interact with parser retries, consulting with senior engineers aligns the team on the optimal approach quickly.",
                 "reasoning": "Knowing when to seek guidance on subtle architectural interactions prevents costly rework and deepens domain knowledge.",
                 "concrete_example": "Discussing whether parser retry attempts should execute inside or outside the main database transaction scope.",
                 "connection_to_question": "Highlights collaborative problem solving and communication efficiency.",
-                "detail": "When an integration edge case emerged concerning how database transactions interacted with parser retries, I consulted with a senior engineer. I presented the problem, my analysis, and two potential solutions, quickly aligning on the optimal approach."
+                "detail": "When an integration edge case emerges concerning how database transactions interact with parser retries, consulting with senior engineers aligns the team on the optimal approach quickly."
             },
             {
                 "step": "Step 6: Submit Pull Request & Verify Merged Production Delivery",
-                "complete_explanation": "I submitted a clean pull request with detailed before-and-after descriptions, screenshots, and test execution logs. After incorporating minor review feedback, the pull request was approved and merged into the team repository.",
+                "complete_explanation": "Submitting a clean pull request with detailed descriptions and test execution evidence, followed by incorporating peer review feedback, completes the professional delivery lifecycle.",
                 "reasoning": "Delivering tested, reviewed, and merged code fulfills the complete software engineering lifecycle.",
                 "concrete_example": "Opening PR #142 with pass verification from CI pipelines, merged into main branch.",
                 "connection_to_question": "Concludes with completed deliverable and positive team impact.",
-                "detail": "I submitted a clean pull request with detailed before-and-after descriptions, screenshots, and test execution logs. After incorporating minor review feedback, the pull request was approved and merged into the team repository."
+                "detail": "Submitting a clean pull request with detailed descriptions and test execution evidence, followed by incorporating peer review feedback, completes the professional delivery lifecycle."
             }
         ]
 
