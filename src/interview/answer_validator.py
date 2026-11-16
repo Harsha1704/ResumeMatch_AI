@@ -7,10 +7,14 @@ Enforces strict quality standards across all generated interview answers:
 - Detects unverified metric fabrications (numbers/percentages not grounded in evidence).
 - Ensures code examples parse and are non-empty when present.
 - Verifies that answers directly address the question intent.
+- Distinguishes resume-supported evidence, candidate confirmations, general technical explanations,
+  illustrative scenarios, missing-information placeholders, and unsupported personal claims.
 """
 
+from __future__ import annotations
+
 import re
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Union, Tuple, Set
 from collections import Counter
 
 
@@ -27,17 +31,91 @@ CLICHE_PHRASES = [
 class AnswerQualityValidator:
     """
     Deterministic rule-based quality auditor for interview question-answer pairs.
+
+    Verification Scope & Architectural Boundaries:
+    - This validator provides deterministic, reproducible guarantees against known ungrounded
+      claim patterns, forbidden positive fallbacks, unbracketed metrics, and structural defects.
+    - Rule-based regex and token matching intentionally avoids non-deterministic LLM evaluation
+      and eliminates external API dependencies and network latency.
+    - Limitations: Rule-based heuristics cannot perform complete semantic understanding of
+      arbitrary natural language. Paraphrased claims that avoid tracked verb patterns or
+      colloquial idioms may not be detected by pattern rules alone. True candidate verification
+      relies on strict separation of verified evidence, candidate confirmations, and explicit
+      missing-information placeholders.
     """
+
+    @classmethod
+    def _extract_evidence_text_set(
+        cls,
+        evidence: Optional[Union[Dict[str, Any], List[str], str]]
+    ) -> List[str]:
+        """
+        Extracts verified resume text tokens and excerpts from supplied evidence.
+        Explicitly excludes metadata fields like 'evidence_sources' so that document
+        source labels are never treated as proof of candidate achievements.
+        """
+        ev_texts: List[str] = []
+        if not evidence:
+            return ev_texts
+
+        if isinstance(evidence, str):
+            if len(evidence.strip()) > 1:
+                ev_texts.append(evidence.strip())
+            return ev_texts
+
+        if isinstance(evidence, list):
+            for item in evidence:
+                if isinstance(item, str) and len(item.strip()) > 1:
+                    ev_texts.append(item.strip())
+                elif isinstance(item, dict):
+                    ev_texts.extend(cls._extract_evidence_text_set(item))
+            return ev_texts
+
+        if isinstance(evidence, dict):
+            # Check verified evidence lists (explicitly ignore 'evidence_sources')
+            for list_key in ["verified_evidence", "candidate_evidence"]:
+                val = evidence.get(list_key)
+                if isinstance(val, list):
+                    for item in val:
+                        if isinstance(item, str) and len(item.strip()) > 1:
+                            ev_texts.append(item.strip())
+                elif isinstance(val, str) and len(val.strip()) > 1:
+                    ev_texts.append(val.strip())
+
+            # Check core candidate record fields
+            for field_key in [
+                "title", "organization", "company", "position", "role", "dates",
+                "description", "exact_excerpt", "responsibilities", "skills",
+                "technical_skills", "technologies"
+            ]:
+                v = evidence.get(field_key)
+                if isinstance(v, str) and len(v.strip()) > 1:
+                    ev_texts.append(v.strip())
+                elif isinstance(v, list):
+                    for item in v:
+                        if isinstance(item, str) and len(item.strip()) > 1:
+                            ev_texts.append(item.strip())
+
+            # Check nested projects or experience
+            for nested_key in ["projects", "experience", "internships"]:
+                nested = evidence.get(nested_key)
+                if isinstance(nested, list):
+                    for n_item in nested:
+                        if isinstance(n_item, dict):
+                            ev_texts.extend(cls._extract_evidence_text_set(n_item))
+
+        return ev_texts
 
     @classmethod
     def classify_statement(
         cls,
         text: str,
-        evidence: Optional[Dict[str, Any]] = None
+        evidence: Optional[Union[Dict[str, Any], List[str], str]] = None
     ) -> Dict[str, bool]:
         """
         Classifies an answer excerpt into distinct evidence and knowledge categories:
-        1. is_resume_supported: Facts supported by actual supplied resume evidence or verified evidence labels.
+        1. is_resume_supported: Facts supported by actual supplied resume evidence.
+           (Never trusts 'Verified ...:' labels blindly; verifies actual value against supplied resume evidence).
         2. is_candidate_confirmed: Marked explicitly with [Candidate Confirmed: ...].
         3. is_general_technical: Objective pedagogical or technical description (must NOT contain unevidenced personal claims).
         4. is_illustrative_scenario: Marked with [Illustrative Scenario...] / [Illustrative Model Scenario...].
@@ -47,38 +125,59 @@ class AnswerQualityValidator:
         Key Invariants:
         - Candidate confirmation is NEVER treated as independent resume evidence.
         - Arbitrary unverified personal text is NEVER classified as general technical content.
-        - Actual evidence supplied to the validator is checked for verification.
+        - Verified markers (e.g. 'Verified Organization:') without genuine evidence are classified as unverified/unsupported.
+        - 'evidence_sources' is NEVER treated as proof of candidate achievements.
+        - If evidence is unavailable, claims are classified as unverified rather than resume-supported.
         """
         t = text.strip()
         is_missing = bool(re.search(r"\[Candidate to specify:[^\]]*\]", t, re.IGNORECASE))
         is_candidate = bool(re.search(r"\[Candidate Confirmed[^\]]*\]", t, re.IGNORECASE))
         is_illustrative = bool(re.search(r"\[Illustrative (?:Model )?Scenario[^\]]*\]", t, re.IGNORECASE))
 
+        # Extract genuine evidence
+        ev_texts = cls._extract_evidence_text_set(evidence)
+
         # Check evidence markers in text
-        has_ev_marker = bool(re.search(
-            r"Verified (?:Project Title|Organization|Position|Dates|Responsibilities|Tools|Objective|Stack|Technologies):",
-            t, re.IGNORECASE
-        ))
+        marker_pattern = re.compile(
+            r"Verified (?:Project Title|Organization|Position|Dates|Responsibilities|Tools|Objective|Stack|Technologies):\s*['\"]?(.*?)(?=['\"]?(?:;|\.|\n|\]|$|\s+Verified ))",
+            re.IGNORECASE
+        )
+        has_ev_marker = False
+        has_fabricated_marker = False
+        marker_verified = False
 
-        # Check actual evidence if supplied
-        matches_actual_evidence = False
-        if evidence and isinstance(evidence, dict):
-            ev_texts = []
-            if "verified_evidence" in evidence and isinstance(evidence["verified_evidence"], list):
-                ev_texts.extend(evidence["verified_evidence"])
-            for k in ["title", "organization", "description", "exact_excerpt", "responsibilities"]:
-                v = evidence.get(k)
-                if isinstance(v, str) and len(v.strip()) > 3:
-                    ev_texts.append(v.strip())
-                elif isinstance(v, list):
-                    ev_texts.extend([item for item in v if isinstance(item, str) and len(item.strip()) > 3])
-
-            for ev_item in ev_texts:
-                if ev_item.lower() in t.lower():
-                    matches_actual_evidence = True
+        for m in marker_pattern.finditer(t):
+            has_ev_marker = True
+            claimed_val = m.group(1).strip()
+            if claimed_val.lower() in ["not explicitly enumerated", "none", "not specified", "unspecified", ""]:
+                continue
+            # If claimed_val has commas (e.g. "Python, PostgreSQL"), verify each item
+            sub_vals = [sv.strip() for sv in claimed_val.split(",") if sv.strip()]
+            val_in_ev = bool(sub_vals)
+            for sv in sub_vals:
+                sv_found = any(sv.lower() in ev_item.lower() for ev_item in ev_texts)
+                if not sv_found:
+                    val_in_ev = False
                     break
+            if val_in_ev and ev_texts:
+                marker_verified = True
+            else:
+                has_fabricated_marker = True
 
-        is_resume = (has_ev_marker or matches_actual_evidence) and not is_candidate
+        # Check if text matches actual evidence directly
+        matches_actual_evidence = False
+        for ev_item in ev_texts:
+            if len(ev_item) > 3 and ev_item.lower() in t.lower():
+                matches_actual_evidence = True
+                break
+
+        # A statement is resume-supported ONLY if evidence is supplied and genuinely matches
+        is_resume = (
+            bool(ev_texts)
+            and (marker_verified or matches_actual_evidence)
+            and not is_candidate
+            and not has_fabricated_marker
+        )
 
         # Detect unsupported personal claims:
         # 1. Generic positive fallbacks
@@ -97,8 +196,17 @@ class AnswerQualityValidator:
         cleaned = re.sub(r"\(General Technical Guidance\):[^\n.]*", "", cleaned, flags=re.IGNORECASE)
         cleaned = re.sub(r"\[[^\]]*\]", "", cleaned)
 
-        has_first_person_action = bool(re.search(
-            r"\b(?:I|we|my|our)\s+(?:designed|built|implemented|engineered|deployed|created|maintained|refactored|tested|optimized|authored|delivered|chose|decided|adhered|reached)\b",
+        has_first_person_or_personal_action = bool(re.search(
+            r"\b(?:I|we|my|our)\s+(?:have\s+)?(?:designed|built|implemented|engineered|deployed|created|maintained|refactored|tested|optimized|authored|delivered|chose|decided|adhered|reached|contributed|collaborated|debugged|coordinated)\b",
+            cleaned, re.IGNORECASE
+        )) or bool(re.search(
+            r"\b(?:the candidate|he|she|they)\s+(?:contributed\s+to|collaborated\s+with|debugged|maintained|coordinated|designed|implemented|built|engineered|deployed|authored|created|developed)\b",
+            cleaned, re.IGNORECASE
+        )) or bool(re.search(
+            r"\b(?:production\s+features?\s+(?:were|was)\s+contributed|payment\s+workflow\s+(?:was|were)\s+debugged|production\s+database\s+(?:was|were)\s+maintained|deployment\s+(?:was|were)\s+coordinated)\b",
+            cleaned, re.IGNORECASE
+        )) or bool(re.search(
+            r"\b(?:contributed\s+to\s+production\s+features?|collaborated\s+with\s+(?:the\s+)?engineering\s+team|debugged\s+the\s+payment\s+workflow|maintained\s+the\s+production\s+database|coordinated\s+deployment)\b",
             cleaned, re.IGNORECASE
         )) or bool(re.search(
             r"\b(?:My pull requests were reviewed|Successfully merged high-quality code|We maintain an extensive base)\b",
@@ -122,11 +230,12 @@ class AnswerQualityValidator:
 
         is_unsupported = (
             has_generic_fallback
-            or has_first_person_action
+            or has_fabricated_marker
+            or has_first_person_or_personal_action
             or has_unsupported_architecture
             or has_unsupported_testing_or_deployment
             or has_unbracketed_metric
-        ) and not is_illustrative and not matches_actual_evidence
+        ) and not is_illustrative and not is_resume
 
         # General technical explanation is valid ONLY if it is technical and NOT an unsupported personal claim
         is_labeled_guidance = bool(re.search(r"\[General Technical Guidance\]|\(General Technical Guidance\)", t, re.IGNORECASE))
@@ -156,31 +265,17 @@ class AnswerQualityValidator:
         verified_evidence: Optional[Union[Dict[str, Any], List[str], str]] = None
     ) -> List[str]:
         """
-        Audits an answer text for ungrounded first-person personal claims.
-        Flags unbracketed assertions like 'I designed modular software components', 'I implemented optimistic locking'
-        that are neither inside [Candidate to specify: ...] placeholders nor inside
-        explicitly labeled [Illustrative Model Scenario...] blocks.
+        Audits an answer text for ungrounded personal claims.
+        Flags unbracketed assertions across first-person, third-person, and passive voice
+        (e.g., 'I contributed to production features', 'The payment workflow was debugged',
+        'I designed modular software components') that are neither inside [Candidate to specify: ...]
+        placeholders nor inside explicitly labeled [Illustrative Model Scenario...] blocks.
         """
-        issues = []
+        issues: List[str] = []
         if not text or not isinstance(text, str):
             return issues
 
-        ev_texts: List[str] = []
-        if verified_evidence:
-            if isinstance(verified_evidence, str):
-                ev_texts.append(verified_evidence.strip())
-            elif isinstance(verified_evidence, list):
-                for item in verified_evidence:
-                    if isinstance(item, str) and len(item.strip()) > 3:
-                        ev_texts.append(item.strip())
-            elif isinstance(verified_evidence, dict):
-                for k, v in verified_evidence.items():
-                    if isinstance(v, str) and len(v.strip()) > 3:
-                        ev_texts.append(v.strip())
-                    elif isinstance(v, list):
-                        for item in v:
-                            if isinstance(item, str) and len(item.strip()) > 3:
-                                ev_texts.append(item.strip())
+        ev_texts = cls._extract_evidence_text_set(verified_evidence)
 
         # Strip out bracketed placeholders, candidate confirmations, and illustrative scenarios
         cleaned = re.sub(r"\[Candidate to specify:[^\]]*\]", "", text, flags=re.IGNORECASE)
@@ -192,6 +287,25 @@ class AnswerQualityValidator:
         cleaned = re.sub(r"\(General Technical Guidance\):[^\n.]*", "", cleaned, flags=re.IGNORECASE)
         cleaned = re.sub(r"\[[^\]]*\]", "", cleaned)
 
+        # Check verified markers against actual evidence
+        marker_pattern = re.compile(
+            r"Verified (?:Project Title|Organization|Position|Dates|Responsibilities|Tools|Objective|Stack|Technologies):\s*['\"]?(.*?)(?=['\"]?(?:;|\.|\n|\]|$|\s+Verified ))",
+            re.IGNORECASE
+        )
+        for m in marker_pattern.finditer(cleaned):
+            claimed_val = m.group(1).strip()
+            if claimed_val.lower() in ["not explicitly enumerated", "none", "not specified", "unspecified", ""]:
+                continue
+            sub_vals = [sv.strip() for sv in claimed_val.split(",") if sv.strip()]
+            val_in_ev = bool(sub_vals)
+            for sv in sub_vals:
+                sv_found = any(sv.lower() in ev_t.lower() for ev_t in ev_texts)
+                if not sv_found:
+                    val_in_ev = False
+                    break
+            if not (val_in_ev and ev_texts):
+                issues.append(f"Found unsupported evidence assertion: Verified marker with unevidenced value '{claimed_val}'")
+
         unsupported_patterns = [
             # 1. Generic positive fallbacks
             (r"\bsoftware engineering duties\b", "Uses forbidden generic positive fallback 'software engineering duties'"),
@@ -200,7 +314,27 @@ class AnswerQualityValidator:
             (r"\bassigned engineering features\b", "Uses forbidden generic fallback 'assigned engineering features'"),
             (r"\bpractical engineering tools\b", "Uses forbidden generic fallback 'practical engineering tools'"),
 
-            # 2. Unsupported Architecture & Design Claims
+            # 2. Personal Engineering Contribution & Collaboration Claims (Active, 3rd-person, Passive)
+            (r"\b(?:I|we|the candidate|he|she|they)?\s*(?:have\s+)?contributed\s+to\s+(?:production\s+)?features?\b", "Claims ungrounded contribution to production features"),
+            (r"\b(?:production\s+)?features?\s+(?:were|was)\s+contributed\b", "Claims ungrounded feature contribution (passive voice)"),
+            (r"\bcontributed\s+to\s+production\s+features?\b", "Claims ungrounded contribution to production features"),
+
+            (r"\b(?:I|we|the candidate|he|she|they)?\s*(?:have\s+)?collaborated\s+with\s+(?:the\s+)?engineering\s+team\b", "Claims ungrounded collaboration with engineering team"),
+            (r"\bcollaborated\s+with\s+(?:the\s+)?engineering\s+team\b", "Claims ungrounded collaboration with engineering team"),
+
+            (r"\b(?:I|we|the candidate|he|she|they)?\s*(?:have\s+)?debugged\s+(?:the\s+)?(?:payment\s+workflow|workflows?|defect|bugs?|production\s+issue)\b", "Claims ungrounded debugging of payment workflow or production issues"),
+            (r"\b(?:the\s+)?(?:payment\s+workflow|workflows?|production\s+issue)\s+(?:was|were)\s+debugged\b", "Claims ungrounded debugging of workflow (passive voice)"),
+            (r"\bdebugged\s+the\s+payment\s+workflow\b", "Claims ungrounded debugging of payment workflow"),
+
+            (r"\b(?:I|we|the candidate|he|she|they)?\s*(?:have\s+)?maintained\s+(?:the\s+)?(?:production\s+)?database\b", "Claims ungrounded maintenance of production database"),
+            (r"\b(?:the\s+)?(?:production\s+)?database\s+(?:was|were)\s+maintained\b", "Claims ungrounded database maintenance (passive voice)"),
+            (r"\bmaintained\s+the\s+production\s+database\b", "Claims ungrounded maintenance of production database"),
+
+            (r"\b(?:I|we|the candidate|he|she|they)?\s*(?:have\s+)?coordinated\s+deployment\b", "Claims ungrounded deployment coordination"),
+            (r"\bdeployment\s+(?:was|were)\s+coordinated\b", "Claims ungrounded deployment coordination (passive voice)"),
+            (r"\bcoordinated\s+deployment\b", "Claims ungrounded deployment coordination"),
+
+            # 3. Unsupported Architecture & Design Claims
             (r"\bdecoupled presentation from backend processing logic\b", "Claims ungrounded architecture decoupling for project without evidence"),
             (r"\bI designed modular software components\b", "Claims ungrounded modular component design"),
             (r"\bI designed a modular layered architecture\b", "Claims ungrounded layered architecture design"),
@@ -210,8 +344,9 @@ class AnswerQualityValidator:
             (r"\bI designed (?:a |the )?(?:architecture|microservices?|modular|layered|system|components?|API|database schema|interfaces?)\b", "Claims ungrounded architecture or design"),
             (r"\bI selected \w+ (?:over|for|to) \w+\b", "Claims ungrounded technology selection rationale"),
             (r"\bdesigned the (?:API contracts?|component interfaces?|database schema)\b", "Claims ungrounded design contracts or interfaces"),
+            (r"\b(?:modular\s+components?|microservices?|architecture)\s+(?:were|was)\s+(?:designed|implemented|architected)\b", "Claims ungrounded architecture or component design (passive voice)"),
 
-            # 3. Unsupported Implementation Claims
+            # 4. Unsupported Implementation Claims
             (r"\bI implemented modular services\b", "Claims ungrounded modular service implementation"),
             (r"\bI implemented optimistic locking\b", "Claims ungrounded optimistic locking implementation"),
             (r"\bI discovered the failure was occurring because\b", "Claims ungrounded failure discovery"),
@@ -219,8 +354,9 @@ class AnswerQualityValidator:
             (r"\bI authored clean, modular code\b", "Claims ungrounded clean modular code authorship"),
             (r"\bI authored modular feature code\b", "Claims ungrounded modular feature code authorship"),
             (r"\bI implemented (?:the|backend|frontend|modular|custom|production|core)\b", "Claims ungrounded implementation"),
+            (r"\b(?:the\s+candidate|he|she|they)\s+implemented\s+(?:modular\s+services|optimistic\s+locking)\b", "Claims ungrounded implementation (third-person)"),
 
-            # 4. Unsupported Testing & QA Claims
+            # 5. Unsupported Testing & QA Claims
             (r"\bI authored automated unit tests\b", "Claims ungrounded automated unit test authorship"),
             (r"\bI authored comprehensive unit tests\b", "Claims ungrounded comprehensive unit tests"),
             (r"\bcreated unit and integration test fixtures\b", "Claims ungrounded test fixture creation"),
@@ -229,8 +365,9 @@ class AnswerQualityValidator:
             (r"\bWe maintain an extensive base of unit tests\b", "Claims unevidenced existing testing base"),
             (r"\bI authored (?:automated |comprehensive |clean, |modular |unit |integration |end-to-end )?tests\b", "Claims ungrounded unit or automated test authoring"),
             (r"\bI wrote (?:automated |comprehensive |unit |integration )?tests\b", "Claims ungrounded test writing"),
+            (r"\b(?:automated\s+unit\s+tests?|unit\s+tests?|test\s+fixtures?)\s+(?:were|was)\s+(?:authored|created|written)\b", "Claims ungrounded test authoring (passive voice)"),
 
-            # 5. Unsupported Deployment & CI/CD Claims
+            # 6. Unsupported Deployment & CI/CD Claims
             (r"\bI deployed (?:this|the|to)\b", "Claims ungrounded deployment execution"),
             (r"\bdeployed to (?:AWS|GCP|Azure|Kubernetes|production)\b", "Claims ungrounded deployment target"),
             (r"\bI authored CI/CD pipelines\b", "Claims ungrounded CI/CD pipeline authoring"),
@@ -239,8 +376,9 @@ class AnswerQualityValidator:
             (r"\bSuccessfully merged high-quality code\b", "Claims ungrounded production merge"),
             (r"\bThe completed service verified functional requirements\b", "Claims ungrounded service verification"),
             (r"\bThe completed system satisfied all acceptance criteria\b", "Claims ungrounded acceptance criteria satisfaction"),
+            (r"\b(?:were|was)\s+deployed\s+to\s+(?:AWS|GCP|Azure|Kubernetes|production)\b", "Claims ungrounded deployment execution (passive voice)"),
 
-            # 6. Unverified Metrics & Interactions
+            # 7. Unverified Metrics & Interactions
             (r"\bI adhered to a structured ['\"]?30-minute rule\b", "Claims unevidenced 30-minute rule adherence"),
             (r"\bMy internship permanently instilled\b", "Claims ungrounded personal internship habits"),
             (r"\bfollowing git and code review conventions\b", "Claims ungrounded adherence to conventions"),
@@ -273,7 +411,8 @@ class AnswerQualityValidator:
         generic positive fallbacks, and ungrounded engineering achievements.
         """
         issues: List[str] = []
-        ev = verified_evidence or question_record.get("verified_evidence") or question_record.get("evidence_sources") or question_record.get("candidate_evidence")
+        # Invariant: evidence_sources is metadata and must NEVER be treated as proof of candidate achievements
+        ev = verified_evidence or question_record.get("verified_evidence") or question_record.get("candidate_evidence")
 
         # 1. detailed_answer
         detailed = question_record.get("detailed_answer", "")
@@ -413,13 +552,17 @@ class AnswerQualityValidator:
         # 13. verified_evidence
         vev = question_record.get("verified_evidence")
         if vev:
+            # When auditing the verified_evidence field itself, only external evidence
+            # (passed via verified_evidence argument or candidate_evidence) can substantiate it.
+            # The field cannot self-authenticate unsupported claims.
+            external_ev = verified_evidence or question_record.get("candidate_evidence")
             if isinstance(vev, list):
                 for idx, v_item in enumerate(vev):
                     if isinstance(v_item, str):
-                        for iss in cls.audit_answer_for_unsupported_first_person_claims(v_item, verified_evidence=ev):
+                        for iss in cls.audit_answer_for_unsupported_first_person_claims(v_item, verified_evidence=external_ev):
                             issues.append(f"verified_evidence[{idx}]: {iss}")
             elif isinstance(vev, str):
-                for iss in cls.audit_answer_for_unsupported_first_person_claims(vev, verified_evidence=ev):
+                for iss in cls.audit_answer_for_unsupported_first_person_claims(vev, verified_evidence=external_ev):
                     issues.append(f"verified_evidence: {iss}")
 
         return issues
@@ -498,7 +641,8 @@ class AnswerQualityValidator:
                 score -= 20.0
 
         # 9. Comprehensive audit across all 13 core generated output fields
-        evidence_ctx = question_record.get("verified_evidence") or question_record.get("evidence_sources") or question_record.get("candidate_evidence")
+        # Invariant: evidence_sources is metadata and must NEVER be treated as proof of candidate achievements
+        evidence_ctx = question_record.get("verified_evidence") or question_record.get("candidate_evidence")
         field_issues = cls.audit_record_fields(question_record, verified_evidence=evidence_ctx)
         for fi in field_issues:
             issues.append(fi)

@@ -270,7 +270,7 @@ class TestPhase211FinalGroundingRepair:
 
         # 2. Resume supported statement
         resume_text = "Verified Organization: Google"
-        res_resume = AnswerQualityValidator.classify_statement(resume_text)
+        res_resume = AnswerQualityValidator.classify_statement(resume_text, evidence={"organization": "Google"})
         assert res_resume["is_resume_supported"] is True
         assert res_resume["is_candidate_confirmed"] is False
 

@@ -474,7 +474,9 @@ class TestPhase212EvidenceValidator:
 
         # Resume evidence markers must classify as resume evidence
         resume_text = "Verified Organization: Acme Corp. Verified Position: Backend Intern."
-        resume_classification = AnswerQualityValidator.classify_statement(resume_text)
+        resume_classification = AnswerQualityValidator.classify_statement(
+            resume_text, evidence={"organization": "Acme Corp", "position": "Backend Intern"}
+        )
         assert resume_classification["is_resume_supported"] is True
         assert resume_classification["is_candidate_confirmed"] is False
 
