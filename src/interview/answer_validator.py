@@ -107,6 +107,26 @@ class AnswerQualityValidator:
         return ev_texts
 
     @classmethod
+    def _token_matches(cls, needle: str, haystack: str) -> bool:
+        """
+        Boundary-aware specific token/phrase matching.
+        Prevents unsafe substring collisions (e.g., treating 'SQL' as proof inside 'NoSQL',
+        'Java' inside 'JavaScript', 'C' inside 'C++', 'Go' inside 'Django', 'Rust' inside 'trust').
+        """
+        n = needle.strip()
+        if not n or not haystack:
+            return False
+        if n.lower() == haystack.strip().lower():
+            return True
+
+        first_char = n[0]
+        left_bound = r"(?<![A-Za-z0-9_])" if first_char.isalnum() else r"(?<!\S)"
+        right_bound = r"(?![A-Za-z0-9_+#])"
+
+        pattern = left_bound + re.escape(n) + right_bound
+        return bool(re.search(pattern, haystack, re.IGNORECASE))
+
+    @classmethod
     def classify_statement(
         cls,
         text: str,
@@ -123,9 +143,11 @@ class AnswerQualityValidator:
         6. is_unsupported_personal_claim: An assertion of personal engineering action, architecture decision, metric, or duty that is NOT verified by evidence.
 
         Key Invariants:
+        - Valid markers and unsupported personal claims can coexist; both classifications are preserved.
+        - A verified organization or title does not authenticate unrelated engineering/deployment claims.
+        - Evidence matching is token- and boundary-aware, avoiding unsafe substring matches (e.g. SQL inside NoSQL).
         - Candidate confirmation is NEVER treated as independent resume evidence.
         - Arbitrary unverified personal text is NEVER classified as general technical content.
-        - Verified markers (e.g. 'Verified Organization:') without genuine evidence are classified as unverified/unsupported.
         - 'evidence_sources' is NEVER treated as proof of candidate achievements.
         - If evidence is unavailable, claims are classified as unverified rather than resume-supported.
         """
@@ -155,7 +177,7 @@ class AnswerQualityValidator:
             sub_vals = [sv.strip() for sv in claimed_val.split(",") if sv.strip()]
             val_in_ev = bool(sub_vals)
             for sv in sub_vals:
-                sv_found = any(sv.lower() in ev_item.lower() for ev_item in ev_texts)
+                sv_found = any(cls._token_matches(sv, ev_item) for ev_item in ev_texts)
                 if not sv_found:
                     val_in_ev = False
                     break
@@ -164,19 +186,19 @@ class AnswerQualityValidator:
             else:
                 has_fabricated_marker = True
 
-        # Check if text matches actual evidence directly
+        # Check if text matches actual evidence directly using boundary-aware token matching
         matches_actual_evidence = False
         for ev_item in ev_texts:
-            if len(ev_item) > 3 and ev_item.lower() in t.lower():
+            if len(ev_item.strip()) >= 2 and cls._token_matches(ev_item, t):
                 matches_actual_evidence = True
                 break
 
-        # A statement is resume-supported ONLY if evidence is supplied and genuinely matches
+        # A statement is resume-supported if genuine evidence or a verified marker is present
+        # Invariant: A valid marker can coexist with an unsupported personal claim or fabricated marker.
         is_resume = (
             bool(ev_texts)
             and (marker_verified or matches_actual_evidence)
             and not is_candidate
-            and not has_fabricated_marker
         )
 
         # Detect unsupported personal claims:
@@ -196,46 +218,66 @@ class AnswerQualityValidator:
         cleaned = re.sub(r"\(General Technical Guidance\):[^\n.]*", "", cleaned, flags=re.IGNORECASE)
         cleaned = re.sub(r"\[[^\]]*\]", "", cleaned)
 
-        has_first_person_or_personal_action = bool(re.search(
+        # Check individual claims against evidence using boundary-aware token matching
+        unsupported_claim_patterns = [
+            # Personal Engineering Contribution & Collaboration Claims
+            r"\b(?:I|we|the candidate|he|she|they)?\s*(?:have\s+)?contributed\s+to\s+(?:production\s+)?features?\b",
+            r"\b(?:production\s+)?features?\s+(?:were|was)\s+contributed\b",
+            r"\bcontributed\s+to\s+production\s+features?\b",
+            r"\b(?:I|we|the candidate|he|she|they)?\s*(?:have\s+)?collaborated\s+with\s+(?:the\s+)?engineering\s+team\b",
+            r"\bcollaborated\s+with\s+(?:the\s+)?engineering\s+team\b",
+            r"\b(?:I|we|the candidate|he|she|they)?\s*(?:have\s+)?debugged\s+(?:the\s+)?(?:payment\s+workflow|workflows?|defect|bugs?|production\s+issue)\b",
+            r"\b(?:the\s+)?(?:payment\s+workflow|workflows?|production\s+issue)\s+(?:was|were)\s+debugged\b",
+            r"\bdebugged\s+the\s+payment\s+workflow\b",
+            r"\b(?:I|we|the candidate|he|she|they)?\s*(?:have\s+)?maintained\s+(?:the\s+)?(?:production\s+)?database\b",
+            r"\b(?:the\s+)?(?:production\s+)?database\s+(?:was|were)\s+maintained\b",
+            r"\bmaintained\s+the\s+production\s+database\b",
+            r"\b(?:I|we|the candidate|he|she|they)?\s*(?:have\s+)?coordinated\s+deployment\b",
+            r"\bdeployment\s+(?:was|were)\s+coordinated\b",
+            r"\bcoordinated\s+deployment\b",
+            # General personal action verbs
             r"\b(?:I|we|my|our)\s+(?:have\s+)?(?:designed|built|implemented|engineered|deployed|created|maintained|refactored|tested|optimized|authored|delivered|chose|decided|adhered|reached|contributed|collaborated|debugged|coordinated)\b",
-            cleaned, re.IGNORECASE
-        )) or bool(re.search(
             r"\b(?:the candidate|he|she|they)\s+(?:contributed\s+to|collaborated\s+with|debugged|maintained|coordinated|designed|implemented|built|engineered|deployed|authored|created|developed)\b",
-            cleaned, re.IGNORECASE
-        )) or bool(re.search(
-            r"\b(?:production\s+features?\s+(?:were|was)\s+contributed|payment\s+workflow\s+(?:was|were)\s+debugged|production\s+database\s+(?:was|were)\s+maintained|deployment\s+(?:was|were)\s+coordinated)\b",
-            cleaned, re.IGNORECASE
-        )) or bool(re.search(
-            r"\b(?:contributed\s+to\s+production\s+features?|collaborated\s+with\s+(?:the\s+)?engineering\s+team|debugged\s+the\s+payment\s+workflow|maintained\s+the\s+production\s+database|coordinated\s+deployment)\b",
-            cleaned, re.IGNORECASE
-        )) or bool(re.search(
             r"\b(?:My pull requests were reviewed|Successfully merged high-quality code|We maintain an extensive base)\b",
-            cleaned, re.IGNORECASE
-        ))
-
-        has_unsupported_architecture = bool(re.search(
+            # Architecture claims
             r"\b(?:decoupled presentation from backend processing logic|implemented a modular layered architecture|designed modular software components|deliberately chose a modular monolithic architecture|designed the architecture|chose microservices)\b",
-            cleaned, re.IGNORECASE
-        ))
-
-        has_unsupported_testing_or_deployment = bool(re.search(
+            r"\bI designed (?:a |the )?(?:architecture|microservices?|modular|layered|system|components?|API|database schema|interfaces?)\b",
+            r"\bI selected \w+ (?:over|for|to) \w+\b",
+            r"\bdesigned the (?:API contracts?|component interfaces?|database schema)\b",
+            r"\b(?:modular\s+components?|microservices?|architecture)\s+(?:were|was)\s+(?:designed|implemented|architected)\b",
+            # Testing & QA claims
+            r"\bI authored (?:automated |comprehensive |clean, |modular |unit |integration |end-to-end )?tests\b",
+            r"\bI wrote (?:automated |comprehensive |unit |integration )?tests\b",
             r"\b(?:authored automated unit tests|authored comprehensive unit tests|created unit and integration test fixtures|committed the failing test case|authored CI/CD pipelines|deployed to AWS|deployed to GCP|deployed to Kubernetes)\b",
-            cleaned, re.IGNORECASE
-        ))
+            r"\b(?:automated\s+unit\s+tests?|unit\s+tests?|test\s+fixtures?)\s+(?:were|was)\s+(?:authored|created|written)\b",
+            # Deployment claims
+            r"\bI deployed (?:this|the|to)\b",
+            r"\bdeployed to (?:AWS|GCP|Azure|Kubernetes|production)\b",
+            r"\b(?:were|was)\s+deployed\s+to\s+(?:AWS|GCP|Azure|Kubernetes|production)\b",
+            # Metrics
+            r"(?<!\[)(?:improved|reduced|increased|boosted|achieved)\s+.*?(?:\d+%\s*|\d+x\s*)(?!\])"
+        ]
 
-        has_unbracketed_metric = bool(re.search(
-            r"(?<!\[)(?:improved|reduced|increased|boosted|achieved)\s+.*?(?:\d+%\s*|\d+x\s*)(?!\])",
-            cleaned, re.IGNORECASE
-        ))
+        has_unsupported_claim = False
+        for pat in unsupported_claim_patterns:
+            m = re.search(pat, cleaned, re.IGNORECASE)
+            if m:
+                matched_str = m.group(0).strip()
+                core_str = re.sub(r"^(?:I|we|the candidate|he|she|they)\s+(?:have\s+)?", "", matched_str, flags=re.IGNORECASE).strip()
+                is_supported = False
+                for ev_t in ev_texts:
+                    if cls._token_matches(matched_str, ev_t) or cls._token_matches(core_str, ev_t):
+                        is_supported = True
+                        break
+                if not is_supported:
+                    has_unsupported_claim = True
+                    break
 
         is_unsupported = (
             has_generic_fallback
             or has_fabricated_marker
-            or has_first_person_or_personal_action
-            or has_unsupported_architecture
-            or has_unsupported_testing_or_deployment
-            or has_unbracketed_metric
-        ) and not is_illustrative and not is_resume
+            or has_unsupported_claim
+        ) and not is_illustrative
 
         # General technical explanation is valid ONLY if it is technical and NOT an unsupported personal claim
         is_labeled_guidance = bool(re.search(r"\[General Technical Guidance\]|\(General Technical Guidance\)", t, re.IGNORECASE))
@@ -299,7 +341,7 @@ class AnswerQualityValidator:
             sub_vals = [sv.strip() for sv in claimed_val.split(",") if sv.strip()]
             val_in_ev = bool(sub_vals)
             for sv in sub_vals:
-                sv_found = any(sv.lower() in ev_t.lower() for ev_t in ev_texts)
+                sv_found = any(cls._token_matches(sv, ev_t) for ev_t in ev_texts)
                 if not sv_found:
                     val_in_ev = False
                     break
@@ -389,10 +431,11 @@ class AnswerQualityValidator:
         for pat, desc in unsupported_patterns:
             m = re.search(pat, cleaned, re.IGNORECASE)
             if m:
-                matched_str = m.group(0)
+                matched_str = m.group(0).strip()
+                core_str = re.sub(r"^(?:I|we|the candidate|he|she|they)\s+(?:have\s+)?", "", matched_str, flags=re.IGNORECASE).strip()
                 is_supported_by_ev = False
                 for ev_t in ev_texts:
-                    if matched_str.lower() in ev_t.lower():
+                    if cls._token_matches(matched_str, ev_t) or cls._token_matches(core_str, ev_t):
                         is_supported_by_ev = True
                         break
                 if "forbidden generic" in desc.lower() or not is_supported_by_ev:
