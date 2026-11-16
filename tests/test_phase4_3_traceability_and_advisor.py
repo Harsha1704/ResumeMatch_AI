@@ -392,9 +392,9 @@ def test_candidate_no_project_descriptions_receives_neutral_advisor_placeholders
     full_text = json.dumps(quant_sug)
 
     # Must contain required neutral placeholders
-    assert "[Describe the actual project or task you completed]" in full_text
-    assert "[Explain your genuine contribution]" in full_text
-    assert "[Add a measured result only if you have verified evidence" in full_text
+    assert "[Describe the actual project or task completed]" in full_text or "[Describe the actual project or task you completed]" in full_text
+    assert "[Explain the specific contribution]" in full_text or "[Explain your genuine contribution]" in full_text
+    assert "[Describe the verified outcome, if measurable" in full_text or "[Add a measured result only if you have verified evidence" in full_text
 
     # Must NOT contain candidate-sounding claims or assumed architectures
     forbidden = [
@@ -439,4 +439,4 @@ def test_candidate_with_existing_project_does_not_invent_architecture():
     assert "interactive portfolio website service" not in full_text.lower()
     assert "rest api endpoints" not in full_text.lower()
     assert "database queries" not in full_text.lower()
-    assert "[Interactive Portfolio Website: Describe the actual project or task you completed]" in full_text
+    assert "[Interactive Portfolio Website: Describe the actual project or task completed]" in full_text or "[Interactive Portfolio Website: Describe the actual project or task you completed]" in full_text

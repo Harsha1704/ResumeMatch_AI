@@ -53,33 +53,33 @@ def generate_resume_improvement_suggestions(
             sample_title = unquantified_bullets[0][0]
             sample_before = unquantified_bullets[0][1]
             sample_after = (
-                f"[Strong Action Verb, e.g. Engineered / Built / Automated] [{sample_title}: Describe the actual project or task you completed], "
-                f"[Explain your genuine contribution] achieving [Add a measured result only if you have verified evidence, e.g. [measured throughput, e.g. +X%] or [verified latency, e.g. <Y ms]] "
-                f"(Template only: Insert only measured, verifiable values from your testing or production logs; never fabricate performance statistics)."
+                f"[Strong Action Verb, e.g. Engineered / Built / Automated] [{sample_title}: Describe the actual project or task completed], "
+                f"[Explain the specific contribution] achieving [Describe the verified outcome, if measurable, e.g. [measured throughput] or [count] units if verified] "
+                f"(Template only: Insert verified measurements from your actual work if available; state only work actually performed)."
             )
         else:
             sample_title = "Project / Technical Task"
             sample_before = "[Template Example]: Completed project deliverables according to technical specifications."
             sample_after = (
-                "[Strong Action Verb, e.g. Engineered / Built / Automated] [Describe the actual project or task you completed], "
-                "[Explain your genuine contribution] handling [count, e.g. verified volume] requests and achieving [Add a measured result only if you have verified evidence, e.g. [measured throughput, e.g. +X%]] "
-                "(Template only: Insert only measured, verifiable values from your actual work; never fabricate performance statistics)."
+                "[Strong Action Verb, e.g. Engineered / Built / Automated] [Describe the actual project or task completed], "
+                "[Explain the specific contribution] achieving [Describe the verified outcome, if measurable, e.g. [measured throughput] or [count] units if verified] "
+                "(Template only: Insert verified measurements from your actual work if available; state only work actually performed)."
             )
 
         before_after_list = [
             {
                 "original": sample_before,
                 "suggested": sample_after,
-                "rationale": "Demonstrates how to frame technical scope with measurable outcomes using neutral template placeholders."
+                "rationale": "Demonstrates framing technical accomplishments with verified outcomes using neutral template placeholders."
             },
             {
-                "original": "[Template Example]: Handled project assignments and updates.",
+                "original": "[Template Example]: Completed project deliverables according to technical specifications.",
                 "suggested": (
-                    "[Strong Action Verb] [Describe the actual project or task you completed], [Explain your genuine contribution] "
-                    "resulting in [Add a measured result only if you have verified evidence] "
+                    "[Strong Action Verb] [Describe the actual project or task completed], [Explain the specific contribution] "
+                    "resulting in [Describe the verified outcome, if measurable] "
                     "(Template only: Insert only measured, verifiable values; state only work actually performed)."
                 ),
-                "rationale": "Illustrates how to add quantifiable scope and reliability metrics using your actual verified measurements without inventing unmeasured claims."
+                "rationale": "Illustrates how to add verifiable scope and impact metrics using your actual measurements without assuming unverified architectures or achievements."
             }
         ]
 
@@ -88,14 +88,14 @@ def generate_resume_improvement_suggestions(
             "category": "Quantifiable Business Impact",
             "priority": "High",
             "reason": "Engineering hiring managers look for measurable scale and business impact rather than passive task descriptions.",
-            "evidence_context": f"Bullet points in '{sample_title}' describe technical activities without explicit percentage, latency, or throughput figures." if unquantified_bullets else "Current project bullet points describe technical activities without explicit percentage, latency, or throughput figures.",
-            "instruction": "Insert only measured, verifiable values from your actual project benchmarks, telemetry, or production metrics. Never fabricate performance or scale statistics.",
+            "evidence_context": f"Bullet points in '{sample_title}' describe technical activities without explicit verified performance or impact metrics." if unquantified_bullets else "Current project bullet points describe technical activities without explicit verified performance or impact metrics.",
+            "instruction": "Insert only measured, verifiable values from your actual project benchmarks or production records, if available. Never fabricate performance or scale statistics.",
             "actionable_example": {
                 "before": sample_before,
                 "after": sample_after
             },
             "before_after_examples": before_after_list,
-            "practical_next_action": "Audit your project bullets and replace template placeholders with concrete, measured metrics (e.g., query latency reduction, test coverage %, or data volume processed)."
+            "practical_next_action": "Review your project bullets and replace template placeholders with concrete, verified measurements from your actual work (e.g. test coverage % or volume processed), if measured."
         })
 
     # 2. Public Repository Traceability
@@ -134,12 +134,12 @@ def generate_resume_improvement_suggestions(
             "instruction": f"Ground '{sample_skill}' by describing how you applied it in your actual work or projects. Describe only features, tasks, or modules you genuinely built.",
             "actionable_example": {
                 "before": f"Technical Skills: {', '.join(sample_skills)} (never mentioned in project descriptions).",
-                "after": f"[Template Project Bullet]: Utilized {sample_skill} to [Describe the actual project or task you completed], [Explain your genuine contribution] (Describe only work actually performed)."
+                "after": f"[Template Project Bullet]: Utilized {sample_skill} to [Describe the actual project or task completed], [Explain the specific contribution] (Describe only work actually performed)."
             },
             "before_after_examples": [
                 {
                     "original": f"[Template Skills List]: {', '.join(sample_skills)}",
-                    "suggested": f"[Template Project Bullet]: Utilized {sample_skill} to [Describe the actual project or task you completed] [Explain your genuine contribution] (State only actual responsibilities and outcomes).",
+                    "suggested": f"[Template Project Bullet]: Utilized {sample_skill} to [Describe the actual project or task completed] [Explain the specific contribution] (State only actual responsibilities and outcomes).",
                     "rationale": "Transforms abstract skill claims into verifiable project evidence without inventing unperformed tasks."
                 }
             ],
@@ -159,12 +159,12 @@ def generate_resume_improvement_suggestions(
             "instruction": "Replace passive introductory wording with strong engineering action verbs that accurately reflect your actual level of contribution.",
             "actionable_example": {
                 "before": f"[Template Example]: {found_verb} project components.",
-                "after": f"[Strong Action Verb, e.g. Architected / Engineered / Automated] [Describe the actual project or task you completed] to [Explain your genuine contribution] (Describe only genuine ownership)."
+                "after": f"[Strong Action Verb, e.g. Architected / Engineered / Automated] [Describe the actual project or task completed] to [Explain the specific contribution] (Describe only genuine ownership)."
             },
             "before_after_examples": [
                 {
                     "original": f"[Template Example]: {found_verb} project components.",
-                    "suggested": f"[Strong Action Verb] [Describe the actual project or task you completed], [Explain your genuine contribution] with [verified unit tests or documentation] (Describe only work actually performed).",
+                    "suggested": f"[Strong Action Verb] [Describe the actual project or task completed], [Explain the specific contribution] with [verified unit tests or documentation, if performed] (Describe only work actually performed).",
                     "rationale": "Emphasizes technical ownership and engineering rigor without attributing unverified architecture work."
                 }
             ],

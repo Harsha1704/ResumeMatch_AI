@@ -10,13 +10,80 @@ import re
 
 from src.common.evidence_registry import resolve_canonical_skill, matches_skill_token, CANONICAL_SKILL_ALIASES
 
+# Markers identifying negated, unused, considered, or prospective non-demonstrated skills
+NON_DEMONSTRATED_PATTERNS = [
+    # Negated / not used / unused
+    r"\b(?:not\s+used|did\s+not\s+use|didn't\s+use|never\s+used|without\s+using|unused)\b",
+    r"\b(?:considered\s+but\s+not\s+used|evaluated\s+but\s+not\s+used|decided\s+against|not\s+adopted|evaluated\s+and\s+rejected)\b",
+    r"\b(?:was|were|is)\s+considered\s+but\s+not\s+used\b",
+    # Planned / prospective / future
+    r"\b(?:plan(?:ned|ning|s)?\s+to\s+(?:migrate|implement|use|adopt|switch|transition))\b",
+    r"\b(?:plan(?:ned|ning|s)?\s+to\b|\bplanning\s+to\b)",
+    r"\b(?:future\s+tool|future\s+plan|future\s+roadmap|future\s+adoption|future\s+work|prospective\s+tool)\b",
+    r"\b(?:possible\s+future\s+tool|potential\s+future\s+tool|possible\s+tool|potential\s+tool)\b",
+    r"\b(?:listed\s+as\s+a\s+possible|listed\s+as\s+a\s+potential|listed\s+as\s+a\s+future)\b",
+    # Considered / proposed
+    r"\b(?:was|were|is)\s+considered\b(?!\s+(?:essential|crucial|key|central|vital|by))",
+    r"\bconsidered\s+(?:for\s+future|as\s+a\s+possible|as\s+a\s+potential)\b",
+    r"\b(?:propos(?:ed|al)|tentative)\s+(?:tool|framework|library|to\s+use|for\s+use)\b",
+    r"\bproposed\s+to\s+use\b",
+]
+
+# Action verbs and active engineering context indicators required for full demonstrated credit
+DEMONSTRATED_ACTION_VERBS = {
+    "use", "used", "uses", "using", "utilize", "utilized", "utilizes", "utilizing",
+    "build", "built", "building", "develop", "developed", "developing", "development",
+    "engineer", "engineered", "engineering", "implement", "implemented", "implementing", "implementation",
+    "design", "designed", "designing", "create", "created", "creating",
+    "test", "tested", "testing", "deploy", "deployed", "deploying", "deployment",
+    "configure", "configured", "configuring", "configuration",
+    "optimize", "optimized", "optimizing", "optimization",
+    "integrate", "integrated", "integrating", "integration",
+    "analyze", "analyzed", "analyzing", "analysis",
+    "automate", "automated", "automating", "automation",
+    "author", "authored", "authoring",
+    "maintain", "maintained", "maintaining", "maintenance",
+    "orchestrate", "orchestrated", "orchestrating", "orchestration",
+    "architect", "architected", "architecting", "architecture",
+    "refactor", "refactored", "refactoring",
+    "program", "programmed", "programming", "code", "coded", "coding",
+    "leverage", "leveraged", "leveraging", "train", "trained", "training",
+    "fine-tune", "fine-tuned", "finetuning", "serve", "served", "serving",
+    "containerize", "containerized", "containerizing",
+    "construct", "constructed", "constructing",
+    "monitor", "monitored", "monitoring",
+    "ingest", "ingested", "ingesting",
+    "process", "processed", "processing",
+    "scale", "scaled", "scaling",
+    "execute", "executed", "executing", "execution",
+    "manage", "managed", "managing", "management",
+    "support", "supported", "supporting",
+    "deliver", "delivered", "delivering",
+    "lead", "led", "leading",
+    "handle", "handled", "handling",
+    "run", "running", "write", "wrote", "writing", "written"
+}
+
 
 def find_supporting_excerpt_for_skill(skill_name: str, text: Optional[str]) -> Optional[str]:
     """
-    Finds a genuine supporting sentence in the given text for the canonical skill.
-    Uses canonical skill resolution and aliases, and enforces word/token boundary checking
-    to prevent false substring positives (e.g., C matching C++, C#, or inside other words).
-    Returns the cleaned excerpt sentence (up to 140 chars) or None if unsupported.
+    Finds a genuine supporting sentence in the given text establishing DEMONSTRATED USE
+    for the canonical skill.
+
+    Heuristic Evaluation & Semantic Scoping:
+    1. Canonical Resolution & Aliases: expands canonical tokens and registered aliases.
+    2. Substring & Boundary Protection: isolates C, C++, C#, .NET from cross-contamination.
+    3. Mentions vs Demonstrated Use:
+       - Rejects negated, unused, considered, or prospective claims (e.g. 'not used',
+         'considered but not used', 'planned to migrate to', 'possible future tool').
+       - Requires contextual indicators of actual engineering use (implementation, development, testing, deployment, etc.).
+       - Preserves the authentic sentence as the excerpt when demonstrated use is established.
+       - Returns None when use cannot be substantiated (triggering 0.60 registry tier).
+
+    Documented Limitations:
+    This heuristic inspects grammatical clauses and known intentional/negation markers. While robust against
+    standard candidate phrasing (negations, future tools, passive consideration), complex multi-clause rhetorical
+    structures without explicit markers cannot be guaranteed 100% equivalent to human semantic analysis.
     """
     if not text or not isinstance(text, str) or not text.strip():
         return None
@@ -27,15 +94,64 @@ def find_supporting_excerpt_for_skill(skill_name: str, text: Optional[str]) -> O
         if c.lower() == canon.lower():
             search_terms.add(alias.lower())
 
-    # Split on sentence boundaries, newlines, or semicolons
-    sentences = re.split(r"(?<=[.!?\n])\s+|[\r\n]+|;\s*", text)
+    # Split text into authentic sentences
+    sentences = re.split(r"(?<=[.!?\n])\s+|[\r\n]+", text)
     for sent in sentences:
         s_clean = sent.strip(" \t\n*-•")
-        if len(s_clean) >= 4:
-            if any(matches_skill_token(s_clean, term) for term in search_terms):
-                if len(s_clean) > 140:
-                    return s_clean[:137] + "..."
-                return s_clean
+        if len(s_clean) < 4:
+            continue
+
+        # Check if this sentence mentions the skill
+        if not any(matches_skill_token(s_clean, term) for term in search_terms):
+            continue
+
+        # Split sentence into clauses (by semicolons, contrasting conjunctions, or parentheticals)
+        clauses = re.split(r";\s*|\s*,\s*(?:but|however|whereas|while)\s*|\s+but\s+", s_clean)
+
+        # Check clauses that specifically mention the skill
+        skill_clauses = [c for c in clauses if any(matches_skill_token(c, term) for term in search_terms)]
+
+        has_demonstrated_clause = False
+        for cl in skill_clauses:
+            cl_lower = cl.lower()
+
+            # 1. Check for negation, unused, prospective, or considered markers in this clause
+            is_non_dem = False
+            for pat in NON_DEMONSTRATED_PATTERNS:
+                if re.search(pat, cl_lower):
+                    is_non_dem = True
+                    break
+            if is_non_dem:
+                continue
+
+            # 2. Check for contextual evidence of actual use / implementation / activity
+            cl_words = set(re.findall(r"\b[a-z]{3,}\b", cl_lower))
+            if cl_words.intersection(DEMONSTRATED_ACTION_VERBS):
+                has_demonstrated_clause = True
+                break
+
+        if has_demonstrated_clause:
+            # Overarching sentence negation check: e.g. "Python was considered but not used"
+            whole_lower = s_clean.lower()
+            overarching_negation = False
+            for pat in [
+                r"\b(?:was|were|is)\s+considered\s+but\s+not\s+used\b",
+                r"\bconsidered\s+(?:[a-z0-9#+.]+\s+)?but\s+not\s+used\b",
+                r"\bnot\s+used\b",
+                r"\bdid\s+not\s+use\b",
+                r"\bnever\s+used\b"
+            ]:
+                if re.search(pat, whole_lower):
+                    overarching_negation = True
+                    break
+
+            if overarching_negation:
+                continue
+
+            if len(s_clean) > 140:
+                return s_clean[:137] + "..."
+            return s_clean
+
     return None
 
 
