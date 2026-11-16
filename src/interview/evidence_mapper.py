@@ -92,6 +92,11 @@ def extract_candidate_evidence(analysis_data: Optional[Dict[str, Any]]) -> Dict[
     # Experience summary
     exp_summary = analysis_data.get("experience_summary", {}).get("display_summary", "Professional experience verified")
 
+    # Unified evidence registry integration
+    ev_dossier = analysis_data.get("evidence_registry") or {}
+    demonstrated_skills = ev_dossier.get("demonstrated_skills") or analysis_data.get("solidly_evidenced_skills") or []
+    partially_evidenced_skills = ev_dossier.get("partially_evidenced_skills") or analysis_data.get("partially_evidenced_skills") or []
+
     return {
         "has_data": True,
         "filename": analysis_data.get("filename", "Uploaded Resume"),
@@ -99,12 +104,15 @@ def extract_candidate_evidence(analysis_data: Optional[Dict[str, Any]]) -> Dict[
         "projects": cleaned_projects,
         "internships": cleaned_internships,
         "skills": resume_skills,
+        "demonstrated_skills": demonstrated_skills,
+        "partially_evidenced_skills": partially_evidenced_skills,
         "matched_skills": matched_skills,
         "missing_skills": missing_skills,
         "required_skills": required_skills,
         "preferred_skills": preferred_skills,
         "education": edu_text,
-        "experience_summary": exp_summary
+        "experience_summary": exp_summary,
+        "evidence_registry": ev_dossier
     }
 
 

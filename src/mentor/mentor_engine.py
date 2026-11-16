@@ -426,7 +426,10 @@ class CareerMentorEngine:
         self.roadmaps = self._generate_gap_roadmaps()
 
     def _extract_verified_strengths(self) -> Dict[str, Any]:
-        """Extracts candidate's verified strengths from resume analysis."""
+        """
+        Extracts candidate's verified strengths from unified evidence registry.
+        Distinguishes demonstrated skills from ungrounded keyword mentions.
+        """
         skills = self.analysis_data.get("resume_skills") or []
         matched = self.analysis_data.get("matched_skills") or []
         projects = self.analysis_data.get("projects") or self.analysis_data.get("relevant_projects") or []
@@ -434,10 +437,24 @@ class CareerMentorEngine:
         edu_summary = self.analysis_data.get("education_analysis", {}).get("notes", "Verified degree coursework")
         exp_summary = self.analysis_data.get("experience_summary", {}).get("display_summary", "Demonstrated hands-on experience")
 
+        ev_dossier = self.analysis_data.get("evidence_registry") or {}
+        demonstrated = ev_dossier.get("demonstrated_skills") or self.analysis_data.get("solidly_evidenced_skills") or []
+        partial = ev_dossier.get("partially_evidenced_skills") or self.analysis_data.get("partially_evidenced_skills") or []
+        user_confs = ev_dossier.get("user_confirmations") or self.analysis_data.get("user_confirmations") or {}
+        confirmed = [k for k, v in user_confs.items() if isinstance(v, dict) and v.get("status") == "confirmed"]
+
+        # Only skills with genuine project/workplace evidence or explicit user confirmation are verified
+        verified = sorted(list(set(demonstrated).union(confirmed)))
+        if not verified:
+            verified = matched if matched else skills
+
         return {
             "total_skills": len(skills),
-            "verified_skills": skills,
+            "verified_skills": verified,
+            "demonstrated_skills": demonstrated,
+            "partially_evidenced_skills": partial,
             "matched_skills": matched,
+            "resume_skills": skills,
             "projects_count": len(projects),
             "projects": projects,
             "internships_count": len(internships),
@@ -469,10 +486,16 @@ class CareerMentorEngine:
         pref_name = self.identity.get("preferred_name")
 
         prioritized = []
+        ev_dossier = self.analysis_data.get("evidence_registry") or {}
+        job_reqs = ev_dossier.get("job_requirements", {})
+        from src.common.evidence_registry import resolve_canonical_skill
+
         for s, tier, status in raw_items:
             cat = classify_mentor_category(s)
             p_info = calculate_skill_priority(s, tier, status, verified_skills, jd_text, projects)
-            jd_sent = find_jd_sentence_for_skill(s, jd_text)
+            canon_lower = resolve_canonical_skill(s).lower()
+            job_req = job_reqs.get(canon_lower, {})
+            jd_sent = job_req.get("supporting_sentence") or find_jd_sentence_for_skill(s, jd_text)
             rel_exp = find_related_candidate_experience(s, verified_skills, projects)
             rec_act = recommend_gap_action(s, cat, projects)
             explanation = format_gap_explanation(s, tier, verified_skills, pref_name)

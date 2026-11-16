@@ -646,9 +646,17 @@ def _get_active_analysis(analysis_id: Optional[str] = None) -> Dict:
     if user_role:
         analysis["job_title"] = user_role
 
-    user_edu = session.get("candidate_confirmations", {}).get("education")
-    if user_edu:
-        analysis["education_analysis"] = {"notes": user_edu}
+    user_confs = session.get("candidate_confirmations", {})
+    if user_confs:
+        analysis["user_confirmations"] = user_confs
+        user_edu = user_confs.get("education")
+        if user_edu:
+            analysis["education_analysis"] = {"notes": user_edu}
+
+    if "evidence_registry" not in analysis:
+        from src.common.evidence_registry import build_unified_evidence_registry
+        ev_reg = build_unified_evidence_registry(analysis)
+        analysis["evidence_registry"] = ev_reg.build_summary_dossier()
 
     return analysis
 
