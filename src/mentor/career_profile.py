@@ -198,8 +198,8 @@ def build_structured_career_profile(analysis_data: Optional[Dict[str, Any]]) -> 
                     "provenance_title": "Evidence Registry (Derived)",
                     "excerpt": None,
                     "excerpt_status": "unavailable",
-                    "provenance_note": "Registry-derived competency; specific textual excerpt unavailable from source resume.",
-                    "confidence": 0.85
+                    "provenance_note": "Registry-derived competency without source resume excerpt; eligible for registry-tier credit (60%), not full demonstrated credit.",
+                    "confidence": 0.60
                 })
 
     # Candidate Self-Confirmed: explicitly confirmed via candidate portal/attestation
@@ -278,6 +278,14 @@ def build_structured_career_profile(analysis_data: Optional[Dict[str, Any]]) -> 
     # Conflicts & Inconsistencies
     conflicts = cand_profile.get("conflicts") or []
 
+    # Separate traceable demonstrated from registry-derived without excerpts
+    registry_derived_skills = [
+        s for s in demonstrated_skills if s.get("evidence_source") == "registry_derived" or s.get("excerpt_status") == "unavailable"
+    ]
+    traceable_demonstrated_skills = [
+        s for s in demonstrated_skills if s.get("evidence_source") != "registry_derived" and s.get("excerpt_status") != "unavailable"
+    ]
+
     return {
         "identity": identity_info,
         "education": education_summary,
@@ -286,12 +294,16 @@ def build_structured_career_profile(analysis_data: Optional[Dict[str, Any]]) -> 
         "projects": projects,
         "internships": internships,
         "demonstrated_competencies": demonstrated_skills,
+        "traceable_demonstrated_competencies": traceable_demonstrated_skills,
+        "registry_derived_competencies": registry_derived_skills,
         "candidate_confirmed_competencies": candidate_confirmed_skills,
         "partially_evidenced_competencies": partially_evidenced_skills,
         "missing_or_uncertain_information": missing_info,
         "conflicts_and_inconsistencies": conflicts,
         "evidence_metrics": {
             "demonstrated_count": len(demonstrated_skills),
+            "traceable_demonstrated_count": len(traceable_demonstrated_skills),
+            "registry_derived_count": len(registry_derived_skills),
             "candidate_confirmed_count": len(candidate_confirmed_skills),
             "partially_evidenced_count": len(partially_evidenced_skills),
             "missing_items_count": len(missing_info),

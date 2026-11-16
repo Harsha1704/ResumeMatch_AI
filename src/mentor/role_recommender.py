@@ -97,10 +97,16 @@ def recommend_suitable_roles(
     """
     data = analysis_data or {}
     
-    # Extract canonical candidate skills by source
-    demonstrated_skills = {
-        s["skill"].lower(): s for s in career_profile.get("demonstrated_competencies", [])
-    }
+    # Extract canonical candidate skills by source evidence tier
+    traceable_demonstrated = {}
+    registry_derived_skills = {}
+    for s in career_profile.get("demonstrated_competencies", []):
+        name = s["skill"].lower()
+        if s.get("evidence_source") == "registry_derived" or s.get("excerpt_status") == "unavailable" or not s.get("excerpt"):
+            registry_derived_skills[name] = s
+        else:
+            traceable_demonstrated[name] = s
+
     confirmed_skills = {
         s["skill"].lower(): s for s in career_profile.get("candidate_confirmed_competencies", [])
     }
@@ -109,7 +115,12 @@ def recommend_suitable_roles(
     }
 
     # All known candidate skills mapped to canonical lowercase
-    all_candidate_skills = set(demonstrated_skills.keys()) | set(confirmed_skills.keys()) | set(partial_skills.keys())
+    all_candidate_skills = (
+        set(traceable_demonstrated.keys()) |
+        set(registry_derived_skills.keys()) |
+        set(confirmed_skills.keys()) |
+        set(partial_skills.keys())
+    )
     
     # Also consider resume_skills from analysis if present
     for s in data.get("resume_skills", []):
@@ -134,26 +145,32 @@ def recommend_suitable_roles(
 
         for s in core_skills:
             s_lower = s.lower()
-            if s_lower in demonstrated_skills:
+            if s_lower in traceable_demonstrated:
                 matching_core.append(s)
-                earned_weight += 1.5
+                earned_weight += 1.5 * 1.0  # Full demonstrated weight (1.0 factor)
             elif s_lower in confirmed_skills:
                 matching_core.append(s)
-                earned_weight += 1.5 * 0.75
+                earned_weight += 1.5 * 0.75  # Candidate-confirmed self-attestation weight (0.75 factor)
+            elif s_lower in registry_derived_skills:
+                matching_core.append(s)
+                earned_weight += 1.5 * 0.60  # Registry-derived without excerpt weight (0.60 factor)
             elif s_lower in partial_skills or s_lower in all_candidate_skills:
                 matching_core.append(s)
-                earned_weight += 1.5 * 0.50
+                earned_weight += 1.5 * 0.50  # Partial evidence weight (0.50 factor)
             else:
                 missing_core.append(s)
 
         for s in secondary_skills:
             s_lower = s.lower()
-            if s_lower in demonstrated_skills:
+            if s_lower in traceable_demonstrated:
                 matching_secondary.append(s)
-                earned_weight += 1.0
+                earned_weight += 1.0 * 1.0
             elif s_lower in confirmed_skills:
                 matching_secondary.append(s)
                 earned_weight += 1.0 * 0.75
+            elif s_lower in registry_derived_skills:
+                matching_secondary.append(s)
+                earned_weight += 1.0 * 0.60
             elif s_lower in partial_skills or s_lower in all_candidate_skills:
                 matching_secondary.append(s)
                 earned_weight += 1.0 * 0.50
@@ -269,14 +286,41 @@ def evaluate_specific_role(
 
     core_reqs = reqs.get("core_skills") or reqs.get("required_skills") or []
     if core_reqs:
-        # Evaluate dynamically against the provided structured requirements
-        candidate_demonstrated = {s["skill"].lower(): s for s in career_profile.get("demonstrated_competencies", [])}
+        # Evaluate dynamically against the provided structured requirements using explicit evidence tiers
+        traceable_demonstrated = {
+            s["skill"].lower(): s for s in career_profile.get("demonstrated_competencies", [])
+            if s.get("evidence_source") != "registry_derived" and s.get("excerpt_status") != "unavailable" and s.get("excerpt")
+        }
+        registry_derived = {
+            s["skill"].lower(): s for s in career_profile.get("demonstrated_competencies", [])
+            if s.get("evidence_source") == "registry_derived" or s.get("excerpt_status") == "unavailable" or not s.get("excerpt")
+        }
         candidate_confirmed = {s["skill"].lower(): s for s in career_profile.get("candidate_confirmed_competencies", [])}
-        all_candidate = set(candidate_demonstrated.keys()) | set(candidate_confirmed.keys())
+        partial_skills = {s["skill"].lower(): s for s in career_profile.get("partially_evidenced_competencies", [])}
 
-        matched_core = [s for s in core_reqs if s.lower() in all_candidate]
-        missing_core = [s for s in core_reqs if s.lower() not in all_candidate]
-        score = round((len(matched_core) / len(core_reqs)) * 100, 1)
+        matched_core = []
+        missing_core = []
+        total_weight = len(core_reqs) * 1.5
+        earned_weight = 0.0
+
+        for s in core_reqs:
+            s_l = s.lower()
+            if s_l in traceable_demonstrated:
+                matched_core.append(s)
+                earned_weight += 1.5 * 1.0  # Full demonstrated credit
+            elif s_l in candidate_confirmed:
+                matched_core.append(s)
+                earned_weight += 1.5 * 0.75  # Candidate-confirmed credit
+            elif s_l in registry_derived:
+                matched_core.append(s)
+                earned_weight += 1.5 * 0.60  # Registry-derived credit
+            elif s_l in partial_skills:
+                matched_core.append(s)
+                earned_weight += 1.5 * 0.50  # Partial evidence credit
+            else:
+                missing_core.append(s)
+
+        score = round((earned_weight / total_weight) * 100, 1) if total_weight > 0 else 0.0
 
         tier = "Strong Fit" if score >= 60.0 else ("Potential Fit" if score >= 35.0 else "Growth Fit")
         badge = "emerald" if score >= 60.0 else ("amber" if score >= 35.0 else "blue")

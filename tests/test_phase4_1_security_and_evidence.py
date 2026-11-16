@@ -33,6 +33,8 @@ import json
 import pytest
 from app import app, ANALYSIS_CACHE
 from src.mentor.career_profile import build_structured_career_profile
+
+app.config["TESTING"] = True
 from src.mentor.role_recommender import (
     recommend_suitable_roles,
     evaluate_specific_role,

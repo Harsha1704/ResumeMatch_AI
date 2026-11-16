@@ -1267,14 +1267,6 @@ def api_career_mentor_evaluate_role():
     if not isinstance(data, dict):
         return jsonify({"status": "error", "message": "Invalid JSON body: expected an object"}), 400
 
-    # CSRF Protection for state-changing POST requests
-    csrf_token = request.headers.get("X-CSRF-Token") or data.get("csrf_token")
-    if not app.config.get("TESTING") and session.get("csrf_token"):
-        if not validate_csrf_token(csrf_token):
-            return jsonify({"status": "error", "message": "CSRF token missing or invalid"}), 403
-    elif csrf_token is not None and not validate_csrf_token(csrf_token):
-        return jsonify({"status": "error", "message": "CSRF token missing or invalid"}), 403
-
     role_name = data.get("role_name")
     if not isinstance(role_name, str) or not role_name.strip():
         return jsonify({"status": "error", "message": "Missing role_name parameter: must be a non-empty string"}), 400
@@ -1283,16 +1275,43 @@ def api_career_mentor_evaluate_role():
     if len(clean_role_name) > 100:
         return jsonify({"status": "error", "message": "Role name exceeds maximum allowable length of 100 characters"}), 400
 
-    aid = data.get("analysis_id") or request.args.get("id")
-    if aid and aid.strip() not in ("sample", "demo", "sample-preview"):
-        aid_clean = aid.strip()
-        if aid_clean not in ANALYSIS_CACHE:
-            return jsonify({"status": "error", "message": f"Analysis ID '{aid_clean}' not found"}), 404
+    # Safely validate analysis_id: reject numbers, objects, arrays, and malformed inputs with 400
+    aid = None
+    if "analysis_id" in data:
+        raw_aid = data.get("analysis_id")
+        if not isinstance(raw_aid, str) or not raw_aid.strip():
+            return jsonify({"status": "error", "message": "Invalid analysis_id parameter: must be a non-empty string"}), 400
+        aid = raw_aid.strip()
+    elif request.args.get("id") is not None:
+        raw_aid = request.args.get("id")
+        if not isinstance(raw_aid, str) or not raw_aid.strip():
+            return jsonify({"status": "error", "message": "Invalid analysis_id parameter: must be a non-empty string"}), 400
+        aid = raw_aid.strip()
+
+    # CSRF Protection: fail-closed enforcement
+    is_testing = bool(app.config.get("TESTING"))
+    csrf_token = request.headers.get("X-CSRF-Token") or data.get("csrf_token")
+
+    if not is_testing:
+        # In production mode: require both active session token and valid matching request token
+        session_csrf = session.get("csrf_token")
+        if not session_csrf or not csrf_token or not validate_csrf_token(csrf_token):
+            return jsonify({"status": "error", "message": "CSRF token missing or invalid"}), 403
+    else:
+        # In testing mode: if either request token or session token is present, validate fail-closed
+        session_csrf = session.get("csrf_token")
+        if csrf_token is not None or session_csrf is not None:
+            if not session_csrf or not csrf_token or not validate_csrf_token(csrf_token):
+                return jsonify({"status": "error", "message": "CSRF token missing or invalid"}), 403
+
+    if aid and aid not in ("sample", "demo", "sample-preview"):
+        if aid not in ANALYSIS_CACHE:
+            return jsonify({"status": "error", "message": f"Analysis ID '{aid}' not found"}), 404
         allowed = session.get("allowed_analyses", [])
-        if aid_clean not in allowed:
+        if aid not in allowed:
             return jsonify({"status": "error", "message": "Unauthorized access to requested analysis ID"}), 403
-        analysis = ANALYSIS_CACHE[aid_clean]
-    elif aid and aid.strip() in ("sample", "demo", "sample-preview"):
+        analysis = ANALYSIS_CACHE[aid]
+    elif aid and aid in ("sample", "demo", "sample-preview"):
         analysis = _get_active_analysis("sample")
     else:
         analysis = _get_active_analysis(None)

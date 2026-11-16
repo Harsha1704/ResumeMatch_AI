@@ -107,21 +107,23 @@ def generate_resume_improvement_suggestions(
     partially_evidenced = career_profile.get("partially_evidenced_competencies", [])
     if len(partially_evidenced) >= 2:
         sample_skills = [s["skill"] for s in partially_evidenced[:3]]
+        sample_skill = sample_skills[0]
         suggestions.append({
             "suggestion_id": "skill_grounding",
             "category": "Skill Evidence Grounding",
             "priority": "High",
             "reason": "Skills listed only in a static skills section without contextual project bullet points appear unverified to technical interviewers.",
             "evidence_context": f"Competencies like {', '.join(sample_skills)} are listed in your profile but lack supporting project or employment bullet points.",
+            "instruction": f"Ground '{sample_skill}' by describing how you applied it in your actual work or projects. Describe only features, tasks, or modules you genuinely built.",
             "actionable_example": {
                 "before": f"Technical Skills: {', '.join(sample_skills)} (never mentioned in project descriptions).",
-                "after": f"Project bullet: Applied {sample_skills[0]} to implement scalable caching and asynchronous task queuing."
+                "after": f"Project bullet: Applied {sample_skill} to [describe specific problem solved, e.g. service integration or data processing] (Describe only work actually performed)."
             },
             "before_after_examples": [
                 {
                     "original": f"Technical Skills: {', '.join(sample_skills)}",
-                    "suggested": f"Project bullet: Implemented core {sample_skills[0]} module to optimize request handling.",
-                    "rationale": "Transforms abstract skill claims into verifiable project evidence."
+                    "suggested": f"Project bullet: Utilized {sample_skill} to [describe genuine feature or deliverable] (State only actual responsibilities and outcomes).",
+                    "rationale": "Transforms abstract skill claims into verifiable project evidence without inventing unperformed tasks."
                 }
             ],
             "practical_next_action": "Incorporate your listed technical skills directly into project or work experience bullet points showing how each tool solved a concrete problem."
@@ -137,18 +139,19 @@ def generate_resume_improvement_suggestions(
             "priority": "Medium",
             "reason": "Passive introductory phrases weaken candidate ownership. Technical resumes should start every bullet with strong engineering verbs.",
             "evidence_context": f"Found {len(passive_verbs)} instances of passive wording like '{passive_verbs[0]}'.",
+            "instruction": "Replace passive introductory wording with strong engineering action verbs that accurately reflect your actual level of contribution.",
             "actionable_example": {
-                "before": f"{found_verb} building database queries and frontend views.",
-                "after": "Architected normalized PostgreSQL schema and optimized analytical queries using composite B-Tree indexes."
+                "before": f"{found_verb} application components.",
+                "after": f"[Strong Action Verb, e.g. Architected / Engineered / Automated] [actual component or task] to [achieve verified objective] (Describe only genuine ownership)."
             },
             "before_after_examples": [
                 {
                     "original": f"{found_verb} application code and database schema.",
-                    "suggested": "Architected and deployed production application services with automated unit test coverage.",
-                    "rationale": "Emphasizes technical leadership, ownership, and engineering rigor."
+                    "suggested": "Engineered and validated [actual project component] with [verifiable unit tests or documentation] (Describe only work actually performed).",
+                    "rationale": "Emphasizes technical ownership and engineering rigor without attributing unverified architecture work."
                 }
             ],
-            "practical_next_action": "Replace passive verbs ('responsible for', 'worked on') with authoritative verbs such as 'Architected', 'Engineered', 'Optimized', and 'Automated'."
+            "practical_next_action": "Replace passive verbs ('responsible for', 'worked on') with authoritative verbs such as 'Architected', 'Engineered', 'Optimized', and 'Automated' matching your genuine contributions."
         })
 
     # 5. Missing Certifications / Continuing Education
