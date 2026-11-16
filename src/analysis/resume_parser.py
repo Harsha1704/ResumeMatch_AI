@@ -21,8 +21,69 @@ MAX_FILE_SIZE = 16 * 1024 * 1024  # 16 MB limit
 MAX_PAGE_COUNT = 30  # Maximum allowed PDF page count
 SUPPORTED_EXTENSIONS = {".pdf", ".docx", ".txt"}
 
+# DOCX archive safety limits against zip bombs / decompressed bombs
+MAX_DOCX_MEMBER_COUNT = 500  # Maximum number of entries in DOCX ZIP container
+MAX_DOCX_UNCOMPRESSED_SIZE = 64 * 1024 * 1024  # 64 MB maximum uncompressed size
+MAX_DOCX_SINGLE_MEMBER_SIZE = 32 * 1024 * 1024  # 32 MB maximum size for any single member
+MAX_DOCX_COMPRESSION_RATIO = 100.0  # Maximum uncompressed/compressed ratio for entries > 10KB
 
-def extract_text_from_pdf(stream_or_path: Union[str, Path, bytes, io.BytesIO]) -> Tuple[str, Dict]:
+
+def validate_docx_archive_safety(payload: bytes) -> Optional[str]:
+    """
+    Validates DOCX OpenXML ZIP container against archive bombs:
+    - Verifies valid ZIP structure and required 'word/document.xml' entry.
+    - Limits total entry count (MAX_DOCX_MEMBER_COUNT).
+    - Limits individual member uncompressed size (MAX_DOCX_SINGLE_MEMBER_SIZE).
+    - Limits total uncompressed archive size (MAX_DOCX_UNCOMPRESSED_SIZE).
+    - Rejects suspicious compression ratios exceeding MAX_DOCX_COMPRESSION_RATIO.
+    Returns error string if safety policy is violated, otherwise None.
+    """
+    if not payload.startswith(b"PK\x03\x04"):
+        return "Invalid DOCX file: missing the standard ZIP/OpenXML header."
+
+    try:
+        with zipfile.ZipFile(io.BytesIO(payload)) as archive:
+            members = archive.infolist()
+            if len(members) > MAX_DOCX_MEMBER_COUNT:
+                return f"Security violation: DOCX member count ({len(members)}) exceeds maximum allowable limit of {MAX_DOCX_MEMBER_COUNT} (archive bomb protection)."
+
+            total_uncompressed = 0
+            has_word_doc = False
+
+            for info in members:
+                if info.filename == "word/document.xml":
+                    has_word_doc = True
+
+                # Check single member size
+                if info.file_size > MAX_DOCX_SINGLE_MEMBER_SIZE:
+                    return f"Security violation: DOCX member '{info.filename}' size ({info.file_size} bytes) exceeds maximum allowable limit of {MAX_DOCX_SINGLE_MEMBER_SIZE} bytes (archive bomb protection)."
+
+                total_uncompressed += info.file_size
+                if total_uncompressed > MAX_DOCX_UNCOMPRESSED_SIZE:
+                    return f"Security violation: Total uncompressed DOCX size ({total_uncompressed} bytes) exceeds maximum allowable limit of {MAX_DOCX_UNCOMPRESSED_SIZE} bytes (archive bomb protection)."
+
+                # Check compression ratio on non-trivial files
+                if info.file_size > 10240 and info.compress_size > 0:
+                    ratio = info.file_size / info.compress_size
+                    if ratio > MAX_DOCX_COMPRESSION_RATIO:
+                        return f"Security violation: Suspicious compression ratio ({ratio:.1f}:1) detected in DOCX member '{info.filename}' (archive bomb protection)."
+
+            if not has_word_doc:
+                return "Invalid or corrupted DOCX document: missing 'word/document.xml'."
+
+            if archive.testzip() is not None:
+                return "Invalid or corrupted DOCX document: archive member failed integrity test."
+
+    except (zipfile.BadZipFile, OSError):
+        return "Invalid or corrupted DOCX document."
+
+    return None
+
+
+def extract_text_from_pdf(
+    stream_or_path: Union[str, Path, bytes, io.BytesIO],
+    filename_hint: Optional[str] = None
+) -> Tuple[str, Dict]:
     """
     Extracts text and page layout metadata from PDF using PyMuPDF.
     Detects scanned PDFs with no extractable text, password-protected/encrypted PDFs,
@@ -32,10 +93,18 @@ def extract_text_from_pdf(stream_or_path: Union[str, Path, bytes, io.BytesIO]) -
         "format": "PDF",
         "page_count": 0,
         "is_scanned": False,
+        "is_blank": False,
+        "has_images": False,
+        "has_drawings": False,
         "is_encrypted": False,
         "warnings": []
     }
     doc = None
+    filename = ""
+    if isinstance(stream_or_path, (str, Path)):
+        filename = str(stream_or_path)
+    elif filename_hint:
+        filename = filename_hint
 
     try:
         if isinstance(stream_or_path, (str, Path)):
@@ -62,21 +131,43 @@ def extract_text_from_pdf(stream_or_path: Union[str, Path, bytes, io.BytesIO]) -
             )
             return "", metadata
 
+        has_images = False
+        has_drawings = False
         text_blocks = []
         for page_num in range(page_count):
             page = doc[page_num]
             text = page.get_text("text")
             if text:
                 text_blocks.append(text)
+            if not has_images and len(page.get_images()) > 0:
+                has_images = True
+            if not has_drawings and len(page.get_drawings()) > 0:
+                has_drawings = True
 
         full_text = "\n".join(text_blocks).strip()
+        metadata["has_images"] = has_images
+        metadata["has_drawings"] = has_drawings
 
-        # If zero or extremely few characters extracted from a non-empty PDF, flag as scanned
-        if len(full_text) < 40 and metadata["page_count"] > 0:
+        is_scanned_indicator = (
+            has_images
+            or has_drawings
+            or ("scanned" in filename.lower() and len(full_text) == 0)
+        )
+
+        # Scanned PDF detection: only flag if document has image(s) or graphic artifacts and lacks sufficient digital text
+        if len(full_text) < 40 and has_images:
+            metadata["is_scanned"] = True
+            metadata["warnings"].append(
+                "Scanned or image-only PDF detected. The document contains images but no readable digital text layer."
+            )
+        elif len(full_text) == 0 and is_scanned_indicator:
             metadata["is_scanned"] = True
             metadata["warnings"].append(
                 "Scanned or image-only PDF detected. PyMuPDF found no digital text layer."
             )
+        elif len(full_text) == 0:
+            metadata["is_blank"] = True
+            metadata["warnings"].append("The PDF document contains blank pages with no text content.")
 
         return full_text, metadata
 
@@ -248,19 +339,10 @@ def parse_resume(
         result["error_message"] = "Invalid PDF file: missing the standard %PDF- header."
         return result
     if ext == ".docx":
-        if not payload.startswith(b"PK\x03\x04"):
+        docx_err = validate_docx_archive_safety(payload)
+        if docx_err:
             result["status"] = "error"
-            result["error_message"] = "Invalid DOCX file: missing the standard ZIP/OpenXML header."
-            return result
-        try:
-            with zipfile.ZipFile(io.BytesIO(payload)) as archive:
-                if "word/document.xml" not in archive.namelist():
-                    raise zipfile.BadZipFile("Missing word/document.xml")
-                if archive.testzip() is not None:
-                    raise zipfile.BadZipFile("Corrupt DOCX archive member")
-        except (zipfile.BadZipFile, OSError):
-            result["status"] = "error"
-            result["error_message"] = "Invalid or corrupted DOCX document."
+            result["error_message"] = docx_err
             return result
     if ext == ".txt" and b"\x00" in payload:
         result["status"] = "error"
@@ -268,7 +350,7 @@ def parse_resume(
         return result
 
     if ext == ".pdf":
-        raw_text, meta = extract_text_from_pdf(payload)
+        raw_text, meta = extract_text_from_pdf(payload, filename_hint=filename)
     elif ext == ".docx":
         raw_text, meta = extract_text_from_docx(payload)
     else:
@@ -299,7 +381,7 @@ def parse_resume(
         )
         return result
 
-    if not raw_text.strip():
+    if meta.get("is_blank", False) or not raw_text.strip():
         result["status"] = "empty"
         result["error_message"] = "The document is empty or text extraction returned no content."
         return result

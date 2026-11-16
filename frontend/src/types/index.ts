@@ -121,8 +121,8 @@ export interface EvidenceGroundedMatch {
   tier: "Required" | "Preferred" | string;
   job_requirement_sentence: string;
   candidate_evidence: string;
-  evidence_source: string;
-  match_classification: "fully_supported" | "partially_supported" | "explicitly_mentioned" | "missing_evidence" | "conflicting_evidence" | string;
+  evidence_source: "project" | "internship" | "professional_experience" | "skills_section" | "candidate_confirmed" | "contradictory_claim" | "none" | string;
+  match_classification: "fully_supported" | "partially_supported" | "explicitly_mentioned" | "missing_evidence" | "conflicting_evidence" | "candidate_confirmed" | string;
   confidence: number;
   explanation: string;
 }
@@ -163,6 +163,7 @@ export interface QualificationCoverageScorecard {
   detected_job_requirements: string[];
   candidate_degrees: string[];
   education_verified: boolean;
+  verification_status?: "verified" | "unrelated_degree" | "missing_education" | "no_explicit_requirement" | "inconclusive" | string;
   notes: string;
 }
 

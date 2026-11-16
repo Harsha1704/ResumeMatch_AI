@@ -537,8 +537,10 @@ export const ResultsPage: React.FC = () => {
               <tbody className="divide-y divide-slate-800/60">
                 {analysis.evidence_grounded_matches.map((item, idx) => {
                   const isFull = item.match_classification === 'fully_supported';
+                  const isConfirmed = item.match_classification === 'candidate_confirmed';
                   const isPartial = item.match_classification === 'partially_supported';
                   const isMention = item.match_classification === 'explicitly_mentioned';
+                  const isConflict = item.match_classification === 'conflicting_evidence';
                   return (
                     <tr key={idx} className="hover:bg-slate-800/30 transition-colors">
                       <td className="py-2.5 px-3 font-semibold text-slate-200">{item.skill}</td>
@@ -552,21 +554,25 @@ export const ResultsPage: React.FC = () => {
                           className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
                             isFull
                               ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                              : isConfirmed
+                              ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
                               : isPartial
                               ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
                               : isMention
                               ? 'bg-sky-500/10 text-sky-400 border border-sky-500/20'
+                              : isConflict
+                              ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40 font-black'
                               : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
                           }`}
                         >
-                          {item.match_classification.replace('_', ' ')}
+                          {item.match_classification.replace(/_/g, ' ')}
                         </span>
                       </td>
                       <td className="py-2.5 px-3 text-slate-300 max-w-xs truncate" title={item.candidate_evidence}>
                         {item.candidate_evidence}
                       </td>
                       <td className="py-2.5 px-3 text-slate-400 text-[11px] capitalize">
-                        {item.evidence_source.replace('_', ' ')}
+                        {item.evidence_source.replace(/_/g, ' ')}
                       </td>
                       <td className="py-2.5 px-3 text-right font-mono font-semibold text-slate-200">
                         {Math.round(item.confidence * 100)}%

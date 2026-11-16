@@ -16,6 +16,7 @@ Tests:
 """
 
 import io
+import zipfile
 import pytest
 import pymupdf
 import docx
@@ -85,16 +86,80 @@ def test_parse_corrupted_docx():
     assert "corrupted" in res["error_message"].lower() or "invalid" in res["error_message"].lower()
 
 
-def test_parse_scanned_pdf():
-    """PDF with zero extractable text layer is flagged as scanned_pdf."""
+def test_docx_archive_bomb_excessive_members():
+    """DOCX with member count exceeding 500 is blocked safely as archive bomb."""
+    bio = io.BytesIO()
+    with zipfile.ZipFile(bio, "w") as zf:
+        zf.writestr("word/document.xml", "<xml></xml>")
+        for i in range(505):
+            zf.writestr(f"word/entry_{i}.xml", "<xml></xml>")
+    res = parse_resume(bio.getvalue(), filename="bomb_members.docx")
+    assert res["status"] == "error"
+    assert "member count" in res["error_message"].lower() or "bomb" in res["error_message"].lower()
+
+
+def test_docx_archive_bomb_suspicious_compression_ratio():
+    """DOCX member with suspicious compression ratio (> 100:1) is blocked safely."""
+    bio = io.BytesIO()
+    with zipfile.ZipFile(bio, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr("word/document.xml", "<xml></xml>")
+        zf.writestr("word/huge_zero_stream.xml", b"\x00" * (1024 * 1024))
+    res = parse_resume(bio.getvalue(), filename="bomb_ratio.docx")
+    assert res["status"] == "error"
+    assert "compression ratio" in res["error_message"].lower() or "bomb" in res["error_message"].lower()
+
+
+def test_pdf_scanned_detection_blank_pdf():
+    """PDF with zero text and zero images returns empty status."""
     doc = pymupdf.open()
-    doc.new_page()  # Blank page without text layer
+    doc.new_page()  # Blank page without text layer or images
     pdf_bytes = doc.tobytes()
     doc.close()
 
-    res = parse_resume(pdf_bytes, filename="scanned.pdf")
+    res = parse_resume(pdf_bytes, filename="blank.pdf")
+    assert res["status"] == "empty"
+    assert "empty" in res["error_message"].lower()
+
+
+def test_pdf_scanned_detection_short_digital_text():
+    """Short digital text PDF (e.g. 20 chars, 0 images) returns success without false scanned flag."""
+    doc = pymupdf.open()
+    page = doc.new_page()
+    page.insert_text((50, 72), "Short digital text.")
+    pdf_bytes = doc.tobytes()
+    doc.close()
+
+    res = parse_resume(pdf_bytes, filename="short.pdf")
+    assert res["status"] == "success"
+    assert "Short digital text." in res["raw_text"]
+
+
+def test_pdf_scanned_detection_image_only():
+    """PDF with raster images and insufficient text is flagged as scanned_pdf."""
+    doc = pymupdf.open()
+    page = doc.new_page()
+    pix = pymupdf.Pixmap(pymupdf.csRGB, pymupdf.IRect(0, 0, 100, 100), False)
+    pix.clear_with(200)
+    page.insert_image(page.rect, pixmap=pix)
+    pdf_bytes = doc.tobytes()
+    doc.close()
+
+    res = parse_resume(pdf_bytes, filename="scanned_image.pdf")
     assert res["status"] == "scanned_pdf"
     assert "scanned image" in res["error_message"].lower() or "text layer" in res["error_message"].lower()
+
+
+def test_pdf_scanned_detection_normal_text():
+    """Normal text PDF extracts successfully with status success."""
+    doc = pymupdf.open()
+    page = doc.new_page()
+    page.insert_text((50, 72), "Software Engineer with extensive experience in cloud computing.")
+    pdf_bytes = doc.tobytes()
+    doc.close()
+
+    res = parse_resume(pdf_bytes, filename="normal.pdf")
+    assert res["status"] == "success"
+    assert "Software Engineer" in res["raw_text"]
 
 
 def test_parse_password_protected_pdf():
@@ -361,7 +426,7 @@ def test_evidence_grounded_matches_table_schema():
         assert "confidence" in m
         assert "explanation" in m
         assert m["match_classification"] in (
-            "fully_supported", "partially_supported", "explicitly_mentioned", "missing_evidence", "conflicting_evidence"
+            "fully_supported", "partially_supported", "explicitly_mentioned", "missing_evidence", "conflicting_evidence", "candidate_confirmed"
         )
 
     # Python should be fully supported via project context
@@ -423,6 +488,186 @@ def test_scorecard_dimension_separation():
 
     assert sc["qualification_coverage"]["education_verified"] is True
     assert len(sc["qualification_coverage"]["candidate_degrees"]) >= 1
+
+
+def test_candidate_confirmation_separation():
+    """Candidate self-confirmation is strictly classified as candidate_confirmed and never fully_supported."""
+    resume = """
+    Alice Smith
+    alice@test.com
+    Skills: Python, SQL
+    Experience: Built web backends using Python and SQL databases.
+    """
+    jd = """
+    Backend Engineer
+    Requirements:
+    - Python
+    - Kubernetes
+    """
+    # Without confirmation: Kubernetes is missing_evidence
+    res_base = analyze_resume_and_job(resume, jd)
+    k8s_base = next(m for m in res_base["evidence_grounded_matches"] if m["skill"].lower() == "kubernetes")
+    assert k8s_base["match_classification"] == "missing_evidence"
+
+    # With candidate self-confirmation: Kubernetes becomes candidate_confirmed
+    res_conf = analyze_resume_and_job(resume, jd, user_confirmations=["Kubernetes"])
+    k8s_conf = next(m for m in res_conf["evidence_grounded_matches"] if m["skill"].lower() == "kubernetes")
+    assert k8s_conf["match_classification"] == "candidate_confirmed"
+    assert k8s_conf["evidence_source"] == "candidate_confirmed"
+    assert k8s_conf["confidence"] == 0.75
+    assert "Candidate confirmed" in k8s_conf["explanation"]
+    assert "not independently evidenced in resume document" in k8s_conf["explanation"]
+
+    # Demonstrated skills remain fully_supported and are not downgraded by self-confirmation
+    res_both = analyze_resume_and_job(resume, jd, user_confirmations=["Python", "Kubernetes"])
+    py_match = next(m for m in res_both["evidence_grounded_matches"] if m["skill"].lower() == "python")
+    assert py_match["match_classification"] == "fully_supported"
+    assert py_match["evidence_source"] in ("project", "professional_experience", "skills_section", "internship")
+
+
+def test_education_verification_positive():
+    """Candidate with matching degree level and STEM field is verified."""
+    resume = """
+    Elena Rostova
+    elena@example.com
+    Education
+    Bachelor of Science in Computer Science
+    Carnegie Mellon University, 2022
+    """
+    jd = """
+    Software Engineer
+    Qualifications:
+    - Bachelor's degree in Computer Science or Software Engineering
+    """
+    res = analyze_resume_and_job(resume, jd)
+    qc = res["scorecard"]["qualification_coverage"]
+    assert qc["education_verified"] is True
+    assert qc["verification_status"] == "verified"
+    assert len(qc["candidate_degrees"]) >= 1
+
+
+def test_education_verification_negative():
+    """Candidate with lower degree than required fails verification without crash."""
+    resume = """
+    Bob Vance
+    bob@example.com
+    Education
+    Bachelor of Science in Computer Science
+    Cornell University, 2020
+    """
+    jd = """
+    Principal AI Scientist
+    Qualifications:
+    - Master's degree in Computer Science or related quantitative field
+    """
+    res = analyze_resume_and_job(resume, jd)
+    qc = res["scorecard"]["qualification_coverage"]
+    assert qc["education_verified"] is False
+    assert qc["verification_status"] in ("inconclusive", "unrelated_degree")
+
+
+def test_education_verification_unrelated_degree():
+    """Candidate with unrelated humanities degree is classified as unrelated_degree."""
+    resume = """
+    Clara Oswald
+    clara@example.com
+    Education
+    Bachelor of Arts in English Literature
+    Oxford University, 2019
+    """
+    jd = """
+    Systems Software Engineer
+    Qualifications:
+    - Bachelor's degree in Computer Science or Software Engineering
+    """
+    res = analyze_resume_and_job(resume, jd)
+    qc = res["scorecard"]["qualification_coverage"]
+    assert qc["education_verified"] is False
+    assert qc["verification_status"] == "unrelated_degree"
+
+
+def test_education_verification_missing_education():
+    """Candidate with no education records when job requires degree is classified as missing_education."""
+    resume = """
+    Self Taught Hacker
+    hacker@example.com
+    Experience: 5 years building Linux kernels.
+    """
+    jd = """
+    Software Engineer
+    Qualifications:
+    - Bachelor's degree in Computer Science
+    """
+    res = analyze_resume_and_job(resume, jd)
+    qc = res["scorecard"]["qualification_coverage"]
+    assert qc["education_verified"] is False
+    assert qc["verification_status"] == "missing_education"
+
+
+def test_education_verification_mere_word_not_verified():
+    """Mere occurrence of the word 'degree' in non-education text does not verify education."""
+    resume = """
+    Mark Sloan
+    mark@example.com
+    Professional Summary:
+    I possess a high degree of enthusiasm and commitment to quality code.
+    Experience:
+    Built web tools with JavaScript.
+    """
+    jd = """
+    Software Engineer
+    Qualifications:
+    - Bachelor's degree in Computer Science
+    """
+    res = analyze_resume_and_job(resume, jd)
+    qc = res["scorecard"]["qualification_coverage"]
+    assert qc["education_verified"] is False
+    assert qc["verification_status"] == "missing_education"
+
+
+def test_conflict_classification_genuine_contradiction():
+    """Explicit disclaimer/denial in resume produces conflicting_evidence classification."""
+    resume = """
+    Jordan Lee
+    jordan@example.com
+    Skills: Python, Linux
+    Experience:
+    Built microservices with Python. I have no experience with Kubernetes and have never used AWS.
+    """
+    jd = """
+    DevOps Engineer
+    Requirements:
+    - Python
+    - Kubernetes
+    """
+    res = analyze_resume_and_job(resume, jd)
+    k8s = next(m for m in res["evidence_grounded_matches"] if m["skill"].lower() == "kubernetes")
+    assert k8s["match_classification"] == "conflicting_evidence"
+    assert k8s["evidence_source"] == "contradictory_claim"
+    assert k8s["confidence"] == 0.0
+    assert "explicitly disclaims" in k8s["explanation"].lower() or "contradictory" in k8s["explanation"].lower()
+
+
+def test_conflict_classification_ordinary_missing():
+    """Skill not mentioned without negative disclaimer is classified as missing_evidence, not conflicting."""
+    resume = """
+    Jordan Lee
+    jordan@example.com
+    Skills: Python, Linux
+    Experience:
+    Built microservices with Python.
+    """
+    jd = """
+    DevOps Engineer
+    Requirements:
+    - Python
+    - Kubernetes
+    """
+    res = analyze_resume_and_job(resume, jd)
+    k8s = next(m for m in res["evidence_grounded_matches"] if m["skill"].lower() == "kubernetes")
+    assert k8s["match_classification"] == "missing_evidence"
+    assert k8s["evidence_source"] == "none"
+    assert k8s["confidence"] == 0.0
 
 
 # ---------------------------------------------------------------------------

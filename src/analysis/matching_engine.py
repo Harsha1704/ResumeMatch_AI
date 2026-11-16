@@ -27,6 +27,196 @@ from src.services.challenger_service import get_challenger_service
 from src.common.evidence_registry import build_unified_evidence_registry
 
 
+ALLOWED_MATCH_CLASSIFICATIONS = {
+    "fully_supported",
+    "partially_supported",
+    "explicitly_mentioned",
+    "missing_evidence",
+    "conflicting_evidence",
+    "candidate_confirmed"
+}
+
+ALLOWED_EVIDENCE_SOURCES = {
+    "project",
+    "internship",
+    "professional_experience",
+    "skills_section",
+    "candidate_confirmed",
+    "contradictory_claim",
+    "none"
+}
+
+DEGREE_LEVEL_HIERARCHY = {
+    "Doctorate": 4,
+    "Master's": 3,
+    "Bachelor's": 2,
+    "Associate": 1,
+    "Not specified": 0
+}
+
+STEM_AND_TECH_FIELDS = {
+    "computer science", "software engineering", "information technology",
+    "electrical engineering", "electronics", "data science", "artificial intelligence",
+    "machine learning", "cybersecurity", "engineering", "mathematics",
+    "statistics", "physics", "stem"
+}
+
+
+def verify_structured_education(
+    candidate_education: List[Dict[str, Any]],
+    job_education_requirements: List[str]
+) -> Dict[str, Any]:
+    """
+    Verifies candidate education credentials against actual job education requirements:
+    - Distinguishes a mere degree keyword mention from a verified matching qualification.
+    - Compares degree level and field of study specialization.
+    - Handles positive, negative, unrelated-degree, missing-education, and inconclusive cases.
+    """
+    candidate_degrees = [e.get("degree_name") for e in candidate_education if e.get("degree_name")]
+
+    # 1. Check if job has explicit education requirements
+    has_explicit_job_req = bool(
+        job_education_requirements and
+        not any("no explicit education" in r.lower() for r in job_education_requirements)
+    )
+
+    if not has_explicit_job_req:
+        if candidate_education:
+            return {
+                "education_verified": True,
+                "verification_status": "no_explicit_requirement",
+                "candidate_degrees": candidate_degrees,
+                "detected_job_requirements": job_education_requirements,
+                "notes": "No explicit education requirements specified in job description; candidate credentials recorded."
+            }
+        else:
+            return {
+                "education_verified": False,
+                "verification_status": "no_explicit_requirement",
+                "candidate_degrees": [],
+                "detected_job_requirements": job_education_requirements,
+                "notes": "Education details not confidently identified"
+            }
+
+    # 2. Job has explicit requirements: check if candidate has any documented education
+    if not candidate_education:
+        return {
+            "education_verified": False,
+            "verification_status": "missing_education",
+            "candidate_degrees": [],
+            "detected_job_requirements": job_education_requirements,
+            "notes": "Missing education: Job requires formal degree qualifications, but no education credentials were documented in candidate resume."
+        }
+
+    # Parse required degree level and required fields from job requirements
+    combined_job_req_text = " ".join(job_education_requirements).lower()
+
+    required_level = "Bachelor's"
+    if any(k in combined_job_req_text for k in ["ph.d", "phd", "doctorate", "doctoral"]):
+        required_level = "Doctorate"
+    elif any(k in combined_job_req_text for k in ["master", "m.tech", "m.s", "m.e", "msc", "mba", "postgraduate"]):
+        required_level = "Master's"
+    elif any(k in combined_job_req_text for k in ["bachelor", "b.tech", "b.s", "b.e", "bsc", "undergraduate"]):
+        required_level = "Bachelor's"
+    elif any(k in combined_job_req_text for k in ["associate", "diploma"]):
+        required_level = "Associate"
+
+    required_rank = DEGREE_LEVEL_HIERARCHY.get(required_level, 2)
+    job_specifies_stem = any(f in combined_job_req_text for f in [
+        "computer science", "engineering", "technical", "information technology",
+        "stem", "software", "data science", "quantitative", "math"
+    ])
+
+    best_match = None
+    unrelated_match = None
+
+    for edu in candidate_education:
+        cand_level = edu.get("degree_level", "Not specified")
+        cand_rank = DEGREE_LEVEL_HIERARCHY.get(cand_level, 0)
+        cand_field = (edu.get("field_of_study") or "").lower()
+        cand_deg_name = (edu.get("degree_name") or "").lower()
+        cand_full = f"{cand_deg_name} {cand_field}"
+
+        level_ok = cand_rank >= required_rank
+
+        field_ok = False
+        is_explicitly_unrelated = False
+
+        if not job_specifies_stem:
+            field_ok = True
+        else:
+            if any(f in cand_full for f in STEM_AND_TECH_FIELDS):
+                field_ok = True
+            elif any(u in cand_full for u in ["arts", "literature", "history", "philosophy", "fine arts", "music", "theology", "english"]):
+                is_explicitly_unrelated = True
+
+        if level_ok and field_ok:
+            best_match = edu
+            break
+        elif level_ok and is_explicitly_unrelated:
+            unrelated_match = edu
+
+    if best_match:
+        deg_str = best_match.get("degree_name") or best_match.get("degree_level")
+        inst_str = best_match.get("institution") or "accredited institution"
+        return {
+            "education_verified": True,
+            "verification_status": "verified",
+            "candidate_degrees": candidate_degrees,
+            "detected_job_requirements": job_education_requirements,
+            "notes": f"Verified: Candidate holds {deg_str} from {inst_str}, satisfying required degree qualification."
+        }
+
+    if unrelated_match:
+        deg_str = unrelated_match.get("degree_name") or unrelated_match.get("degree_level")
+        return {
+            "education_verified": False,
+            "verification_status": "unrelated_degree",
+            "candidate_degrees": candidate_degrees,
+            "detected_job_requirements": job_education_requirements,
+            "notes": f"Unrelated qualification: Candidate degree ({deg_str}) does not align with the required technical specialization."
+        }
+
+    return {
+        "education_verified": False,
+        "verification_status": "inconclusive",
+        "candidate_degrees": candidate_degrees,
+        "detected_job_requirements": job_education_requirements,
+        "notes": "Verification inconclusive: Extracted education credentials could not be definitively matched against job degree requirements."
+    }
+
+
+def check_skill_contradiction(skill: str, resume_raw_text: str, conflicts: List[Dict[str, Any]]) -> Optional[Tuple[str, str]]:
+    """
+    Checks if there is contradictory or disclaimed evidence regarding a skill:
+    - Explicit denial or disclaimer in resume text (e.g. 'no experience with Docker', 'did not work with Kubernetes', 'never used AWS')
+    - Directly contradictory chronology affecting the skill's tenure
+    Returns (conflicting_excerpt, explanation) if contradiction exists, otherwise None.
+    """
+    skill_lower = skill.lower()
+
+    # 1. Check for explicit negative disclaimer or denial in resume text
+    denial_patterns = [
+        rf"\b(?:no|little|without|never\s+used|not\s+used|did\s+not\s+(?:use|work\s+with)|lacks?|have\s+not\s+worked\s+with|haven't\s+worked\s+with)\b[^.!?\n]{{0,40}}\b{re.escape(skill_lower)}\b",
+        rf"\b{re.escape(skill_lower)}\b[^.!?\n]{{0,40}}\b(?:was\s+not\s+used|not\s+applicable|is\s+unfamiliar|not\s+practiced|not\s+experienced)\b"
+    ]
+    for pat in denial_patterns:
+        m = re.search(pat, resume_raw_text, re.I)
+        if m:
+            sentences = [s.strip() for s in re.split(r"(?<=[.!?\n])\s+", resume_raw_text) if s.strip()]
+            for s in sentences:
+                if m.group(0).lower() in s.lower() or (re.search(rf"\b{re.escape(skill_lower)}\b", s, re.I) and any(w in s.lower() for w in ["no experience", "did not", "never used", "not worked", "without", "lacks"])):
+                    return s, f"Contradictory evidence: Resume text explicitly disclaims or negates experience with {skill}."
+
+    # 2. Check if a candidate profile conflict directly relates to this skill
+    for c in conflicts:
+        desc = c.get("description", "")
+        if re.search(rf"\b{re.escape(skill_lower)}\b", desc, re.I):
+            return desc, f"Contradictory evidence: {desc}"
+
+    return None
+
+
 class ResumeMatchingEngine:
     """
     Unified end-to-end matching and skill gap engine.
@@ -59,7 +249,8 @@ class ResumeMatchingEngine:
         job_description_input: str,
         resume_filename: Optional[str] = None,
         model_backend: Optional[str] = None,
-        target_role_input: Optional[str] = None
+        target_role_input: Optional[str] = None,
+        user_confirmations: Optional[Union[List[str], Dict[str, Any]]] = None
     ) -> Dict:
         """
         Runs the full analysis pipeline on a resume and job description.
@@ -319,11 +510,12 @@ class ResumeMatchingEngine:
             "skill_coverage_display": full_cov_disp
         }
 
-        # Education verification
-        lower_res_text = parsed_resume["cleaned_text"].lower()
-        degree_tokens = ["bachelor", "master", "b.tech", "m.tech", "b.e", "m.e", "b.s", "m.s", "phd", "degree", "diploma", "btech", "mtech", "b.sc", "m.sc"]
-        has_degree_mention = any(re.search(rf"\b{re.escape(tok)}\b", lower_res_text) for tok in degree_tokens)
-        edu_notes = "Verified against degree mentions in parsed resume." if has_degree_mention else "Education details not confidently identified"
+        # Structured Education verification
+        candidate_edu_list = parsed_resume.get("candidate_profile", {}).get("education", [])
+        edu_verif = verify_structured_education(
+            candidate_edu_list,
+            job_res.get("education_requirements", [])
+        )
 
         from src.common.evidence_registry import build_unified_evidence_registry
 
@@ -380,7 +572,10 @@ class ResumeMatchingEngine:
             "experience_analysis": exp_res,
             "education_analysis": {
                 "detected_job_requirements": job_res["education_requirements"],
-                "notes": edu_notes
+                "candidate_degrees": edu_verif["candidate_degrees"],
+                "education_verified": edu_verif["education_verified"],
+                "verification_status": edu_verif["verification_status"],
+                "notes": edu_verif["notes"]
             },
             "prioritized_gaps": gap_res["prioritized_gaps"],
             "recommendations": recommendations,
@@ -402,30 +597,70 @@ class ResumeMatchingEngine:
 
         # Build unified evidence registry
         evidence_reg = build_unified_evidence_registry(result_payload)
+        if user_confirmations:
+            if isinstance(user_confirmations, (list, set)):
+                for skill_conf in user_confirmations:
+                    evidence_reg.add_user_confirmation(skill_conf, True)
+            elif isinstance(user_confirmations, dict):
+                for skill_conf, is_conf in user_confirmations.items():
+                    if is_conf:
+                        evidence_reg.add_user_confirmation(skill_conf, is_conf)
+
         result_payload["evidence_registry"] = evidence_reg.build_summary_dossier()
 
         # Build unified evidence-grounded matches table
         evidence_grounded_matches = []
+        conflicts = parsed_resume.get("candidate_profile", {}).get("conflicts", [])
+
         for canon_lower, req in evidence_reg.job_requirements.items():
             canon_skill = req.name
             tier = req.tier
             job_sentence = req.supporting_sentence
 
+            # 1. First check if contradictory evidence exists for this skill
+            contradiction = check_skill_contradiction(canon_skill, resume_raw_text, conflicts)
+            if contradiction:
+                contra_excerpt, contra_explanation = contradiction
+                evidence_grounded_matches.append({
+                    "skill": canon_skill,
+                    "tier": tier,
+                    "job_requirement_sentence": job_sentence,
+                    "candidate_evidence": contra_excerpt,
+                    "evidence_source": "contradictory_claim",
+                    "match_classification": "conflicting_evidence",
+                    "confidence": 0.0,
+                    "explanation": contra_explanation
+                })
+                continue
+
+            # 2. Check candidate evidence in evidence registry
             rec = evidence_reg.evidence_records.get(canon_lower)
-            if rec and rec.evidence_type in (
+            is_resume_demonstrated = rec and rec.evidence_type in (
                 "demonstrated", "demonstrated_project", "demonstrated_internship",
-                "demonstrated_experience", "user_confirmed"
-            ):
+                "demonstrated_experience"
+            )
+            is_candidate_confirmed = rec and (
+                rec.evidence_type == "user_confirmed" or
+                getattr(rec, "candidate_confirmation", None) == "confirmed"
+            )
+
+            if is_resume_demonstrated:
                 source = (
                     "project" if "project" in rec.evidence_type
                     else ("internship" if "internship" in rec.evidence_type
-                          else ("professional_experience" if "experience" in rec.evidence_type
-                                else "confirmed"))
+                          else "professional_experience")
                 )
                 classification = "fully_supported"
                 confidence = float(rec.confidence) if rec.confidence else 0.95
                 excerpt = rec.supporting_text
                 explanation = f"Candidate demonstrates verifiable application of {canon_skill} with contextual project or experience details."
+            elif is_candidate_confirmed:
+                # Candidate confirmation is strictly separate from independently verified resume evidence
+                source = "candidate_confirmed"
+                classification = "candidate_confirmed"
+                confidence = 0.75
+                excerpt = rec.supporting_text
+                explanation = f"Candidate confirmed proficiency with {canon_skill} via self-attestation; not independently evidenced in resume document."
             elif rec and rec.evidence_type == "partially_evidenced":
                 source = "skills_section" if "skills" in rec.supporting_text.lower() else "project"
                 classification = "partially_supported"
@@ -489,9 +724,10 @@ class ResumeMatchingEngine:
             },
             "qualification_coverage": {
                 "detected_job_requirements": job_res.get("education_requirements", []),
-                "candidate_degrees": [e.get("degree_name") for e in parsed_resume.get("candidate_profile", {}).get("education", [])] if parsed_resume.get("candidate_profile", {}).get("education") else [],
-                "education_verified": has_degree_mention,
-                "notes": edu_notes
+                "candidate_degrees": edu_verif["candidate_degrees"],
+                "education_verified": edu_verif["education_verified"],
+                "verification_status": edu_verif["verification_status"],
+                "notes": edu_verif["notes"]
             }
         }
 
@@ -522,12 +758,14 @@ def analyze_resume_and_job(
     job_description_input: str,
     resume_filename: Optional[str] = None,
     model_backend: Optional[str] = None,
-    target_role_input: Optional[str] = None
+    target_role_input: Optional[str] = None,
+    user_confirmations: Optional[Union[List[str], Dict[str, Any]]] = None
 ) -> Dict:
     return get_matching_engine().analyze(
         resume_input,
         job_description_input,
         resume_filename=resume_filename,
         model_backend=model_backend,
-        target_role_input=target_role_input
+        target_role_input=target_role_input,
+        user_confirmations=user_confirmations
     )

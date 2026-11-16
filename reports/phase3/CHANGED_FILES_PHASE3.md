@@ -1,6 +1,6 @@
 # ResumeMatch AI — Phase 3: Changed Files Index
 
-This document tracks all files modified, created, or tested during Phase 3 Resume Analyzer Hardening on branch `fix/resumematch-final-repair`.
+This document tracks all files modified, created, or tested during Phase 3 Resume Analyzer Hardening and Security Repair on branch `fix/resumematch-final-repair`.
 
 ---
 
@@ -9,7 +9,7 @@ This document tracks all files modified, created, or tested during Phase 3 Resum
 | File Path | Purpose |
 |---|---|
 | `src/analysis/candidate_profile_extractor.py` | Deterministic structured candidate profile extractor (name, email, phone, links, education, certifications, duplicate skills, conflicts, missing fields without hallucination). |
-| `tests/test_phase3_resume_analyzer.py` | Comprehensive Phase 3 test suite covering parsing formats, size/page limits, encrypted PDFs, candidate profile extraction, job analyzer, evidence grounded matches, scorecard separation, and API endpoints. |
+| `tests/test_phase3_resume_analyzer.py` | Comprehensive Phase 3 test suite covering parsing formats, size/page limits, DOCX archive bomb defenses, scanned PDF detection, candidate profile extraction, job analyzer, evidence grounded matches, scorecard separation, candidate confirmation separation, education verification, conflict classification, and API endpoints. |
 | `reports/phase3/PHASE3_RESUME_ANALYZER_REPORT.md` | Complete architectural baseline audit, vulnerability analysis, remediation report, and test verification metrics. |
 | `reports/phase3/CHANGED_FILES_PHASE3.md` | Inventory of all files modified, created, or audited during Phase 3. |
 
@@ -19,19 +19,19 @@ This document tracks all files modified, created, or tested during Phase 3 Resum
 
 | File Path | Changes Applied |
 |---|---|
-| `src/analysis/resume_parser.py` | Enforced `MAX_PAGE_COUNT = 30`, PyMuPDF encrypted document detection (`doc.is_encrypted` / `doc.needs_pass`), deterministic `doc.close()` cleanup in `finally:`, empty 0-byte payload handling, and candidate profile integration via `candidate_profile_extractor`. |
+| `src/analysis/resume_parser.py` | 1. Added DOCX archive bomb safety protection (`MAX_DOCX_MEMBER_COUNT = 500`, `MAX_DOCX_UNCOMPRESSED_SIZE = 64 MB`, `MAX_DOCX_SINGLE_MEMBER_SIZE = 32 MB`, `MAX_DOCX_COMPRESSION_RATIO = 100.0`, `validate_docx_archive_safety()`).<br>2. Corrected scanned PDF detection: distinguished blank PDFs (0 text, 0 images, 0 drawings -> `empty`), short digital text PDFs (e.g. 20 chars, 0 images -> `success`), normal text PDFs (`success`), and image-only PDFs (has images and < 40 chars text -> `scanned_pdf`).<br>3. Enforced `MAX_PAGE_COUNT = 30`, PyMuPDF encrypted document detection (`doc.is_encrypted` / `doc.needs_pass`), deterministic `doc.close()` cleanup in `finally:`, empty 0-byte payload handling, and candidate profile integration. |
 | `src/analysis/job_analyzer.py` | Added `extract_responsibilities()`, `extract_qualifications()`, `extract_tools_and_technologies()`, and `extract_structured_experience_requirements()`. Maintained exact token preservation (`C++`, `C#`, `.NET`, `Node.js`, `SQL`, `Python`, `AWS`). |
-| `src/analysis/matching_engine.py` | Added unified `evidence_grounded_matches` table mapping requirements to exact JD sentences, candidate evidence excerpts, provenance, match classification, and explanations. Added structured `scorecard` cleanly separating ML compatibility, skill coverage, experience coverage, and qualification coverage. Propagated candidate profile and job structural fields in all payloads. |
+| `src/analysis/matching_engine.py` | 1. Enforced strict separation between candidate confirmation (`candidate_confirmed`) and demonstrated resume evidence (`fully_supported`).<br>2. Replaced broad `has_degree_mention` keyword check with structured education verification (`verify_structured_education`) comparing candidate's degrees and fields against job education requirements with degree hierarchy and STEM alignment.<br>3. Implemented truthful conflict classification (`check_skill_contradiction()`) detecting explicit negative disclaimers/denials in resume text and candidate profile conflicts without inferring conflict from mere absence of evidence.<br>4. Documented and enforced `ALLOWED_MATCH_CLASSIFICATIONS` and `ALLOWED_EVIDENCE_SOURCES`.<br>5. Added `user_confirmations` support to `analyze()` and `analyze_resume_and_job()`. |
 | `app.py` | Updated `/api/analyze` and `/api/match` to return HTTP 400 Bad Request with descriptive JSON payloads on encrypted, empty, scanned, or invalid resumes. Propagated complete Phase 3 grounded payloads. |
-| `frontend/src/types/index.ts` | Defined TypeScript interfaces for `CandidateProfile`, `CandidateName`, `CandidateContactInfo`, `EducationRecord`, `CertificationRecord`, `EvidenceGroundedMatch`, `Scorecard`, and updated `AnalysisResult`. |
-| `frontend/src/pages/ResultsPage.tsx` | Rendered Extracted Candidate Profile card (name, email, phone, links, education, certifications) and Unified Evidence-Grounded Requirements Matching responsive table. |
+| `frontend/src/types/index.ts` | Defined and updated TypeScript interfaces for `CandidateProfile`, `CandidateName`, `CandidateContactInfo`, `EducationRecord`, `CertificationRecord`, `EvidenceGroundedMatch` (including `candidate_confirmed`, `contradictory_claim`), `QualificationCoverageScorecard` (`verification_status`), `Scorecard`, and `AnalysisResult`. |
+| `frontend/src/pages/ResultsPage.tsx` | Rendered Extracted Candidate Profile card, Unified Evidence-Grounded Requirements Matching responsive table with color-coded badges (purple badge for `candidate_confirmed`, amber badge for `conflicting_evidence`). |
 
 ---
 
 ## 3. Verification Summary
 
-- **Phase 3 Test Suite**: `tests/test_phase3_resume_analyzer.py` — **17 / 17 passed (100%)**.
-- **Cumulative Phase Regression Suite**: Phases 1, 2, 2.1, 2.1.1–2.1.4, 3 — **171 / 171 passed (100%)**.
-- **Full Backend Regression**: `python -m pytest tests/ -q` — **570 / 570 passed (100% PASS RATE)**.
+- **Phase 3 Test Suite**: `tests/test_phase3_resume_analyzer.py` — **30 / 30 passed (100%)**.
+- **Cumulative Phase Regression Suite**: Phases 1, 2, 2.1, 2.1.1–2.1.4, 3 (`tests/test_phase1_extraction_repair.py`, `tests/test_phase2_evidence_engine.py`, `tests/test_phase2_1_interview_grounding.py`, `tests/test_phase2_1_1_final_grounding.py`, `tests/test_phase2_1_2_evidence_validator.py`, `tests/test_phase2_1_3_validator_import_evidence.py`, `tests/test_phase2_1_4_claim_level_evidence.py`, `tests/test_phase3_resume_analyzer.py`) — **155 / 155 passed (100%)**.
+- **Full Backend Regression**: `python -m pytest tests/ -q` — **583 / 583 passed (100% PASS RATE)**.
 - **Frontend Build**: `npm.cmd run build --prefix frontend` — **Built cleanly without TypeScript compilation errors**.
 - **Frontend Lint**: `npm.cmd run lint --prefix frontend` — **0 errors**.
