@@ -154,20 +154,24 @@ def extract_text_from_pdf(
             or ("scanned" in filename.lower() and len(full_text) == 0)
         )
 
-        # Scanned PDF detection: only flag if document has image(s) or graphic artifacts and lacks sufficient digital text
-        if len(full_text) < 40 and has_images:
-            metadata["is_scanned"] = True
-            metadata["warnings"].append(
-                "Scanned or image-only PDF detected. The document contains images but no readable digital text layer."
-            )
-        elif len(full_text) == 0 and is_scanned_indicator:
+        # Refined scanned PDF detection:
+        # Distinguish genuine image-only scans from short digital-text PDFs containing logos or profile images
+        words = [w for w in re.split(r"\s+", full_text) if re.search(r"[a-zA-Z0-9]", w)]
+        has_meaningful_text = len(words) >= 2 or len(full_text.strip()) >= 15
+
+        if len(full_text.strip()) == 0 and is_scanned_indicator:
             metadata["is_scanned"] = True
             metadata["warnings"].append(
                 "Scanned or image-only PDF detected. PyMuPDF found no digital text layer."
             )
-        elif len(full_text) == 0:
+        elif len(full_text.strip()) == 0:
             metadata["is_blank"] = True
             metadata["warnings"].append("The PDF document contains blank pages with no text content.")
+        elif not has_meaningful_text and has_images:
+            metadata["is_scanned"] = True
+            metadata["warnings"].append(
+                "Scanned or image-only PDF detected. The document contains images but lacks readable digital text."
+            )
 
         return full_text, metadata
 

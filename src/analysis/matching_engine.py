@@ -10,7 +10,7 @@ Integrates:
 Zero LLM reliance. Fully deterministic.
 """
 
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 import logging
 import uuid
 import re
@@ -83,7 +83,7 @@ def verify_structured_education(
     if not has_explicit_job_req:
         if candidate_education:
             return {
-                "education_verified": True,
+                "education_verified": False,
                 "verification_status": "no_explicit_requirement",
                 "candidate_degrees": candidate_degrees,
                 "detected_job_requirements": job_education_requirements,

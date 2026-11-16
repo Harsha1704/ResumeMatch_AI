@@ -16,6 +16,8 @@ Tests:
 """
 
 import io
+import sys
+import subprocess
 import zipfile
 import pytest
 import pymupdf
@@ -58,6 +60,17 @@ def create_test_docx(paragraphs: list) -> bytes:
     bio = io.BytesIO()
     doc.save(bio)
     return bio.getvalue()
+
+
+def test_matching_engine_fresh_process_import():
+    """Verify src.analysis.matching_engine imports in an isolated clean Python process without NameError."""
+    cmd = [
+        sys.executable,
+        "-c",
+        "import src.analysis.matching_engine as m; assert hasattr(m, 'analyze_resume_and_job'); assert hasattr(m, 'ALLOWED_MATCH_CLASSIFICATIONS')"
+    ]
+    proc = subprocess.run(cmd, capture_output=True, text=True)
+    assert proc.returncode == 0, f"Clean-process import failed with stderr: {proc.stderr}"
 
 
 # ---------------------------------------------------------------------------
@@ -132,6 +145,23 @@ def test_pdf_scanned_detection_short_digital_text():
     res = parse_resume(pdf_bytes, filename="short.pdf")
     assert res["status"] == "success"
     assert "Short digital text." in res["raw_text"]
+
+
+def test_pdf_scanned_detection_short_digital_text_with_logo_or_image():
+    """Short digital-text PDF containing a logo or profile image is not rejected as scanned."""
+    doc = pymupdf.open()
+    page = doc.new_page()
+    page.insert_text((50, 72), "Alice Chen\nSoftware Engineer")
+    pix = pymupdf.Pixmap(pymupdf.csRGB, pymupdf.IRect(0, 0, 80, 80), False)
+    pix.clear_with(150)
+    page.insert_image(pymupdf.Rect(450, 50, 530, 130), pixmap=pix)
+    pdf_bytes = doc.tobytes()
+    doc.close()
+
+    res = parse_resume(pdf_bytes, filename="profile_with_logo.pdf")
+    assert res["status"] == "success"
+    assert res["metadata"]["is_scanned"] is False
+    assert "Alice Chen" in res["raw_text"]
 
 
 def test_pdf_scanned_detection_image_only():
@@ -623,6 +653,31 @@ def test_education_verification_mere_word_not_verified():
     qc = res["scorecard"]["qualification_coverage"]
     assert qc["education_verified"] is False
     assert qc["verification_status"] == "missing_education"
+
+
+def test_education_verification_no_explicit_job_requirement_with_credentials():
+    """When job has no explicit education requirement, qualifications are not claimed as verified against job, but credentials are preserved."""
+    resume = """
+    Grace Hopper
+    grace@example.com
+    Education
+    Ph.D. in Mathematics
+    Yale University, 1934
+    Skills: COBOL, Compilers
+    """
+    jd = """
+    Software Systems Architect
+    Requirements:
+    - Experience in language design and compiler development.
+    - COBOL and assembly language proficiency.
+    """
+    res = analyze_resume_and_job(resume, jd)
+    qc = res["scorecard"]["qualification_coverage"]
+    assert qc["education_verified"] is False
+    assert qc["verification_status"] == "no_explicit_requirement"
+    assert len(qc["candidate_degrees"]) >= 1
+    assert "No explicit education requirements" in qc["notes"]
+    assert "credentials recorded" in qc["notes"]
 
 
 def test_conflict_classification_genuine_contradiction():
