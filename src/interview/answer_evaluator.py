@@ -128,6 +128,204 @@ class HeuristicAnswerEvaluator:
             return "reliability_coverage"
         return "general_metric"
 
+    @staticmethod
+    def _normalize_unit(unit: str) -> str:
+        """Normalizes metric units for deterministic equivalence matching."""
+        u = (unit or "").lower().strip()
+        if u in ("%", "percent", "pct", "percentage"):
+            return "%"
+        if u in ("ms", "millisecond", "milliseconds"):
+            return "ms"
+        if u in ("s", "sec", "second", "seconds"):
+            return "s"
+        if u in ("min", "minute", "minutes"):
+            return "min"
+        if u in ("hr", "hrs", "hour", "hours"):
+            return "hr"
+        if u in ("user", "users", "clients", "customers"):
+            return "users"
+        if u in ("query", "queries", "request", "requests", "req/s", "rps", "qps"):
+            return "throughput"
+        if u in ("gb", "mb", "tb"):
+            return "data_size"
+        if u in ("record", "records", "row", "rows"):
+            return "records"
+        if u in ("test", "tests"):
+            return "tests"
+        return u
+
+    @staticmethod
+    def _detect_sentence_unit(text: str) -> Optional[str]:
+        """Detects unit mentions in a sentence when not adjacent to the number."""
+        tl = text.lower()
+        if re.search(r"\b(?:%|percent|percentage)\b", tl):
+            return "%"
+        if re.search(r"\b(?:ms|milliseconds?)\b", tl):
+            return "ms"
+        if re.search(r"\b(?:seconds?|secs?)\b", tl):
+            return "s"
+        if re.search(r"\b(?:minutes?|mins?)\b", tl):
+            return "min"
+        if re.search(r"\b(?:hours?|hrs?)\b", tl):
+            return "hr"
+        if re.search(r"\b(?:users?|clients?|customers?)\b", tl):
+            return "users"
+        if re.search(r"\b(?:queries|requests|req/s|rps|qps)\b", tl):
+            return "throughput"
+        if re.search(r"\b(?:gb|mb|tb)\b", tl):
+            return "data_size"
+        if re.search(r"\b(?:records?|rows?)\b", tl):
+            return "records"
+        if re.search(r"\b(?:tests?)\b", tl):
+            return "tests"
+        return None
+
+    def _verify_metric_claim(
+        self,
+        val_str: str,
+        unit_raw: str,
+        answer_sentence: str,
+        candidate_evidence: Dict[str, Any]
+    ) -> tuple[bool, Optional[str]]:
+        """
+        Multi-attribute deterministic verification of an answer metric claim against resume evidence.
+        Validates:
+        1. Exact numeric value
+        2. Unit and unit meaning (e.g. 94 seconds vs 94%)
+        3. Metric category (e.g. accuracy vs latency)
+        4. Associated project/internship identity (attribution to correct record)
+        5. Achievement task context alignment
+        """
+        claimed_unit = self._normalize_unit(unit_raw)
+        claimed_cat = self._detect_metric_category(answer_sentence)
+        val_re = re.compile(r"(?<![0-9])" + re.escape(val_str) + r"(?![0-9])")
+        s_lower = answer_sentence.lower()
+
+        projects = candidate_evidence.get("projects", [])
+        internships = candidate_evidence.get("internships", [])
+
+        records = []
+        for p in projects:
+            if isinstance(p, dict):
+                title = str(p.get("title") or p.get("project_title") or "Project")
+                desc = " ".join([
+                    title,
+                    str(p.get("description", "")),
+                    str(p.get("exact_excerpt", "")),
+                    str(p.get("confirmed_details", ""))
+                ])
+                records.append({
+                    "type": "project",
+                    "title": title,
+                    "text": desc.lower(),
+                    "raw": p
+                })
+
+        for i in internships:
+            if isinstance(i, dict):
+                title = str(i.get("organization") or i.get("company") or "Internship")
+                desc = " ".join([
+                    title,
+                    str(i.get("role") or i.get("position") or ""),
+                    str(i.get("description", "")),
+                    " ".join(str(r) for r in i.get("responsibilities", [])),
+                    str(i.get("exact_excerpt", "")),
+                    str(i.get("confirmed_details", ""))
+                ])
+                records.append({
+                    "type": "internship",
+                    "title": title,
+                    "text": desc.lower(),
+                    "raw": i
+                })
+
+        if candidate_evidence.get("experience_summary"):
+            records.append({
+                "type": "summary",
+                "title": "Experience Summary",
+                "text": str(candidate_evidence.get("experience_summary", "")).lower(),
+                "raw": {}
+            })
+
+        matching_records = [r for r in records if val_re.search(r["text"])]
+        if not matching_records:
+            return False, f"metric {val_str}{unit_raw} is not evidenced in your resume"
+
+        metric_search_pat = re.compile(
+            r"\b(\d{1,3}(?:,\d{3})*(?:\.\d+)?|\d+(?:\.\d+)?)\s*(%|percent|ms|milliseconds?|seconds?|minutes?|hours?|users|queries|requests|req/s|rps|qps|gb|mb|tb|records|rows|tests)(?![a-zA-Z0-9])",
+            re.IGNORECASE
+        )
+
+        failure_reasons = []
+        for rec in matching_records:
+            rec_sentences = [ss.strip() for ss in re.split(r"(?<!\d)[.!?]+(?!\d)\s*", rec["text"]) if val_re.search(ss)]
+            rec_sent = rec_sentences[0] if rec_sentences else rec["text"]
+
+            # 1. Unit match check
+            rec_unit = None
+            for mr in metric_search_pat.finditer(rec_sent):
+                if mr.group(1).replace(",", "") == val_str:
+                    rec_unit = self._normalize_unit(mr.group(2))
+                    break
+            if not rec_unit:
+                rec_unit = self._detect_sentence_unit(rec_sent)
+
+            if rec_unit and claimed_unit and rec_unit != claimed_unit:
+                failure_reasons.append(
+                    f"metric {val_str} claimed with unit '{unit_raw}', but resume evidence for '{rec['title']}' has unit '{rec_unit}'"
+                )
+                continue
+
+            # 2. Metric category check
+            rec_cat = self._detect_metric_category(rec_sent)
+            if rec_cat == "general_metric":
+                rec_cat = self._detect_metric_category(rec["text"])
+
+            if claimed_cat != rec_cat and not (claimed_cat == "general_metric" and rec_cat != "general_metric"):
+                claimed_lbl = claimed_cat.replace('_', '/')
+                rec_lbl = rec_cat.replace('_', '/')
+                failure_reasons.append(
+                    f"metric {val_str}{unit_raw} claimed as {claimed_lbl}, but resume only supports {val_str} in a different context ({rec_lbl})"
+                )
+                continue
+
+            # 3. Project attribution check: does answer explicitly reference a different project?
+            mismatch_project = False
+            for other_rec in records:
+                if other_rec["title"] != rec["title"] and not val_re.search(other_rec["text"]):
+                    other_title_lower = other_rec["title"].lower()
+                    distinctive_words = [
+                        w for w in re.findall(r"[a-z]{4,}", other_title_lower)
+                        if w not in ("project", "system", "pipeline", "service", "application", "model", "platform", "tool", "development", "engineer", "software")
+                    ]
+                    if distinctive_words and any(re.search(r"\b" + re.escape(w) + r"\b", s_lower) for w in distinctive_words):
+                        failure_reasons.append(
+                            f"metric {val_str}{unit_raw} is attributed to '{other_rec['title']}', but resume evidence only associates it with '{rec['title']}'"
+                        )
+                        mismatch_project = True
+                        break
+            if mismatch_project:
+                continue
+
+            # 4. Achievement task context alignment check
+            distinct_domains = [
+                "speech", "audio", "video", "computer vision", "face detection", "fraud",
+                "churn", "recommendation", "sentiment", "nlp", "robotics", "genai", "llm"
+            ]
+            answer_domains = [d for d in distinct_domains if re.search(r"\b" + re.escape(d) + r"\b", s_lower)]
+            if answer_domains:
+                if not any(re.search(r"\b" + re.escape(d) + r"\b", rec["text"]) for d in answer_domains):
+                    failure_reasons.append(
+                        f"metric {val_str}{unit_raw} is claimed for task context '{', '.join(answer_domains)}', but resume record '{rec['title']}' is not associated with this domain"
+                    )
+                    continue
+
+            # If all checks passed for this record, the metric is verified
+            return True, None
+
+        primary_reason = failure_reasons[0] if failure_reasons else f"metric {val_str}{unit_raw} not established by resume evidence"
+        return False, primary_reason
+
     def _tokens(self, value: str) -> List[str]:
         return [
             token.lower() for token in re.findall(r"[a-zA-Z][a-zA-Z0-9+#.-]*", value or "")
@@ -572,47 +770,20 @@ class HeuristicAnswerEvaluator:
             elif is_personal and has_m:
                 if candidate_evidence and resume_corpus:
                     # Multi-attribute metric-to-evidence matching:
-                    # Match numeric value, unit, metric category/context, and associated achievement.
-                    # Mismatched metric types (e.g. 94% Macro F1 claimed as 94% latency reduction)
-                    # must NOT be classified as resume_supported_claims.
+                    # Checks numeric value, unit & unit meaning, metric category, associated project attribution,
+                    # and task context alignment. Claims failing any required relationship are classified as unsupported.
                     all_metrics_supported = True
                     mismatch_details = []
 
                     for m in metric_matches:
                         val_str = m.group(1).replace(",", "")
                         unit_str = m.group(2)
-                        claimed_cat = self._detect_metric_category(s_lower)
-
-                        matched_in_any_snippet = False
-                        category_matched = False
-                        resume_cat_found = None
-
-                        val_re = re.compile(r"(?<![0-9])" + re.escape(val_str) + r"(?![0-9])")
-                        for snip in evidence_snippets:
-                            snip_lower = snip.lower()
-                            if val_re.search(snip_lower):
-                                matched_in_any_snippet = True
-                                snip_sentences = re.split(r"(?<!\d)[.!?]+(?!\d)\s*", snip_lower)
-                                snip_match_sent = next((ss for ss in snip_sentences if val_re.search(ss)), snip_lower)
-                                resume_cat = self._detect_metric_category(snip_match_sent)
-                                if resume_cat == "general_metric":
-                                    resume_cat = self._detect_metric_category(snip_lower)
-                                resume_cat_found = resume_cat
-
-                                if claimed_cat == resume_cat or (claimed_cat == "general_metric" and resume_cat != "general_metric"):
-                                    category_matched = True
-                                    break
-
-                        if not matched_in_any_snippet:
+                        is_ok, reason = self._verify_metric_claim(
+                            val_str, unit_str, s, candidate_evidence
+                        )
+                        if not is_ok:
                             all_metrics_supported = False
-                            mismatch_details.append(f"metric {val_str}{unit_str} is not evidenced in your resume")
-                        elif not category_matched:
-                            all_metrics_supported = False
-                            claimed_label = claimed_cat.replace('_', '/')
-                            res_label = (resume_cat_found or "other").replace('_', '/')
-                            mismatch_details.append(
-                                f"metric {val_str}{unit_str} claimed as {claimed_label}, but resume only supports {val_str} in a different context ({res_label})"
-                            )
+                            mismatch_details.append(reason or f"metric {val_str}{unit_str} unestablished")
 
                     if all_metrics_supported:
                         resume_supported_claims.append(s)
@@ -637,9 +808,10 @@ class HeuristicAnswerEvaluator:
         # ---------------------------------------------------------------------
         # 6. Specificity & Concrete Examples
         # ---------------------------------------------------------------------
-        # Unsupported metrics must NOT increase the specificity score.
-        # Resume-supported metrics may contribute to specificity only when evidence is matched.
-        # Fabricated metrics cannot improve the overall score compared to an answer without them.
+        # Unsupported and unverified personal metrics must NOT increase the specificity score.
+        # Candidate self-reports are tracked as claims, but receive NO specificity bonus (+0.0).
+        # Only resume-supported metrics (+30.0) or legitimate general technical explanations (+15.0)
+        # may contribute to metric specificity.
         evidence_detected = bool(resume_supported_claims) or bool(matched_entities) or bool(general_technical_explanations)
 
         specificity_score = 30.0
@@ -652,10 +824,8 @@ class HeuristicAnswerEvaluator:
 
         if has_supported_metrics:
             specificity_score += 30.0
-        elif has_general_metrics:
+        elif has_general_metrics and not unsupported_claims and not has_self_reported_metrics:
             specificity_score += 15.0
-        elif has_self_reported_metrics and not candidate_evidence:
-            specificity_score += 10.0
 
         # Scoring penalty for unsupported achievement claims
         if unsupported_claims:
@@ -730,7 +900,9 @@ class HeuristicAnswerEvaluator:
                 "details": (
                     "Includes concrete verified metrics and named tools." if (has_supported_metrics or len(verified_claims) >= 2) else (
                         "Contains unsupported metric claims that penalized specificity." if unsupported_claims else (
-                            "Includes named tools and conceptual examples." if matched_entities else "Answer is conceptual; lacks quantified results or specific tools."
+                            "Candidate self-reported metrics are unverified and do not receive specificity credit." if has_self_reported_metrics else (
+                                "Includes named tools and conceptual examples." if matched_entities else "Answer is conceptual; lacks quantified results or specific tools."
+                            )
                         )
                     )
                 )

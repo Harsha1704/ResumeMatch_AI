@@ -1329,3 +1329,162 @@ def test_34_cross_user_reset_and_deletion_rejected(sample_candidate_analysis):
     )
     assert resp_reset_a.status_code == 200
     assert resp_reset_a.get_json()["status"] == "reset"
+
+
+# =========================================================================
+# 9. Phase 5.3 Adversarial Metric Grounding & Scoring Integrity Tests
+# =========================================================================
+
+
+def test_35_adversarial_metric_grounding_and_scoring_integrity(sample_candidate_analysis):
+    """
+    Adversarial test suite covering all 8 Phase 5.3 metric verification and scoring constraints:
+    1. No resume evidence + fabricated personal metric: no specificity bonus.
+    2. Resume has 94% Macro F1; answer claims 94% latency reduction: unsupported.
+    3. Resume has 94 seconds; answer claims 94%: unit mismatch, unsupported.
+    4. Same number appears in an unrelated project: project attribution mismatch, unsupported.
+    5. Same metric category appears in a different achievement: task context mismatch, unsupported.
+    6. General theoretical numeric explanation: not classified as a personal achievement.
+    7. Truthful disclosure of missing metrics: no penalty for honesty.
+    8. Existing supported metric test continues to pass with full credit.
+    """
+    evaluator = HeuristicAnswerEvaluator()
+    candidate_evidence = extract_candidate_evidence(ANALYSIS_CACHE[sample_candidate_analysis])
+
+    q_data = {
+        "question_text": "Describe your technical implementation results and performance outcomes.",
+        "expected_key_points": ["Implementation architecture", "Verified results"],
+        "recommended_answer_framework": "STAR"
+    }
+
+    # Case 1: No resume evidence + fabricated personal metric: no specificity bonus
+    ans_honest_no_resume = (
+        "Situation: In our data tier, we needed reliable processing. "
+        "Task: I was responsible for data transformation. "
+        "Action: I developed Python scripts to transform records and tested them with pytest. "
+        "Result: The pipeline ran smoothly and passed all unit tests."
+    )
+    ev_h_no_res = evaluator.evaluate_answer(q_data, ans_honest_no_resume, "STAR", candidate_evidence=None)
+
+    ans_fab_no_resume = (
+        "Situation: In our data tier, we needed reliable processing. "
+        "Task: I was responsible for data transformation. "
+        "Action: I developed Python scripts to transform records and tested them with pytest. "
+        "Result: I achieved 99.9% uptime and scaled the system to 500000 concurrent users."
+    )
+    ev_f_no_res = evaluator.evaluate_answer(q_data, ans_fab_no_resume, "STAR", candidate_evidence=None)
+
+    assert len(ev_f_no_res["claims_analysis"]["candidate_self_reported_claims"]) > 0
+    # Assert NO specificity bonus is awarded for unverified personal metrics without resume
+    h_spec = ev_h_no_res["individual_criterion_scores"]["specificity_examples"]["score"]
+    f_spec = ev_f_no_res["individual_criterion_scores"]["specificity_examples"]["score"]
+    assert f_spec <= h_spec, f"Self-reported metrics ({f_spec}) must not increase specificity over honest answer ({h_spec})"
+    # Assert overall composite score with fabricated metrics never improves over honest answer
+    assert ev_f_no_res["overall_score"] < ev_h_no_res["overall_score"]
+
+    # Case 2: Resume has 94% Macro F1; answer claims 94% latency reduction: unsupported
+    ans_c2 = (
+        "Situation: In our multimodal semantic search project, query speed was critical. "
+        "Task: Accelerate inference pipeline throughput. "
+        "Action: I optimized model weights and batching routines in PyTorch. "
+        "Result: I achieved 94% reduction in latency across all endpoint requests."
+    )
+    ev_c2 = evaluator.evaluate_answer(q_data, ans_c2, "STAR", candidate_evidence=candidate_evidence)
+    assert len(ev_c2["claims_analysis"]["unsupported_claims"]) > 0
+    assert len(ev_c2["claims_analysis"]["resume_supported_claims"]) == 0
+    assert any("latency" in w.lower() and "different context" in w.lower() for w in ev_c2["evidence_grounding_warnings"])
+
+    # Case 3: Resume has 94 seconds; answer claims 94%: do not assume equivalent units
+    ev_seconds = {
+        "projects": [{
+            "title": "Compilation Pipeline",
+            "description": "Optimized container build pipeline and reduced compile time to 94 seconds.",
+            "exact_excerpt": "reduced compile time to 94 seconds."
+        }]
+    }
+    ans_c3 = (
+        "Situation: Build times were excessively slow. "
+        "Task: Optimize compiler runtime. "
+        "Action: I tuned build scripts and docker layers. "
+        "Result: I achieved a 94% reduction in build overhead."
+    )
+    ev_c3 = evaluator.evaluate_answer(q_data, ans_c3, "STAR", candidate_evidence=ev_seconds)
+    assert len(ev_c3["claims_analysis"]["unsupported_claims"]) > 0
+    assert len(ev_c3["claims_analysis"]["resume_supported_claims"]) == 0
+    assert any("unit" in w.lower() for w in ev_c3["evidence_grounding_warnings"])
+
+    # Case 4: Same number appears in an unrelated project: not sufficient evidence
+    ev_unrelated_proj = {
+        "projects": [
+            {
+                "title": "Fraud Detection Pipeline",
+                "description": "Processed financial transactions using XGBoost and Pandas.",
+                "exact_excerpt": "Processed financial transactions."
+            },
+            {
+                "title": "Multimodal Semantic Matcher",
+                "description": "Dense vector retrieval achieving 94% Macro F1.",
+                "exact_excerpt": "Dense vector retrieval achieving 94% Macro F1."
+            }
+        ]
+    }
+    ans_c4 = (
+        "Situation: We were classifying fraudulent financial transactions. "
+        "Task: Maximize precision on rare fraud classes. "
+        "Action: I developed tree-based models and tuned hyperparameters. "
+        "Result: In my Fraud Detection Pipeline project, I achieved 94% Macro F1 on the benchmark."
+    )
+    ev_c4 = evaluator.evaluate_answer(q_data, ans_c4, "STAR", candidate_evidence=ev_unrelated_proj)
+    assert len(ev_c4["claims_analysis"]["unsupported_claims"]) > 0
+    assert len(ev_c4["claims_analysis"]["resume_supported_claims"]) == 0
+    assert any("fraud detection pipeline" in w.lower() and "multimodal semantic matcher" in w.lower() for w in ev_c4["evidence_grounding_warnings"])
+
+    # Case 5: Same metric category appears in a different achievement: not sufficient evidence
+    ans_c5 = (
+        "Situation: Developing an automated audio transcription system. "
+        "Task: Maximize acoustic classification accuracy. "
+        "Action: I built an acoustic feature extractor and acoustic classifier. "
+        "Result: In our audio pipeline, I achieved 94% accuracy in speech audio recognition."
+    )
+    ev_c5 = evaluator.evaluate_answer(q_data, ans_c5, "STAR", candidate_evidence=candidate_evidence)
+    assert len(ev_c5["claims_analysis"]["unsupported_claims"]) > 0
+    assert len(ev_c5["claims_analysis"]["resume_supported_claims"]) == 0
+    assert any("speech" in w.lower() or "audio" in w.lower() for w in ev_c5["evidence_grounding_warnings"])
+
+    # Case 6: General theoretical numeric explanation: not classified as a personal achievement
+    ans_c6 = (
+        "Situation: When configuring distributed architectures, timeout values matter. "
+        "Task: Explain connection architecture. "
+        "Action: By default, Python worker processes typically timeout after 30 seconds. "
+        "Result: This prevents runaway transactions on saturated connection pools."
+    )
+    ev_c6 = evaluator.evaluate_answer(q_data, ans_c6, "STAR", candidate_evidence=candidate_evidence)
+    assert len(ev_c6["claims_analysis"]["general_technical_explanations"]) > 0
+    assert len(ev_c6["claims_analysis"]["unsupported_claims"]) == 0
+    assert not any("30" in w or "timeout" in w.lower() or "metric" in w.lower() for w in ev_c6["evidence_grounding_warnings"])
+
+    # Case 7: Truthful disclosure of missing metrics: no penalty for honesty
+    ans_c7 = (
+        "Situation: In this coursework project, we developed an experimental recommendation prototype. "
+        "Task: Design the core collaborative filtering matrix. "
+        "Action: I have not yet deployed this to production, as this was an academic project, so I do not have real-world metrics. "
+        "Result: We verified offline accuracy on the validation split."
+    )
+    ev_c7 = evaluator.evaluate_answer(q_data, ans_c7, "STAR", candidate_evidence=candidate_evidence)
+    assert len(ev_c7["claims_analysis"]["truthful_disclosures"]) > 0
+    assert len(ev_c7["claims_analysis"]["unsupported_claims"]) == 0
+    assert len(ev_c7["evidence_grounding_warnings"]) == 0
+    assert any("candid and honest" in s.lower() for s in ev_c7["strengths"])
+
+    # Case 8: Existing supported metric test continues to pass with full credit
+    ans_c8 = (
+        "Situation: In our multimodal semantic search project, retrieval accuracy was critical. "
+        "Task: Fine-tune the dense encoder without overfitting. "
+        "Action: I developed a two-tower neural network with custom contrastive loss in PyTorch. "
+        "Result: In our multimodal semantic search project, I achieved 94% Macro F1 on the validation benchmark suite."
+    )
+    ev_c8 = evaluator.evaluate_answer(q_data, ans_c8, "STAR", candidate_evidence=candidate_evidence)
+    assert len(ev_c8["claims_analysis"]["resume_supported_claims"]) > 0
+    assert len(ev_c8["claims_analysis"]["unsupported_claims"]) == 0
+    assert ev_c8["criterion_scores"]["evidence_consistency"]["status"] == "pass"
+    assert ev_c8["individual_criterion_scores"]["specificity_examples"]["score"] >= 60.0
