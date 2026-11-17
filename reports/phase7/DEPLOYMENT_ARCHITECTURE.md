@@ -3,6 +3,9 @@
 **Target Repository**: `Harsha1704/ResumeMatch_AI`  
 **Working Branch**: `fix/resumematch-final-repair`  
 **Baseline Commit**: `1757b326371ebf43a76141ff6347e8ccdc0b1a51`  
+**Verified Live Deployed Commit**: `07b88a058f166f13491fa9050ba835d95fd0e8fd`  
+**Verified Vercel Deployment**: `https://frontend-orzkrjj8t-harsha1704s-projects.vercel.app` (Project: `frontend`, Team: `harsha1704s-projects`)  
+**Verified Render Deployment**: `https://resumematch-ai-api-atil.onrender.com` (Service: `resumematch-ai-api`, ID: `srv-dbspslmi0phs73dqbptg`)  
 **Audit Date**: November 17, 2026  
 **Document Status**: Approved Final Architecture Specification
 
@@ -16,7 +19,7 @@ ResumeMatch AI is structured as a decoupled web application comprising:
 
 To resolve the decoupling challenges between Vercel and Render (cross-origin cookies, CORS preflights, upload size limits, and browser tracking prevention), we evaluated two primary architectural options:
 - **Option 1**: Custom Subdomains on Shared Apex Domain (`app.resumematch.ai` + `api.resumematch.ai`).
-- **Option 2**: Vercel Reverse Proxy Rewriting to Render (`resumematch-ai.vercel.app/api/*` -> `onrender.com/api/*`).
+- **Option 2**: Vercel Reverse Proxy Rewriting to Render (`frontend.vercel.app/api/*` -> `onrender.com/api/*`).
 
 ### Definitive Architecture Decision: **OPTION 1 (Shared Apex Subdomains)**
 
@@ -28,7 +31,7 @@ Option 1 is definitively chosen. Option 2 has fatal infrastructure limitations (
 
 | Dimension | Option 1: Shared Custom Apex Domain (`*.resumematch.ai`) | Option 2: Vercel Reverse Proxy (`vercel.json` Rewrites) |
 | :--- | :--- | :--- |
-| **Hosting Topology** | Frontend: `https://app.resumematch.ai` (Vercel)<br>Backend: `https://api.resumematch.ai` (Render) | Frontend: `https://resumematch-ai.vercel.app` (Vercel)<br>Backend: `https://resumematch-ai-api.onrender.com` (Render) |
+| **Hosting Topology** | Frontend: `https://app.resumematch.ai` (Vercel)<br>Backend: `https://api.resumematch.ai` (Render) | Frontend: `https://frontend-harsha1704s-projects.vercel.app`<br>Backend: `https://resumematch-ai-api-atil.onrender.com` |
 | **Site Relationship** | **Same-Site** (Shares apex eTLD+1 `resumematch.ai`) | **Same-Origin** (From browser perspective, proxied through Vercel) |
 | **Cookie Architecture** | `SameSite=Lax`, `Secure=True`, `HttpOnly=True`.<br>Sent by all browsers on same-site cross-subdomain requests. | Same-origin cookie handling. |
 | **Browser Compatibility** | **100% universal across Chromium, Firefox, Safari/WebKit, and iOS WebKit** without relying on third-party cookie concessions. | 100% universal across browsers. |
@@ -64,7 +67,7 @@ flowchart TD
 | Record Type | Host / Name | Target / Value | TTL | Purpose |
 | :--- | :--- | :--- | :--- | :--- |
 | **CNAME** | `app` | `cname.vercel-dns.com` | Auto / 300 | Routes frontend traffic to Vercel |
-| **CNAME** | `api` | `resumematch-ai-api.onrender.com` | Auto / 300 | Routes API traffic to Render |
+| **CNAME** | `api` | `resumematch-ai-api-atil.onrender.com` | Auto / 300 | Routes API traffic to Render |
 | **TXT / ALIAS** | `@` (Apex) | As directed by DNS provider | Auto | Domain apex verification |
 
 ### 3.2 SSL / TLS Certificate Automation
@@ -77,6 +80,8 @@ flowchart TD
    ```python
    CORS_ALLOWED_ORIGINS = [
        "https://app.resumematch.ai",
+       "https://frontend-harsha1704s-projects.vercel.app",
+       "https://frontend-orzkrjj8t-harsha1704s-projects.vercel.app",
        "http://localhost:5173",
        "http://127.0.0.1:5173"
    ]
@@ -109,13 +114,12 @@ The failed project `resumematch_ai` on Vercel is failing with `LAMBDA_SIZE_EXCEE
 ### 4.2 Administrative Resolution Steps
 1. Navigate to the **Vercel Dashboard**.
 2. Select the `resumematch_ai` project.
-3. If this project is redundant (since the React frontend is deployed as a separate project):
+3. If this project is redundant (since the React frontend is deployed as project `frontend`):
    - Navigate to **Settings** -> **Advanced** -> Click **Delete Project**.
-4. If this project is intended to be the production frontend:
+4. If this project is intended to be retained:
    - Navigate to **Settings** -> **General** -> **Root Directory**.
    - Change `.` to `frontend`.
    - Save and trigger **Redeploy**.
-   - Set Environment Variable: `VITE_API_BASE_URL=https://api.resumematch.ai`.
 
 ---
 
@@ -124,8 +128,8 @@ The failed project `resumematch_ai` on Vercel is failing with `LAMBDA_SIZE_EXCEE
 If custom DNS propagation is delayed or encounters issues during rollout, the following safe fallback procedure is pre-tested:
 
 1. **Emergency Fallback to Direct Provider URLs**:
-   - Update Vercel frontend environment variable: `VITE_API_BASE_URL=https://resumematch-ai-api.onrender.com`.
-   - Add `https://resumematch-ai.vercel.app` to Render backend `CORS_ALLOWED_ORIGINS`.
+   - Update Vercel frontend environment variable: `VITE_API_BASE_URL=https://resumematch-ai-api-atil.onrender.com`.
+   - Ensure `https://frontend-harsha1704s-projects.vercel.app` is in Render backend `CORS_ALLOWED_ORIGINS` (already verified active).
    - Redeploy frontend on Vercel.
 2. **Caveats of Emergency Fallback**:
    - Safari/WebKit users may experience session drops due to third-party cookie restrictions across `*.vercel.app` and `*.onrender.com`.

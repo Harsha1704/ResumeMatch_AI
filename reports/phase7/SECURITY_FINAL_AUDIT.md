@@ -32,7 +32,7 @@ Every security control has been empirically validated via automated regression t
 ### SEC-MED-01: Third-Party Cookie Blocking on Default Cloud Domains
 - **Severity**: MEDIUM
 - **Component**: Cross-Origin Session Cookie Persistence
-- **Description**: When deployed across separate default cloud domains (e.g. `resumematch-ai.vercel.app` and `resumematch-ai-api.onrender.com`), the Public Suffix List (PSL) treats these domains as completely distinct eTLDs. WebKit (Safari) and strict privacy configurations in Chromium/Firefox block third-party cookies by default, preventing the Flask session cookie from persisting across requests.
+- **Description**: When deployed across separate default cloud domains (e.g. `frontend-harsha1704s-projects.vercel.app` and `resumematch-ai-api-atil.onrender.com`), the Public Suffix List (PSL) treats these domains as completely distinct eTLDs. WebKit (Safari) and strict privacy configurations in Chromium/Firefox block third-party cookies by default, preventing the Flask session cookie from persisting across requests.
 - **Impact**: Users on Safari or privacy-focused browsers would be unable to maintain sessions across multi-step flows (Analyzer -> Skill Gap -> Interview Studio).
 - **Resolution**: Implemented Option 1 architecture (Custom Subdomains on Shared Apex Domain, e.g. `app.resumematch.ai` and `api.resumematch.ai`). Under a shared apex domain, requests are **same-site**; cookies set with `SameSite=Lax` persist seamlessly without third-party cookie restrictions.
 
