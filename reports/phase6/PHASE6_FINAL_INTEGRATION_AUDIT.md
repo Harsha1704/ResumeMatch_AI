@@ -31,26 +31,31 @@ Phase 6 constitutes the comprehensive final integration, end-to-end regression a
 ### Primary Audit Verdict
 - **Backend Core**: 100% pass across 759 unit, regression, and integration tests (zero failures, 1 pre-existing SVD variance division warning in scikit-learn).
 - **Cumulative Phase Regression**: 100% pass across 486 phase-specific regression tests (`test_phase*.py`), explicitly audited and separated into:
-  - **Phase 1–6 Dedicated Suites**: 331 passed in 18.84s (`test_phase1*.py` through `test_phase6*.py`).
-  - **Later-Phase Regression Suites (Phases 7, 10, 12, 13)**: 155 passed in 79.82s.
-- **Frontend SPA**: React 19 + TypeScript + Vite 8 production build succeeded in 459ms with 0 errors; Oxlint static analysis clean (0 errors, 33 pre-existing style/unused-var warnings); 14 Node unit and browser tests pass (0 failures).
+  - **Phase 1–6 Dedicated Suites**: 331 passed in 18.65s (`test_phase1*.py` through `test_phase6*.py`).
+  - **Later-Phase Regression Suites (Phases 7, 10, 12, 13)**: 155 passed in 79.53s.
+  - **All Phase-Prefixed Test Suites (Combined)**: 486 passed in 97.36s.
+  - **Full Backend Regression Suite**: 759 passed, 1 pre-existing warning in 123.24s.
+- **Frontend SPA**: React 19 + TypeScript + Vite 8 production build succeeded in 480ms with 0 errors; Oxlint static analysis clean (0 errors, 33 pre-existing style/unused-var warnings); 14 Node unit and browser tests pass (0 failures in 5.87s).
 - **Cross-Session Security**: Eliminated authorization bypass and Broken Object Level Authorization (BOLA/IDOR) on `/api/analysis/<id>` and `/api/skill-gap`, establishing unified 403 Forbidden enforcement across all four analysis-consuming endpoints.
 - **Fail-Closed CSRF Protection (Phase 6.1 & 6.2)**: 17 state-changing endpoints strictly validated against session-bound CSRF tokens without testing bypasses (including legacy HTML form routes `POST /analyze`, `POST /interview-studio/generate`, and `POST /interview-practice/submit`); 1 documented stateless exception (`POST /api/match`).
 - **Frontend Fail-Closed Token Retrieval**: React client (`frontend/src/services/api.ts`) aborts mutating requests before calling fetch if CSRF token retrieval fails; 403 responses clear cached tokens without auto-replay.
-- **Genuine Mutation-Triggered Browser Preflight Verification (Phase 6.6)**:
+- **CDP Preflight Correlation & Browser Verification (Phase 6.6 & 6.7)**:
   - Triggered real cross-origin POST from browser page with `Content-Type: application/json` and `X-CSRF-Token`.
-  - Captured genuine browser-generated preflight `OPTIONS` request via Chrome DevTools Protocol (CDP) and Playwright listeners.
+  - Captured genuine browser-generated preflight `OPTIONS` request via Chrome DevTools Protocol (CDP) and strictly correlated request to response via `requestId` (`Network.requestWillBeSent` and `Network.responseReceived`).
+  - Enforced fail-closed assertions: fails test immediately if preflight request or correlated response is not captured (no silent skips).
   - Verified `Access-Control-Request-Method: POST` and `Access-Control-Request-Headers` includes `content-type` and `x-csrf-token`.
-  - Verified preflight response status 200, `Access-Control-Allow-Origin: https://localhost:3443`, `Access-Control-Allow-Credentials: true`, and `Access-Control-Allow-Headers` permits `X-CSRF-Token`.
+  - Verified correlated preflight response status 200, `Access-Control-Allow-Origin: https://localhost:3443`, `Access-Control-Allow-Credentials: true`, and `Access-Control-Allow-Headers` permits `X-CSRF-Token`.
   - In Firefox where Marionette does not surface preflight events, server-header evidence (`APIRequestContext` probe) is strictly separated from browser-enforced successful mutation evidence (200 OK).
+  - WebKit Default Behavior Reconciled: Under native WebKit default privacy settings (ITP active), cross-origin third-party cookies are blocked (`sessionCookie === undefined`) and cross-origin mutations fail closed with HTTP 403 Forbidden. No privacy settings were relaxed to force a 200 OK result. In contrast, same-origin WebKit retains the session cookie and succeeds with HTTP 200 OK.
   - Missing-token rejection tested separately, confirming 403 Forbidden.
-  - Real browser versions tested and dynamically verified: Playwright v1.65.1, Chromium v159.0.8154.6, Firefox v159.0, WebKit v27.2.
+  - Real browser versions tested and dynamically verified via `browser.version()`: Chromium v159.0.8154.6, Firefox v159.0, WebKit v27.2 (Playwright package v1.65.1).
 - **Robust Configurable Python Process Lifecycle**:
   - Supports explicit Python executable path via `PYTHON_PATH` or `PYTHON_EXEC` preserving paths with spaces (e.g. `C:\Program Files\Python314\python.exe`) without shell concatenation.
   - Supports optional arguments via `PYTHON_ARGS`.
   - Preserves Windows `py -3.14` and POSIX `python3` defaults.
   - Process tree cleanup via `taskkill` (Windows) and process group `SIGKILL` (POSIX).
   - Fail-safe startup error handling prevents orphaned processes.
+- **Windows NTFS Concurrency Hardening**: Added retry loop in `tests/test_dataset_improvement.py` (`test_split_reproducibility`) to eliminate transient Windows NTFS file lock collisions (`OSError Errno 22`).
 - **Production Architecture Decision & Accurate Cookie Security Claims**: Documented host-only cookie recommendation for future same-site apex deployment (`app.resumematch.ai` + `api.resumematch.ai`). Removed absolute claims; accurately explained that host-only cookies prevent direct ambient cookie exposure across sibling subdomains, but do not replace defense-in-depth XSS mitigations, CSP, CSRF, or server authorization.
 - **Production Readiness & Configuration Tiers**: Clearly categorized into: (A) Verified source configuration, (B) Verified cloud deployment settings, (C) Unknown private dashboard settings, (D) Recommended future architecture, and (E) Actual production compatibility (unverified until deployed on custom domains).
 - **Vercel CI Failure Accurate Diagnosis**: Documented that `Vercel – frontend` passes, while `Vercel – resumematch_ai` fails with `LAMBDA_SIZE_EXCEEDED` (732.81 MB vs 500 MB limit) due to the root-level Flask application being treated as a Vercel deployment. This check remains failing and is diagnosed, not fixed in code.
@@ -65,6 +70,7 @@ Phase 6 constitutes the comprehensive final integration, end-to-end regression a
 4. **Approved Phase 6.4 Starting Commit**: `64ba81caf0f5f659ac9c2a4b8afaf5cea3997499`
 5. **Approved Phase 6.5 Starting Commit**: `13535d12a982622bb803e1caef27da7f66b1be3d`
 6. **Approved Phase 6.6 Starting Commit**: `c8e51f901766899b9565590df4ad5850ca492f1e`
+7. **Approved Phase 6.7 Starting Commit**: `592093bdd0c0b16a83825390790bcf50f2428902`
 7. **Working Tree**: Verified clean before and after changes.
 8. **Technology Stack**:
    - Frontend: React 19, Vite 8, TypeScript 5.x, Tailwind CSS v4.

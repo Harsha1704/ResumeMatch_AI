@@ -99,24 +99,27 @@ All discovered security vulnerabilities were eliminated with minimal safe code m
 
 ---
 
-### 2.4 Browser Compatibility Verification & Genuine Mutation Preflight (Phase 6.6)
+### 2.4 Browser Compatibility Verification & Genuine Mutation Preflight (Phase 6.6 & 6.7)
 
 #### Tested Software Versions
-- **Playwright Package**: `1.65.1`
-- **Chromium Binary**: `159.0.8154.6`
-- **Firefox Binary**: `159.0`
-- **WebKit Binary**: `27.2`
+- **Playwright Package**: `1.65.1` (dynamically read from package manifest)
+- **Chromium Binary**: `159.0.8154.6` (dynamically verified via `browser.version()`)
+- **Firefox Binary**: `159.0` (dynamically verified via `browser.version()`)
+- **WebKit Binary**: `27.2` (dynamically verified via `browser.version()`)
 
-#### Genuine Mutation-Triggered Preflight Verification
+#### Genuine Mutation-Triggered Preflight Verification & CDP Correlation
 - In [`frontend/tests/browser_cross_origin.test.mjs`](file:///d:/skillsync1/frontend/tests/browser_cross_origin.test.mjs), rather than issuing manual `fetch(method: OPTIONS)` calls with browser-forbidden headers, the suite triggers a real cross-origin POST mutation from the browser document context with `Content-Type: application/json` and `X-CSRF-Token`.
-- **Preflight Capture & Verification**:
+- **Preflight Capture & Correlation Verification**:
   - **In Chromium**: Intercepted the browser's internal network stack via Chrome DevTools Protocol (`Network.requestWillBeSent` and `Network.responseReceived`).
-    - Verified the captured request URL corresponds to `/api/candidate/update-role`.
+    - Captured the genuine browser preflight OPTIONS request and its unique CDP `requestId`.
+    - Strictly correlated the preflight response using the matching `requestId`, guaranteeing that response headers belong to the OPTIONS preflight and not the subsequent POST mutation.
+    - Verified the preflight request URL corresponds to `/api/candidate/update-role`.
     - Verified `Access-Control-Request-Method: POST`.
     - Verified `Access-Control-Request-Headers` includes both `content-type` and `x-csrf-token`.
-    - Verified response status `200 OK`, `Access-Control-Allow-Origin: https://localhost:3443`, `Access-Control-Allow-Credentials: true`, and `Access-Control-Allow-Headers: content-type, x-csrf-token`.
+    - Verified correlated preflight response status `200 OK`, `Access-Control-Allow-Origin: https://localhost:3443`, `Access-Control-Allow-Credentials: true`, and `Access-Control-Allow-Headers: X-CSRF-Token`.
+    - Enforced fail-closed assertions: fails test immediately if preflight request or correlated response is not captured (no silent skips).
   - **In Firefox**: Documented that Marionette internal socket networking evaluates the preflight internally without surfacing preflight requests/responses to high-level automation listeners. The test strictly separates server-header evidence (verified via the standalone `APIRequestContext` probe) from browser-enforced mutation evidence (the browser evaluates the preflight and successfully completes the protected POST with HTTP 200 OK).
-  - **In WebKit**: Documented that WebKit native ITP drops third-party cross-origin cookies by default, causing the mutation to fail closed with HTTP 403 Forbidden.
+  - **In WebKit (Reconciled Default Behavior)**: Verified that under native Apple WebKit default privacy settings (ITP active), third-party cross-origin cookies are dropped (`sessionCookie === undefined`). Consequently, the cross-origin mutation fails closed with HTTP 403 Forbidden (`itcMutation.status === 403`). No browser privacy settings were altered or relaxed to force a 200 OK result. In contrast, same-origin WebKit retains the session cookie and completes mutations with HTTP 200 OK.
 - **Separate Missing-Token Rejection**: Tested separately from the authenticated flow; verified that cross-origin mutations without `X-CSRF-Token` return HTTP 403 Forbidden (`CSRF token missing or invalid`).
 
 ---

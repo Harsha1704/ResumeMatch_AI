@@ -25,7 +25,12 @@ import fs from 'node:fs';
 import { spawn, execSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
 import { chromium, firefox, webkit } from 'playwright';
+
+const require = createRequire(import.meta.url);
+const playwrightPkg = require('playwright/package.json');
+const PLAYWRIGHT_PACKAGE_VERSION = playwrightPkg.version;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -156,23 +161,27 @@ describe('Playwright Real Browser Same-Origin Suite (HTTP)', () => {
   });
 
   const browsers = [
-    { name: 'Chromium', engine: chromium, version: '159.0.8154.6' },
-    { name: 'Firefox', engine: firefox, version: '159.0' },
-    { name: 'WebKit', engine: webkit, version: '27.2' },
+    { name: 'Chromium', engine: chromium },
+    { name: 'Firefox', engine: firefox },
+    { name: 'WebKit', engine: webkit },
   ];
 
-  for (const { name, engine, version } of browsers) {
-    describe(`${name} Engine (v${version})`, () => {
+  for (const { name, engine } of browsers) {
+    describe(`${name} Engine — Same-Origin Verification`, () => {
       it(`should retrieve CSRF token, maintain HttpOnly session cookie, and execute protected mutations in ${name}`, async () => {
         let browser;
         try {
           browser = await engine.launch({ headless: true });
         } catch (err) {
-          assert.fail(`Browser engine ${name} is unavailable: ${err.message}`);
+          assert.fail(`Browser engine ${name} is unavailable or failed to launch: ${err.message}`);
         }
 
         const actualVersion = browser.version();
-        assert.ok(actualVersion && actualVersion.length > 0, `${name}: Actual browser version verified (${actualVersion})`);
+        assert.ok(
+          actualVersion && typeof actualVersion === 'string' && actualVersion.trim().length > 0,
+          `${name}: Failed to resolve runtime browser version`
+        );
+        console.log(`[Browser Engine Info] Engine: ${name}, Runtime Version: ${actualVersion}, Playwright Package: ${PLAYWRIGHT_PACKAGE_VERSION}`);
 
         const context = await browser.newContext();
         const page = await context.newPage();

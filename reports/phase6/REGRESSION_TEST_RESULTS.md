@@ -5,8 +5,9 @@
 **Phase 6 Baseline Commit**: `ad4bc5b2f5e7e6f5b892c5e788102a573b07c2f6`  
 **Phase 6.4 Baseline Commit**: `64ba81caf0f5f659ac9c2a4b8afaf5cea3997499`  
 **Phase 6.5 Baseline Commit**: `13535d12a982622bb803e1caef27da7f66b1be3d`  
-**Phase 6.6 Starting Commit**: `c8e51f901766899b9565590df4ad5850ca492f1e`  
-**Review Status**: **VERIFIED CLEAN** (100% test pass rate across all test suites)
+**Phase 6.6 Baseline Commit**: `c8e51f901766899b9565590df4ad5850ca492f1e`  
+**Phase 6.7 Starting Commit**: `592093bdd0c0b16a83825390790bcf50f2428902`  
+**Review Status**: **VERIFIED CLEAN** (100% test pass rate across all test suites, 0 skipped, 0 failed)
 
 ---
 
@@ -19,19 +20,21 @@ All test suites were executed on Python 3.14 (Backend) and Node.js v24.20.0 / Vi
 > - The test executions, pass counts, durations, and exit codes reported below reflect actual runs in this local development environment.
 > - They are distinct from remote CI workflows (such as GitHub Actions or Vercel CI), which run in separate cloud runner environments.
 > - Browser tests are explicitly separated into: (1) Genuine Cross-Origin HTTPS browser tests ([`frontend/tests/browser_cross_origin.test.mjs`](file:///d:/skillsync1/frontend/tests/browser_cross_origin.test.mjs)), (2) Same-Origin HTTP browser tests ([`frontend/tests/browser_same_origin.test.mjs`](file:///d:/skillsync1/frontend/tests/browser_same_origin.test.mjs)), and (3) Mocked-fetch unit tests ([`frontend/tests/api_csrf.test.mjs`](file:///d:/skillsync1/frontend/tests/api_csrf.test.mjs)).
-> - Exact tested browser engine binaries dynamically verified via `browser.version()`: Chromium v159.0.8154.6, Firefox v159.0, WebKit v27.2.
+> - Exact tested browser engine binaries dynamically verified via `browser.version()`: Chromium v159.0.8154.6, Firefox v159.0, WebKit v27.2. Playwright package version: 1.65.1.
+> - Chromium CDP preflight correlation: `cdpPreflightRequestId` from `Network.requestWillBeSent` is strictly correlated to the preflight response in `Network.responseReceived` by `requestId`, ensuring assertions evaluate the genuine preflight transaction rather than subsequent mutations.
+> - WebKit Behavior Reconciled: Under default WebKit privacy settings (ITP active), cross-origin third-party cookies are blocked (`sessionCookie === undefined`) and cross-origin mutations fail closed with HTTP 403 Forbidden. No privacy settings were relaxed to force a 200 OK result.
 
 | Test Suite / Quality Gate | Execution Command | Result | Duration | Exit Code |
 | :--- | :--- | :--- | :--- | :--- |
-| **Phase 1–6 Dedicated Suites** | `powershell -Command "$p16 = (Get-ChildItem tests/test_phase*.py \| Where-Object { $_.Name -match '^test_phase[1-6]' -and $_.Name -notmatch '^test_phase1[0-9]' }); py -3.14 -m pytest $p16 -q"` | **331 passed** | 18.84s | `0` |
-| **Later-Phase Regression Suites (Phases 7, 10, 12, 13)** | `powershell -Command "$later = (Get-ChildItem tests/test_phase*.py \| Where-Object { $_.Name -match '^test_phase(7\|10\|12\|13)' }); py -3.14 -m pytest $later -q"` | **155 passed** | 79.82s | `0` |
-| **All Phase-Prefixed Test Suites (`test_phase*.py` — Combined)** | `powershell -Command "py -3.14 -m pytest (Get-ChildItem tests/test_phase*.py) -q"` | **486 passed** | 99.34s | `0` |
-| **Full Backend Regression Suite** | `py -3.14 -m pytest tests/ -q` | **759 passed**, 1 pre-existing warning | 124.60s | `0` |
-| **Frontend Unit Test Suite** | `node --test --experimental-strip-types frontend/tests/api_csrf.test.mjs` | **6 passed** | 0.09s | `0` |
-| **Same-Origin Playwright Suite** | `node --test --experimental-strip-types frontend/tests/browser_same_origin.test.mjs` | **4 passed** | 5.12s | `0` |
-| **Cross-Origin Playwright Suite** | `node --test --experimental-strip-types frontend/tests/browser_cross_origin.test.mjs` | **4 passed** | 5.81s | `0` |
-| **Combined Frontend Test Suite** | `npm test --prefix frontend` | **14 passed** (6 unit + 4 cross-origin + 4 same-origin) | 7.18s | `0` |
-| **Frontend Production Build** | `npm.cmd run build --prefix frontend` | **Success** (built in 459ms, 0 errors) | 0.46s | `0` |
+| **Phase 1–6 Dedicated Suites** | `powershell -Command "$p16 = (Get-ChildItem tests/test_phase*.py \| Where-Object { $_.Name -match '^test_phase[1-6]' -and $_.Name -notmatch '^test_phase1[0-9]' }); py -3.14 -m pytest $p16 -q"` | **331 passed** | 18.65s | `0` |
+| **Later-Phase Regression Suites (Phases 7, 10, 12, 13)** | `powershell -Command "$later = (Get-ChildItem tests/test_phase*.py \| Where-Object { $_.Name -match '^test_phase(7\|10\|12\|13)' }); py -3.14 -m pytest $later -q"` | **155 passed** | 79.53s | `0` |
+| **All Phase-Prefixed Test Suites (`test_phase*.py` — Combined)** | `powershell -Command "py -3.14 -m pytest (Get-ChildItem tests/test_phase*.py) -q"` | **486 passed** | 97.36s | `0` |
+| **Full Backend Regression Suite** | `py -3.14 -m pytest tests/ -q` | **759 passed**, 1 pre-existing warning | 123.24s | `0` |
+| **Frontend Unit Test Suite** | `node --test --experimental-strip-types frontend/tests/api_csrf.test.mjs` | **6 passed** | 0.10s | `0` |
+| **Same-Origin Playwright Suite** | `node --test --experimental-strip-types frontend/tests/browser_same_origin.test.mjs` | **4 passed** | 5.21s | `0` |
+| **Cross-Origin Playwright Suite** | `node --test --experimental-strip-types frontend/tests/browser_cross_origin.test.mjs` | **4 passed** | 5.63s | `0` |
+| **Combined Frontend Test Suite** | `npm test --prefix frontend` | **14 passed** (6 unit + 4 cross-origin + 4 same-origin) | 5.87s | `0` |
+| **Frontend Production Build** | `npm.cmd run build --prefix frontend` | **Success** (built in 480ms, 0 errors) | 0.48s | `0` |
 | **Frontend Static Analysis & Lint** | `npm.cmd run lint --prefix frontend` | **Clean** (0 errors, 33 pre-existing style warnings) | 0.02s | `0` |
 
 ---
@@ -107,10 +110,10 @@ All test suites were executed on Python 3.14 (Backend) and Node.js v24.20.0 / Vi
 6. `analyzeResume` multipart upload attaches `X-CSRF-Token` and credentials on success (`PASS`)
 
 ### 3.2 Genuine Cross-Origin HTTPS Browser Tests (`frontend/tests/browser_cross_origin.test.mjs` — 4 Tests)
-- **Engine Binaries Tested & Dynamically Verified**: Chromium v159.0.8154.6, Firefox v159.0, WebKit v27.2.
-7. **Chromium Engine**: Live server preflight probe, genuine mutation-triggered browser preflight verification via CDP, CSRF token retrieval over HTTPS, `SameSite=None; Secure; HttpOnly` session cookie persistence, separate missing-token 403 rejection, 200 OK on authenticated mutation, session continuity across sequential mutations (`PASS`)
+- **Engine Binaries Tested & Dynamically Verified**: Chromium v159.0.8154.6, Firefox v159.0, WebKit v27.2 (Playwright package v1.65.1).
+7. **Chromium Engine**: Live server preflight probe, genuine mutation-triggered browser preflight verification via Chrome DevTools Protocol (CDP) strictly correlating request and response by `requestId`, verification of `Access-Control-Request-Method: POST` and `Access-Control-Request-Headers: content-type, x-csrf-token`, response status 200, exact `Access-Control-Allow-Origin: https://localhost:3443`, `Access-Control-Allow-Credentials: true`, `Access-Control-Allow-Headers: X-CSRF-Token`, CSRF token retrieval over HTTPS, `SameSite=None; Secure; HttpOnly` session cookie persistence, separate missing-token 403 rejection, 200 OK on authenticated mutation, session continuity across sequential mutations (`PASS`)
 8. **Firefox Engine**: Live server preflight probe, browser-originated preflight verification, CSRF token retrieval over HTTPS, session cookie persistence, separate missing-token 403 rejection, 200 OK on authenticated mutation (`PASS`)
-9. **WebKit Engine**: Live server preflight probe, browser-originated preflight verification, CSRF token retrieval over HTTPS, Apple ITP drop of cross-site cookies empirically verified, fail-closed mutation rejection with HTTP 403 Forbidden (`PASS`)
+9. **WebKit Engine (Default Behavior)**: Live server preflight probe, browser-originated preflight verification, CSRF token retrieval over HTTPS, native Apple ITP drop of cross-site cookies empirically verified under default settings (`sessionCookie === undefined`), fail-closed mutation rejection with HTTP 403 Forbidden (`PASS`)
 10. **CORS Disallowed Origin Enforcement**: Verified that cross-origin requests from untrusted origins (`https://unauthorized-site.com`) do not receive allow-credentials or allow-origin headers (`PASS`)
 
 ### 3.3 Real Browser Same-Origin Tests (`frontend/tests/browser_same_origin.test.mjs` — 4 Tests)
