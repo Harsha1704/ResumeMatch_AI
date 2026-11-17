@@ -6,6 +6,7 @@
 **Phase 6 Starting Commit**: `ad4bc5b2f5e7e6f5b892c5e788102a573b07c2f6`  
 **Phase 6.4 Starting Commit**: `64ba81caf0f5f659ac9c2a4b8afaf5cea3997499`  
 **Phase 6.5 Starting Commit**: `13535d12a982622bb803e1caef27da7f66b1be3d`  
+**Phase 6.6 Starting Commit**: `c8e51f901766899b9565590df4ad5850ca492f1e`  
 **Auditor**: Senior Security Engineer & Production-Readiness Reviewer  
 **Status**: **PASS (Hardened & Verified)**
 
@@ -98,9 +99,7 @@ All discovered security vulnerabilities were eliminated with minimal safe code m
 
 ---
 
-### 2.4 Browser Compatibility Claims, Versions & Empirical Separation (Phase 6.5)
-
-To prevent unwarranted generalization and clearly delineate empirical observations from theoretical policy, the browser assessment documents exact versions and separates test-context results from broader production reality:
+### 2.4 Browser Compatibility Verification & Genuine Mutation Preflight (Phase 6.6)
 
 #### Tested Software Versions
 - **Playwright Package**: `1.65.1`
@@ -108,32 +107,17 @@ To prevent unwarranted generalization and clearly delineate empirical observatio
 - **Firefox Binary**: `159.0`
 - **WebKit Binary**: `27.2`
 
-#### Empirical Observations by Engine
-
-1. **Cookie Storage in Tested Chromium Binary (v159.0.8154.6)**:
-   - In our automated HTTPS test harness between `https://localhost:3443` and `https://127.0.0.1:5443`, Chromium accepted and stored the `SameSite=None; Secure; HttpOnly` cross-origin session cookie in its cookie jar.
-   - Subsequent credentialed mutations sent the cookie successfully, passing session validation.
-   - *Limitation*: This observation applies to the automated Chromium context without user privacy extensions enabled. It does not predict behavior for Chrome users who have opted into Chrome Privacy Sandbox third-party cookie restrictions or have third-party cookies disabled in `chrome://settings/cookies`.
-
-2. **Cookie Storage in Tested Firefox Binary (v159.0)**:
-   - In our automated HTTPS test harness, Firefox stored the `SameSite=None; Secure; HttpOnly` cross-origin cookie and transmitted it on subsequent credentialed fetches.
-   - *Limitation*: Playwright launches Firefox with a fresh temporary test profile. In real-world desktop and mobile Firefox, Enhanced Tracking Protection (ETP) / Total Cookie Protection partitions cookies by default into per-site jars, which can break cross-site session sharing between distinct registered domains (`vercel.app` and `onrender.com`).
-
-3. **WebKit ITP Behavior in Tested WebKit Binary (v27.2)**:
-   - In our automated HTTPS test harness, Apple WebKit's native Intelligent Tracking Prevention (ITP) dropped third-party cross-origin cookies by default.
-   - As a direct consequence, the session cookie was **not** stored in WebKit's cookie jar, and subsequent mutations failed closed with HTTP 403 Forbidden (`CSRF token missing or invalid`).
-   - *Significance*: This provides direct empirical browser proof that decoupled cross-origin architectures fail for Apple WebKit / Safari users without custom domains or proxy rewrites.
-
-4. **General Browser Policy Analysis**:
-   - Modern browser vendors are systematically phasing out unpartitioned third-party cookies:
-     - **Apple Safari (WebKit)**: Enforces ITP across all iOS, iPadOS, and macOS browsers, blocking third-party cookies by default.
-     - **Google Chrome**: Incrementally deploying Tracking Protection / Privacy Sandbox to block third-party cookies.
-     - **Mozilla Firefox**: Default-enables Total Cookie Protection, isolating cookies to the top-level origin.
-     - **Privacy Extensions & Alternative Browsers**: Brave (Brave Shields), DuckDuckGo, and extensions like uBlock Origin and Privacy Badger strictly block third-party cookies.
-
-5. **Actual Production Compatibility Remains Unverified**:
-   - Because real users visit from diverse operating systems, browser versions, mobile webviews, corporate proxies, and privacy extensions, production cross-site compatibility across `vercel.app` -> `onrender.com` cannot be guaranteed based on local test runs.
-   - The only architecturally guaranteed solution across all browser engines is eliminating third-party cookies entirely through a **Same-Site Custom Domain** architecture or a single-origin reverse-proxy.
+#### Genuine Mutation-Triggered Preflight Verification
+- In [`frontend/tests/browser_cross_origin.test.mjs`](file:///d:/skillsync1/frontend/tests/browser_cross_origin.test.mjs), rather than issuing manual `fetch(method: OPTIONS)` calls with browser-forbidden headers, the suite triggers a real cross-origin POST mutation from the browser document context with `Content-Type: application/json` and `X-CSRF-Token`.
+- **Preflight Capture & Verification**:
+  - **In Chromium**: Intercepted the browser's internal network stack via Chrome DevTools Protocol (`Network.requestWillBeSent` and `Network.responseReceived`).
+    - Verified the captured request URL corresponds to `/api/candidate/update-role`.
+    - Verified `Access-Control-Request-Method: POST`.
+    - Verified `Access-Control-Request-Headers` includes both `content-type` and `x-csrf-token`.
+    - Verified response status `200 OK`, `Access-Control-Allow-Origin: https://localhost:3443`, `Access-Control-Allow-Credentials: true`, and `Access-Control-Allow-Headers: content-type, x-csrf-token`.
+  - **In Firefox**: Documented that Marionette internal socket networking evaluates the preflight internally without surfacing preflight requests/responses to high-level automation listeners. The test strictly separates server-header evidence (verified via the standalone `APIRequestContext` probe) from browser-enforced mutation evidence (the browser evaluates the preflight and successfully completes the protected POST with HTTP 200 OK).
+  - **In WebKit**: Documented that WebKit native ITP drops third-party cross-origin cookies by default, causing the mutation to fail closed with HTTP 403 Forbidden.
+- **Separate Missing-Token Rejection**: Tested separately from the authenticated flow; verified that cross-origin mutations without `X-CSRF-Token` return HTTP 403 Forbidden (`CSRF token missing or invalid`).
 
 ---
 
@@ -150,20 +134,48 @@ To prevent unwarranted generalization and clearly delineate empirical observatio
   - `SESSION_COOKIE_DOMAIN = None` (Host-only cookie; omit `Domain` attribute).
 - **CORS Whitelist**: `FRONTEND_ORIGINS = "https://app.resumematch.ai"`
 
-#### Detailed Security Rationale: Why Host-Only Cookie is Safer
-Setting `Domain=.resumematch.ai` creates a domain-scoped cookie visible to every subdomain under `resumematch.ai`. Preferring a **host-only** API session cookie (scoped strictly to `api.resumematch.ai`) provides three critical security defenses:
-
-1. **Subdomain Isolation & Blast Radius Containment**:
-   - A host-only cookie scoped strictly to `api.resumematch.ai` is never transmitted to, accessible by, or shared with other subdomains (such as `app.resumematch.ai`, `blog.resumematch.ai`, `docs.resumematch.ai`, or third-party marketing tools hosted on other subdomains).
-   - If an XSS vulnerability occurs on the frontend SPA or any other corporate subdomain, the attacker cannot read, exfiltrate, or manipulate the API session cookie.
-2. **Cookie Tossing & Overwrite Prevention**:
-   - Under RFC 6265, a parent domain or sibling subdomain can "toss" a domain-scoped cookie (`Domain=.resumematch.ai`) to shadow or overwrite a host's cookie. If an attacker gains control of any minor subdomain, they could toss a session cookie to corrupt or hijack API sessions. Host-only cookies are protected against sibling subdomain tossing.
-3. **Principle of Least Privilege**:
-   - Omission of the `Domain` attribute follows the principle of least privilege by restricting credential transmission exclusively to the exact origin that processes authentication and state.
+#### Corrected Security Scope & Limitations: What Host-Only Cookies Do and Do NOT Prevent
+1. **What Host-Only Cookies Protect**:
+   - Setting `SESSION_COOKIE_DOMAIN = None` creates a host-only cookie scoped strictly to the FQDN `api.resumematch.ai`.
+   - Sibling subdomains (e.g. `app.resumematch.ai`, `blog.resumematch.ai`, `docs.resumematch.ai`, or third-party marketing services) never receive the API session cookie directly in ambient HTTP requests.
+   - Sibling subdomains cannot "toss" a domain-scoped cookie (`Domain=.resumematch.ai`) to shadow or overwrite the API cookie under RFC 6265 rules.
+   - `HttpOnly=True` prevents client-side JavaScript on any origin from reading the cookie string via `document.cookie`.
+2. **What Host-Only Cookies Do NOT Protect (Security Reality)**:
+   - Host-only cookies do **NOT** prevent an XSS vulnerability on the frontend (`app.resumematch.ai`) from initiating credentialed cross-origin requests to `api.resumematch.ai`.
+   - Because `api.resumematch.ai` whitelists `app.resumematch.ai` in CORS with `supports_credentials=True`, malicious JavaScript executing on `app.resumematch.ai` can issue `fetch('https://api.resumematch.ai/...', { credentials: 'include' })`, and the browser will automatically attach the host-only session cookie.
+3. **Mandatory Defense-in-Depth Requirements**:
+   - Because cookies cannot prevent authenticated request execution by compromised frontend JavaScript, robust application security requires:
+     - Strict Content Security Policy (CSP) to restrict script sources and exfiltration endpoints.
+     - Context-aware HTML and JavaScript output encoding to prevent script injection.
+     - Ongoing dependency vulnerability scanning.
+     - Session-bound CSRF token validation on all mutating endpoints.
+     - Fine-grained server-side authorization and rate limiting.
 
 ---
 
-### 2.6 Document Parsing Limits & Archive Bomb Protection — VERIFIED
+### 2.6 Production Readiness Claims & Verification Tiers
+
+To ensure complete transparency and eliminate assumptions, production configuration is strictly classified into five distinct categories:
+
+1. **A. Verified Source Configuration**:
+   - `frontend/src/services/api.ts` uses `credentials: 'include'`.
+   - `frontend/vercel.json` contains ONLY SPA fallback `/(.*) -> /index.html`; no `/api/*` rewrites exist; reverse-proxy is **NOT active** in source.
+   - `render.yaml` sets `FRONTEND_ORIGIN: https://resumematch-ai.vercel.app` and `RESUMEMATCH_ENV: production`.
+   - `app.py` in production sets `SameSite=None`, `Secure=True`, `HttpOnly=True`, `Domain=None`, and allows CORS for `FRONTEND_ORIGIN`.
+2. **B. Verified Cloud Deployment Settings**:
+   - Target frontend: `https://resumematch-ai.vercel.app` (registered on Vercel).
+   - Target backend: `https://resumematch-ai-api.onrender.com` (registered on Render).
+3. **C. Unknown Private Dashboard Settings**:
+   - Exact environment variables currently set inside Vercel's private cloud dashboard project settings for `resumematch-ai` (e.g. build-time `VITE_API_BASE_URL`).
+4. **D. Recommended Future Architecture (Not Currently Deployed)**:
+   - Same-site apex domain alignment (`app.resumematch.ai` + `api.resumematch.ai`) with host-only cookie, or single-origin reverse-proxy rewrite. This architecture is **NOT currently deployed or active** on production DNS or cloud settings.
+5. **E. Actual Production Compatibility (Remains Unverified)**:
+   - Actual production compatibility remains **unverified** until custom domains and cloud deployment settings are configured, deployed, and tested in live environments across real user devices and networks.
+   - Under current decoupled deployment (`https://resumematch-ai.vercel.app` calling `https://resumematch-ai-api.onrender.com`), the application is **incompatible with Safari/WebKit** due to Apple ITP blocking third-party cookies.
+
+---
+
+### 2.7 Document Parsing Limits & Archive Bomb Protection — VERIFIED
 - **File Upload Limits**:
   - Maximum upload size strictly enforced at 16 MB (`MAX_CONTENT_LENGTH = 16 * 1024 * 1024`).
   - Supported extensions restricted to `.pdf`, `.docx`, and `.txt`.
@@ -176,7 +188,7 @@ Setting `Domain=.resumematch.ai` creates a domain-scoped cookie visible to every
   - Rejects corrupted or encrypted PDFs without OCR fallback.
   - Rejects binary executable signatures (`MZ` for PE/EXE, `ELF` for Linux binaries, null bytes in TXT files).
 
-### 2.7 SQLite Concurrency, Transactions & Persistence — VERIFIED
+### 2.8 SQLite Concurrency, Transactions & Persistence — VERIFIED
 - **Database Engine**:
   - SQLite 3 with Write-Ahead Logging (`PRAGMA journal_mode=WAL`), `PRAGMA synchronous=NORMAL`, and `PRAGMA busy_timeout=30000`.
   - Connection isolation: thread-safe connection pooling per thread (`check_same_thread=False`).
@@ -184,7 +196,7 @@ Setting `Domain=.resumematch.ai` creates a domain-scoped cookie visible to every
   - Session mutations (`create_session`, `submit_answer`, `next_question`, `complete_session`, `delete_session`) use context-managed database transactions.
   - If disk write fails, the database transaction rolls back, in-memory state is restored to its prior state (preventing split-brain divergence), and an observable `500 Internal Server Error` is returned with structured logging.
 
-### 2.8 Information Leakage & Error Handling — VERIFIED
+### 2.9 Information Leakage & Error Handling — VERIFIED
 - **Structured Error Responses**:
   - Database exceptions are caught, logged to server logs with stack traces, and returned to clients as sanitized JSON error messages (`500 Internal Server Error`).
   - Database connection strings, SQL queries, internal filesystem paths, and exception tracebacks are never leaked in API response payloads.

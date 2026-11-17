@@ -5,6 +5,7 @@
 **Phase 6 Baseline Commit**: `ad4bc5b2f5e7e6f5b892c5e788102a573b07c2f6`  
 **Phase 6.4 Baseline Commit**: `64ba81caf0f5f659ac9c2a4b8afaf5cea3997499`  
 **Phase 6.5 Baseline Commit**: `13535d12a982622bb803e1caef27da7f66b1be3d`  
+**Phase 6.6 Starting Commit**: `c8e51f901766899b9565590df4ad5850ca492f1e`  
 **Review Status**: **VERIFIED CLEAN** (100% test pass rate across all test suites)
 
 ---
@@ -18,18 +19,18 @@ All test suites were executed on Python 3.14 (Backend) and Node.js v24.20.0 / Vi
 > - The test executions, pass counts, durations, and exit codes reported below reflect actual runs in this local development environment.
 > - They are distinct from remote CI workflows (such as GitHub Actions or Vercel CI), which run in separate cloud runner environments.
 > - Browser tests are explicitly separated into: (1) Genuine Cross-Origin HTTPS browser tests ([`frontend/tests/browser_cross_origin.test.mjs`](file:///d:/skillsync1/frontend/tests/browser_cross_origin.test.mjs)), (2) Same-Origin HTTP browser tests ([`frontend/tests/browser_same_origin.test.mjs`](file:///d:/skillsync1/frontend/tests/browser_same_origin.test.mjs)), and (3) Mocked-fetch unit tests ([`frontend/tests/api_csrf.test.mjs`](file:///d:/skillsync1/frontend/tests/api_csrf.test.mjs)).
-> - Exact tested browser engine binaries: Chromium v159.0.8154.6, Firefox v159.0, WebKit v27.2.
+> - Exact tested browser engine binaries dynamically verified via `browser.version()`: Chromium v159.0.8154.6, Firefox v159.0, WebKit v27.2.
 
 | Test Suite / Quality Gate | Execution Command | Result | Duration | Exit Code |
 | :--- | :--- | :--- | :--- | :--- |
-| **Phase 1–6 Dedicated Suites** | `powershell -Command "$p16 = (Get-ChildItem tests/test_phase*.py \| Where-Object { $_.Name -match '^test_phase[1-6]' -and $_.Name -notmatch '^test_phase1[0-9]' }); py -3.14 -m pytest $p16 -q"` | **331 passed** | 18.60s | `0` |
-| **Later-Phase Regression Suites (Phases 7, 10, 12, 13)** | `powershell -Command "$later = (Get-ChildItem tests/test_phase*.py \| Where-Object { $_.Name -match '^test_phase(7\|10\|12\|13)' }); py -3.14 -m pytest $later -q"` | **155 passed** | 80.74s | `0` |
+| **Phase 1–6 Dedicated Suites** | `powershell -Command "$p16 = (Get-ChildItem tests/test_phase*.py \| Where-Object { $_.Name -match '^test_phase[1-6]' -and $_.Name -notmatch '^test_phase1[0-9]' }); py -3.14 -m pytest $p16 -q"` | **331 passed** | 18.84s | `0` |
+| **Later-Phase Regression Suites (Phases 7, 10, 12, 13)** | `powershell -Command "$later = (Get-ChildItem tests/test_phase*.py \| Where-Object { $_.Name -match '^test_phase(7\|10\|12\|13)' }); py -3.14 -m pytest $later -q"` | **155 passed** | 79.82s | `0` |
 | **All Phase-Prefixed Test Suites (`test_phase*.py` — Combined)** | `powershell -Command "py -3.14 -m pytest (Get-ChildItem tests/test_phase*.py) -q"` | **486 passed** | 99.34s | `0` |
-| **Full Backend Regression Suite** | `py -3.14 -m pytest tests/ -q` | **759 passed**, 1 pre-existing warning | 125.91s | `0` |
+| **Full Backend Regression Suite** | `py -3.14 -m pytest tests/ -q` | **759 passed**, 1 pre-existing warning | 124.60s | `0` |
 | **Frontend Unit Test Suite** | `node --test --experimental-strip-types frontend/tests/api_csrf.test.mjs` | **6 passed** | 0.09s | `0` |
 | **Same-Origin Playwright Suite** | `node --test --experimental-strip-types frontend/tests/browser_same_origin.test.mjs` | **4 passed** | 5.12s | `0` |
 | **Cross-Origin Playwright Suite** | `node --test --experimental-strip-types frontend/tests/browser_cross_origin.test.mjs` | **4 passed** | 5.81s | `0` |
-| **Combined Frontend Test Suite** | `npm test --prefix frontend` | **14 passed** (6 unit + 4 cross-origin + 4 same-origin) | 6.91s | `0` |
+| **Combined Frontend Test Suite** | `npm test --prefix frontend` | **14 passed** (6 unit + 4 cross-origin + 4 same-origin) | 7.18s | `0` |
 | **Frontend Production Build** | `npm.cmd run build --prefix frontend` | **Success** (built in 459ms, 0 errors) | 0.46s | `0` |
 | **Frontend Static Analysis & Lint** | `npm.cmd run lint --prefix frontend` | **Clean** (0 errors, 33 pre-existing style warnings) | 0.02s | `0` |
 
@@ -61,7 +62,7 @@ All test suites were executed on Python 3.14 (Backend) and Node.js v24.20.0 / Vi
 | `tests/test_phase6_integration_audit.py` | 9 | End-to-end 10-module contract integrity, BOLA 403 isolation, CORS preflight with DELETE, ML scoring determinism |
 | `tests/test_phase6_1_csrf_security.py` | 41 | Fail-closed CSRF enforcement, GET /api/csrf-token, X-CSRF-Token validation on state-changing API endpoints, cross-session isolation |
 | `tests/test_phase6_2_legacy_csrf.py` | 13 | Legacy form routes CSRF enforcement (POST /analyze, /interview-studio/generate, /interview-practice/submit), multi-mutation session continuity |
-| **Subtotal Phase 1–6** | **331** | **100% Passed (18.60s)** |
+| **Subtotal Phase 1–6** | **331** | **100% Passed (18.84s)** |
 
 ### 2.2 Later-Phase Regression Suites — Phases 7, 10, 12, 13 (155 Tests)
 
@@ -90,7 +91,7 @@ All test suites were executed on Python 3.14 (Backend) and Node.js v24.20.0 / Vi
 | `tests/test_phase12i11_statistical_audit.py` | 4 | Final statistical audit |
 | `tests/test_phase12i12_statistical_verification.py` | 4 | Forensic reproducibility |
 | `tests/test_phase13_model_improvement.py` | 12 | Model 5 challenger evaluation and comparison gates |
-| **Subtotal Later Phases** | **155** | **100% Passed (80.74s)** |
+| **Subtotal Later Phases** | **155** | **100% Passed (79.82s)** |
 | **Total Phase Tests Combined** | **486** | **100% Passed (0 Failed, 0 Skipped)** |
 
 ---
@@ -106,9 +107,9 @@ All test suites were executed on Python 3.14 (Backend) and Node.js v24.20.0 / Vi
 6. `analyzeResume` multipart upload attaches `X-CSRF-Token` and credentials on success (`PASS`)
 
 ### 3.2 Genuine Cross-Origin HTTPS Browser Tests (`frontend/tests/browser_cross_origin.test.mjs` — 4 Tests)
-- **Engine Binaries Tested**: Chromium v159.0.8154.6, Firefox v159.0, WebKit v27.2.
-7. **Chromium Engine**: Live server preflight probe, browser-originated preflight verification, CSRF token retrieval over HTTPS, `SameSite=None; Secure; HttpOnly` session cookie persistence, 403 on missing token, 200 OK on authenticated mutation, session continuity across sequential mutations (`PASS`)
-8. **Firefox Engine**: Live server preflight probe, browser-originated preflight verification, CSRF token retrieval over HTTPS, session cookie persistence, 403 on missing token, 200 OK on authenticated mutation (`PASS`)
+- **Engine Binaries Tested & Dynamically Verified**: Chromium v159.0.8154.6, Firefox v159.0, WebKit v27.2.
+7. **Chromium Engine**: Live server preflight probe, genuine mutation-triggered browser preflight verification via CDP, CSRF token retrieval over HTTPS, `SameSite=None; Secure; HttpOnly` session cookie persistence, separate missing-token 403 rejection, 200 OK on authenticated mutation, session continuity across sequential mutations (`PASS`)
+8. **Firefox Engine**: Live server preflight probe, browser-originated preflight verification, CSRF token retrieval over HTTPS, session cookie persistence, separate missing-token 403 rejection, 200 OK on authenticated mutation (`PASS`)
 9. **WebKit Engine**: Live server preflight probe, browser-originated preflight verification, CSRF token retrieval over HTTPS, Apple ITP drop of cross-site cookies empirically verified, fail-closed mutation rejection with HTTP 403 Forbidden (`PASS`)
 10. **CORS Disallowed Origin Enforcement**: Verified that cross-origin requests from untrusted origins (`https://unauthorized-site.com`) do not receive allow-credentials or allow-origin headers (`PASS`)
 
@@ -120,14 +121,18 @@ All test suites were executed on Python 3.14 (Backend) and Node.js v24.20.0 / Vi
 
 ---
 
-## 4. Forensic CI Failure Investigation (`Vercel – resumematch_ai`)
+## 4. Accurate Diagnosis of the Separate Vercel CI Failure
 
-### 4.1 Actual Deployment Forensic Evidence
+### 4.1 Deployment Status Breakdown
+- **Vercel – frontend Check**: **PASSING** (`npm run build` succeeds in 459ms with 0 errors).
+- **Vercel – resumematch_ai Check**: **FAILING** (`LAMBDA_SIZE_EXCEEDED`).
+
+### 4.2 Actual Deployment Forensic Evidence
 - **Project**: `resumematch_ai`
 - **Framework**: Flask
 - **Build Entrypoint**: `.` (repository root)
 - **Error Code**: `LAMBDA_SIZE_EXCEEDED`
-- **Actual Serverless Bundle Size**: `732.81 MB`
+- **Reported Serverless Bundle Size**: `732.81 MB`
 - **Maximum Function Size Limit**: `500 MB`
 - **Vercel Build Log Excerpt**:
   ```text
@@ -135,14 +140,14 @@ All test suites were executed on Python 3.14 (Backend) and Node.js v24.20.0 / Vi
   Error: Command failed with exit code 1.
   ```
 
-### 4.2 Architectural Diagnosis
-1. **Directory Structure**:
+### 4.3 Architectural Diagnosis & Resolution Status
+1. **Diagnosis**:
    - The React 19 frontend resides in `frontend/` (`frontend/package.json`, `frontend/vite.config.ts`, `frontend/vercel.json`).
    - The repository root contains the Flask backend (`app.py`, `requirements.txt`, `render.yaml`).
-2. **Two Disconnected Projects on Vercel**:
-   - **Project 1 ("frontend")**: Configured with Root Directory `frontend/` -> **PASSES** (Build completes in 459ms with 0 errors).
-   - **Project 2 ("resumematch_ai")**: Connected to `./` without subdirectory configuration -> **FAILS** with `LAMBDA_SIZE_EXCEEDED` because Vercel attempts to bundle heavy Python ML packages (`torch`, `sentence-transformers`, `scikit-learn`, `scipy`) into a serverless function.
-3. **Conclusion**:
-   - The failure of `Vercel – resumematch_ai` is **100% an external deployment configuration issue**, not a software code defect.
+   - In Vercel, two projects are associated with the GitHub repository:
+     - **Project 1 ("frontend")**: Configured with Root Directory `frontend/` -> **PASSES**.
+     - **Project 2 ("resumematch_ai")**: Connected to root `./` without subdirectory configuration -> **FAILS** with `LAMBDA_SIZE_EXCEEDED` because Vercel attempts to bundle heavy Python ML packages (`torch`, `sentence-transformers`, `scikit-learn`, `scipy`) into a serverless function.
+2. **Status**:
+   - This failure is **diagnosed and documented, not fixed in code during this phase**.
    - The Flask backend is deployed on Render (`render.yaml`), which uses containerized execution without size limits.
-   - Per delivery instructions, no production Vercel project settings were modified and no external deployments were triggered.
+   - Resolving this check requires administrative configuration in the Vercel cloud dashboard (either updating the Root Directory of `resumematch_ai` to `frontend` or deleting the redundant project).

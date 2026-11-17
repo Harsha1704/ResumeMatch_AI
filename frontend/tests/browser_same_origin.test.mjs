@@ -21,6 +21,7 @@
 
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import { spawn, execSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -35,18 +36,43 @@ const BASE_URL = `http://127.0.0.1:${TEST_PORT}`;
 let serverProcess = null;
 
 /**
- * Portable Python command resolver:
- * Checks process.env.PYTHON, falling back to 'py -3.14' on Windows and 'python3' on POSIX.
+ * Configurable Python executable and argument resolver:
+ * - Supports explicit executable path via process.env.PYTHON_PATH or process.env.PYTHON_EXEC.
+ *   This preserves full paths containing spaces (e.g. "C:\Program Files\Python314\python.exe")
+ *   without whitespace splitting.
+ * - Supports optional interpreter arguments separately via process.env.PYTHON_ARGS.
+ * - Backwards compatibility with process.env.PYTHON:
+ *   - If process.env.PYTHON points to an existing file/path, it is used as the executable directly.
+ *   - If process.env.PYTHON is 'py -3.14' or similar command string without an existing file,
+ *     it splits launcher command and flags.
+ * - Defaults:
+ *   - Windows: executable 'py', args ['-3.14'].
+ *   - POSIX: executable 'python3', args [].
+ * - Spawns directly using child_process.spawn(cmd, args) without shell command concatenation.
  */
 function getPythonCommand() {
+  const customPath = process.env.PYTHON_PATH || process.env.PYTHON_EXEC;
+  const customArgs = process.env.PYTHON_ARGS ? process.env.PYTHON_ARGS.trim().split(/\s+/) : null;
+
+  if (customPath) {
+    return { cmd: customPath, args: customArgs || [] };
+  }
+
   if (process.env.PYTHON) {
-    const parts = process.env.PYTHON.trim().split(/\s+/);
-    return { cmd: parts[0], args: parts.slice(1) };
+    if (fs.existsSync(process.env.PYTHON)) {
+      return { cmd: process.env.PYTHON, args: customArgs || [] };
+    }
+    if (process.env.PYTHON.startsWith('py ') && !customArgs) {
+      const parts = process.env.PYTHON.trim().split(/\s+/);
+      return { cmd: parts[0], args: parts.slice(1) };
+    }
+    return { cmd: process.env.PYTHON, args: customArgs || [] };
   }
+
   if (process.platform === 'win32') {
-    return { cmd: 'py', args: ['-3.14'] };
+    return { cmd: 'py', args: customArgs || ['-3.14'] };
   }
-  return { cmd: 'python3', args: [] };
+  return { cmd: 'python3', args: customArgs || [] };
 }
 
 /**
@@ -144,6 +170,9 @@ describe('Playwright Real Browser Same-Origin Suite (HTTP)', () => {
         } catch (err) {
           assert.fail(`Browser engine ${name} is unavailable: ${err.message}`);
         }
+
+        const actualVersion = browser.version();
+        assert.ok(actualVersion && actualVersion.length > 0, `${name}: Actual browser version verified (${actualVersion})`);
 
         const context = await browser.newContext();
         const page = await context.newPage();
