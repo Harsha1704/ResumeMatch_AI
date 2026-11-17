@@ -151,23 +151,28 @@ class InterviewSessionStore:
     def get_session(self, session_id: str, owner_id: Optional[str] = None) -> Optional[Dict[str, Any]]:
         """
         Retrieves a session by ID. If owner_id is provided, enforces ownership isolation.
+        Raises sqlite3.Error or Exception on database failure so read outages are observable.
         """
-        with self._get_connection() as conn:
-            cursor = conn.cursor()
-            if owner_id:
-                cursor.execute(
-                    "SELECT * FROM interview_sessions WHERE session_id = ? AND owner_id = ?",
-                    (session_id, owner_id)
-                )
-            else:
-                cursor.execute(
-                    "SELECT * FROM interview_sessions WHERE session_id = ?",
-                    (session_id,)
-                )
-            row = cursor.fetchone()
-            if not row:
-                return None
-            return self._row_to_dict(row)
+        try:
+            with self._get_connection() as conn:
+                cursor = conn.cursor()
+                if owner_id:
+                    cursor.execute(
+                        "SELECT * FROM interview_sessions WHERE session_id = ? AND owner_id = ?",
+                        (session_id, owner_id)
+                    )
+                else:
+                    cursor.execute(
+                        "SELECT * FROM interview_sessions WHERE session_id = ?",
+                        (session_id,)
+                    )
+                row = cursor.fetchone()
+                if not row:
+                    return None
+                return self._row_to_dict(row)
+        except Exception as e:
+            logger.error("Failed to read interview session %s from SQLite: %s", session_id, e, exc_info=True)
+            raise
 
     def list_sessions(
         self,
@@ -177,39 +182,44 @@ class InterviewSessionStore:
     ) -> List[Dict[str, Any]]:
         """
         Lists interview sessions for a given owner.
+        Raises sqlite3.Error or Exception on database failure so outages are not masked as empty lists.
         """
-        with self._get_connection() as conn:
-            cursor = conn.cursor()
-            if analysis_id:
-                cursor.execute(
-                    """
-                    SELECT session_id, owner_id, analysis_id, candidate_filename, job_title,
-                           target_role, interview_mode, difficulty, created_at, updated_at,
-                           completed_at, is_completed, elapsed_seconds, current_index,
-                           questions_json, answers_json, evaluations_json, results_summary_json
-                    FROM interview_sessions
-                    WHERE owner_id = ? AND analysis_id = ?
-                    ORDER BY created_at DESC
-                    LIMIT ?
-                    """,
-                    (owner_id, analysis_id, limit)
-                )
-            else:
-                cursor.execute(
-                    """
-                    SELECT session_id, owner_id, analysis_id, candidate_filename, job_title,
-                           target_role, interview_mode, difficulty, created_at, updated_at,
-                           completed_at, is_completed, elapsed_seconds, current_index,
-                           questions_json, answers_json, evaluations_json, results_summary_json
-                    FROM interview_sessions
-                    WHERE owner_id = ?
-                    ORDER BY created_at DESC
-                    LIMIT ?
-                    """,
-                    (owner_id, limit)
-                )
-            rows = cursor.fetchall()
-            return [self._row_to_dict(r) for r in rows]
+        try:
+            with self._get_connection() as conn:
+                cursor = conn.cursor()
+                if analysis_id:
+                    cursor.execute(
+                        """
+                        SELECT session_id, owner_id, analysis_id, candidate_filename, job_title,
+                               target_role, interview_mode, difficulty, created_at, updated_at,
+                               completed_at, is_completed, elapsed_seconds, current_index,
+                               questions_json, answers_json, evaluations_json, results_summary_json
+                        FROM interview_sessions
+                        WHERE owner_id = ? AND analysis_id = ?
+                        ORDER BY created_at DESC
+                        LIMIT ?
+                        """,
+                        (owner_id, analysis_id, limit)
+                    )
+                else:
+                    cursor.execute(
+                        """
+                        SELECT session_id, owner_id, analysis_id, candidate_filename, job_title,
+                               target_role, interview_mode, difficulty, created_at, updated_at,
+                               completed_at, is_completed, elapsed_seconds, current_index,
+                               questions_json, answers_json, evaluations_json, results_summary_json
+                        FROM interview_sessions
+                        WHERE owner_id = ?
+                        ORDER BY created_at DESC
+                        LIMIT ?
+                        """,
+                        (owner_id, limit)
+                    )
+                rows = cursor.fetchall()
+                return [self._row_to_dict(r) for r in rows]
+        except Exception as e:
+            logger.error("Failed to list interview sessions for owner %s from SQLite: %s", owner_id, e, exc_info=True)
+            raise
 
     def delete_session(self, session_id: str, owner_id: str) -> bool:
         """
@@ -233,8 +243,13 @@ class InterviewSessionStore:
     def get_progress(self, owner_id: str, analysis_id: Optional[str] = None) -> Dict[str, Any]:
         """
         Aggregates practice progress metrics across user's sessions.
+        Raises on database read failure so outages are observable.
         """
-        sessions = self.list_sessions(owner_id, analysis_id=analysis_id, limit=200)
+        try:
+            sessions = self.list_sessions(owner_id, analysis_id=analysis_id, limit=200)
+        except Exception as e:
+            logger.error("Failed to read sessions for progress aggregation (owner: %s): %s", owner_id, e, exc_info=True)
+            raise
         total_sessions = len(sessions)
         completed_sessions = sum(1 for s in sessions if s.get("is_completed"))
 

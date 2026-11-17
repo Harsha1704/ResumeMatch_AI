@@ -80,9 +80,13 @@ class InterviewSession:
         evaluator: Optional[HeuristicAnswerEvaluator] = None,
         candidate_evidence: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
-        """Records an answer and computes heuristic evaluation."""
+        """Records an answer and computes heuristic evaluation with state rollback on persistence failure."""
         if 0 <= question_index < len(self.questions):
             idx_str = str(question_index)
+            old_ans = self.answers.get(idx_str)
+            old_eval = self.evaluations.get(idx_str)
+            old_updated = self.updated_at
+
             self.answers[idx_str] = (answer_text or "").strip()
             self.updated_at = time.time()
 
@@ -98,39 +102,91 @@ class InterviewSession:
                 candidate_evidence=evidence
             )
             self.evaluations[idx_str] = eval_res
-            self._save_to_store()
+
+            try:
+                self._save_to_store()
+            except Exception:
+                # Rollback in-memory state on failed write
+                if old_ans is not None:
+                    self.answers[idx_str] = old_ans
+                else:
+                    self.answers.pop(idx_str, None)
+                if old_eval is not None:
+                    self.evaluations[idx_str] = old_eval
+                else:
+                    self.evaluations.pop(idx_str, None)
+                self.updated_at = old_updated
+                raise
+
             return eval_res
         return {}
 
     def toggle_guidance(self, question_index: int, revealed: bool = True):
         if 0 <= question_index < len(self.questions):
-            self.guidance_revealed[str(question_index)] = revealed
-            self._save_to_store()
+            idx_str = str(question_index)
+            old_val = self.guidance_revealed.get(idx_str)
+            self.guidance_revealed[idx_str] = revealed
+            try:
+                self._save_to_store()
+            except Exception:
+                if old_val is not None:
+                    self.guidance_revealed[idx_str] = old_val
+                else:
+                    self.guidance_revealed.pop(idx_str, None)
+                raise
 
     def next_question(self) -> Optional[Dict[str, Any]]:
         if self.current_index < len(self.questions) - 1:
+            old_idx = self.current_index
             self.current_index += 1
-            self._save_to_store()
+            try:
+                self._save_to_store()
+            except Exception:
+                self.current_index = old_idx
+                raise
         return self.get_current_question()
 
     def prev_question(self) -> Optional[Dict[str, Any]]:
         if self.current_index > 0:
+            old_idx = self.current_index
             self.current_index -= 1
-            self._save_to_store()
+            try:
+                self._save_to_store()
+            except Exception:
+                self.current_index = old_idx
+                raise
         return self.get_current_question()
 
     def jump_to(self, index: int) -> Optional[Dict[str, Any]]:
         if 0 <= index < len(self.questions):
+            old_idx = self.current_index
             self.current_index = index
-            self._save_to_store()
+            try:
+                self._save_to_store()
+            except Exception:
+                self.current_index = old_idx
+                raise
         return self.get_current_question()
 
     def complete_session(self) -> Dict[str, Any]:
+        old_completed = self.is_completed
+        old_completed_at = self.completed_at
+        old_updated = self.updated_at
+
         self.is_completed = True
         self.completed_at = time.time()
         self.updated_at = self.completed_at
         summary = self.get_results_summary()
-        self._save_to_store(summary=summary)
+
+        try:
+            self._save_to_store(summary=summary)
+        except Exception:
+            # Rollback in-memory completion state
+            self.is_completed = old_completed
+            self.completed_at = old_completed_at
+            self.updated_at = old_updated
+            raise
+
         return summary
 
     def get_results_summary(self) -> Dict[str, Any]:
@@ -312,10 +368,15 @@ class InterviewSessionManager:
             owner_id=owner_id,
             candidate_evidence=candidate_evidence
         )
-        ACTIVE_SESSIONS[session.session_id] = session
-        # Persist immediately to SQLite
-        session._save_to_store()
+        # Persist immediately to SQLite before activating in-memory cache
+        try:
+            session._save_to_store()
+        except Exception as e:
+            ACTIVE_SESSIONS.pop(session.session_id, None)
+            logger.error("Failed to persist new session %s: %s", session.session_id, e, exc_info=True)
+            raise
 
+        ACTIVE_SESSIONS[session.session_id] = session
         # Keep memory cache bounded to 100 active sessions
         if len(ACTIVE_SESSIONS) > 100:
             oldest_key = next(iter(ACTIVE_SESSIONS))
@@ -327,6 +388,7 @@ class InterviewSessionManager:
         """
         Retrieves a session from memory or persistent SQLite.
         If owner_id is provided, enforces session ownership isolation.
+        Raises on database read errors so outages are observable.
         """
         session = ACTIVE_SESSIONS.get(session_id)
         if session:
@@ -342,9 +404,10 @@ class InterviewSessionManager:
                 session = InterviewSession.from_dict(data)
                 ACTIVE_SESSIONS[session.session_id] = session
                 return session
-        except Exception:
-            pass
-        return None
+            return None
+        except Exception as e:
+            logger.error("Database read failure in InterviewSessionManager.get_session(%s): %s", session_id, e, exc_info=True)
+            raise
 
     @staticmethod
     def delete_session(session_id: str, owner_id: Optional[str] = None) -> bool:
@@ -356,13 +419,10 @@ class InterviewSessionManager:
         if session and owner_id and session.owner_id != owner_id:
             return False
 
-        if session_id in ACTIVE_SESSIONS:
-            del ACTIVE_SESSIONS[session_id]
-
         try:
             store = get_interview_session_store()
             if owner_id:
-                return store.delete_session(session_id, owner_id=owner_id)
+                deleted = store.delete_session(session_id, owner_id=owner_id)
             else:
                 # Direct delete if no owner specified
                 with store._get_connection() as conn:
@@ -370,7 +430,9 @@ class InterviewSessionManager:
                     cursor.execute("DELETE FROM interview_sessions WHERE session_id = ?", (session_id,))
                     deleted = cursor.rowcount > 0
                     conn.commit()
-                    return deleted
+            if deleted or (session and (not owner_id or session.owner_id == owner_id)):
+                ACTIVE_SESSIONS.pop(session_id, None)
+            return deleted
         except Exception as e:
             logger.error("Failed to delete interview session %s: %s", session_id, e, exc_info=True)
             raise
@@ -379,28 +441,24 @@ class InterviewSessionManager:
     def list_sessions(owner_id: str, analysis_id: Optional[str] = None, limit: int = 50) -> List[Dict[str, Any]]:
         """
         Retrieves session history for an owner.
+        Raises on database read errors so outages are observable.
         """
         try:
             store = get_interview_session_store()
             return store.list_sessions(owner_id=owner_id, analysis_id=analysis_id, limit=limit)
-        except Exception:
-            return []
+        except Exception as e:
+            logger.error("Database read failure in InterviewSessionManager.list_sessions(%s): %s", owner_id, e, exc_info=True)
+            raise
 
     @staticmethod
     def get_progress(owner_id: str, analysis_id: Optional[str] = None) -> Dict[str, Any]:
         """
         Aggregates practice progress metrics.
+        Raises on database read errors so outages are observable.
         """
         try:
             store = get_interview_session_store()
             return store.get_progress(owner_id=owner_id, analysis_id=analysis_id)
-        except Exception:
-            return {
-                "total_sessions": 0,
-                "completed_sessions": 0,
-                "total_questions_attempted": 0,
-                "average_score": 0.0,
-                "categories_practiced": {},
-                "struggled_topics": [],
-                "recent_sessions": []
-            }
+        except Exception as e:
+            logger.error("Database read failure in InterviewSessionManager.get_progress(%s): %s", owner_id, e, exc_info=True)
+            raise

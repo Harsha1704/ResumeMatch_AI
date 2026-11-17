@@ -963,19 +963,36 @@ def api_interview_confirm_activity():
 
 @app.route("/api/interview/reset", methods=["POST"])
 def api_interview_reset():
-    """Clears the active interview session with CSRF protection."""
+    """Clears the active interview session with CSRF and ownership verification."""
     data = request.get_json(silent=True) or request.form.to_dict()
     csrf_err = _validate_interview_csrf(data if isinstance(data, dict) else None)
     if csrf_err:
         return csrf_err
 
-    session_id = session.pop("active_interview_session_id", None)
-    if session_id:
+    owner_id = _get_or_create_interview_owner_id()
+    raw_sid = (data.get("session_id") if isinstance(data, dict) else None) or session.get("active_interview_session_id")
+    if raw_sid:
+        if not isinstance(raw_sid, str) or not raw_sid.strip():
+            return jsonify({"status": "error", "message": "Invalid session_id"}), 400
+        target_sid = raw_sid.strip()
         try:
-            InterviewSessionManager.delete_session(session_id)
+            session_obj = InterviewSessionManager.get_session(target_sid)
         except Exception as e:
-            logger.error("Failed to delete interview session %s on reset: %s", session_id, e, exc_info=True)
-            return jsonify({"status": "error", "message": f"Database failure resetting session: {str(e)}"}), 500
+            logger.error("Failed to lookup interview session %s during reset: %s", target_sid, e, exc_info=True)
+            return jsonify({"status": "error", "message": f"Database failure during reset lookup: {str(e)}"}), 500
+
+        if session_obj:
+            if session_obj.owner_id != owner_id:
+                return jsonify({"status": "error", "message": "Unauthorized reset of requested session."}), 403
+            try:
+                InterviewSessionManager.delete_session(target_sid, owner_id=owner_id)
+            except Exception as e:
+                logger.error("Failed to delete interview session %s on reset: %s", target_sid, e, exc_info=True)
+                return jsonify({"status": "error", "message": f"Database failure resetting session: {str(e)}"}), 500
+
+        if session.get("active_interview_session_id") == target_sid:
+            session.pop("active_interview_session_id", None)
+
     return jsonify({"status": "reset"}), 200
 
 
@@ -1785,7 +1802,11 @@ def api_interview_list_sessions():
     """Retrieves practice session history for the current session owner."""
     owner_id = _get_or_create_interview_owner_id()
     aid = request.args.get("analysis_id") or request.args.get("id")
-    sessions_list = InterviewSessionManager.list_sessions(owner_id=owner_id, analysis_id=aid)
+    try:
+        sessions_list = InterviewSessionManager.list_sessions(owner_id=owner_id, analysis_id=aid)
+    except Exception as e:
+        logger.error("Failed to list interview sessions for owner %s: %s", owner_id, e, exc_info=True)
+        return jsonify({"status": "error", "message": f"Database failure retrieving interview sessions: {str(e)}"}), 500
     return jsonify({
         "status": "success",
         "sessions": sessions_list
@@ -1799,7 +1820,12 @@ def api_interview_get_session(session_id: str):
         return jsonify({"status": "error", "message": "Invalid session_id"}), 400
 
     owner_id = _get_or_create_interview_owner_id()
-    session_obj = InterviewSessionManager.get_session(session_id)
+    try:
+        session_obj = InterviewSessionManager.get_session(session_id)
+    except Exception as e:
+        logger.error("Failed to retrieve interview session %s: %s", session_id, e, exc_info=True)
+        return jsonify({"status": "error", "message": f"Database failure retrieving session: {str(e)}"}), 500
+
     if not session_obj:
         return jsonify({"status": "error", "message": f"Practice session '{session_id}' not found."}), 404
     if session_obj.owner_id != owner_id:
@@ -1823,7 +1849,12 @@ def api_interview_delete_session(session_id: str):
         return csrf_err
 
     owner_id = _get_or_create_interview_owner_id()
-    session_obj = InterviewSessionManager.get_session(session_id)
+    try:
+        session_obj = InterviewSessionManager.get_session(session_id)
+    except Exception as e:
+        logger.error("Failed to verify interview session %s before delete: %s", session_id, e, exc_info=True)
+        return jsonify({"status": "error", "message": f"Database failure checking session: {str(e)}"}), 500
+
     if not session_obj:
         return jsonify({"status": "error", "message": f"Practice session '{session_id}' not found."}), 404
     if session_obj.owner_id != owner_id:
@@ -1851,7 +1882,12 @@ def api_interview_progress():
     """Aggregates interview practice progress and completion metrics."""
     owner_id = _get_or_create_interview_owner_id()
     aid = request.args.get("analysis_id") or request.args.get("id")
-    progress = InterviewSessionManager.get_progress(owner_id=owner_id, analysis_id=aid)
+    try:
+        progress = InterviewSessionManager.get_progress(owner_id=owner_id, analysis_id=aid)
+    except Exception as e:
+        logger.error("Failed to retrieve interview progress for owner %s: %s", owner_id, e, exc_info=True)
+        return jsonify({"status": "error", "message": f"Database failure retrieving progress: {str(e)}"}), 500
+
     return jsonify({
         "status": "success",
         "progress": progress
@@ -1866,7 +1902,12 @@ def api_interview_practice():
     session_id = raw_sid or session.get("active_interview_session_id")
 
     if session_id:
-        practice_session = InterviewSessionManager.get_session(session_id)
+        try:
+            practice_session = InterviewSessionManager.get_session(session_id)
+        except Exception as e:
+            logger.error("Failed to retrieve practice session %s: %s", session_id, e, exc_info=True)
+            return jsonify({"status": "error", "message": f"Database failure loading practice session: {str(e)}"}), 500
+
         if not practice_session:
             return jsonify({"status": "error", "message": "Practice session expired or not found."}), 404
         if practice_session.owner_id != owner_id:
@@ -1933,7 +1974,12 @@ def api_interview_practice_submit():
         return jsonify({"status": "error", "message": "direction must be one of: next, prev, finish, current"}), 400
     direction = raw_dir.lower().strip()
 
-    practice_session = InterviewSessionManager.get_session(session_id)
+    try:
+        practice_session = InterviewSessionManager.get_session(session_id)
+    except Exception as e:
+        logger.error("Failed to retrieve practice session %s for submit: %s", session_id, e, exc_info=True)
+        return jsonify({"status": "error", "message": f"Database failure loading session: {str(e)}"}), 500
+
     if not practice_session:
         return jsonify({"status": "error", "message": "Practice session expired or not found."}), 404
     if practice_session.owner_id != owner_id:
@@ -1986,7 +2032,12 @@ def api_interview_results():
     if not session_id:
         return jsonify({"status": "error", "message": "No active practice session found."}), 404
 
-    practice_session = InterviewSessionManager.get_session(session_id)
+    try:
+        practice_session = InterviewSessionManager.get_session(session_id)
+    except Exception as e:
+        logger.error("Failed to retrieve practice results for session %s: %s", session_id, e, exc_info=True)
+        return jsonify({"status": "error", "message": f"Database failure loading session results: {str(e)}"}), 500
+
     if not practice_session:
         return jsonify({"status": "error", "message": "No practice results found for this session."}), 404
     if practice_session.owner_id != owner_id:

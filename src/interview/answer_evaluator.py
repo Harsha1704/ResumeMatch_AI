@@ -46,7 +46,9 @@ class HeuristicAnswerEvaluator:
         "typescript", "javascript", "node.js", "django", "spring boot", "kafka"
     )
 
-    # Defined validation rules to genuinely verify technical usage beyond mere name-dropping
+    # Defined validation rules to genuinely verify technical usage beyond mere name-dropping.
+    # Note: Automated rule-based verification is limited, pattern-scoped, and heuristic.
+    # It validates standard technical terminology in sentence context, not runtime correctness.
     _TECH_VALIDATION_RULES = {
         "python": [
             r"\bpython\b.*?\b(?:scripts?|code|functions?|classes|modules?|decorators?|generators?|list\s+comprehensions?|multiprocessing|asyncio|type\s+hints?|virtualenv|pip|gil|pandas|numpy|scipy|flask|fastapi|django|pytest)\b",
@@ -109,6 +111,22 @@ class HeuristicAnswerEvaluator:
             r"\b(?:endpoints?|http|get|post|put|delete|json|status\s+codes?|payload|headers?)\b.*?\brest\s+api\b",
         ],
     }
+
+    @staticmethod
+    def _detect_metric_category(text: str) -> str:
+        """Categorizes metric claims and context to prevent conflating distinct performance measures."""
+        tl = text.lower()
+        if any(k in tl for k in ["f1", "macro f1", "micro f1", "accuracy", "precision", "recall", "auc", "roc", "bleu", "rouge", "loss", "error rate", "score"]):
+            return "accuracy_quality"
+        if any(k in tl for k in ["latency", "response time", "delay", "speed", "faster", "runtime", "duration", "ms", "millisecond"]):
+            return "latency_speed"
+        if any(k in tl for k in ["throughput", "traffic", "volume", "concurrent", "users", "queries", "requests", "qps", "rps", "req/s"]):
+            return "throughput_volume"
+        if any(k in tl for k in ["size", "memory", "storage", "footprint", "ram", "disk", "bandwidth", "compressed", "gb", "mb", "tb"]):
+            return "resource_size"
+        if any(k in tl for k in ["uptime", "availability", "sla", "coverage", "test coverage"]):
+            return "reliability_coverage"
+        return "general_metric"
 
     def _tokens(self, value: str) -> List[str]:
         return [
@@ -396,51 +414,63 @@ class HeuristicAnswerEvaluator:
             clarity_score = max(10.0, clarity_score - 15.0)
 
         # ---------------------------------------------------------------------
-        # 4. Specificity & Concrete Examples
+        # 4. Technical Accuracy Where Verifiable (Sentence-Scoped)
         # ---------------------------------------------------------------------
-        has_metrics = bool(re.search(
-            r"\b\d+(?:\.\d+)?\s*(?:%|ms|seconds?|minutes?|users|queries|gb|mb|records|rows|tests)(?![a-zA-Z0-9])",
-            lower
-        ))
+        # Differentiates verified technical usage from recognized keyword mentions and unverifiable domains.
+        # Rule verification is strictly scoped to the sentence containing the term, preventing contamination
+        # from keywords in unrelated sentences, and rejecting negated or hypothetical usage.
         matched_entities = [entity for entity in self._TECHNICAL_ENTITIES
                             if re.search(r"(?<![a-z0-9])" + re.escape(entity) + r"(?![a-z0-9])", lower)]
-        evidence_detected = has_metrics or bool(matched_entities)
 
-        specificity_score = 30.0
-        if matched_entities:
-            specificity_score += min(40.0, len(matched_entities) * 15.0)
-        if has_metrics:
-            specificity_score += 30.0
-        specificity_score = min(100.0, specificity_score)
-
-        # ---------------------------------------------------------------------
-        # 5. Technical Accuracy Where Verifiable
-        # ---------------------------------------------------------------------
-        # Differentiates verified technical usage from recognized keyword mentions and unverifiable domains
         verified_claims = []
         recognized_claims = []
         unverifiable_claims = []
 
         for ent in matched_entities:
             rules = self._TECH_VALIDATION_RULES.get(ent)
-            if rules:
-                if any(re.search(pat, lower) for pat in rules):
-                    verified_claims.append(ent)
-                else:
-                    recognized_claims.append(ent)
-            else:
+            if not rules:
                 unverifiable_claims.append(ent)
+                continue
+
+            ent_pat = re.compile(r"(?<![a-z0-9])" + re.escape(ent) + r"(?![a-z0-9])", re.IGNORECASE)
+            ent_sentences = [s for s in sentences if ent_pat.search(s)]
+
+            is_verified = False
+            for s in ent_sentences:
+                s_lower = s.lower()
+
+                # Check for negation or hypothetical / unused statements scoped to this entity
+                is_negated = bool(
+                    re.search(r"\b(?:not|never|didn't|did\s+not|haven't|have\s+not|wasn't|was\s+not|don't|do\s+not|without|no\s+(?:prior\s+)?experience\s+with|never\s+used)\b.*?\b" + re.escape(ent) + r"\b", s_lower) or
+                    re.search(r"\b" + re.escape(ent) + r"\b.*?\b(?:was\s+not\s+used|was\s+only\s+considered|is\s+not\s+used|was\s+avoided|wasn't\s+used)\b", s_lower)
+                )
+                is_hypothetical = bool(
+                    re.search(r"\b(?:would\s+like\s+to|planning\s+to|hope\s+to|considered|considering|hypothetical(?:ly)?|if\s+i\s+(?:were|had)|wish\s+to|want\s+to\s+learn)\b.*?\b" + re.escape(ent) + r"\b", s_lower) or
+                    re.search(r"\b(?:instead\s+of|rather\s+than)\s+" + re.escape(ent) + r"\b", s_lower)
+                )
+
+                if is_negated or is_hypothetical:
+                    continue
+
+                if any(re.search(pat, s_lower) for pat in rules):
+                    is_verified = True
+                    break
+
+            if is_verified:
+                verified_claims.append(ent)
+            else:
+                recognized_claims.append(ent)
 
         if verified_claims:
             tech_accuracy_status = "verified"
             tech_accuracy_score = 85.0
             verified_names = [e.capitalize() for e in verified_claims]
-            tech_notes = f"Verified standard technical usage for: {', '.join(verified_names)}."
+            tech_notes = f"Verified standard technical usage within sentence scope for: {', '.join(verified_names)}. (Automated heuristic verification)."
         elif recognized_claims:
             tech_accuracy_status = "recognized"
             tech_accuracy_score = 70.0
             rec_names = [e.capitalize() for e in recognized_claims]
-            tech_notes = f"Recognized technical terms: {', '.join(rec_names)}. Contextual usage was not validated by automated rule verification."
+            tech_notes = f"Recognized technical terms: {', '.join(rec_names)}. Contextual usage was not validated within sentence scope by automated rule verification."
         elif unverifiable_claims:
             tech_accuracy_status = "unverifiable"
             tech_accuracy_score = 65.0
@@ -452,7 +482,7 @@ class HeuristicAnswerEvaluator:
             tech_notes = "Answer lacks concrete technical entities to verify against standard architectural knowledge."
 
         # ---------------------------------------------------------------------
-        # 6. Evidence Consistency with Candidate Resume & Metric Grounding
+        # 5. Evidence Consistency with Candidate Resume & Metric Grounding
         # ---------------------------------------------------------------------
         grounding_warnings = []
         resume_supported_claims = []
@@ -463,6 +493,8 @@ class HeuristicAnswerEvaluator:
 
         resume_corpus = ""
         candidate_skills = set()
+        evidence_snippets: List[str] = []
+
         if candidate_evidence:
             candidate_skills = {
                 s.lower().strip() for s in (
@@ -471,20 +503,33 @@ class HeuristicAnswerEvaluator:
                     candidate_evidence.get("all_skills", [])
                 )
             }
-            proj_texts = [
-                str(p.get("description", "")) + " " + str(p.get("exact_excerpt", "")) + " " + str(p.get("confirmed_details", ""))
-                for p in candidate_evidence.get("projects", []) if isinstance(p, dict)
-            ]
-            intern_texts = [
-                str(i.get("description", "")) + " " + str(i.get("exact_excerpt", "")) + " " + str(i.get("confirmed_details", ""))
-                for i in candidate_evidence.get("internships", []) if isinstance(i, dict)
-            ]
-            resume_corpus = (
-                " ".join(proj_texts + intern_texts + [
-                    str(candidate_evidence.get("experience_summary", "")),
-                    str(candidate_evidence.get("education", ""))
-                ])
-            ).lower()
+            for p in candidate_evidence.get("projects", []):
+                if isinstance(p, dict):
+                    txt = " ".join([
+                        str(p.get("title", "")),
+                        str(p.get("description", "")),
+                        str(p.get("exact_excerpt", "")),
+                        str(p.get("confirmed_details", ""))
+                    ])
+                    evidence_snippets.append(txt)
+
+            for i in candidate_evidence.get("internships", []):
+                if isinstance(i, dict):
+                    txt = " ".join([
+                        str(i.get("role", "")),
+                        str(i.get("company", "")),
+                        str(i.get("description", "")),
+                        str(i.get("exact_excerpt", "")),
+                        str(i.get("confirmed_details", ""))
+                    ])
+                    evidence_snippets.append(txt)
+
+            if candidate_evidence.get("experience_summary"):
+                evidence_snippets.append(str(candidate_evidence.get("experience_summary")))
+            if candidate_evidence.get("education"):
+                evidence_snippets.append(str(candidate_evidence.get("education")))
+
+            resume_corpus = " ".join(evidence_snippets).lower()
 
             # Check unevidenced technologies
             for ent in matched_entities:
@@ -495,7 +540,7 @@ class HeuristicAnswerEvaluator:
 
         # Sentence-level achievement and metric grounding
         metric_pat = re.compile(
-            r"\b\d+(?:\.\d+)?\s*(?:%|percent|ms|milliseconds?|seconds?|minutes?|hours?|users|queries|requests|req/s|rps|gb|mb|tb|records|rows|tests)(?![a-zA-Z0-9])",
+            r"\b(\d{1,3}(?:,\d{3})*(?:\.\d+)?|\d+(?:\.\d+)?)\s*(%|percent|ms|milliseconds?|seconds?|minutes?|hours?|users|queries|requests|req/s|rps|qps|gb|mb|tb|records|rows|tests)(?![a-zA-Z0-9])",
             re.IGNORECASE
         )
         personal_pat = re.compile(
@@ -513,7 +558,8 @@ class HeuristicAnswerEvaluator:
 
         for s in sentences:
             s_lower = s.lower()
-            has_m = bool(metric_pat.search(s_lower))
+            metric_matches = list(metric_pat.finditer(s_lower))
+            has_m = bool(metric_matches)
             is_personal = bool(personal_pat.search(s_lower)) or (
                 bool(re.search(r"\b(?:i|my|we)\b", s_lower)) and
                 bool(re.search(r"\b(?:achieved|improved|reduced|increased|boosted|optimized|scaled|cut|accelerated|delivered|handled|processed|served|decreased)\b", s_lower))
@@ -524,11 +570,59 @@ class HeuristicAnswerEvaluator:
             if is_disclosure:
                 truthful_disclosures.append(s)
             elif is_personal and has_m:
-                metric_matches = metric_pat.findall(s_lower)
-                metric_in_resume = any(m.lower().strip() in resume_corpus for m in metric_matches) if resume_corpus else False
-                if metric_in_resume:
-                    resume_supported_claims.append(s)
-                elif candidate_evidence and resume_corpus:
+                if candidate_evidence and resume_corpus:
+                    # Multi-attribute metric-to-evidence matching:
+                    # Match numeric value, unit, metric category/context, and associated achievement.
+                    # Mismatched metric types (e.g. 94% Macro F1 claimed as 94% latency reduction)
+                    # must NOT be classified as resume_supported_claims.
+                    all_metrics_supported = True
+                    mismatch_details = []
+
+                    for m in metric_matches:
+                        val_str = m.group(1).replace(",", "")
+                        unit_str = m.group(2)
+                        claimed_cat = self._detect_metric_category(s_lower)
+
+                        matched_in_any_snippet = False
+                        category_matched = False
+                        resume_cat_found = None
+
+                        val_re = re.compile(r"(?<![0-9])" + re.escape(val_str) + r"(?![0-9])")
+                        for snip in evidence_snippets:
+                            snip_lower = snip.lower()
+                            if val_re.search(snip_lower):
+                                matched_in_any_snippet = True
+                                snip_sentences = re.split(r"(?<!\d)[.!?]+(?!\d)\s*", snip_lower)
+                                snip_match_sent = next((ss for ss in snip_sentences if val_re.search(ss)), snip_lower)
+                                resume_cat = self._detect_metric_category(snip_match_sent)
+                                if resume_cat == "general_metric":
+                                    resume_cat = self._detect_metric_category(snip_lower)
+                                resume_cat_found = resume_cat
+
+                                if claimed_cat == resume_cat or (claimed_cat == "general_metric" and resume_cat != "general_metric"):
+                                    category_matched = True
+                                    break
+
+                        if not matched_in_any_snippet:
+                            all_metrics_supported = False
+                            mismatch_details.append(f"metric {val_str}{unit_str} is not evidenced in your resume")
+                        elif not category_matched:
+                            all_metrics_supported = False
+                            claimed_label = claimed_cat.replace('_', '/')
+                            res_label = (resume_cat_found or "other").replace('_', '/')
+                            mismatch_details.append(
+                                f"metric {val_str}{unit_str} claimed as {claimed_label}, but resume only supports {val_str} in a different context ({res_label})"
+                            )
+
+                    if all_metrics_supported:
+                        resume_supported_claims.append(s)
+                    else:
+                        unsupported_claims.append(s)
+                        details_text = "; ".join(mismatch_details)
+                        grounding_warnings.append(
+                            f"Achievement claim '{s}' asserts metrics not established by your submitted resume evidence ({details_text}). Avoid citing unverified numbers in interviews."
+                        )
+                elif candidate_evidence:
                     unsupported_claims.append(s)
                     grounding_warnings.append(
                         f"Achievement claim '{s}' asserts metrics not established by your submitted resume evidence. Avoid citing unverified numbers in interviews."
@@ -540,10 +634,39 @@ class HeuristicAnswerEvaluator:
             elif has_m or is_general:
                 general_technical_explanations.append(s)
 
+        # ---------------------------------------------------------------------
+        # 6. Specificity & Concrete Examples
+        # ---------------------------------------------------------------------
+        # Unsupported metrics must NOT increase the specificity score.
+        # Resume-supported metrics may contribute to specificity only when evidence is matched.
+        # Fabricated metrics cannot improve the overall score compared to an answer without them.
+        evidence_detected = bool(resume_supported_claims) or bool(matched_entities) or bool(general_technical_explanations)
+
+        specificity_score = 30.0
+        if verified_claims or recognized_claims:
+            specificity_score += min(40.0, len(verified_claims) * 15.0 + len(recognized_claims) * 8.0)
+
+        has_supported_metrics = bool(resume_supported_claims)
+        has_general_metrics = bool(general_technical_explanations and any(metric_pat.search(s) for s in general_technical_explanations))
+        has_self_reported_metrics = bool(candidate_self_reported_claims and any(metric_pat.search(s) for s in candidate_self_reported_claims))
+
+        if has_supported_metrics:
+            specificity_score += 30.0
+        elif has_general_metrics:
+            specificity_score += 15.0
+        elif has_self_reported_metrics and not candidate_evidence:
+            specificity_score += 10.0
+
+        # Scoring penalty for unsupported achievement claims
+        if unsupported_claims:
+            specificity_score = max(10.0, specificity_score - len(unsupported_claims) * 10.0)
+
+        specificity_score = min(100.0, max(10.0, specificity_score))
+
         # Calculate consistency score
         if candidate_evidence:
-            penalties = len(grounding_warnings) * 15.0
-            consistency_score = max(40.0, 100.0 - penalties)
+            penalties = len(grounding_warnings) * 20.0
+            consistency_score = max(20.0, 100.0 - penalties)
             if grounding_warnings:
                 consistency_details = f"Caution: {len(grounding_warnings)} claim(s) or technology mention(s) lack grounding in your submitted resume."
                 consistency_status = "warning"
@@ -552,9 +675,14 @@ class HeuristicAnswerEvaluator:
                 consistency_details = "Answer claims align cleanly with verified resume technologies and experiences."
                 consistency_status = "pass"
         else:
-            consistency_score = 85.0
-            consistency_details = "Standard question evaluation (candidate resume evidence not attached)."
-            consistency_status = "pass"
+            if candidate_self_reported_claims and any(metric_pat.search(s) for s in candidate_self_reported_claims):
+                consistency_score = 75.0
+                consistency_details = "Candidate self-reported claims contain unverified metrics (no resume provided for verification)."
+                consistency_status = "unverified"
+            else:
+                consistency_score = 85.0
+                consistency_details = "Standard question evaluation (candidate resume evidence not attached)."
+                consistency_status = "pass"
 
         # ---------------------------------------------------------------------
         # Overall Composite Score Calculation
@@ -599,7 +727,13 @@ class HeuristicAnswerEvaluator:
                 "score": specificity_score,
                 "weight_pct": 15,
                 "status": "pass" if specificity_score >= 60 else "needs_improvement",
-                "details": "Includes concrete metrics and named tools." if evidence_detected else "Answer is conceptual; lacks quantified results or specific tools."
+                "details": (
+                    "Includes concrete verified metrics and named tools." if (has_supported_metrics or len(verified_claims) >= 2) else (
+                        "Contains unsupported metric claims that penalized specificity." if unsupported_claims else (
+                            "Includes named tools and conceptual examples." if matched_entities else "Answer is conceptual; lacks quantified results or specific tools."
+                        )
+                    )
+                )
             },
             "evidence_consistency": {
                 "score": consistency_score,
@@ -648,7 +782,7 @@ class HeuristicAnswerEvaluator:
 
         if evidence_detected:
             evidence_parts = [e.capitalize() for e in (verified_claims or recognized_claims)[:4]]
-            if has_metrics:
+            if has_supported_metrics or has_general_metrics:
                 evidence_parts.append("quantified result")
             strengths.append("Included concrete evidence: " + ", ".join(evidence_parts) + ".")
         else:

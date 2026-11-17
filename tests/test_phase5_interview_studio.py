@@ -1015,3 +1015,317 @@ def test_28_sqlite_write_failure_observable_handling(sample_candidate_analysis, 
     err_json = resp.get_json()
     assert err_json["status"] == "error"
     assert "Failed to persist practice session" in err_json["message"]
+
+
+# =========================================================================
+# 8. Phase 5.2 Scoring, Metric Matching, Isolation & Reliability Tests
+# =========================================================================
+
+
+def test_29_fabricated_metrics_never_improve_scores(sample_candidate_analysis):
+    """Verify unsupported/fabricated metrics never improve specificity or overall composite scores."""
+    evaluator = HeuristicAnswerEvaluator()
+    candidate_evidence = extract_candidate_evidence(ANALYSIS_CACHE[sample_candidate_analysis])
+
+    q_data = {
+        "question_text": "Describe your backend architecture and service performance.",
+        "expected_key_points": ["Architecture design", "Service reliability"],
+        "recommended_answer_framework": "STAR"
+    }
+
+    # Answer A: Honest response using verified technologies without fabricated metrics
+    ans_honest = (
+        "Situation: In our backend system, we needed a robust data processing service. "
+        "Task: I was responsible for implementing the pipeline architecture. "
+        "Action: I built the backend service using Python scripts and packaged it with Docker containers. "
+        "Result: The service passed all integration tests and was deployed cleanly to the cluster."
+    )
+    ev_honest = evaluator.evaluate_answer(q_data, ans_honest, "STAR", candidate_evidence=candidate_evidence)
+
+    # Answer B: Exactly identical to Answer A, but appends an unverified/fabricated metric claim
+    ans_fabricated = (
+        "Situation: In our backend system, we needed a robust data processing service. "
+        "Task: I was responsible for implementing the pipeline architecture. "
+        "Action: I built the backend service using Python scripts and packaged it with Docker containers. "
+        "Result: I achieved a 99.9% latency reduction and scaled the service to 500000 concurrent users."
+    )
+    ev_fabricated = evaluator.evaluate_answer(q_data, ans_fabricated, "STAR", candidate_evidence=candidate_evidence)
+
+    # 1. Fabricated answer must classify the claims as unsupported
+    assert len(ev_fabricated["claims_analysis"]["unsupported_claims"]) > 0
+    assert len(ev_honest["claims_analysis"]["unsupported_claims"]) == 0
+
+    # 2. Unsupported metrics must NOT increase the specificity score
+    honest_spec = ev_honest["individual_criterion_scores"]["specificity_examples"]["score"]
+    fab_spec = ev_fabricated["individual_criterion_scores"]["specificity_examples"]["score"]
+    assert fab_spec <= honest_spec, f"Fabricated specificity ({fab_spec}) must not exceed honest ({honest_spec})"
+
+    # 3. Overall composite score with fabricated metrics must NOT improve over honest answer
+    honest_overall = ev_honest["overall_score"]
+    fab_overall = ev_fabricated["overall_score"]
+    assert fab_overall < honest_overall, f"Fabricated overall ({fab_overall}) must be lower than honest ({honest_overall})"
+
+
+def test_30_metric_type_and_context_mismatch_rejected(sample_candidate_analysis):
+    """Verify different metric types cannot support one another merely because the numeric value matches."""
+    evaluator = HeuristicAnswerEvaluator()
+    candidate_evidence = extract_candidate_evidence(ANALYSIS_CACHE[sample_candidate_analysis])
+
+    q_data = {
+        "question_text": "Describe your model optimization and performance accomplishments.",
+        "expected_key_points": ["Model metrics", "Performance optimization"],
+        "recommended_answer_framework": "STAR"
+    }
+
+    # Harsha_ML_Resume.pdf contains: 94% Macro F1 in Multimodal Semantic Matcher
+    # Case A: Candidate claims 94% latency reduction (latency != accuracy/quality)
+    ans_mismatched = (
+        "Situation: In our multimodal semantic search project, query speed was critical. "
+        "Task: My goal was to accelerate inference throughput on GPU hardware. "
+        "Action: I optimized model weights and implemented custom batching routines in PyTorch. "
+        "Result: I achieved a 94% reduction in latency across all endpoint requests."
+    )
+    ev_mismatch = evaluator.evaluate_answer(q_data, ans_mismatched, "STAR", candidate_evidence=candidate_evidence)
+
+    # Must NOT be classified as resume_supported_claims!
+    assert len(ev_mismatch["claims_analysis"]["resume_supported_claims"]) == 0
+    assert len(ev_mismatch["claims_analysis"]["unsupported_claims"]) > 0
+    warnings = ev_mismatch["evidence_grounding_warnings"]
+    assert any("latency" in w.lower() and "different context" in w.lower() for w in warnings)
+
+    # Case B: Candidate claims 94% Macro F1 (matches both number AND metric type)
+    ans_matched = (
+        "Situation: In our multimodal semantic search project, retrieval accuracy was critical. "
+        "Task: My goal was fine-tuning the dense encoder on domain data. "
+        "Action: I trained the two-tower neural network using custom contrastive loss in PyTorch. "
+        "Result: I achieved 94% Macro F1 on the validation benchmark suite."
+    )
+    ev_matched = evaluator.evaluate_answer(q_data, ans_matched, "STAR", candidate_evidence=candidate_evidence)
+    assert len(ev_matched["claims_analysis"]["resume_supported_claims"]) > 0
+    assert len(ev_matched["claims_analysis"]["unsupported_claims"]) == 0
+    assert ev_matched["criterion_scores"]["evidence_consistency"]["status"] == "pass"
+
+
+def test_31_sentence_scoped_technical_validation_isolation_and_negation():
+    """Verify technical terms in unrelated sentences do not become verified, and negation/hypothetical usage is not verified."""
+    evaluator = HeuristicAnswerEvaluator()
+    q_data = {
+        "question_text": "Detail your software and database implementation background.",
+        "expected_key_points": ["Database design", "Language implementation"],
+        "recommended_answer_framework": "STAR"
+    }
+
+    # Case A: Unrelated sentence combination
+    # Python is in Sentence 1 without code/script rules.
+    # SQL is in Sentence 2 with SELECT and FROM clauses.
+    ans_unrelated = (
+        "I have general background working with Python. "
+        "In our database tier, I wrote SQL queries using SELECT, JOIN, and WHERE clauses. "
+        "We also used Git repositories for version tracking."
+    )
+    ev_unrelated = evaluator.evaluate_answer(q_data, ans_unrelated, "STAR")
+    claims = ev_unrelated["claims_analysis"]
+
+    # SQL is verified in sentence 2
+    assert "sql" in claims["verified_technical_entities"]
+    # Python is in sentence 1 without rule match: must be recognized, NOT verified!
+    assert "python" in claims["recognized_technical_entities"]
+    assert "python" not in claims["verified_technical_entities"]
+
+    # Case B: Negation - explicitly unused or denied technologies
+    ans_negated = (
+        "Situation: We evaluated several scripting languages for our pipeline. "
+        "Task: Choose the appropriate technology. "
+        "Action: I have never used Python for production scripts, and we did not use Docker containers. "
+        "Result: We completed the deployment using alternate internal tools."
+    )
+    ev_negated = evaluator.evaluate_answer(q_data, ans_negated, "STAR")
+    neg_claims = ev_negated["claims_analysis"]
+    assert "python" not in neg_claims["verified_technical_entities"]
+    assert "docker" not in neg_claims["verified_technical_entities"]
+
+    # Case C: Hypothetical / future / merely considered statements
+    ans_hypothetical = (
+        "Situation: Planning future machine learning architectures. "
+        "Task: Explore potential deep learning frameworks. "
+        "Action: If I were to use PyTorch, I would train neural network architectures with custom loss functions. "
+        "Result: This hypothetical design could improve future model iterations."
+    )
+    ev_hypothetical = evaluator.evaluate_answer(q_data, ans_hypothetical, "STAR")
+    hypo_claims = ev_hypothetical["claims_analysis"]
+    assert "pytorch" not in hypo_claims["verified_technical_entities"]
+    assert "pytorch" in hypo_claims["recognized_technical_entities"]
+
+    # Case D: Genuine technical example
+    ans_genuine = (
+        "Situation: We needed a data processing script. "
+        "Task: Implement the processing pipeline. "
+        "Action: I developed Python scripts and modules using pytest for automated test coverage. "
+        "Result: All tests passed cleanly in CI."
+    )
+    ev_genuine = evaluator.evaluate_answer(q_data, ans_genuine, "STAR")
+    assert "python" in ev_genuine["claims_analysis"]["verified_technical_entities"]
+
+
+def test_32_database_read_failures_produce_observable_errors(sample_candidate_analysis, monkeypatch):
+    """Verify database read failures produce observable 500 errors and do not mask outages as empty history."""
+    client = app.test_client()
+    with client.session_transaction() as sess:
+        sess["interview_owner_id"] = "db_failure_user"
+        sess["allowed_analyses"] = [sample_candidate_analysis]
+        sess["csrf_token"] = "valid_token"
+
+    token_hdr = {"X-CSRF-Token": "valid_token"}
+
+    # Mock get_session, list_sessions, get_progress to simulate SQLite database read failure
+    def mock_failing_get(self, session_id, owner_id=None):
+        raise sqlite3.OperationalError("disk I/O error: database is locked")
+
+    def mock_failing_list(self, owner_id, analysis_id=None, limit=50):
+        raise sqlite3.OperationalError("disk I/O error: database is corrupted")
+
+    def mock_failing_progress(self, owner_id, analysis_id=None):
+        raise sqlite3.OperationalError("disk I/O error: disk failure")
+
+    # 1. Test InterviewSessionManager raises on read error (does not swallow)
+    monkeypatch.setattr(InterviewSessionStore, "get_session", mock_failing_get)
+    ACTIVE_SESSIONS.clear()
+    with pytest.raises(sqlite3.OperationalError):
+        InterviewSessionManager.get_session("nonexistent_sid")
+
+    # 2. Test GET /api/interview/sessions produces 500 (not 200 empty list)
+    monkeypatch.setattr(InterviewSessionStore, "list_sessions", mock_failing_list)
+    resp_list = client.get("/api/interview/sessions")
+    assert resp_list.status_code == 500
+    assert "Database failure" in resp_list.get_json()["message"]
+
+    # 3. Test GET /api/interview/progress produces 500 (not 200 with 0s)
+    monkeypatch.setattr(InterviewSessionStore, "get_progress", mock_failing_progress)
+    resp_prog = client.get("/api/interview/progress")
+    assert resp_prog.status_code == 500
+    assert "Database failure" in resp_prog.get_json()["message"]
+
+    # 4. Test GET /api/interview/sessions/<id> produces 500 on database error
+    resp_get = client.get("/api/interview/sessions/some_session_id")
+    assert resp_get.status_code == 500
+    assert "Database failure" in resp_get.get_json()["message"]
+
+    # 5. Undo monkeypatch and verify legitimate 404 for genuinely missing record
+    monkeypatch.undo()
+    ACTIVE_SESSIONS.clear()
+    resp_404 = client.get("/api/interview/sessions/truly_nonexistent_session")
+    assert resp_404.status_code == 404
+    assert "not found" in resp_404.get_json()["message"].lower()
+
+
+def test_33_failed_persistence_rollback_and_no_inconsistent_in_memory_state(sample_candidate_analysis, monkeypatch):
+    """Verify failed SQLite writes roll back in-memory state and do not leave orphaned sessions."""
+    analysis = ANALYSIS_CACHE[sample_candidate_analysis]
+    generator = InterviewQuestionGenerator(analysis)
+    questions = generator.generate_questions(max_questions=2)
+
+    # 1. Failed session creation must not leave session in ACTIVE_SESSIONS
+    def mock_fail_save(self, data):
+        raise sqlite3.OperationalError("disk I/O error: disk full")
+
+    monkeypatch.setattr(InterviewSessionStore, "save_session", mock_fail_save)
+
+    with pytest.raises(sqlite3.OperationalError):
+        InterviewSessionManager.create_session(
+            questions=questions,
+            analysis_id=sample_candidate_analysis,
+            owner_id="rollback_test_user"
+        )
+    # Ensure no lingering unpersisted session exists in ACTIVE_SESSIONS
+    assert not any(s.owner_id == "rollback_test_user" for s in ACTIVE_SESSIONS.values())
+
+    # 2. Failed answer submission must rollback in-memory answers and evaluations
+    monkeypatch.undo()
+    session = InterviewSessionManager.create_session(
+        questions=questions,
+        analysis_id=sample_candidate_analysis,
+        owner_id="rollback_answer_user"
+    )
+    sid = session.session_id
+
+    # Submit valid first answer successfully
+    res1 = session.submit_answer(0, "Valid initial answer using Python.")
+    assert "0" in session.answers
+    assert session.answers["0"] == "Valid initial answer using Python."
+
+    # Now make store fail on subsequent answer save
+    monkeypatch.setattr(InterviewSessionStore, "save_session", mock_fail_save)
+
+    with pytest.raises(sqlite3.OperationalError):
+        session.submit_answer(0, "Attempted corrupting answer text.")
+
+    # State must be rolled back to original initial answer!
+    assert session.answers["0"] == "Valid initial answer using Python."
+    assert session.evaluations["0"]["overall_score"] == res1["overall_score"]
+
+    # 3. Failed completion must rollback is_completed and completed_at
+    assert session.is_completed is False
+    assert session.completed_at is None
+
+    with pytest.raises(sqlite3.OperationalError):
+        session.complete_session()
+
+    assert session.is_completed is False
+    assert session.completed_at is None
+
+
+def test_34_cross_user_reset_and_deletion_rejected(sample_candidate_analysis):
+    """Verify cross-user session reset and deletion are strictly rejected with 403 Forbidden."""
+    client_a = app.test_client()
+    with client_a.session_transaction() as sess:
+        sess["interview_owner_id"] = "legit_user_a"
+        sess["allowed_analyses"] = [sample_candidate_analysis]
+        sess["csrf_token"] = "token_a"
+
+    token_hdr_a = {"X-CSRF-Token": "token_a"}
+
+    # User A creates a session
+    resp_create = client_a.post(
+        "/api/interview/sessions",
+        data=json.dumps({"analysis_id": sample_candidate_analysis}),
+        content_type="application/json",
+        headers=token_hdr_a
+    )
+    assert resp_create.status_code == 201
+    sid_a = resp_create.get_json()["session"]["session_id"]
+
+    # User B attempts to delete User A's session via DELETE endpoint
+    client_b = app.test_client()
+    with client_b.session_transaction() as sess:
+        sess["interview_owner_id"] = "attacker_user_b"
+        sess["csrf_token"] = "token_b"
+
+    token_hdr_b = {"X-CSRF-Token": "token_b"}
+
+    resp_del_b = client_b.delete(f"/api/interview/sessions/{sid_a}", headers=token_hdr_b)
+    assert resp_del_b.status_code == 403
+    assert "unauthorized" in resp_del_b.get_json()["message"].lower()
+
+    # User B attempts to reset User A's session via POST /api/interview/reset
+    resp_reset_b = client_b.post(
+        "/api/interview/reset",
+        data=json.dumps({"session_id": sid_a}),
+        content_type="application/json",
+        headers=token_hdr_b
+    )
+    assert resp_reset_b.status_code == 403
+    assert "unauthorized" in resp_reset_b.get_json()["message"].lower()
+
+    # Verify User A's session was NOT deleted and is still intact
+    resp_check = client_a.get(f"/api/interview/sessions/{sid_a}")
+    assert resp_check.status_code == 200
+
+    # User A performs legitimate reset of their own session
+    resp_reset_a = client_a.post(
+        "/api/interview/reset",
+        data=json.dumps({"session_id": sid_a}),
+        content_type="application/json",
+        headers=token_hdr_a
+    )
+    assert resp_reset_a.status_code == 200
+    assert resp_reset_a.get_json()["status"] == "reset"
