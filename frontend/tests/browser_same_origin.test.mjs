@@ -1,18 +1,16 @@
 /**
- * Phase 6.3 Browser Compatibility and Cookie Verification Suite
+ * Phase 6.4 Real Browser Same-Origin Test Suite
  *
- * Exercises real browser engines (Chromium, Firefox, WebKit) via Playwright:
- *  1. Launches local Flask test server instance on port 5009.
- *  2. For each available browser engine (Chromium, Firefox, WebKit):
- *     - Verifies CSRF token retrieval via real browser fetch.
- *     - Verifies session-cookie persistence, HttpOnly flag, and SameSite attribute.
- *     - Verifies protected mutation without token is rejected with HTTP 403 Forbidden.
- *     - Verifies protected mutation with valid X-CSRF-Token succeeds with HTTP 200 OK.
- *     - Verifies session continuity across multiple sequential mutations.
- *  3. Cross-origin / cookie architecture empirical verification:
- *     - Demonstrates that cross-origin POST requests with credentials: 'omit' drop cookies.
- *     - Demonstrates SameSite cookie boundary behavior between origins.
- *  4. Reports detailed results per browser engine.
+ * Exercises real browser engines (Chromium, Firefox, WebKit) via Playwright in a same-origin context:
+ *  - Origin: http://127.0.0.1:5009 (Local Flask development-mode server)
+ *
+ * Verifies:
+ *  1. Live CSRF token retrieval via browser fetch.
+ *  2. HttpOnly session cookie persistence in browser cookie jar.
+ *  3. Protected mutation without token is rejected with HTTP 403 Forbidden.
+ *  4. Protected mutation with valid token succeeds with HTTP 200 OK.
+ *  5. Session continuity across sequential mutations.
+ *  6. Demonstrates that credentials: 'omit' drops cookies and causes session-backed mutations to fail.
  */
 
 import { describe, it, before, after } from 'node:test';
@@ -46,7 +44,7 @@ async function waitForServer(url, timeoutMs = 25000) {
   throw new Error(`Server failed to start at ${url} within ${timeoutMs}ms (last error: ${lastErr})`);
 }
 
-describe('Playwright Real Browser Compatibility & CSRF Suite', () => {
+describe('Playwright Real Browser Same-Origin Suite (HTTP)', () => {
   before(async () => {
     // Start Flask test instance
     const env = {

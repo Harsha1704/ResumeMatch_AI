@@ -2070,6 +2070,10 @@ def api_interview_results():
 
 
 if __name__ == "__main__":
+    host = os.environ.get("FLASK_HOST", "127.0.0.1")
     port = int(os.environ.get("PORT", 5000))
     debug = os.environ.get("FLASK_DEBUG", "0").lower() in ("1", "true")
-    app.run(host="127.0.0.1", port=port, debug=debug)
+    cert = os.environ.get("FLASK_SSL_CERT")
+    key = os.environ.get("FLASK_SSL_KEY")
+    ssl_context = (cert, key) if cert and key else None
+    app.run(host=host, port=port, debug=debug, ssl_context=ssl_context)
