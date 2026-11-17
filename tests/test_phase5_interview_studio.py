@@ -1896,3 +1896,137 @@ def test_37_strict_unit_token_boundary_validation(sample_candidate_analysis):
     assert len(ev_c6["claims_analysis"]["unsupported_claims"]) == 0
     assert ev_c6["criterion_scores"]["evidence_consistency"]["status"] == "pass"
     assert ev_c6["individual_criterion_scores"]["specificity_examples"]["score"] >= 60.0
+
+
+def test_38_compound_rate_unit_parsing_and_semantic_distinction(sample_candidate_analysis):
+    """
+    Phase 5.6 regression test suite covering compound rate unit parsing and semantic distinction:
+    - 100 requests/sec is parsed as a rate, not a request count.
+    - 100 queries/sec is parsed as a rate.
+    - 100 queries/s is parsed as a rate.
+    - 100 req/s, 100 rps, and 100 qps retain their intended rate category.
+    - 100 requests and 100 queries remain count units.
+    - A rate claim cannot be supported by resume evidence containing only a count with the same number.
+    - A count claim cannot be supported by resume evidence containing only a rate with the same number.
+    - Existing Phase 5.5 malformed-token tests still pass (94students, 94msomething, 94requestsExtra).
+    - Existing decimal precision, missing-unit, project-attribution, and domain-mismatch tests remain passing.
+    """
+    evaluator = HeuristicAnswerEvaluator()
+
+    # 1. Direct parsing and normalization validation
+    m_req_sec = evaluator._extract_metric_mentions("Server sustained 100 requests/sec under load.")[0]
+    assert m_req_sec["raw_unit"].lower() == "requests/sec"
+    assert m_req_sec["normalized_unit"] == "req/s"
+
+    m_queries_sec = evaluator._extract_metric_mentions("Engine handled 100 queries/sec across replicas.")[0]
+    assert m_queries_sec["raw_unit"].lower() == "queries/sec"
+    assert m_queries_sec["normalized_unit"] == "req/s"
+
+    m_queries_s = evaluator._extract_metric_mentions("Achieved 100 queries/s throughput.")[0]
+    assert m_queries_s["raw_unit"].lower() == "queries/s"
+    assert m_queries_s["normalized_unit"] == "req/s"
+
+    m_req_s = evaluator._extract_metric_mentions("Scaled API to 100 req/s.")[0]
+    assert m_req_s["normalized_unit"] == "req/s"
+
+    m_rps = evaluator._extract_metric_mentions("Measured 100 rps in production.")[0]
+    assert m_rps["normalized_unit"] == "req/s"
+
+    m_qps = evaluator._extract_metric_mentions("Benchmark confirmed 100 qps.")[0]
+    assert m_qps["normalized_unit"] == "req/s"
+
+    m_requests = evaluator._extract_metric_mentions("Processed 100 requests in test batch.")[0]
+    assert m_requests["raw_unit"].lower() == "requests"
+    assert m_requests["normalized_unit"] == "requests"
+
+    m_queries = evaluator._extract_metric_mentions("Executed 100 queries in database.")[0]
+    assert m_queries["raw_unit"].lower() == "queries"
+    assert m_queries["normalized_unit"] == "requests"
+
+    # Semantic distinction: rate != count
+    assert m_req_sec["normalized_unit"] != m_requests["normalized_unit"]
+    assert m_queries_sec["normalized_unit"] != m_queries["normalized_unit"]
+
+    # 2. End-to-end evaluation: rate claim cannot be supported by count evidence
+    q_data = {
+        "question_text": "Describe your API performance and throughput accomplishments.",
+        "expected_key_points": ["API Architecture", "Throughput metrics"],
+        "recommended_answer_framework": "STAR"
+    }
+
+    ev_count = {
+        "skills": ["Python", "Flask"],
+        "projects": [{
+            "title": "API Gateway",
+            "technologies": "Python, Flask",
+            "description": "Engineered API Gateway with Python and Flask, processed 100 requests in test batch.",
+            "exact_excerpt": "processed 100 requests in test batch."
+        }]
+    }
+
+    ans_rate_honest = (
+        "Situation: API gateway traffic spikes required optimization. "
+        "Task: Improve throughput in Python and Flask. "
+        "Action: Tuned asynchronous event loops. "
+        "Result: In our API Gateway project, request processing ran reliably."
+    )
+    ev_rate_honest = evaluator.evaluate_answer(q_data, ans_rate_honest, "STAR", candidate_evidence=ev_count)
+
+    ans_rate_claim = (
+        "Situation: API gateway traffic spikes required optimization. "
+        "Task: Improve throughput in Python and Flask. "
+        "Action: Tuned asynchronous event loops. "
+        "Result: In our API Gateway project, I served 100 requests/sec reliably."
+    )
+    ev_rate_on_count = evaluator.evaluate_answer(q_data, ans_rate_claim, "STAR", candidate_evidence=ev_count)
+    assert len(ev_rate_on_count["claims_analysis"]["unsupported_claims"]) > 0
+    assert len(ev_rate_on_count["claims_analysis"]["resume_supported_claims"]) == 0
+    assert any("incompatible unit" in w.lower() for w in ev_rate_on_count["evidence_grounding_warnings"])
+    assert ev_rate_on_count["individual_criterion_scores"]["specificity_examples"]["score"] <= ev_rate_honest["individual_criterion_scores"]["specificity_examples"]["score"]
+    assert ev_rate_on_count["overall_score"] < ev_rate_honest["overall_score"]
+
+    # 3. End-to-end evaluation: count claim cannot be supported by rate evidence
+    ev_rate = {
+        "skills": ["Python", "Flask"],
+        "projects": [{
+            "title": "API Gateway",
+            "technologies": "Python, Flask",
+            "description": "Engineered API Gateway with Python and Flask, served 100 requests/sec with high stability.",
+            "exact_excerpt": "served 100 requests/sec with high stability."
+        }]
+    }
+
+    ans_count_claim = (
+        "Situation: API gateway traffic spikes required optimization. "
+        "Task: Improve throughput in Python and Flask. "
+        "Action: Tuned asynchronous event loops. "
+        "Result: In our API Gateway project, I served 100 requests total."
+    )
+    ev_count_on_rate = evaluator.evaluate_answer(q_data, ans_count_claim, "STAR", candidate_evidence=ev_rate)
+    assert len(ev_count_on_rate["claims_analysis"]["unsupported_claims"]) > 0
+    assert len(ev_count_on_rate["claims_analysis"]["resume_supported_claims"]) == 0
+    assert any("incompatible unit" in w.lower() for w in ev_count_on_rate["evidence_grounding_warnings"])
+    assert ev_count_on_rate["individual_criterion_scores"]["specificity_examples"]["score"] <= ev_rate_honest["individual_criterion_scores"]["specificity_examples"]["score"]
+    assert ev_count_on_rate["overall_score"] < ev_rate_honest["overall_score"]
+
+    # 4. Valid rate-to-rate and count-to-count matches succeed
+    ev_rate_match = evaluator.evaluate_answer(q_data, ans_rate_claim, "STAR", candidate_evidence=ev_rate)
+    assert len(ev_rate_match["claims_analysis"]["resume_supported_claims"]) > 0
+    assert len(ev_rate_match["claims_analysis"]["unsupported_claims"]) == 0
+    assert ev_rate_match["criterion_scores"]["evidence_consistency"]["status"] == "pass"
+
+    ans_count_valid = (
+        "Situation: API gateway traffic spikes required optimization. "
+        "Task: Improve throughput in Python and Flask. "
+        "Action: Tuned asynchronous event loops. "
+        "Result: In our API Gateway project, I processed 100 requests in test batch."
+    )
+    ev_count_match = evaluator.evaluate_answer(q_data, ans_count_valid, "STAR", candidate_evidence=ev_count)
+    assert len(ev_count_match["claims_analysis"]["resume_supported_claims"]) > 0
+    assert len(ev_count_match["claims_analysis"]["unsupported_claims"]) == 0
+    assert ev_count_match["criterion_scores"]["evidence_consistency"]["status"] == "pass"
+
+    # 5. Malformed token boundaries remain rejected
+    assert evaluator._extract_metric_mentions("Tested 94students in coursework.")[0]["has_unit"] is False
+    assert evaluator._extract_metric_mentions("Processed 94msomething payloads.")[0]["has_unit"] is False
+    assert evaluator._extract_metric_mentions("Handled 94requestsExtra in testing.")[0]["has_unit"] is False
