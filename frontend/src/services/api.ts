@@ -164,18 +164,28 @@ export const api = {
     });
   },
 
-  async getInterviewStudio(analysisId?: string, category = 'ALL', difficulty = 'All', maxQuestions = 10): Promise<{
+  async getInterviewStudio(
+    analysisId?: string,
+    category = 'ALL',
+    difficulty = 'All',
+    maxQuestions = 10,
+    mode = 'mixed',
+    targetRole?: string
+  ): Promise<{
     status: string;
     evidence: InterviewEvidence;
     questions: InterviewQuestion[];
     technical_topics: string[];
     active_session_id?: string;
+    recent_sessions?: any[];
   }> {
     const params = new URLSearchParams();
     if (analysisId) params.append('id', analysisId);
     params.append('category', category);
     params.append('difficulty', difficulty);
     params.append('max_questions', maxQuestions.toString());
+    if (mode) params.append('mode', mode);
+    if (targetRole) params.append('target_role', targetRole);
     return fetchJson(`/api/interview-studio?${params.toString()}`);
   },
 
@@ -188,6 +198,9 @@ export const api = {
     framework?: string;
     action?: string;
     question_id?: string;
+    mode?: string;
+    target_role?: string;
+    csrf_token?: string;
   }): Promise<{
     status: string;
     evidence: InterviewEvidence;
@@ -200,6 +213,60 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
+  },
+
+  async createInterviewSession(payload: {
+    analysis_id?: string;
+    mode?: string;
+    difficulty?: string;
+    max_questions?: number;
+    target_role?: string;
+    category?: string;
+    csrf_token?: string;
+  }): Promise<{
+    status: string;
+    session: any;
+    question: InterviewQuestion;
+  }> {
+    return fetchJson('/api/interview/sessions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async getInterviewSessions(analysisId?: string): Promise<{
+    status: string;
+    sessions: any[];
+  }> {
+    const q = analysisId ? `?analysis_id=${encodeURIComponent(analysisId)}` : '';
+    return fetchJson(`/api/interview/sessions${q}`);
+  },
+
+  async getInterviewSessionDetail(sessionId: string): Promise<{
+    status: string;
+    session: any;
+  }> {
+    return fetchJson(`/api/interview/sessions/${encodeURIComponent(sessionId)}`);
+  },
+
+  async deleteInterviewSession(sessionId: string, csrfToken?: string): Promise<{
+    status: string;
+    message: string;
+    session_id: string;
+  }> {
+    return fetchJson(`/api/interview/sessions/${encodeURIComponent(sessionId)}`, {
+      method: 'DELETE',
+      headers: csrfToken ? { 'X-CSRF-Token': csrfToken } : {},
+    });
+  },
+
+  async getInterviewProgress(analysisId?: string): Promise<{
+    status: string;
+    progress: any;
+  }> {
+    const q = analysisId ? `?analysis_id=${encodeURIComponent(analysisId)}` : '';
+    return fetchJson(`/api/interview/progress${q}`);
   },
 
   async getInterviewPractice(sessionId?: string): Promise<{

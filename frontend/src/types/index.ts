@@ -453,10 +453,14 @@ export interface InterviewQuestion {
   difficulty: "Beginner" | "Intermediate" | "Advanced" | "Easy" | "Medium" | "Hard" | string;
   question_text: string;
   rationale?: string;
+  related_skill?: string;
+  reason_for_asking?: string;
   important_concepts?: string[];
   expected_key_points?: string[];
+  expected_answer_evaluation_criteria?: string[];
   recommended_answer_framework?: "STAR" | "PAR" | "CAR" | "Direct Technical" | string;
   topic?: string;
+  source_type?: string;
   source_evidence?: string;
   user_answer?: string;
   question_number?: number;
@@ -467,6 +471,8 @@ export interface InterviewQuestion {
   detailed_answer?: string;
   simpler_answer?: string;
   short_answer?: string;
+  completed_framework_answer?: Record<string, string>;
+  evaluation?: HeuristicEvaluation;
 }
 
 export interface InterviewEvidence {
@@ -479,26 +485,91 @@ export interface InterviewEvidence {
   internships_count?: number;
 }
 
+export interface CriterionScore {
+  score: number;
+  weight_pct: number;
+  status: string;
+  details: string;
+}
+
 export interface HeuristicEvaluation {
+  [key: string]: any;
   status: string;
   score: number;
+  overall_score?: number;
   evaluator_label: string;
+  disclaimer?: string;
+  word_count?: number;
+  completeness_level?: string;
+  individual_criterion_scores?: Record<string, CriterionScore>;
+  criterion_scores?: Record<string, CriterionScore>;
   framework_adherence: {
     framework: string;
+    framework_id?: string;
     sections_addressed: string[];
-    missing_sections: string[];
+    missing_sections?: string[];
+    sections_missing?: string[];
     adherence_pct: number;
   };
   key_point_coverage: {
-    points_covered: string[];
-    points_omitted: string[];
+    covered?: string[];
+    missing?: string[];
+    points_covered?: string[];
+    points_omitted?: string[];
     coverage_pct: number;
   };
-  conceptual_depth: {
+  important_concepts_coverage?: {
+    covered: string[];
+    missing: string[];
+    coverage_pct: number;
+  };
+  conceptual_depth?: {
     concepts_demonstrated: string[];
     depth_score: number;
   };
-  feedback_notes: string[];
+  evidence_detected?: boolean;
+  strengths?: string[];
+  areas_for_improvement?: string[];
+  missing_concepts?: string[];
+  improvement_suggestions?: string[];
+  evidence_grounding_warnings?: string[];
+  evidence_warnings?: string[];
+  suggested_improved_answer_structure?: {
+    framework_name: string;
+    framework_id: string;
+    recommended_steps: Array<{ step: string; guidance: string }>;
+    safeguard_note: string;
+  };
+  actionable_feedback?: string;
+  feedback_notes?: string[];
+}
+
+export interface InterviewSessionItem {
+  session_id: string;
+  owner_id?: string;
+  analysis_id?: string;
+  candidate_filename?: string;
+  job_title?: string;
+  target_role?: string;
+  interview_mode?: string;
+  difficulty?: string;
+  is_completed: boolean;
+  created_at: number;
+  updated_at?: number;
+  completed_at?: number;
+  total_questions: number;
+  answered_questions: number;
+  results_summary?: Record<string, any>;
+}
+
+export interface InterviewProgressSummary {
+  total_sessions: number;
+  completed_sessions: number;
+  total_questions_attempted: number;
+  average_score: number;
+  categories_practiced: Record<string, number>;
+  struggled_topics: string[];
+  recent_sessions: InterviewSessionItem[];
 }
 
 export interface ComparisonTableRow {
