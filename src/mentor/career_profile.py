@@ -27,41 +27,63 @@ NON_DEMONSTRATED_PATTERNS = [
     r"\bconsidered\s+(?:for\s+future|as\s+a\s+possible|as\s+a\s+potential)\b",
     r"\b(?:propos(?:ed|al)|tentative)\s+(?:tool|framework|library|to\s+use|for\s+use)\b",
     r"\bproposed\s+to\s+use\b",
+    # General discussions / planning without implementation
+    r"\b(?:was|were|is)\s+discussed\b",
+    r"\bdiscussed\s+(?:during|in|at|for)\b",
+    r"\b(?:under|in)\s+discussion\b",
+    # Requirements / preferences / role specs (not candidate evidence)
+    r"\b(?:is|are|was|were)\s+required\s+(?:for|by|in)\b",
+    r"\brequired\s+for\s+(?:this|the|a)\s+(?:role|job|position|project)\b",
+    r"\b(?:is|are)\s+preferred\b",
+    r"\b(?:preferred|desirable)\s+(?:qualification|skill|tool)\b",
+    r"\brole\s+requirement\b",
 ]
 
-# Action verbs and active engineering context indicators required for full demonstrated credit
+# Action verbs and active engineering context indicators required for full demonstrated credit.
+# Strictly limited to genuine action verbs; nominal forms (e.g. development, implementation,
+# architecture, analysis, configuration, management) are excluded to prevent treating discussions,
+# requirements, or descriptions as proof of candidate implementation.
 DEMONSTRATED_ACTION_VERBS = {
+    # Active usage
     "use", "used", "uses", "using", "utilize", "utilized", "utilizes", "utilizing",
-    "build", "built", "building", "develop", "developed", "developing", "development",
-    "engineer", "engineered", "engineering", "implement", "implemented", "implementing", "implementation",
+    # Construction / development / implementation
+    "build", "built", "building", "develop", "developed", "developing",
+    "engineer", "engineered",
+    "implement", "implemented", "implementing",
     "design", "designed", "designing", "create", "created", "creating",
-    "test", "tested", "testing", "deploy", "deployed", "deploying", "deployment",
-    "configure", "configured", "configuring", "configuration",
-    "optimize", "optimized", "optimizing", "optimization",
-    "integrate", "integrated", "integrating", "integration",
-    "analyze", "analyzed", "analyzing", "analysis",
-    "automate", "automated", "automating", "automation",
-    "author", "authored", "authoring",
-    "maintain", "maintained", "maintaining", "maintenance",
-    "orchestrate", "orchestrated", "orchestrating", "orchestration",
-    "architect", "architected", "architecting", "architecture",
-    "refactor", "refactored", "refactoring",
-    "program", "programmed", "programming", "code", "coded", "coding",
-    "leverage", "leveraged", "leveraging", "train", "trained", "training",
-    "fine-tune", "fine-tuned", "finetuning", "serve", "served", "serving",
-    "containerize", "containerized", "containerizing",
     "construct", "constructed", "constructing",
+    "author", "authored", "authoring",
+    "refactor", "refactored", "refactoring",
+    "program", "programmed",
+    "code", "coded", "coding",
+    "write", "wrote", "writing", "written",
+    # Operations / verification / systems
+    "test", "tested", "testing",
+    "deploy", "deployed", "deploying",
+    "configure", "configured", "configuring",
+    "optimize", "optimized", "optimizing",
+    "integrate", "integrated", "integrating",
+    "analyze", "analyzed", "analyzing",
+    "automate", "automated", "automating",
+    "maintain", "maintained", "maintaining",
+    "orchestrate", "orchestrated", "orchestrating",
+    "architect", "architected", "architecting",
+    "containerize", "containerized", "containerizing",
     "monitor", "monitored", "monitoring",
     "ingest", "ingested", "ingesting",
     "process", "processed", "processing",
     "scale", "scaled", "scaling",
-    "execute", "executed", "executing", "execution",
-    "manage", "managed", "managing", "management",
+    "execute", "executed", "executing",
+    "manage", "managed", "managing",
     "support", "supported", "supporting",
     "deliver", "delivered", "delivering",
     "lead", "led", "leading",
     "handle", "handled", "handling",
-    "run", "running", "write", "wrote", "writing", "written"
+    "run", "running",
+    "leverage", "leveraged", "leveraging",
+    "train", "trained",
+    "fine-tune", "fine-tuned",
+    "serve", "served", "serving"
 }
 
 
@@ -131,21 +153,24 @@ def find_supporting_excerpt_for_skill(skill_name: str, text: Optional[str]) -> O
                 break
 
         if has_demonstrated_clause:
-            # Overarching sentence negation check: e.g. "Python was considered but not used"
+            # Overarching sentence rejection check: e.g. "Python was considered but not used"
             whole_lower = s_clean.lower()
-            overarching_negation = False
+            overarching_rejection = False
             for pat in [
                 r"\b(?:was|were|is)\s+considered\s+but\s+not\s+used\b",
                 r"\bconsidered\s+(?:[a-z0-9#+.]+\s+)?but\s+not\s+used\b",
                 r"\bnot\s+used\b",
                 r"\bdid\s+not\s+use\b",
-                r"\bnever\s+used\b"
+                r"\bnever\s+used\b",
+                r"\b(?:is|are|was|were)\s+required\s+for\s+(?:this|the|a)\s+(?:role|job|position)\b",
+                r"\bdiscussed\s+during\s+planning\b",
+                r"\b(?:was|were|is)\s+discussed\s+(?:during|in|at)\b"
             ]:
                 if re.search(pat, whole_lower):
-                    overarching_negation = True
+                    overarching_rejection = True
                     break
 
-            if overarching_negation:
+            if overarching_rejection:
                 continue
 
             if len(s_clean) > 140:
@@ -318,8 +343,16 @@ def build_structured_career_profile(analysis_data: Optional[Dict[str, Any]]) -> 
                     "confidence": 0.60
                 })
 
-    # Pull additional solidly evidenced skills from evidence registry or analysis
-    registry_demonstrated = ev_registry.get("demonstrated_skills") or data.get("solidly_evidenced_skills") or []
+    # Pull candidate skills from registry, analysis solidly evidenced, or matches
+    registry_demonstrated = list(ev_registry.get("demonstrated_skills") or data.get("solidly_evidenced_skills") or [])
+    for m in data.get("matches", []):
+        if isinstance(m, dict):
+            m_skill = m.get("skill") or m.get("skill_name")
+            if m_skill and isinstance(m_skill, str) and m_skill.strip():
+                canon_m = resolve_canonical_skill(m_skill.strip())
+                if not any(resolve_canonical_skill(existing).lower() == canon_m.lower() for existing in registry_demonstrated):
+                    registry_demonstrated.append(canon_m)
+
     for s in registry_demonstrated:
         canon = resolve_canonical_skill(s)
         canon_key = canon.lower()
@@ -329,18 +362,24 @@ def build_structured_career_profile(analysis_data: Optional[Dict[str, Any]]) -> 
             continue
 
         real_excerpt = None
+        source_title = "Documented Work Experience"
+        source_type = "professional_experience"
 
-        # Check matches table
+        # Check matches table with strict evidence validation (no bypass for arbitrary strings)
         for m in data.get("matches", []):
             if isinstance(m, dict):
                 m_skill = m.get("skill") or m.get("skill_name") or ""
                 if resolve_canonical_skill(m_skill).lower() == canon_key:
                     ex = m.get("resume_evidence") or m.get("evidence") or m.get("excerpt")
-                    if ex and isinstance(ex, str) and len(ex.strip()) > 5:
-                        real_excerpt = ex.strip()
-                        if len(real_excerpt) > 140:
-                            real_excerpt = real_excerpt[:137] + "..."
-                        break
+                    if isinstance(ex, list):
+                        ex = " ".join(str(item) for item in ex if item)
+                    if ex and isinstance(ex, str) and len(ex.strip()) >= 4:
+                        validated_ex = find_supporting_excerpt_for_skill(canon, ex)
+                        if validated_ex:
+                            real_excerpt = validated_ex
+                            source_title = "Verified Resume Match"
+                            source_type = "professional_experience"
+                            break
 
         # Check professional experience with safe boundary-checked search
         if not real_excerpt:
@@ -352,6 +391,8 @@ def build_structured_career_profile(analysis_data: Optional[Dict[str, Any]]) -> 
                     found_ex = find_supporting_excerpt_for_skill(canon, desc)
                     if found_ex:
                         real_excerpt = found_ex
+                        source_title = "Documented Work Experience"
+                        source_type = "professional_experience"
                         break
 
         # Check raw resume text with safe boundary-checked search
@@ -360,12 +401,14 @@ def build_structured_career_profile(analysis_data: Optional[Dict[str, Any]]) -> 
             found_ex = find_supporting_excerpt_for_skill(canon, raw_t)
             if found_ex and not any(found_ex.lower().startswith(h) for h in ["skills:", "technical skills", "technologies:"]):
                 real_excerpt = found_ex
+                source_title = "Resume Text"
+                source_type = "professional_experience"
 
         if real_excerpt:
             _record_demonstrated_skill({
                 "skill": canon,
-                "evidence_source": "professional_experience",
-                "provenance_title": "Documented Work Experience",
+                "evidence_source": source_type,
+                "provenance_title": source_title,
                 "excerpt": real_excerpt,
                 "excerpt_status": "available",
                 "provenance_note": None,
