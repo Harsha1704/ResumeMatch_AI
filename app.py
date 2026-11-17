@@ -36,15 +36,32 @@ app = Flask(__name__)
 # Runtime configuration: keep local development convenient, but fail closed in production.
 APP_ENV = os.environ.get("RESUMEMATCH_ENV", "development").strip().lower()
 secret_key = os.environ.get("SECRET_KEY")
-if APP_ENV == "production" and not secret_key:
-    raise RuntimeError("SECRET_KEY must be configured for production deployments.")
+
+INSECURE_SECRET_KEYS = {
+    "skillsync-dev-key-2026",
+    "dev-key-change-me",
+    "insecure-default",
+    "change-me",
+    "secret",
+    "default",
+    ""
+}
+
+if APP_ENV == "production":
+    if not secret_key or secret_key.strip() in INSECURE_SECRET_KEYS or len(secret_key.strip()) < 16:
+        raise RuntimeError("SECRET_KEY must be configured with a secure, random value for production deployments.")
 
 app.config["SECRET_KEY"] = secret_key or "skillsync-dev-key-2026"
 app.config["MAX_CONTENT_LENGTH"] = int(os.environ.get("MAX_CONTENT_LENGTH", 16 * 1024 * 1024))
 app.config["MODEL_BACKEND"] = os.environ.get("RESUMEMATCH_MODEL_BACKEND", "production")
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SECURE"] = APP_ENV == "production"
-app.config["SESSION_COOKIE_SAMESITE"] = "None" if APP_ENV == "production" else "Lax"
+
+# In production for the selected Option 1 architecture (app.resumematch.ai + api.resumematch.ai),
+# cookies are same-site. SESSION_COOKIE_SAMESITE defaults to "Lax" for strong security.
+# Allows environment override via SESSION_COOKIE_SAMESITE if needed (e.g. cross-site testing).
+app.config["SESSION_COOKIE_SAMESITE"] = os.environ.get("SESSION_COOKIE_SAMESITE", "Lax")
+app.config["SESSION_COOKIE_DOMAIN"] = os.environ.get("SESSION_COOKIE_DOMAIN") or None
 
 # Vercel and Render are different origins. Credentialed API requests are limited
 # to explicitly configured frontend origins; no wildcard origin is permitted.
@@ -1187,9 +1204,10 @@ def api_candidate_confirm_education():
     csrf_err = _validate_csrf(data)
     if csrf_err:
         return csrf_err
-    edu = data.get("education", "").strip()
-    if not edu:
+    raw_edu = data.get("education")
+    if not isinstance(raw_edu, str) or not raw_edu.strip():
         return jsonify({"status": "error", "message": "Education cannot be empty"}), 400
+    edu = raw_edu.strip()
     confs = session.get("candidate_confirmations", {})
     confs["education"] = edu
     session["candidate_confirmations"] = confs

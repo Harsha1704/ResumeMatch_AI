@@ -1,59 +1,57 @@
-# RESUMEMATCH AI — PHASE 7: PRODUCTION RELEASE & DEPLOYMENT CHECKLIST
+# RESUMEMATCH AI — PHASE 7.1: PRODUCTION RELEASE & DEPLOYMENT CHECKLIST
 
 **Target Repository**: `Harsha1704/ResumeMatch_AI`  
 **Working Branch**: `fix/resumematch-final-repair`  
 **Baseline Commit**: `1757b326371ebf43a76141ff6347e8ccdc0b1a51`  
 **Verified Live Deployed Commit**: `07b88a058f166f13491fa9050ba835d95fd0e8fd`  
-**Verified Vercel Deployment**: `https://frontend-orzkrjj8t-harsha1704s-projects.vercel.app` (Project: `frontend`, Team: `harsha1704s-projects`)  
-**Verified Render Deployment**: `https://resumematch-ai-api-atil.onrender.com` (Service: `resumematch-ai-api`, ID: `srv-dbspslmi0phs73dqbptg`)  
-**Document Purpose**: Operational Step-by-Step Release Gate Checklist for System Administrators
+**Verified Vercel Deployment**: `https://frontend-orzkrjj8t-harsha1704s-projects.vercel.app` (Project: `frontend`, Team: `harsha1704s-projects`, Branch: `main`)  
+**Verified Render Deployment**: `https://resumematch-ai-api-atil.onrender.com` (Service: `resumematch-ai-api`, ID: `srv-dbspslmi0phs73dqbptg`, Branch: `deploy/vercel-render-free`)  
+**Document Purpose**: Step-by-Step Dual-Branch Release Gate Checklist for System Administrators
 
 ---
 
-## 1. Pre-Release Verification (Engineering Sign-Off)
+## 1. Pre-Release Engineering Verification (All Verified)
 
-Before performing any actions in production cloud dashboards, ensure all engineering milestones are verified:
-
-- [x] **Branch Verification**: All changes are committed and pushed to `fix/resumematch-final-repair`. No uncommitted files or unstaged changes.
-- [x] **Backend Regression**: All 770 pytest tests pass cleanly (`py -3.14 -m pytest tests/ -q`).
-- [x] **Production Readiness Suite**: All 19 Phase 7 tests pass cleanly (`py -3.14 -m pytest tests/test_phase7*.py -v`).
+- [x] **Branch Isolation Check**: Work committed strictly to `fix/resumematch-final-repair`. No uncommitted or unstaged changes.
+- [x] **Backend Regression**: All 771 pytest tests pass cleanly (`py -3.14 -m pytest tests/ -q`).
+- [x] **Phase 7.1 Production Readiness Suite**: All 20 tests pass cleanly (`py -3.14 -m pytest tests/test_phase7*.py -v`).
+- [x] **Real Startup Tests**: Tested production startup in real subprocess with missing and insecure secrets; verified fail-closed `RuntimeError`.
+- [x] **Real Production Cookie Headers**: Verified actual `Set-Cookie` response headers (`session=...; Secure; HttpOnly; SameSite=Lax; Domain=resumematch.ai`).
+- [x] **Complete Route Inventory CSRF**: Verified missing token (403), invalid token (403), and valid token (pass) across all 17 state-changing routes.
+- [x] **Real DOCX Archive Bomb**: Generated genuine 1000:1 ratio DOCX bomb; verified fail-closed rejection by validator and resume parser.
+- [x] **Exceeded Rate Limiting**: Tested threshold exceeding (60 req/min) on `/api/match`; verified HTTP 429 with `Retry-After`.
+- [x] **IDOR Reads & Mutations**: Verified unowned analysis reads (403) and unowned session mutations (create, submit, delete) return 403.
 - [x] **Frontend Unit & Browser Suites**: All 14 tests pass across Chromium, Firefox, and WebKit (`npm test --prefix frontend`).
 - [x] **Frontend Production Build**: `tsc -b && vite build` completes cleanly with 0 errors.
 - [x] **Frontend Linting**: `oxlint` completes with 0 errors.
-- [x] **Fail-Closed CSRF Protection**: All 13 mutating API routes verified rejecting unauthenticated/untokenized mutations with HTTP 403.
-- [x] **Session Isolation**: Multi-session IDOR isolation verified across all analysis endpoints.
-- [x] **Archive Bomb & File Validation**: Magic bytes inspection and DOCX 10:1 compression ratio limits verified.
 
 ---
 
 ## 2. Cloud Infrastructure & Dashboard Configuration Checklist
 
-These steps require administrative access to the Vercel, Render, and DNS registrar dashboards:
-
-### 2.1 Vercel Dashboard Actions
-- [ ] **Remediate Failing Project `resumematch_ai`**:
-  - Open Vercel Dashboard -> Project `resumematch_ai`.
-  - If redundant: Click **Settings** -> **Advanced** -> **Delete Project**.
-  - If retaining: Click **Settings** -> **General** -> Change **Root Directory** from `.` to `frontend` -> Save.
+### 2.1 Vercel Dashboard Actions (Project: `frontend`)
 - [ ] **Adjust Vercel Deployment Protection**:
   - In Vercel Project `frontend` -> **Settings** -> **Deployment Protection**:
-  - For public access, configure protection settings so public users can access the application without SSO login prompts.
+  - Disable Deployment Protection or configure public bypass so end-users can access without team SSO login.
 - [ ] **Configure Frontend Production Environment Variables**:
   - In Vercel Project `frontend` -> **Settings** -> **Environment Variables**:
-    - `VITE_API_BASE_URL` = `https://api.resumematch.ai` (or `https://resumematch-ai-api-atil.onrender.com` during transition)
+    - `VITE_API_BASE_URL` = `https://api.resumematch.ai`
 - [ ] **Bind Custom Domain**:
   - In Vercel Project `frontend` -> **Settings** -> **Domains**:
     - Add `app.resumematch.ai`.
+- [ ] **Remediate Secondary Failing Project `resumematch_ai`**:
+  - Open Vercel Project `resumematch_ai` -> **Settings** -> **Advanced** -> Click **Delete Project**.
 
-### 2.2 Render Dashboard Actions
-- [ ] **Verify Service Status**:
-  - Open Render Dashboard -> Service `resumematch-ai-api` (`srv-dbspslmi0phs73dqbptg`).
-  - Verify Build Command: `pip install -r requirements.txt`.
-  - Verify Start Command: `gunicorn --worker-class sync --workers 2 --bind 0.0.0.0:$PORT wsgi:app`.
-- [ ] **Set Production Environment Variables**:
-  - `FLASK_ENV` = `production`
+### 2.2 Render Dashboard Actions (Service: `resumematch-ai-api`)
+- [ ] **Verify Service Spec**:
+  - Build Command: `pip install -r requirements.txt`.
+  - Start Command: `gunicorn --worker-class sync --workers 2 --bind 0.0.0.0:$PORT wsgi:app`.
+- [ ] **Set Real Production Environment Variables**:
+  - `RESUMEMATCH_ENV` = `production`
   - `SECRET_KEY` = `<GENERATE_CRYPTOGRAPHIC_HEX_KEY_64_CHARS>` (e.g. `python -c "import secrets; print(secrets.token_hex(32))"`)
-  - `CORS_ALLOWED_ORIGINS` = `https://app.resumematch.ai,https://frontend-harsha1704s-projects.vercel.app`
+  - `FRONTEND_ORIGINS` = `https://app.resumematch.ai,https://frontend-harsha1704s-projects.vercel.app`
+  - `SESSION_COOKIE_SAMESITE` = `Lax`
+  - `SESSION_COOKIE_DOMAIN` = `.resumematch.ai` (or omit for host-only `None`)
   - `PYTHON_VERSION` = `3.14.0` (or `3.11+`)
 - [ ] **Bind Custom Domain**:
   - In Render Service -> **Settings** -> **Custom Domains**:
@@ -67,61 +65,59 @@ These steps require administrative access to the Vercel, Render, and DNS registr
 
 ---
 
-## 3. Production Deployment & Merge Execution
+## 3. Dual-Branch Deployment Sequence (Guarantees Same Commit)
 
-Once cloud configurations and DNS records are staged:
+Vercel tracks `main` while Render tracks `deploy/vercel-render-free`. To guarantee both services deploy the exact same release commit:
 
-- [ ] **Pull Request & Code Review**:
-  - Create Pull Request: `fix/resumematch-final-repair` -> `main`.
-  - Review release documentation in [reports/phase7/](file:///d:/skillsync1/reports/phase7/).
-- [ ] **Merge to Main**:
-  - Merge the pull request.
-- [ ] **Trigger Production Builds**:
-  - Trigger Vercel production deployment from `main` on project `frontend`.
-  - Trigger Render manual deploy (Clear build cache & deploy) from `main` on service `srv-dbspslmi0phs73dqbptg`.
+1. **Step 1: Merge Repair Branch to Main (Deploys Vercel)**:
+   - Create Pull Request: `fix/resumematch-final-repair` $\rightarrow$ `main`.
+   - Review and merge.
+   - Vercel automatically deploys `main` to project `frontend`.
+2. **Step 2: Fast-Forward Deploy Branch for Render (Deploys Render)**:
+   - Synchronize branch `deploy/vercel-render-free` with `main`:
+     ```bash
+     git checkout deploy/vercel-render-free
+     git pull origin deploy/vercel-render-free
+     git merge main --ff-only  # or git merge main
+     git push origin deploy/vercel-render-free
+     ```
+   - Render automatically detects the push to `deploy/vercel-render-free` and triggers deployment on `srv-dbspslmi0phs73dqbptg`.
+3. **Step 3: Verify Deployment Commit Hash on Both Dashboards**:
+   - Verify that Vercel Deployment lists commit SHA: `<RELEASE_COMMIT_SHA>`.
+   - Verify that Render Deploy lists commit SHA: `<RELEASE_COMMIT_SHA>`.
 
 ---
 
 ## 4. Post-Deployment Smoke Verification (Live Acceptance Testing)
 
-Execute in Chromium (Chrome/Edge), Firefox, and Safari (macOS/iOS):
+Execute in Chromium, Firefox, and Safari:
 
 - [ ] **1. Public Health Check**:
-  - Request `https://api.resumematch.ai/health` (or `https://resumematch-ai-api-atil.onrender.com/health`).
+  - Request `https://api.resumematch.ai/health`.
   - Expect: HTTP 200 `{"status": "healthy"}`.
 - [ ] **2. CSRF & Session Initialization**:
-  - Request `https://api.resumematch.ai/api/csrf-token` (or Render endpoint) with `credentials: include`.
+  - Request `https://api.resumematch.ai/api/csrf-token` with `credentials: include`.
   - Expect: HTTP 200, JSON `{ "csrf_token": "..." }`, Response Header `Set-Cookie: session=...; Secure; HttpOnly; SameSite=Lax`.
 - [ ] **3. Frontend SPA Loading**:
-  - Open `https://app.resumematch.ai` (or `https://frontend-harsha1704s-projects.vercel.app`).
-  - Expect: React 19 UI renders without console errors or missing chunk errors.
+  - Open `https://app.resumematch.ai`.
+  - Expect: React 19 UI renders without Vercel SSO login wall or missing chunk errors.
 - [ ] **4. End-to-End Resume Analysis Flow**:
-  - Upload a standard `.pdf` or `.docx` resume (< 16 MB).
-  - Paste a valid job description.
+  - Upload sample `.pdf` or `.docx` resume (< 16 MB).
+  - Paste job description.
   - Click **Analyze**.
-  - Expect:
-    - Preflight `OPTIONS /api/analyze` returns HTTP 200 with `Access-Control-Allow-Origin`.
-    - Request sends `X-CSRF-Token` header.
-    - Processing succeeds; navigation redirects to `/results/:id`.
-    - Multi-model scores render accurately.
+  - Expect: Preflight `OPTIONS` succeeds; request sends `X-CSRF-Token`; redirects to `/results/:id`.
 - [ ] **5. Multi-Module Session Persistence Flow**:
-  - Click **Skill Gap** -> Matched/missing skills display for active analysis.
-  - Click **Interview Studio** -> Question sets generate successfully.
-  - Click **Career Mentor** -> Role readiness dossier loads.
-- [ ] **6. Browser Compatibility Sign-Off**:
-  - Verify above steps in Chrome.
-  - Verify above steps in Firefox.
-  - Verify above steps in Safari / WebKit (confirms same-site cookie persistence under Apple ITP).
+  - Navigate to **Skill Gap** -> Matched/missing skills render.
+  - Navigate to **Interview Studio** -> Question sets generate.
+  - Navigate to **Career Mentor** -> Role readiness dossier loads.
+- [ ] **6. Cross-Browser Sign-Off**:
+  - Verified in Chrome, Firefox, and Safari (confirms same-site cookie persistence under Apple ITP).
 
 ---
 
-## 5. Rollback & Contingency Procedures
-
-If any critical issue arises during live smoke verification:
+## 5. Rollback Procedures
 
 1. **Frontend Rollback**:
    - In Vercel Dashboard -> **Deployments** -> Select previous stable deployment (`07b88a0`) -> Click **Promote to Production**.
 2. **Backend Rollback**:
    - In Render Dashboard -> **Deploys** -> Select previous stable deploy (`07b88a0`) -> Click **Rollback**.
-3. **Emergency Provider URLs**:
-   - Set Vercel `VITE_API_BASE_URL=https://resumematch-ai-api-atil.onrender.com` if custom domain routing encounters DNS propagation delays.

@@ -196,7 +196,8 @@ describe('Playwright Genuine Cross-Origin Browser Test Suite (HTTPS)', () => {
       const env = {
         ...process.env,
         PORT: String(BACKEND_PORT),
-        RESUMEMATCH_ENV: 'production', // Activates SESSION_COOKIE_SECURE=True and SESSION_COOKIE_SAMESITE="None"
+        RESUMEMATCH_ENV: 'production', // Activates SESSION_COOKIE_SECURE=True
+        SESSION_COOKIE_SAMESITE: 'None', // Cross-site browser test requires SameSite=None
         SECRET_KEY: 'cross-origin-test-secret-key-phase6.6',
         FLASK_SSL_CERT: CERT_PATH,
         FLASK_SSL_KEY: KEY_PATH,
