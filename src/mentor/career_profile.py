@@ -19,10 +19,12 @@ NON_DEMONSTRATED_PATTERNS = [
     # Planned / prospective / future
     r"\b(?:plan(?:ned|ning|s)?\s+to\s+(?:migrate|implement|use|adopt|switch|transition))\b",
     r"\b(?:plan(?:ned|ning|s)?\s+to\b|\bplanning\s+to\b)",
+    r"\b(?:was|were|is)\s+planned\s+for\b",
     r"\b(?:future\s+tool|future\s+plan|future\s+roadmap|future\s+adoption|future\s+work|prospective\s+tool)\b",
     r"\b(?:possible\s+future\s+tool|potential\s+future\s+tool|possible\s+tool|potential\s+tool)\b",
     r"\b(?:listed\s+as\s+a\s+possible|listed\s+as\s+a\s+potential|listed\s+as\s+a\s+future)\b",
     # Considered / proposed
+    r"\b(?:was|were|is)\s+only\s+considered\b",
     r"\b(?:was|were|is)\s+considered\b(?!\s+(?:essential|crucial|key|central|vital|by))",
     r"\bconsidered\s+(?:for\s+future|as\s+a\s+possible|as\s+a\s+potential)\b",
     r"\b(?:propos(?:ed|al)|tentative)\s+(?:tool|framework|library|to\s+use|for\s+use)\b",
@@ -89,6 +91,49 @@ DEMONSTRATED_ACTION_VERBS = {
     "serve", "served", "serving"
 }
 
+VERB_INDICATOR_PATTERN = (
+    r"\b(?:was|were|is|are|am|did|do|does|have|has|had|will|would|can|could|should|"
+    r"used|developed|built|implemented|tested|created|designed|architected|configured|"
+    r"optimized|automated|maintained|wrote|coded|engineered|programmed|led|managed|"
+    r"considered|listed|mentioned|discussed|required|preferred|adopted|evaluated)\b"
+)
+
+
+def split_sentence_into_clauses(s_clean: str) -> List[str]:
+    """
+    Splits a sentence into independent or contrasting clauses while strictly preserving
+    coordinated skill lists (e.g. 'using Python and React', 'Python and Java were used').
+    """
+    major_delimiters = (
+        r";\s*"
+        r"|,\s*(?:but|however|whereas|while|although|though|yet|instead of|rather than)\s*"
+        r"|\s+(?:but|however|whereas|while|although|though|instead of|rather than)\s+"
+        r"|,\s*(?:and\s+then|then)\s+"
+    )
+    first_pass = re.split(major_delimiters, s_clean, flags=re.IGNORECASE)
+
+    clauses: List[str] = []
+    for chunk in first_pass:
+        chunk = chunk.strip()
+        if not chunk:
+            continue
+        parts: List[str] = []
+        last_idx = 0
+        for m in re.finditer(r"\s+(?:,\s*)?and\s+", chunk, flags=re.IGNORECASE):
+            before_text = chunk[last_idx:m.start()]
+            after_text = chunk[m.end():]
+            # Split on 'and' ONLY when both before and after contain distinct verb/predicate phrases
+            if re.search(VERB_INDICATOR_PATTERN, before_text, flags=re.IGNORECASE) and re.search(VERB_INDICATOR_PATTERN, after_text, flags=re.IGNORECASE):
+                parts.append(before_text.strip())
+                last_idx = m.end()
+        parts.append(chunk[last_idx:].strip())
+
+        for p in parts:
+            if p:
+                clauses.append(p)
+
+    return clauses
+
 
 def find_supporting_excerpt_for_skill(skill_name: str, text: Optional[str]) -> Optional[str]:
     """
@@ -131,15 +176,7 @@ def find_supporting_excerpt_for_skill(skill_name: str, text: Optional[str]) -> O
             continue
 
         # Split sentence into clauses (by semicolons, contrasting conjunctions, coordinating clause boundaries, or parentheticals)
-        clause_split_pattern = (
-            r";\s*"
-            r"|,\s*(?:but|however|whereas|while|although|though|yet|instead of|rather than)\s*"
-            r"|\s+(?:but|however|whereas|while|although|though|instead of|rather than)\s+"
-            r"|,\s*(?:and\s+then|then)\s+"
-            r"|,\s*(?:and|or)\s+(?=[^,;]+?\b(?:was|were|is|are|am|did|do|does|have|has|had|will|would|can|could|should|developed|built|used|implemented|tested|created|designed|architected|configured|optimized|automated|maintained|wrote|coded|engineered|programmed|led|managed)\b)"
-            r"|\s+and\s+(?=(?:i|we|they|he|she|it|the)\b|(?:was|were|is|are)\b|(?:developed|built|used|implemented|tested|created|designed|architected|configured|optimized|automated|maintained|wrote|coded|engineered|programmed|led|managed)\b)"
-        )
-        clauses = re.split(clause_split_pattern, s_clean, flags=re.IGNORECASE)
+        clauses = split_sentence_into_clauses(s_clean)
 
         # Check clauses that specifically mention the skill
         skill_clauses = [c for c in clauses if any(matches_skill_token(c, term) for term in search_terms)]
