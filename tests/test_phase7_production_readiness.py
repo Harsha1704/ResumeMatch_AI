@@ -100,38 +100,45 @@ def test_prod_01_real_startup_missing_and_insecure_secrets():
 def test_prod_02_inspect_actual_production_set_cookie_headers(monkeypatch):
     """
     Inspects actual HTTP Set-Cookie response headers from Flask under production configuration.
-    Verifies Secure, HttpOnly, SameSite=Lax, and optional domain behavior.
+    Verifies that the recommended production cookie policy is strictly host-only (NO Domain attribute)
+    for api.resumematch.ai, with HttpOnly=True, Secure=True, and SameSite=Lax.
+    Verifies that subsequent credentialed API mutations and queries succeed with this host-only cookie.
     """
     monkeypatch.setenv("RESUMEMATCH_ENV", "production")
     monkeypatch.setenv("SECRET_KEY", "prod-strong-secret-key-32chars-xyz")
+    monkeypatch.delenv("SESSION_COOKIE_DOMAIN", raising=False)
     
-    # Test Case A: Host-only cookie (default Option 1 subdomains, Domain=None)
+    # Recommended production configuration: Host-only cookie locked to api.resumematch.ai
     app.config["SESSION_COOKIE_SECURE"] = True
     app.config["SESSION_COOKIE_HTTPONLY"] = True
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
     app.config["SESSION_COOKIE_DOMAIN"] = None
 
-    with app.test_client() as prod_client:
-        res = prod_client.get("/api/csrf-token")
-        assert res.status_code == 200
-        cookie_header = res.headers.get("Set-Cookie", "")
-        assert "session=" in cookie_header, "Set-Cookie header must set session cookie"
-        assert "HttpOnly" in cookie_header, "Cookie must have HttpOnly flag"
-        assert "Secure" in cookie_header, "Cookie must have Secure flag in production"
-        assert "SameSite=Lax" in cookie_header, "Cookie must have SameSite=Lax attribute"
-        assert "Domain=" not in cookie_header, "Host-only cookie must not include Domain attribute"
-
-    # Test Case B: Shared Apex Domain cookie (Domain=.resumematch.ai)
-    app.config["SESSION_COOKIE_DOMAIN"] = ".resumematch.ai"
     try:
-        with app.test_client() as prod_client_domain:
-            res = prod_client_domain.get("/api/csrf-token")
+        with app.test_client() as prod_client:
+            # 1. Inspect response headers on GET /api/csrf-token
+            res = prod_client.get("/api/csrf-token")
             assert res.status_code == 200
             cookie_header = res.headers.get("Set-Cookie", "")
-            assert "Domain=resumematch.ai" in cookie_header or "Domain=.resumematch.ai" in cookie_header, "Cookie must include Domain=resumematch.ai"
-            assert "SameSite=Lax" in cookie_header
-            assert "HttpOnly" in cookie_header
-            assert "Secure" in cookie_header
+            assert "session=" in cookie_header, "Set-Cookie header must set session cookie"
+            assert "HttpOnly" in cookie_header, "Cookie must have HttpOnly flag"
+            assert "Secure" in cookie_header, "Cookie must have Secure flag in production"
+            assert "SameSite=Lax" in cookie_header, "Cookie must have SameSite=Lax attribute"
+            assert "Domain=" not in cookie_header, "Production cookie must be strictly host-only with no Domain attribute"
+
+            # 2. Verify credentialed state-changing mutation with the host-only cookie
+            token = res.get_json()["csrf_token"]
+            mutate_res = prod_client.post(
+                "/api/candidate/update-role",
+                json={"target_role": "Staff Platform Engineer"},
+                headers={"X-CSRF-Token": token}
+            )
+            assert mutate_res.status_code == 200
+            assert mutate_res.get_json()["target_role"] == "Staff Platform Engineer"
+
+            # 3. Verify session continuity on subsequent credentialed query
+            dash_res = prod_client.get("/api/dashboard")
+            assert dash_res.status_code == 200
     finally:
         app.config["SESSION_COOKIE_DOMAIN"] = None
         app.config["SESSION_COOKIE_SECURE"] = False

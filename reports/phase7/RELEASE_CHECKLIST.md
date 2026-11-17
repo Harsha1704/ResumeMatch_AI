@@ -1,4 +1,4 @@
-# RESUMEMATCH AI — PHASE 7.1: PRODUCTION RELEASE & DEPLOYMENT CHECKLIST
+# RESUMEMATCH AI — PHASE 7.2: PRODUCTION RELEASE & DEPLOYMENT CHECKLIST
 
 **Target Repository**: `Harsha1704/ResumeMatch_AI`  
 **Working Branch**: `fix/resumematch-final-repair`  
@@ -14,9 +14,9 @@
 
 - [x] **Branch Isolation Check**: Work committed strictly to `fix/resumematch-final-repair`. No uncommitted or unstaged changes.
 - [x] **Backend Regression**: All 771 pytest tests pass cleanly (`py -3.14 -m pytest tests/ -q`).
-- [x] **Phase 7.1 Production Readiness Suite**: All 20 tests pass cleanly (`py -3.14 -m pytest tests/test_phase7*.py -v`).
+- [x] **Phase 7.2 Production Readiness Suite**: All 20 tests pass cleanly (`py -3.14 -m pytest tests/test_phase7*.py -v`).
 - [x] **Real Startup Tests**: Tested production startup in real subprocess with missing and insecure secrets; verified fail-closed `RuntimeError`.
-- [x] **Real Production Cookie Headers**: Verified actual `Set-Cookie` response headers (`session=...; Secure; HttpOnly; SameSite=Lax; Domain=resumematch.ai`).
+- [x] **Host-Only Production Cookie Verification**: Verified actual `Set-Cookie` response headers (`session=...; Secure; HttpOnly; SameSite=Lax`) with **no Domain attribute** (host-only cookie locked strictly to `api.resumematch.ai`). Verified credentialed mutations and queries succeed.
 - [x] **Complete Route Inventory CSRF**: Verified missing token (403), invalid token (403), and valid token (pass) across all 17 state-changing routes.
 - [x] **Real DOCX Archive Bomb**: Generated genuine 1000:1 ratio DOCX bomb; verified fail-closed rejection by validator and resume parser.
 - [x] **Exceeded Rate Limiting**: Tested threshold exceeding (60 req/min) on `/api/match`; verified HTTP 429 with `Retry-After`.
@@ -43,15 +43,15 @@
   - Open Vercel Project `resumematch_ai` -> **Settings** -> **Advanced** -> Click **Delete Project**.
 
 ### 2.2 Render Dashboard Actions (Service: `resumematch-ai-api`)
-- [ ] **Verify Service Spec**:
+- [ ] **Verify Service Spec (Distinguishing Deployed from Proposed Settings)**:
+  - **Actual Verified Deployed Setting**: `gunicorn --workers 1 --threads 2 --timeout 120 --bind 0.0.0.0:$PORT wsgi:app`. (Do NOT change this setting; 1 worker with 2 threads is optimized for Render 512 MB memory constraints).
   - Build Command: `pip install -r requirements.txt`.
-  - Start Command: `gunicorn --worker-class sync --workers 2 --bind 0.0.0.0:$PORT wsgi:app`.
 - [ ] **Set Real Production Environment Variables**:
   - `RESUMEMATCH_ENV` = `production`
   - `SECRET_KEY` = `<GENERATE_CRYPTOGRAPHIC_HEX_KEY_64_CHARS>` (e.g. `python -c "import secrets; print(secrets.token_hex(32))"`)
   - `FRONTEND_ORIGINS` = `https://app.resumematch.ai,https://frontend-harsha1704s-projects.vercel.app`
   - `SESSION_COOKIE_SAMESITE` = `Lax`
-  - `SESSION_COOKIE_DOMAIN` = `.resumematch.ai` (or omit for host-only `None`)
+  - *(Leave `SESSION_COOKIE_DOMAIN` unset / omit: defaults to host-only cookie for `api.resumematch.ai`)*
   - `PYTHON_VERSION` = `3.14.0` (or `3.11+`)
 - [ ] **Bind Custom Domain**:
   - In Render Service -> **Settings** -> **Custom Domains**:
@@ -97,7 +97,7 @@ Execute in Chromium, Firefox, and Safari:
   - Expect: HTTP 200 `{"status": "healthy"}`.
 - [ ] **2. CSRF & Session Initialization**:
   - Request `https://api.resumematch.ai/api/csrf-token` with `credentials: include`.
-  - Expect: HTTP 200, JSON `{ "csrf_token": "..." }`, Response Header `Set-Cookie: session=...; Secure; HttpOnly; SameSite=Lax`.
+  - Expect: HTTP 200, JSON `{ "csrf_token": "..." }`, Response Header `Set-Cookie: session=...; Secure; HttpOnly; SameSite=Lax` with no Domain attribute (host-only).
 - [ ] **3. Frontend SPA Loading**:
   - Open `https://app.resumematch.ai`.
   - Expect: React 19 UI renders without Vercel SSO login wall or missing chunk errors.
@@ -111,7 +111,7 @@ Execute in Chromium, Firefox, and Safari:
   - Navigate to **Interview Studio** -> Question sets generate.
   - Navigate to **Career Mentor** -> Role readiness dossier loads.
 - [ ] **6. Cross-Browser Sign-Off**:
-  - Verified in Chrome, Firefox, and Safari (confirms same-site cookie persistence under Apple ITP).
+  - Verified in Chrome, Firefox, and Safari (confirms expected same-site cookie persistence under Apple ITP).
 
 ---
 

@@ -48,13 +48,14 @@ Every security control has been empirically validated via automated regression t
   ```
 - **Automated Verification**: Spawns real Python processes importing `app.py`. Verified that missing keys or insecure defaults fail closed with `RuntimeError`, while valid random keys boot cleanly ([tests/test_phase7_production_readiness.py::test_prod_01](file:///d:/skillsync1/tests/test_phase7_production_readiness.py#L42)).
 
-### 2.2 Reconciled Same-Site Cookie Architecture
-- **Active Settings**: `SESSION_COOKIE_SAMESITE="Lax"`, `SESSION_COOKIE_HTTPONLY=True`, `SESSION_COOKIE_SECURE=True`, `SESSION_COOKIE_DOMAIN`.
+### 2.2 Reconciled Host-Only Cookie Policy (Option 1)
+- **Active Settings**: `SESSION_COOKIE_SAMESITE="Lax"`, `SESSION_COOKIE_HTTPONLY=True`, `SESSION_COOKIE_SECURE=True`, `SESSION_COOKIE_DOMAIN=None` (host-only cookie).
 - **Inspection of Actual Response Headers**:
   ```http
-  Set-Cookie: session=...; Domain=resumematch.ai; Secure; HttpOnly; Path=/; SameSite=Lax
+  Set-Cookie: session=...; Secure; HttpOnly; Path=/; SameSite=Lax
   ```
-- Verified in [tests/test_phase7_production_readiness.py::test_prod_02](file:///d:/skillsync1/tests/test_phase7_production_readiness.py#L88) asserting all attributes directly on response headers.
+  *(Verified with no Domain attribute present; strictly host-only for api.resumematch.ai).*
+- Verified in [tests/test_phase7_production_readiness.py::test_prod_02](file:///d:/skillsync1/tests/test_phase7_production_readiness.py#L98) asserting all attributes and host-only scoping directly on response headers.
 
 ### 2.3 Universal CSRF Defense Across Complete Route Inventory
 - **Coverage**: All 17 state-changing routes:

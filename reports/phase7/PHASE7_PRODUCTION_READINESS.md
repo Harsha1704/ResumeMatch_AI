@@ -42,7 +42,7 @@ The application codebase is technically and functionally production-ready. Howev
 | :--- | :--- | :--- |
 | **Real Configuration Variables** | **Source-code verified** | `RESUMEMATCH_ENV=production`, `SECRET_KEY`, and `FRONTEND_ORIGINS` verified in [app.py](file:///d:/skillsync1/app.py#L37-L57). `FLASK_ENV` and `CORS_ALLOWED_ORIGINS` are confirmed inactive. |
 | **Production Secret Enforcement** | **Automated-test verified** | Verified in real Python subprocess startup: missing or insecure keys (`skillsync-dev-key-2026`, `dev-key-change-me`, `<16` chars) fail closed with `RuntimeError`; strong random key boots cleanly. |
-| **Production Cookie Headers** | **Automated-test verified** | Verified on actual HTTP `Set-Cookie` response headers: `session=...; Secure; HttpOnly; SameSite=Lax` (and `Domain=resumematch.ai` when configured). |
+| **Production Cookie Headers** | **Automated-test verified** | Verified on actual HTTP `Set-Cookie` response headers: `session=...; Secure; HttpOnly; SameSite=Lax` with no Domain attribute (host-only cookie strictly locked to `api.resumematch.ai`). |
 | **CSRF Route Coverage** | **Automated-test verified** | Complete inventory of all 17 state-changing routes verified rejecting without token (403), rejecting invalid token (403), and accepting valid session token (non-403). |
 | **DOCX Archive Bomb Guard** | **Automated-test verified** | Real DOCX archive generated with 1000:1 compression ratio verified rejected fail-closed by both safety validator and resume parser. |
 | **Rate Limiter Enforcement** | **Automated-test verified** | Verified on `/api/match`: exceeding 60 requests/min threshold triggers HTTP 429 Too Many Requests with `Retry-After` header. |
@@ -94,10 +94,11 @@ Because `app.resumematch.ai` and `api.resumematch.ai` share the same apex regist
 - `SESSION_COOKIE_HTTPONLY = True`: Blocks client-side JavaScript access (`document.cookie`), preventing XSS token harvesting.
 - `SESSION_COOKIE_SECURE = True`: Enforces transmission exclusively over encrypted HTTPS connections.
 - `SESSION_COOKIE_SAMESITE = "Lax"`: Provides strong CSRF protection while permitting same-site cross-subdomain fetch requests when `credentials: "include"`.
-- Response headers empirically verified in [test_phase7_production_readiness.py::test_prod_02](file:///d:/skillsync1/tests/test_phase7_production_readiness.py#L88):
+- Response headers empirically verified in [test_phase7_production_readiness.py::test_prod_02](file:///d:/skillsync1/tests/test_phase7_production_readiness.py#L98):
   ```http
-  Set-Cookie: session=...; Domain=resumematch.ai; Secure; HttpOnly; Path=/; SameSite=Lax
+  Set-Cookie: session=...; Secure; HttpOnly; Path=/; SameSite=Lax
   ```
+  *(Verified with no Domain attribute present; strictly host-only for api.resumematch.ai).*
 
 ---
 

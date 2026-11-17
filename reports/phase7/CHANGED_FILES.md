@@ -1,4 +1,4 @@
-# RESUMEMATCH AI — PHASE 7.1: CHANGED FILES INVENTORY
+# RESUMEMATCH AI — PHASE 7.2: CHANGED FILES INVENTORY
 
 **Target Repository**: `Harsha1704/ResumeMatch_AI`  
 **Working Branch**: `fix/resumematch-final-repair`  
@@ -7,9 +7,14 @@
 
 ---
 
-## 1. Overview of Phase 7.1 Modifications
+## 1. Overview of Phase 7.2 Modifications
 
-Phase 7.1 delivers final release gate corrections, reconciling real application configuration variable names, implementing the intended same-site cookie policy, replacing simulated checks with real application tests, and documenting the dual-branch cloud deployment workflow:
+Phase 7.2 refines the release gate documentation and cookie scoping:
+- Removed `SESSION_COOKIE_DOMAIN=.resumematch.ai` from recommended production settings, enforcing a strictly host-only cookie for `api.resumematch.ai` (`SESSION_COOKIE_DOMAIN=None`).
+- Preserved `SESSION_COOKIE_HTTPONLY=True`, `SESSION_COOKIE_SECURE=True`, and `SESSION_COOKIE_SAMESITE=Lax`.
+- Updated cookie tests in `tests/test_phase7_production_readiness.py` to assert that the recommended production cookie has NO Domain attribute and that credentialed API requests succeed.
+- Distinguished actual deployed Render start command (`gunicorn --workers 1 --threads 2 --timeout 120 --bind 0.0.0.0:$PORT wsgi:app`) from proposed settings in the release checklist.
+- Refined `DEPLOYMENT_ARCHITECTURE.md` by removing unsupported absolute claims, citing authoritative Vercel/Render documentation for platform limits, and characterizing browser compatibility as tested and expected rather than universally guaranteed.
 - Work was strictly confined to `fix/resumematch-final-repair`.
 - No extraneous features or redesigns were introduced.
 - Existing functionality was preserved.
