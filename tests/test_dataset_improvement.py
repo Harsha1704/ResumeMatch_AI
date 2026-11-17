@@ -81,8 +81,10 @@ def test_zero_pair_overlap():
 
 def test_split_reproducibility():
     """10. Split reproducibility using seed 20."""
+    import time
     from experiments.dataset_improvement.scripts.create_dual_unseen_split import create_dual_unseen_partition
     t1, v1, _, _ = create_dual_unseen_partition(seed=20)
+    time.sleep(0.05)
     t2, v2, _, _ = create_dual_unseen_partition(seed=20)
     assert t1["pair_id"].tolist() == t2["pair_id"].tolist()
     assert v1["pair_id"].tolist() == v2["pair_id"].tolist()

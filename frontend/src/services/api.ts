@@ -32,7 +32,7 @@ async function fetchJson<T>(url: string, options: RequestInit = {}): Promise<T> 
       ...defaultHeaders,
       ...(options.headers || {}),
     },
-    credentials: 'omit', // clean cross-origin handling
+    credentials: 'include', // send cookies cross-origin for session ownership & CSRF
   });
 
   if (!response.ok) {
@@ -79,9 +79,15 @@ export const api = {
 
   async analyzeResume(formData: FormData): Promise<{ status: string; analysis_id: string; data: AnalysisResult }> {
     const fullUrl = `${API_BASE}/api/analyze`;
+    const csrf = getCsrfToken();
     const response = await fetch(fullUrl, {
       method: 'POST',
       body: formData,
+      credentials: 'include',
+      headers: {
+        'Accept': 'application/json',
+        ...(csrf ? { 'X-CSRF-Token': csrf } : {}),
+      },
     });
     if (!response.ok) {
       let err = `Upload failed (${response.status})`;

@@ -72,8 +72,8 @@ if frontend_origins:
             r"/health": {"origins": frontend_origins}
         },
         supports_credentials=True,
-        allow_headers=["Content-Type", "X-CSRF-Token"],
-        methods=["GET", "POST", "OPTIONS"]
+        allow_headers=["Content-Type", "X-CSRF-Token", "Accept"],
+        methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
     )
 
 # Security rate limiters
@@ -678,6 +678,25 @@ def _get_active_analysis(analysis_id: Optional[str] = None) -> Dict:
     return analysis
 
 
+def _resolve_authorized_analysis(aid: Optional[str]):
+    """
+    Validates analysis ownership across all analysis-consuming endpoints.
+    Returns (analysis, error_response).
+    """
+    if aid and aid.strip() not in ("sample", "demo", "sample-preview"):
+        aid_clean = aid.strip()
+        if aid_clean not in ANALYSIS_CACHE:
+            return None, (jsonify({"status": "error", "message": f"Analysis ID '{aid_clean}' not found"}), 404)
+        allowed = session.get("allowed_analyses", [])
+        if aid_clean not in allowed:
+            return None, (jsonify({"status": "error", "message": "Unauthorized access to requested analysis ID"}), 403)
+        return ANALYSIS_CACHE[aid_clean], None
+    elif aid and aid.strip() in ("sample", "demo", "sample-preview"):
+        return _get_active_analysis("sample"), None
+    else:
+        return _get_active_analysis(None), None
+
+
 @app.route("/interview-studio", methods=["GET"])
 def interview_studio():
     """Main Interview Studio dashboard."""
@@ -1266,23 +1285,20 @@ def api_analyze():
 
 @app.route("/api/analysis/<analysis_id>", methods=["GET"])
 def api_get_analysis(analysis_id: str):
-    """Retrieves cached analysis result or returns authentic demo sample."""
-    if not analysis_id or analysis_id not in ANALYSIS_CACHE:
-        if analysis_id in ("sample", "demo", "sample-preview"):
-            sample = _get_active_analysis("sample")
-            return jsonify({"status": "success", "analysis": sample}), 200
-        # If cache contains any entry, offer it
-        sample = _get_active_analysis(None)
-        return jsonify({"status": "success", "analysis": sample}), 200
-
-    return jsonify({"status": "success", "analysis": ANALYSIS_CACHE[analysis_id]}), 200
+    """Retrieves cached analysis result or returns authentic demo sample with ownership enforcement."""
+    analysis, err = _resolve_authorized_analysis(analysis_id)
+    if err:
+        return err
+    return jsonify({"status": "success", "analysis": analysis}), 200
 
 
 @app.route("/api/skill-gap", methods=["GET"])
 def api_skill_gap():
-    """Returns analysis for skill-gap view."""
+    """Returns analysis for skill-gap view with ownership enforcement."""
     aid = request.args.get("id")
-    analysis = _get_active_analysis(aid)
+    analysis, err = _resolve_authorized_analysis(aid)
+    if err:
+        return err
     return jsonify({"status": "success", "analysis": analysis}), 200
 
 
@@ -1314,19 +1330,9 @@ def api_datasets():
 def api_career_mentor():
     """Returns the Personalized Career Mentor dossier for active analysis."""
     aid = request.args.get("id")
-    if aid and aid.strip() not in ("sample", "demo", "sample-preview"):
-        aid_clean = aid.strip()
-        if aid_clean not in ANALYSIS_CACHE:
-            return jsonify({"status": "error", "message": f"Analysis ID '{aid_clean}' not found"}), 404
-        allowed = session.get("allowed_analyses", [])
-        if aid_clean not in allowed:
-            return jsonify({"status": "error", "message": "Unauthorized access to requested analysis ID"}), 403
-        analysis = ANALYSIS_CACHE[aid_clean]
-    elif aid and aid.strip() in ("sample", "demo", "sample-preview"):
-        analysis = _get_active_analysis("sample")
-    else:
-        # Use session's latest authorized analysis if available, otherwise sample preview
-        analysis = _get_active_analysis(None)
+    analysis, err = _resolve_authorized_analysis(aid)
+    if err:
+        return err
 
     user_override_name = session.get("candidate_preferred_name")
 
@@ -1395,17 +1401,9 @@ def api_career_mentor_evaluate_role():
             if not session_csrf or not csrf_token or not validate_csrf_token(csrf_token):
                 return jsonify({"status": "error", "message": "CSRF token missing or invalid"}), 403
 
-    if aid and aid not in ("sample", "demo", "sample-preview"):
-        if aid not in ANALYSIS_CACHE:
-            return jsonify({"status": "error", "message": f"Analysis ID '{aid}' not found"}), 404
-        allowed = session.get("allowed_analyses", [])
-        if aid not in allowed:
-            return jsonify({"status": "error", "message": "Unauthorized access to requested analysis ID"}), 403
-        analysis = ANALYSIS_CACHE[aid]
-    elif aid and aid in ("sample", "demo", "sample-preview"):
-        analysis = _get_active_analysis("sample")
-    else:
-        analysis = _get_active_analysis(None)
+    analysis, err = _resolve_authorized_analysis(aid)
+    if err:
+        return err
 
     from src.mentor.career_profile import build_structured_career_profile
     from src.mentor.role_recommender import evaluate_specific_role
@@ -1433,22 +1431,8 @@ def _get_or_create_interview_owner_id() -> str:
 
 
 def _resolve_authorized_interview_analysis(aid: Optional[str]):
-    """
-    Validates analysis ownership for interview studio endpoints.
-    Returns (analysis, error_response).
-    """
-    if aid and aid.strip() not in ("sample", "demo", "sample-preview"):
-        aid_clean = aid.strip()
-        if aid_clean not in ANALYSIS_CACHE:
-            return None, (jsonify({"status": "error", "message": f"Analysis ID '{aid_clean}' not found"}), 404)
-        allowed = session.get("allowed_analyses", [])
-        if aid_clean not in allowed:
-            return None, (jsonify({"status": "error", "message": "Unauthorized access to requested analysis ID"}), 403)
-        return ANALYSIS_CACHE[aid_clean], None
-    elif aid and aid.strip() in ("sample", "demo", "sample-preview"):
-        return _get_active_analysis("sample"), None
-    else:
-        return _get_active_analysis(None), None
+    """Alias for backwards compatibility with interview studio endpoints."""
+    return _resolve_authorized_analysis(aid)
 
 
 def _validate_interview_csrf(data: Optional[Dict] = None):
