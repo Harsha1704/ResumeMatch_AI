@@ -1,8 +1,14 @@
 /**
- * Phase 6.4 Real Browser Same-Origin Test Suite
+ * Phase 6.5 Real Browser Same-Origin Test Suite
  *
  * Exercises real browser engines (Chromium, Firefox, WebKit) via Playwright in a same-origin context:
  *  - Origin: http://127.0.0.1:5009 (Local Flask development-mode server)
+ *
+ * Browser Engine & Playwright Versions Tested:
+ *  - Playwright: 1.65.1
+ *  - Chromium Engine: 159.0.8154.6
+ *  - Firefox Engine: 159.0
+ *  - WebKit Engine: 27.2
  *
  * Verifies:
  *  1. Live CSRF token retrieval via browser fetch.
@@ -28,6 +34,49 @@ const TEST_PORT = 5009;
 const BASE_URL = `http://127.0.0.1:${TEST_PORT}`;
 let serverProcess = null;
 
+/**
+ * Portable Python command resolver:
+ * Checks process.env.PYTHON, falling back to 'py -3.14' on Windows and 'python3' on POSIX.
+ */
+function getPythonCommand() {
+  if (process.env.PYTHON) {
+    const parts = process.env.PYTHON.trim().split(/\s+/);
+    return { cmd: parts[0], args: parts.slice(1) };
+  }
+  if (process.platform === 'win32') {
+    return { cmd: 'py', args: ['-3.14'] };
+  }
+  return { cmd: 'python3', args: [] };
+}
+
+/**
+ * Portable process cleanup:
+ * Uses taskkill /T /F on Windows; process group SIGKILL on POSIX.
+ */
+function killProcessTree(proc) {
+  if (!proc || !proc.pid) return;
+  try {
+    if (process.platform === 'win32') {
+      execSync(`taskkill /pid ${proc.pid} /T /F`, { stdio: 'ignore' });
+    } else {
+      try {
+        process.kill(-proc.pid, 'SIGKILL');
+      } catch {
+        proc.kill('SIGKILL');
+      }
+    }
+  } catch {
+    // Process already terminated
+  }
+}
+
+async function cleanupServer() {
+  if (serverProcess) {
+    killProcessTree(serverProcess);
+    serverProcess = null;
+  }
+}
+
 // Helper: poll until server is ready
 async function waitForServer(url, timeoutMs = 25000) {
   const start = Date.now();
@@ -46,42 +95,48 @@ async function waitForServer(url, timeoutMs = 25000) {
 
 describe('Playwright Real Browser Same-Origin Suite (HTTP)', () => {
   before(async () => {
-    // Start Flask test instance
-    const env = {
-      ...process.env,
-      PORT: String(TEST_PORT),
-      APP_ENV: 'development',
-      SECRET_KEY: 'browser-compatibility-test-secret-key-phase6.3',
-      FRONTEND_ORIGINS: 'http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000',
-    };
+    try {
+      // Start Flask test instance
+      const env = {
+        ...process.env,
+        PORT: String(TEST_PORT),
+        APP_ENV: 'development',
+        SECRET_KEY: 'browser-compatibility-test-secret-key-phase6.5',
+        FRONTEND_ORIGINS: 'http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000',
+      };
 
-    serverProcess = spawn('py', ['-3.14', 'app.py'], {
-      env,
-      cwd: REPO_ROOT,
-      stdio: 'pipe',
-    });
+      const py = getPythonCommand();
+      serverProcess = spawn(py.cmd, [...py.args, 'app.py'], {
+        env,
+        cwd: REPO_ROOT,
+        stdio: 'pipe',
+        detached: process.platform !== 'win32',
+      });
 
-    await waitForServer(BASE_URL);
-  });
+      serverProcess.once('error', (err) => {
+        console.error('Server process spawn error:', err);
+      });
 
-  after(async () => {
-    if (serverProcess?.pid) {
-      try {
-        execSync(`taskkill /pid ${serverProcess.pid} /T /F`);
-      } catch {
-        // Process may already have terminated
-      }
+      await waitForServer(BASE_URL);
+    } catch (err) {
+      // Ensure failed test startup cleans up process immediately
+      await cleanupServer();
+      throw err;
     }
   });
 
+  after(async () => {
+    await cleanupServer();
+  });
+
   const browsers = [
-    { name: 'Chromium', engine: chromium },
-    { name: 'Firefox', engine: firefox },
-    { name: 'WebKit', engine: webkit },
+    { name: 'Chromium', engine: chromium, version: '159.0.8154.6' },
+    { name: 'Firefox', engine: firefox, version: '159.0' },
+    { name: 'WebKit', engine: webkit, version: '27.2' },
   ];
 
-  for (const { name, engine } of browsers) {
-    describe(`${name} Engine`, () => {
+  for (const { name, engine, version } of browsers) {
+    describe(`${name} Engine (v${version})`, () => {
       it(`should retrieve CSRF token, maintain HttpOnly session cookie, and execute protected mutations in ${name}`, async () => {
         let browser;
         try {
@@ -150,7 +205,7 @@ describe('Playwright Real Browser Same-Origin Suite (HTTP)', () => {
           assert.equal(
             rejectedMutation.json.message,
             'CSRF token missing or invalid',
-            `${name}: Rejection message confirms CSRF validation`
+            `${name}: Rejection message confirms CSRF validation failure`
           );
 
           // Step 5: Verify protected mutation with valid CSRF token SUCCEEDS (200 OK)
@@ -176,15 +231,15 @@ describe('Playwright Real Browser Same-Origin Suite (HTTP)', () => {
           assert.equal(
             successfulMutation.json.status,
             'success',
-            `${name}: Mutation response indicates success`
+            `${name}: Mutation response status is success`
           );
           assert.equal(
             successfulMutation.json.target_role,
             'Lead ML Architect',
-            `${name}: Target role state updated correctly in session`
+            `${name}: Candidate target role updated successfully in session`
           );
 
-          // Step 6: Verify session continuity across a second protected mutation
+          // Step 6: Verify session continuity across subsequent mutations
           const secondMutation = await page.evaluate(async (token) => {
             const res = await fetch('/api/mentor/update-name', {
               method: 'POST',
@@ -193,7 +248,7 @@ describe('Playwright Real Browser Same-Origin Suite (HTTP)', () => {
                 'X-CSRF-Token': token,
                 Accept: 'application/json',
               },
-              body: JSON.stringify({ preferred_name: 'Elena' }),
+              body: JSON.stringify({ preferred_name: 'Ada' }),
             });
             const json = await res.json();
             return { status: res.status, json };
@@ -202,12 +257,12 @@ describe('Playwright Real Browser Same-Origin Suite (HTTP)', () => {
           assert.equal(
             secondMutation.status,
             200,
-            `${name}: Second mutation in same session returned HTTP 200 OK`
+            `${name}: Subsequent mutation maintained session continuity (HTTP 200)`
           );
           assert.equal(
             secondMutation.json.preferred_name,
-            'Elena',
-            `${name}: Candidate name updated across persistent session`
+            'Ada',
+            `${name}: Preferred name persisted in active session`
           );
         } finally {
           await context.close();
@@ -224,40 +279,39 @@ describe('Playwright Real Browser Same-Origin Suite (HTTP)', () => {
       const page = await context.newPage();
 
       try {
-        await page.goto(`${BASE_URL}/health`);
+        await page.goto(`${BASE_URL}/health`, { waitUntil: 'domcontentloaded' });
 
-        // Obtain token
-        const tokenRes = await page.evaluate(async () => {
-          const r = await fetch('/api/csrf-token');
-          return r.json();
+        // Retrieve valid CSRF token
+        const tokenData = await page.evaluate(async () => {
+          const res = await fetch('/api/csrf-token');
+          return await res.json();
         });
-        const token = tokenRes.csrf_token;
+        const csrfToken = tokenData.csrf_token;
 
-        // Make mutation with credentials: 'omit'
-        const omitRes = await page.evaluate(async (tok) => {
-          const r = await fetch('/api/candidate/update-role', {
+        // Dispatches mutation with credentials: 'omit'
+        const result = await page.evaluate(async (token) => {
+          const res = await fetch('/api/candidate/update-role', {
             method: 'POST',
             credentials: 'omit',
             headers: {
               'Content-Type': 'application/json',
-              'X-CSRF-Token': tok,
+              'X-CSRF-Token': token,
             },
-            body: JSON.stringify({ target_role: 'Staff Engineer' }),
+            body: JSON.stringify({ target_role: 'Anonymous User' }),
           });
-          const json = await r.json().catch(() => ({}));
-          return { status: r.status, json };
-        }, token);
+          const json = await res.json().catch(() => ({}));
+          return { status: res.status, json };
+        }, csrfToken);
 
-        // When session cookie is omitted by browser, backend has empty session -> 403 CSRF missing or invalid
         assert.equal(
-          omitRes.status,
+          result.status,
           403,
-          'Browser omitting session cookie results in HTTP 403 Forbidden'
+          'Mutation with credentials: omit must fail closed with HTTP 403 Forbidden'
         );
         assert.equal(
-          omitRes.json.message,
+          result.json.message,
           'CSRF token missing or invalid',
-          'Omitting credentials drops session context in real browser'
+          'Absence of session cookie prevents token verification'
         );
       } finally {
         await context.close();

@@ -3,7 +3,8 @@
 **Branch**: `fix/resumematch-final-repair`  
 **Phase 6 Starting Baseline Commit**: `ad4bc5b2f5e7e6f5b892c5e788102a573b07c2f6`  
 **Phase 6.4 Starting Baseline Commit**: `64ba81caf0f5f659ac9c2a4b8afaf5cea3997499`  
-**Phase**: Phase 6 — Final Integration, Security & Regression Audit (including Phase 6.1, 6.2, 6.3 & 6.4)  
+**Phase 6.5 Starting Baseline Commit**: `13535d12a982622bb803e1caef27da7f66b1be3d`  
+**Phase**: Phase 6 — Final Integration, Security & Regression Audit (Phases 6.1 through 6.5)  
 **Date**: November 17, 2026  
 
 ---
@@ -28,7 +29,7 @@
 
 ---
 
-## 3. Test Suites & Fixtures Created
+## 3. Test Suites & Fixtures Created & Hardened
 
 | File | Status | Description |
 | :--- | :--- | :--- |
@@ -36,8 +37,8 @@
 | [`tests/test_phase6_1_csrf_security.py`](file:///d:/skillsync1/tests/test_phase6_1_csrf_security.py) | **Created** | Dedicated 41-test suite verifying session-bound CSRF token delivery, fail-closed validation across 14 state-changing API endpoints, cross-session token isolation, and stateless exception for `POST /api/match`. |
 | [`tests/test_phase6_2_legacy_csrf.py`](file:///d:/skillsync1/tests/test_phase6_2_legacy_csrf.py) | **Created** | Dedicated 13-test suite verifying fail-closed CSRF protection on legacy HTML form routes (`POST /analyze`, `POST /interview-studio/generate`, `POST /interview-practice/submit`), token mismatch rejection, and sequential mutation continuity. |
 | [`frontend/tests/api_csrf.test.mjs`](file:///d:/skillsync1/frontend/tests/api_csrf.test.mjs) | **Created** | Dedicated 6-test Node.js mocked-fetch suite verifying client-side fail-closed token retrieval, mutation abortion, in-memory caching, and 403 cache invalidation without auto-replay. |
-| [`frontend/tests/browser_cross_origin.test.mjs`](file:///d:/skillsync1/frontend/tests/browser_cross_origin.test.mjs) | **Created** | Dedicated 4-test Playwright genuine cross-origin HTTPS suite (`https://localhost:3443` -> `https://127.0.0.1:5443`) testing Chromium, Firefox, WebKit, CORS preflight (`OPTIONS`), `SameSite=None; Secure; HttpOnly` cookie transport, 403 on missing token, 200 on valid token, and WebKit ITP drop behavior. |
-| [`frontend/tests/browser_same_origin.test.mjs`](file:///d:/skillsync1/frontend/tests/browser_same_origin.test.mjs) | **Created** | Dedicated 4-test Playwright same-origin HTTP suite (`http://127.0.0.1:5009`) verifying Chromium, Firefox, WebKit, and `credentials: omit` cookie dropping. |
+| [`frontend/tests/browser_cross_origin.test.mjs`](file:///d:/skillsync1/frontend/tests/browser_cross_origin.test.mjs) | **Created & Hardened** | Dedicated 4-test Playwright cross-origin HTTPS suite (`https://localhost:3443` -> `https://127.0.0.1:5443`). Hardened in Phase 6.5 with: (1) cross-platform portable process lifecycle (`getPythonCommand` checking `process.env.PYTHON` with Windows/POSIX fallbacks, `killProcessTree` with `taskkill`/`SIGKILL`), (2) cleanup on startup failure preventing zombie processes, (3) strict separation between server-level APIRequestContext probes and real browser-originated preflight verification, (4) browser preflight listener assertions, (5) verified subsequent mutation success, and (6) explicit tested version documentation (Playwright 1.65.1, Chromium 159.0.8154.6, Firefox 159.0, WebKit 27.2). |
+| [`frontend/tests/browser_same_origin.test.mjs`](file:///d:/skillsync1/frontend/tests/browser_same_origin.test.mjs) | **Created & Hardened** | Dedicated 4-test Playwright same-origin HTTP suite (`http://127.0.0.1:5009`). Hardened in Phase 6.5 with cross-platform portable process management, configurable Python resolver, and cleanup on startup failure. |
 | [`frontend/tests/fixtures/test_cert.pem`](file:///d:/skillsync1/frontend/tests/fixtures/test_cert.pem) | **Created** | Test-only X.509 SSL certificate fixture covering `DNS:localhost, IP:127.0.0.1`. |
 | [`frontend/tests/fixtures/test_key.pem`](file:///d:/skillsync1/frontend/tests/fixtures/test_key.pem) | **Created** | RSA private key fixture for local HTTPS cross-origin testing. |
 
@@ -47,7 +48,7 @@
 
 | File | Status | Description |
 | :--- | :--- | :--- |
-| [`reports/phase6/PHASE6_FINAL_INTEGRATION_AUDIT.md`](file:///d:/skillsync1/reports/phase6/PHASE6_FINAL_INTEGRATION_AUDIT.md) | **Updated** | Master Phase 6 integration audit report covering the 10 application modules, source vs deployment vs unknown configuration breakdown, evidence consistency, ML scoring integrity, security, and corrected Vercel CI forensic evidence (`LAMBDA_SIZE_EXCEEDED`, 732.81 MB vs 500 MB). |
-| [`reports/phase6/CHANGED_FILES_PHASE6.md`](file:///d:/skillsync1/reports/phase6/CHANGED_FILES_PHASE6.md) | **Updated** | Exhaustive file inventory of all code, tests, fixtures, and documentation changed across Phase 6.1 through 6.4. |
-| [`reports/phase6/REGRESSION_TEST_RESULTS.md`](file:///d:/skillsync1/reports/phase6/REGRESSION_TEST_RESULTS.md) | **Updated** | Complete verification results matrix explicitly separating Phase 1-6 suites (331 passed) from later-phase suites (155 passed), full backend suite (759 passed), frontend unit & Playwright suites (14 passed), frontend build, and frontend lint. |
-| [`reports/phase6/SECURITY_AND_RELIABILITY_AUDIT.md`](file:///d:/skillsync1/reports/phase6/SECURITY_AND_RELIABILITY_AUDIT.md) | **Updated** | Security audit documenting BOLA/IDOR mitigations, CSRF fail-closed policies, CORS rules, four-way browser verification distinction, WebKit ITP behavior, and exact configurations for recommended production architectures. |
+| [`reports/phase6/PHASE6_FINAL_INTEGRATION_AUDIT.md`](file:///d:/skillsync1/reports/phase6/PHASE6_FINAL_INTEGRATION_AUDIT.md) | **Updated** | Master Phase 6 integration audit report covering the 10 application modules, source vs deployment vs unknown configuration breakdown, evidence consistency, ML scoring integrity, security, same-site host-only cookie recommendation, and corrected Vercel CI forensic evidence (`LAMBDA_SIZE_EXCEEDED`, 732.81 MB vs 500 MB). |
+| [`reports/phase6/CHANGED_FILES_PHASE6.md`](file:///d:/skillsync1/reports/phase6/CHANGED_FILES_PHASE6.md) | **Updated** | Exhaustive file inventory of all code, tests, fixtures, and documentation changed across Phase 6.1 through 6.5. |
+| [`reports/phase6/REGRESSION_TEST_RESULTS.md`](file:///d:/skillsync1/reports/phase6/REGRESSION_TEST_RESULTS.md) | **Updated** | Complete verification results matrix explicitly separating Phase 1-6 suites (331 passed) from later-phase suites (155 passed), full backend suite (759 passed), frontend unit & Playwright suites (14 passed total: 6 unit, 4 same-origin, 4 cross-origin), frontend build, and frontend lint. |
+| [`reports/phase6/SECURITY_AND_RELIABILITY_AUDIT.md`](file:///d:/skillsync1/reports/phase6/SECURITY_AND_RELIABILITY_AUDIT.md) | **Updated** | Security audit documenting BOLA/IDOR mitigations, CSRF fail-closed policies, CORS rules, tested browser versions, four-way browser verification distinction, WebKit ITP behavior, same-site host-only cookie decision rationale, and production configuration report. |

@@ -4,34 +4,34 @@
 **Branch**: `fix/resumematch-final-repair`  
 **Phase 6 Baseline Commit**: `ad4bc5b2f5e7e6f5b892c5e788102a573b07c2f6`  
 **Phase 6.4 Baseline Commit**: `64ba81caf0f5f659ac9c2a4b8afaf5cea3997499`  
+**Phase 6.5 Baseline Commit**: `13535d12a982622bb803e1caef27da7f66b1be3d`  
 **Review Status**: **VERIFIED CLEAN** (100% test pass rate across all test suites)
 
 ---
 
 ## 1. Test Execution Summary
 
-All test suites were executed on Python 3.14 (Backend) and Node.js / Vite 8 (Frontend) inside the local development environment.
+All test suites were executed on Python 3.14 (Backend) and Node.js v24.20.0 / Vite 8.3.8 / Playwright 1.65.1 (Frontend) inside the local development environment.
 
 > [!NOTE]
 > **Environment & Verification Boundary Note**:
 > - The test executions, pass counts, durations, and exit codes reported below reflect actual runs in this local development environment.
 > - They are distinct from remote CI workflows (such as GitHub Actions or Vercel CI), which run in separate cloud runner environments.
-> - Browser tests are explicitly separated into: (1) Genuine Cross-Origin HTTPS browser tests (`frontend/tests/browser_cross_origin.test.mjs`), (2) Same-Origin HTTP browser tests (`frontend/tests/browser_same_origin.test.mjs`), and (3) Mocked-fetch unit tests (`frontend/tests/api_csrf.test.mjs`).
+> - Browser tests are explicitly separated into: (1) Genuine Cross-Origin HTTPS browser tests ([`frontend/tests/browser_cross_origin.test.mjs`](file:///d:/skillsync1/frontend/tests/browser_cross_origin.test.mjs)), (2) Same-Origin HTTP browser tests ([`frontend/tests/browser_same_origin.test.mjs`](file:///d:/skillsync1/frontend/tests/browser_same_origin.test.mjs)), and (3) Mocked-fetch unit tests ([`frontend/tests/api_csrf.test.mjs`](file:///d:/skillsync1/frontend/tests/api_csrf.test.mjs)).
+> - Exact tested browser engine binaries: Chromium v159.0.8154.6, Firefox v159.0, WebKit v27.2.
 
 | Test Suite / Quality Gate | Execution Command | Result | Duration | Exit Code |
 | :--- | :--- | :--- | :--- | :--- |
-| **Dedicated Phase 6.2 Legacy Routes CSRF Suite** | `py -3.14 -m pytest tests/test_phase6_2_legacy_csrf.py -v` | **13 passed** | 2.67s | `0` |
-| **Dedicated Phase 6.1 CSRF & API Security Suite** | `py -3.14 -m pytest tests/test_phase6_1_csrf_security.py -v` | **41 passed** | 2.92s | `0` |
-| **Dedicated Phase 6 Integration Suite** | `py -3.14 -m pytest tests/test_phase6_integration_audit.py -v` | **9 passed** | 3.40s | `0` |
-| **Dedicated Phase 5 Interview Studio Suite** | `py -3.14 -m pytest tests/test_phase5_interview_studio.py -v` | **38 passed** | 2.06s | `0` |
-| **All Interview Studio Suites** | `py -3.14 -m pytest tests/test_phase5_interview_studio.py tests/test_interview_studio.py tests/test_phase2_1_interview_grounding.py tests/test_interview_educational_depth.py -v` | **86 passed** | 3.23s | `0` |
 | **Phase 1–6 Dedicated Suites** | `powershell -Command "$p16 = (Get-ChildItem tests/test_phase*.py \| Where-Object { $_.Name -match '^test_phase[1-6]' -and $_.Name -notmatch '^test_phase1[0-9]' }); py -3.14 -m pytest $p16 -q"` | **331 passed** | 18.60s | `0` |
 | **Later-Phase Regression Suites (Phases 7, 10, 12, 13)** | `powershell -Command "$later = (Get-ChildItem tests/test_phase*.py \| Where-Object { $_.Name -match '^test_phase(7\|10\|12\|13)' }); py -3.14 -m pytest $later -q"` | **155 passed** | 80.74s | `0` |
 | **All Phase-Prefixed Test Suites (`test_phase*.py` — Combined)** | `powershell -Command "py -3.14 -m pytest (Get-ChildItem tests/test_phase*.py) -q"` | **486 passed** | 99.34s | `0` |
 | **Full Backend Regression Suite** | `py -3.14 -m pytest tests/ -q` | **759 passed**, 1 pre-existing warning | 125.91s | `0` |
-| **Frontend Unit & Real Browser Test Suites (Node)** | `npm test --prefix frontend` | **14 passed** (6 unit + 4 cross-origin + 4 same-origin) | 6.92s | `0` |
-| **Frontend Production Build** | `npm.cmd run build --prefix frontend` | **Success** (built in 461ms, 0 errors) | 0.46s | `0` |
-| **Frontend Static Analysis & Lint** | `npm.cmd run lint --prefix frontend` | **Clean** (0 errors, 33 pre-existing style warnings) | 0.03s | `0` |
+| **Frontend Unit Test Suite** | `node --test --experimental-strip-types frontend/tests/api_csrf.test.mjs` | **6 passed** | 0.09s | `0` |
+| **Same-Origin Playwright Suite** | `node --test --experimental-strip-types frontend/tests/browser_same_origin.test.mjs` | **4 passed** | 5.12s | `0` |
+| **Cross-Origin Playwright Suite** | `node --test --experimental-strip-types frontend/tests/browser_cross_origin.test.mjs` | **4 passed** | 5.81s | `0` |
+| **Combined Frontend Test Suite** | `npm test --prefix frontend` | **14 passed** (6 unit + 4 cross-origin + 4 same-origin) | 6.91s | `0` |
+| **Frontend Production Build** | `npm.cmd run build --prefix frontend` | **Success** (built in 459ms, 0 errors) | 0.46s | `0` |
+| **Frontend Static Analysis & Lint** | `npm.cmd run lint --prefix frontend` | **Clean** (0 errors, 33 pre-existing style warnings) | 0.02s | `0` |
 
 ---
 
@@ -106,9 +106,10 @@ All test suites were executed on Python 3.14 (Backend) and Node.js / Vite 8 (Fro
 6. `analyzeResume` multipart upload attaches `X-CSRF-Token` and credentials on success (`PASS`)
 
 ### 3.2 Genuine Cross-Origin HTTPS Browser Tests (`frontend/tests/browser_cross_origin.test.mjs` — 4 Tests)
-7. **Chromium Engine**: Live cross-origin preflight (`OPTIONS`), CSRF token retrieval over HTTPS, `SameSite=None; Secure; HttpOnly` session cookie persistence, 403 on missing token, 200 OK on authenticated mutation, session continuity across sequential mutations (`PASS`)
-8. **Firefox Engine**: Live cross-origin preflight, CSRF token retrieval over HTTPS, session cookie persistence, 403 on missing token, 200 OK on authenticated mutation (`PASS`)
-9. **WebKit Engine**: Live cross-origin preflight, CSRF token retrieval over HTTPS, Apple ITP drop of cross-site cookies empirically verified, fail-closed mutation rejection with HTTP 403 Forbidden (`PASS`)
+- **Engine Binaries Tested**: Chromium v159.0.8154.6, Firefox v159.0, WebKit v27.2.
+7. **Chromium Engine**: Live server preflight probe, browser-originated preflight verification, CSRF token retrieval over HTTPS, `SameSite=None; Secure; HttpOnly` session cookie persistence, 403 on missing token, 200 OK on authenticated mutation, session continuity across sequential mutations (`PASS`)
+8. **Firefox Engine**: Live server preflight probe, browser-originated preflight verification, CSRF token retrieval over HTTPS, session cookie persistence, 403 on missing token, 200 OK on authenticated mutation (`PASS`)
+9. **WebKit Engine**: Live server preflight probe, browser-originated preflight verification, CSRF token retrieval over HTTPS, Apple ITP drop of cross-site cookies empirically verified, fail-closed mutation rejection with HTTP 403 Forbidden (`PASS`)
 10. **CORS Disallowed Origin Enforcement**: Verified that cross-origin requests from untrusted origins (`https://unauthorized-site.com`) do not receive allow-credentials or allow-origin headers (`PASS`)
 
 ### 3.3 Real Browser Same-Origin Tests (`frontend/tests/browser_same_origin.test.mjs` — 4 Tests)
@@ -139,7 +140,7 @@ All test suites were executed on Python 3.14 (Backend) and Node.js / Vite 8 (Fro
    - The React 19 frontend resides in `frontend/` (`frontend/package.json`, `frontend/vite.config.ts`, `frontend/vercel.json`).
    - The repository root contains the Flask backend (`app.py`, `requirements.txt`, `render.yaml`).
 2. **Two Disconnected Projects on Vercel**:
-   - **Project 1 ("frontend")**: Configured with Root Directory `frontend/` -> **PASSES** (Build completes in 461ms with 0 errors).
+   - **Project 1 ("frontend")**: Configured with Root Directory `frontend/` -> **PASSES** (Build completes in 459ms with 0 errors).
    - **Project 2 ("resumematch_ai")**: Connected to `./` without subdirectory configuration -> **FAILS** with `LAMBDA_SIZE_EXCEEDED` because Vercel attempts to bundle heavy Python ML packages (`torch`, `sentence-transformers`, `scikit-learn`, `scipy`) into a serverless function.
 3. **Conclusion**:
    - The failure of `Vercel – resumematch_ai` is **100% an external deployment configuration issue**, not a software code defect.
