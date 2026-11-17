@@ -175,29 +175,33 @@ class HeuristicAnswerEvaluator:
             return "tests"
         return u
 
+    # Supported unit pattern with explicit token boundary enforcement
+    _UNIT_PATTERN = (
+        r"(?:%|percent(?:age)?|pct|"
+        r"milliseconds?|ms|"
+        r"seconds?|secs?|s|"
+        r"minutes?|mins?|min|"
+        r"hours?|hrs?|hr|"
+        r"users?|clients?|customers?|"
+        r"queries|query|requests?|req/s|rps|qps|queries/s|queries/sec|requests/sec|"
+        r"gb|mb|tb|"
+        r"records?|rows?|"
+        r"tests?)"
+    )
+
     @classmethod
     def _extract_metric_mentions(cls, text: str) -> List[Dict[str, Any]]:
         """
         Extracts all numeric mentions with their associated units and surrounding sentence.
-        Uses boundary-safe regex that does not confuse:
-        - '94' with '94.5' or '94.0'
-        - '5' with '50'
-        - '1000' with '1,000' (normalized safely)
+        Uses boundary-safe regex that:
+        - Extracts complete numeric tokens (integers, thousands-grouped, decimals)
+        - Enforces strict unit token boundaries: units must be complete tokens,
+          never a prefix or suffix of an unrelated word (e.g., '94students', '94msomething',
+          '94requestsExtra' have no valid unit).
+        - Correctly accepts valid units with or without space (e.g., '94 seconds', '94s', '94%').
         """
-        unit_pattern = (
-            r"(?:%|percent(?:age)?|pct|"
-            r"milliseconds?|ms|"
-            r"seconds?|secs?|s|"
-            r"minutes?|mins?|min|"
-            r"hours?|hrs?|hr|"
-            r"users?|clients?|customers?|"
-            r"queries|query|requests?|req/s|rps|qps|queries/s|queries/sec|requests/sec|"
-            r"gb|mb|tb|"
-            r"records?|rows?|"
-            r"tests?)"
-        )
         pattern = re.compile(
-            r"\b(\d{1,3}(?:,\d{3})*(?:\.\d+)?|\d+(?:\.\d+)?)(?![0-9]|(?:\.\d))\b(?:\s*(" + unit_pattern + r"))?",
+            r"\b(\d{1,3}(?:,\d{3})*(?:\.\d+)?|\d+(?:\.\d+)?)(?![0-9]|(?:\.\d))(?:\s*(" + cls._UNIT_PATTERN + r"(?![a-zA-Z0-9])))?",
             re.IGNORECASE
         )
         mentions = []
@@ -784,7 +788,7 @@ class HeuristicAnswerEvaluator:
 
         # Sentence-level achievement and metric grounding
         metric_pat = re.compile(
-            r"\b(\d{1,3}(?:,\d{3})*(?:\.\d+)?|\d+(?:\.\d+)?)\s*(%|percent|ms|milliseconds?|seconds?|minutes?|hours?|users|queries|requests|req/s|rps|qps|gb|mb|tb|records|rows|tests)(?![a-zA-Z0-9])",
+            r"\b(\d{1,3}(?:,\d{3})*(?:\.\d+)?|\d+(?:\.\d+)?)\s*(" + self._UNIT_PATTERN + r")(?![a-zA-Z0-9])",
             re.IGNORECASE
         )
         personal_pat = re.compile(

@@ -1,30 +1,36 @@
-# ResumeMatch AI — Phase 5, 5.1, 5.2, 5.3 & 5.4 Implementation Report: Evidence-Grounded Interview Studio, Strict Numeric & Unit Verification
+# ResumeMatch AI — Phase 5, 5.1, 5.2, 5.3, 5.4 & 5.5 Implementation Report: Evidence-Grounded Interview Studio, Strict Numeric & Unit Token Boundary Verification
 
 **Date**: November 17, 2026  
 **Repository**: `Harsha1704/ResumeMatch_AI`  
 **Branch**: `fix/resumematch-final-repair`  
-**Starting Commit Phase 5.4**: `2991373ecc4545893451b9b0a947ab617bb3f50b`  
-**Implementation Phase**: Phase 5, 5.1, 5.2, 5.3 & 5.4 — Strict Decimal-Safe Numeric & Fail-Closed Unit Verification  
+**Starting Commit Phase 5.5**: `b83bff06586b079ff49a78e59362cdb283b3c33d`  
+**Implementation Phase**: Phase 5, 5.1, 5.2, 5.3, 5.4 & 5.5 — Strict Unit Token Boundary Validation  
 
 ---
 
 ## 1. Executive Summary
 
-Phase 5, 5.1, 5.2, 5.3 & 5.4 deliver an enterprise-grade, evidence-grounded **Interview Studio** fully integrated into ResumeMatch AI. The system provides candidates with a realistic, deterministic interview preparation environment that generates tailored questions based on their verified resume evidence and target job requirements, evaluates written answers against six transparent coaching criteria, guards against keyword stuffing and unevidenced claims, and maintains durable practice history and progress tracking with zero LLM hallucination.
+Phase 5, 5.1, 5.2, 5.3, 5.4 & 5.5 deliver an enterprise-grade, evidence-grounded **Interview Studio** fully integrated into ResumeMatch AI. The system provides candidates with a realistic, deterministic interview preparation environment that generates tailored questions based on their verified resume evidence and target job requirements, evaluates written answers against six transparent coaching criteria, guards against keyword stuffing and unevidenced claims, and maintains durable practice history and progress tracking with zero LLM hallucination.
 
-Phase 5.4 enforces strict decimal-safe exact numeric matching and fail-closed unit verification:
-1. **Decimal-Safe Exact Numeric Matching**:
-   - Replaced flawed digit-only boundary regexes (`(?<![0-9])` / `(?![0-9])`) that mistakenly allowed decimal points to match substrings (e.g. `94` matching inside `94.5` or `94.0`).
-   - Implemented `_extract_metric_mentions()` with boundary-safe token extraction `(?![0-9]|(?:\.\d))` ensuring complete numeric tokens (integers, decimals, and comma-grouped numbers) are captured without fragmentation.
-   - Enforced an explicit `NUMERIC_NORMALIZATION_POLICY = "strict_precision"` policy: integer numbers and numbers with decimal fractions are distinguished by precision (`94` != `94.5` and `94` != `94.0`). Grouping commas are safely normalized (`1,000` == `1000`).
-2. **Fail-Closed Unit Verification**:
-   - Completely eliminated the loophole where a missing or unextracted resume unit (`rec_unit is None`) bypassed unit mismatch checks.
-   - If the candidate answer specifies a unit, resume evidence must establish a directly attached, compatible unit.
-   - Missing or ambiguous resume units (e.g., `94` modules or `94` benchmark runs without a compatible metric unit) immediately fail closed as unsupported.
-   - Removed sentence-wide unit inference (`_detect_sentence_unit`), preventing numbers from inheriting unrelated units from elsewhere in the sentence.
-3. **Adversarial Regression Test Suite (Test 36)**:
-   - Added `test_36_strict_numeric_and_unit_verification` in `tests/test_phase5_interview_studio.py` covering all 9 required verification scenarios.
-   - Verified that unsupported claims never receive metric specificity bonuses and cannot improve overall scores over baseline answers.
+Phase 5.5 hardens unit token boundary validation:
+1. **Strict Unit Token Boundaries**:
+   - In `src/interview/answer_evaluator.py`, hardened `_extract_metric_mentions()` and `metric_pat` in `evaluate_answer()` with full-token boundary enforcement (`(?![a-zA-Z0-9])`).
+   - A unit must be a complete valid token, never a prefix or suffix of an unrelated word:
+     - `94 seconds` -> valid unit
+     - `94s` -> valid unit under explicit unit policy
+     - `94students` -> no valid unit
+     - `94msomething` -> no valid unit
+     - `94requestsExtra` -> no valid unit
+     - `94%` -> valid unit
+2. **Preserved Valid Unit Equivalences**:
+   - Retained valid unit aliases without introducing cross-category semantic bleeding:
+     - `%`, `percent`, `percentage`, `pct` -> `%`
+     - `s`, `sec`, `secs`, `second`, `seconds` -> `s`
+     - `ms`, `millisecond`, `milliseconds` -> `ms`
+     - `requests`, `request`, `queries`, `query` -> `requests`
+3. **Adversarial Regression Test Suite (Test 37)**:
+   - Added `test_37_strict_unit_token_boundary_validation` in `tests/test_phase5_interview_studio.py` covering invalid unit token boundaries, valid token variants, decimal precision, missing units, and project attribution/domain isolation.
+   - Asserted that invalid unit strings never establish resume-supported metrics or earn specificity bonuses.
 
 ---
 
@@ -58,6 +64,7 @@ Phase 5.4 enforces strict decimal-safe exact numeric matching and fail-closed un
 |  - Complete answers & structured criteria         |  |    Evidence Consistency                          |
 |  - Pedagogical steps & follow-up Q&As             |  |  - Decimal-safe numeric extraction               |
 |                                                   |  |  - Strict precision normalization policy         |
+|                                                   |  |  - Strict unit token boundary enforcement        |
 |                                                   |  |  - Fail-closed unit verification                 |
 |                                                   |  |  - Zero bonus & deductions for unverified claims |
 +---------------------------------------------------+  +--------------------------------------------------+
@@ -87,18 +94,18 @@ Phase 5.4 enforces strict decimal-safe exact numeric matching and fail-closed un
 | **Concept Coverage** | 20% | Evaluates coverage of `expected_key_points` (70% subweight) and `important_concepts` (30% subweight) using stemming and boundary-aware matching. |
 | **Clarity & Structure** | 15% | Evaluates structural progression against the designated framework (STAR, PREP, CAR, PAR, SOAR, PEEL, WHAT-WHY-HOW); penalizes verbatim duplicate sentences. |
 | **Specificity & Examples** | 15% | Rewards verified technical tools and resume-grounded metrics. Unsupported and unverified self-reported metrics receive 0 credit; unsupported claims incur explicit deductions. |
-| **Evidence Consistency** | 10% | Validates claims against candidate's verified resume profile; flags unevidenced technologies, mismatched metric categories, project attribution conflicts, precision mismatches, and unsupported claims with -20 pt penalty per warning. |
+| **Evidence Consistency** | 10% | Validates claims against candidate's verified resume profile; flags unevidenced technologies, mismatched metric categories, project attribution conflicts, precision mismatches, unit token boundary violations, and unsupported claims with -20 pt penalty per warning. |
 
-### Numeric and Unit Normalization Policy
+### Unit Token Boundary Rules
 
-1. **Policy Name**: `strict_precision`
-2. **Numeric Representation Rules**:
-   - Comma grouping (`1,000`, `10,000`, `1,000,000`) is stripped when matching valid standard thousands grouping: `1,000` is safely accepted as equivalent to `1000`.
-   - Distinct precision representations are NOT conflated: integer `94` does not match decimal `94.0` or `94.5`. Decimal `94.0%` in resume vs `94%` in answer is classified as unsupported with an explicit precision mismatch warning.
-3. **Unit Compatibility Rules**:
-   - When an answer specifies a unit (`%`, `s`, `ms`, `requests`, `users`, etc.), resume evidence must directly associate a compatible unit with that exact numeric token.
-   - If the unit in the resume evidence is missing (e.g. `94` benchmark runs) or ambiguous, the evaluation fails closed (`unsupported_claims`).
-   - Equivalent unit tokens normalize to canonical units (e.g., `percent`, `pct`, `%` -> `%`; `second`, `seconds`, `sec`, `s` -> `s`).
+1. **Complete Token Enforcement**: Units are matched with `(?![a-zA-Z0-9])` lookaheads. A unit cannot be accepted if it forms a prefix or substring of an unevidenced word (e.g., `94students` does not establish `94s` or `94 seconds`; `94msomething` does not establish `94ms`; `94requestsExtra` does not establish `94 requests`).
+2. **Valid Unit Aliases**:
+   - Percentage: `%`, `percent`, `percentage`, `pct` -> `%`
+   - Seconds: `s`, `sec`, `secs`, `second`, `seconds` -> `s`
+   - Milliseconds: `ms`, `millisecond`, `milliseconds` -> `ms`
+   - Requests: `requests`, `request`, `queries`, `query` -> `requests`
+   - Rates: `req/s`, `rps`, `qps`, `queries/s`, `requests/sec` -> `req/s`
+3. **Fail-Closed on Missing/Invalid Units**: A number without an established compatible unit fails closed, incurring scoring penalties and explicit grounding warnings.
 
 ---
 
@@ -108,21 +115,21 @@ All verification suites completed cleanly:
 
 | Suite / Check | Command | Result |
 | :--- | :--- | :--- |
-| **Dedicated Phase 5 Suite** | `py -3.14 -m pytest tests/test_phase5_interview_studio.py -v` | **36 passed** in 2.10s |
-| **All Interview Studio Suites** | `py -3.14 -m pytest tests/test_phase5_interview_studio.py tests/test_interview_studio.py tests/test_phase2_1_interview_grounding.py tests/test_interview_educational_depth.py -v` | **84 passed** in 3.15s |
-| **Cumulative Phase 1–5 Suites** | `powershell -Command "py -3.14 -m pytest (Get-ChildItem tests/test_phase*.py) -q"` | **421 passed** in 94.85s |
-| **Full Backend Test Suite** | `powershell -Command "py -3.14 -m pytest tests/ -q"` | **694 passed**, 1 pre-existing warning in 123.01s |
-| **Frontend Production Build** | `npm.cmd run build --prefix frontend` | **Success** (built in 468ms, 0 errors) |
+| **Dedicated Phase 5 Suite** | `py -3.14 -m pytest tests/test_phase5_interview_studio.py -v` | **37 passed** in 2.24s |
+| **All Interview Studio Suites** | `py -3.14 -m pytest tests/test_phase5_interview_studio.py tests/test_interview_studio.py tests/test_phase2_1_interview_grounding.py tests/test_interview_educational_depth.py -v` | **85 passed** in 3.14s |
+| **Cumulative Phase 1–5 Suites** | `powershell -Command "py -3.14 -m pytest (Get-ChildItem tests/test_phase*.py) -q"` | **422 passed** in 95.23s |
+| **Full Backend Test Suite** | `powershell -Command "py -3.14 -m pytest tests/ -q"` | **695 passed**, 1 pre-existing warning in 123.19s |
+| **Frontend Production Build** | `npm.cmd run build --prefix frontend` | **Success** (built in 481ms, 0 errors) |
 | **Frontend Lint** | `npm.cmd run lint --prefix frontend` | **Clean** (0 errors, 33 pre-existing warnings) |
 
 ---
 
-## 5. Adversarial Metric Grounding Test Suites (Tests 35 & 36)
+## 5. Adversarial Metric Grounding Test Suites (Tests 35, 36 & 37)
 
 The test suites in `tests/test_phase5_interview_studio.py` verify all adversarial metric constraints:
 
-1. **Test 35**:
-   - Case 1: No resume evidence + fabricated personal metric -> no specificity bonus; overall score strictly lower than honest answer.
+1. **Test 35 (Metric Grounding & Self-Report Integrity)**:
+   - Case 1: No resume evidence + fabricated personal metric -> no specificity bonus; composite score strictly lower than honest answer.
    - Case 2: Resume has 94% Macro F1; answer claims 94% latency reduction -> unsupported (category mismatch warning).
    - Case 3: Resume has 94 seconds; answer claims 94% -> unsupported (unit mismatch).
    - Case 4: Same number in an unrelated project -> unsupported (project attribution mismatch).
@@ -130,7 +137,7 @@ The test suites in `tests/test_phase5_interview_studio.py` verify all adversaria
    - Case 6: General theoretical numeric explanation -> general technical explanation without achievement penalty.
    - Case 7: Truthful candidate disclosure -> praised for candor.
    - Case 8: Genuine supported metric -> full credit.
-2. **Test 36**:
+2. **Test 36 (Strict Numeric Precision & Safe Normalization)**:
    - Case 1: Resume `94.5%`, answer `94%` -> unsupported (decimal value mismatch).
    - Case 2: Resume `94%`, answer `94.5%` -> unsupported (decimal value mismatch).
    - Case 3: Resume `94.0%`, answer `94%` -> unsupported under explicit `strict_precision` policy.
@@ -140,3 +147,12 @@ The test suites in `tests/test_phase5_interview_studio.py` verify all adversaria
    - Case 7: Resume `50%`, answer `5%` -> unsupported.
    - Case 8: Existing valid `94% Macro F1` evidence -> supported.
    - Case 9: Existing project attribution and domain mismatch tests -> remain passing.
+3. **Test 37 (Unit Token Boundaries)**:
+   - Case 1: `94students` cannot establish 94 seconds.
+   - Case 2: `94msomething` cannot establish 94 milliseconds.
+   - Case 3: `94requestsExtra` cannot establish 94 requests.
+   - Case 4: `94 seconds` remains valid.
+   - Case 5: `94s` remains valid under explicit unit policy.
+   - Case 6: `94%` remains valid.
+   - Case 7: Decimal precision and missing-unit tests remain passing.
+   - Case 8: Project attribution and domain mismatch tests remain passing.

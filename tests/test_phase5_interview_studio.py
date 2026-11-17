@@ -1701,3 +1701,198 @@ def test_36_strict_numeric_and_unit_verification(sample_candidate_analysis):
     assert len(ev_c9_domain["claims_analysis"]["unsupported_claims"]) > 0
     assert len(ev_c9_domain["claims_analysis"]["resume_supported_claims"]) == 0
     assert any("speech" in w.lower() or "audio" in w.lower() for w in ev_c9_domain["evidence_grounding_warnings"])
+
+
+def test_37_strict_unit_token_boundary_validation(sample_candidate_analysis):
+    """
+    Phase 5.5 regression test suite covering strict unit token boundary validation:
+    1. 94students cannot establish 94 seconds.
+    2. 94msomething cannot establish 94 milliseconds.
+    3. 94requestsExtra cannot establish 94 requests.
+    4. 94 seconds remains valid.
+    5. 94s remains valid under explicit unit policy.
+    6. 94% remains valid.
+    7. Existing decimal precision and missing-unit tests still pass.
+    8. Existing project attribution and domain mismatch tests still pass.
+    Asserts both metric classification and scoring behavior: invalid unit strings
+    never establish resume-supported metrics or earn specificity credit.
+    """
+    evaluator = HeuristicAnswerEvaluator()
+
+    q_data = {
+        "question_text": "Describe your performance optimization accomplishments and verified outcomes.",
+        "expected_key_points": ["Implementation architecture", "Verified results"],
+        "recommended_answer_framework": "STAR"
+    }
+
+    # Baseline honest answer without any numeric metric
+    ans_baseline = (
+        "Situation: In our multimodal semantic search project, query speed was critical. "
+        "Task: Accelerate the inference pipeline. "
+        "Action: I developed a two-tower neural network with custom contrastive loss in PyTorch. "
+        "Result: In our multimodal semantic search project, query throughput improved significantly."
+    )
+    ev_baseline = evaluator.evaluate_answer(q_data, ans_baseline, "STAR", candidate_evidence=extract_candidate_evidence(ANALYSIS_CACHE[sample_candidate_analysis]))
+    baseline_spec = ev_baseline["individual_criterion_scores"]["specificity_examples"]["score"]
+    baseline_score = ev_baseline["overall_score"]
+
+    # 1. 94students cannot establish 94 seconds
+    ev_students = {
+        "skills": ["Python"],
+        "projects": [{
+            "title": "Teaching Assistant Pipeline",
+            "technologies": "Python",
+            "description": "Automated grading scripts in Python, mentored 94students in coursework.",
+            "exact_excerpt": "mentored 94students in coursework."
+        }]
+    }
+    ans_seconds_honest = (
+        "Situation: Build times were excessively slow. "
+        "Task: Optimize compiler runtime. "
+        "Action: I tuned build scripts and docker layers in Python. "
+        "Result: In our Teaching Assistant Pipeline project, the compiler executed reliably."
+    )
+    ev_c1_honest = evaluator.evaluate_answer(q_data, ans_seconds_honest, "STAR", candidate_evidence=ev_students)
+
+    ans_seconds = (
+        "Situation: Build times were excessively slow. "
+        "Task: Optimize compiler runtime. "
+        "Action: I tuned build scripts and docker layers in Python. "
+        "Result: In our Teaching Assistant Pipeline project, I achieved 94 seconds compile time."
+    )
+    ev_c1 = evaluator.evaluate_answer(q_data, ans_seconds, "STAR", candidate_evidence=ev_students)
+    assert len(ev_c1["claims_analysis"]["unsupported_claims"]) > 0
+    assert len(ev_c1["claims_analysis"]["resume_supported_claims"]) == 0
+    assert any("compatible unit" in w.lower() or "unit" in w.lower() for w in ev_c1["evidence_grounding_warnings"])
+    assert ev_c1["individual_criterion_scores"]["specificity_examples"]["score"] <= ev_c1_honest["individual_criterion_scores"]["specificity_examples"]["score"]
+    assert ev_c1["overall_score"] < ev_c1_honest["overall_score"]
+
+    # Also verify: answer claiming 94students does not earn metric specificity bonus
+    ans_claim_students = (
+        "Situation: Course grading was manual. "
+        "Task: Automate feedback loops in Python. "
+        "Action: I wrote batch processing routines. "
+        "Result: In our Teaching Assistant Pipeline project, I processed 94students successfully."
+    )
+    ev_c1b = evaluator.evaluate_answer(q_data, ans_claim_students, "STAR", candidate_evidence=ev_students)
+    assert len(ev_c1b["claims_analysis"]["resume_supported_claims"]) == 0
+    assert ev_c1b["individual_criterion_scores"]["specificity_examples"]["score"] <= ev_c1_honest["individual_criterion_scores"]["specificity_examples"]["score"]
+
+    # 2. 94msomething cannot establish 94 milliseconds
+    ev_msomething = {
+        "skills": ["Python", "PyTorch"],
+        "projects": [{
+            "title": "Streaming Pipeline",
+            "technologies": "Python, PyTorch",
+            "description": "Processed 94msomething payloads with Python and PyTorch.",
+            "exact_excerpt": "Processed 94msomething payloads."
+        }]
+    }
+    ans_ms_honest = (
+        "Situation: Streaming latency was high. "
+        "Task: Accelerate message processing in PyTorch. "
+        "Action: I optimized tensor buffers and worker threads in Python. "
+        "Result: In our Streaming Pipeline project, message processing achieved real-time execution."
+    )
+    ev_c2_honest = evaluator.evaluate_answer(q_data, ans_ms_honest, "STAR", candidate_evidence=ev_msomething)
+
+    ans_ms = (
+        "Situation: Streaming latency was high. "
+        "Task: Accelerate message processing in PyTorch. "
+        "Action: I optimized tensor buffers and worker threads in Python. "
+        "Result: In our Streaming Pipeline project, I achieved 94 milliseconds latency."
+    )
+    ev_c2 = evaluator.evaluate_answer(q_data, ans_ms, "STAR", candidate_evidence=ev_msomething)
+    assert len(ev_c2["claims_analysis"]["unsupported_claims"]) > 0
+    assert len(ev_c2["claims_analysis"]["resume_supported_claims"]) == 0
+    assert any("compatible unit" in w.lower() or "unit" in w.lower() for w in ev_c2["evidence_grounding_warnings"])
+    assert ev_c2["individual_criterion_scores"]["specificity_examples"]["score"] <= ev_c2_honest["individual_criterion_scores"]["specificity_examples"]["score"]
+    assert ev_c2["overall_score"] < ev_c2_honest["overall_score"]
+
+    # 3. 94requestsExtra cannot establish 94 requests
+    ev_requests_extra = {
+        "skills": ["Python", "Flask"],
+        "projects": [{
+            "title": "API Gateway",
+            "technologies": "Python, Flask",
+            "description": "Handled 94requestsExtra in testing with Python and Flask.",
+            "exact_excerpt": "Handled 94requestsExtra in testing."
+        }]
+    }
+    ans_requests_honest = (
+        "Situation: Our API gateway needed higher concurrency. "
+        "Task: Scale request processing with Flask. "
+        "Action: I implemented asynchronous request handlers in Python. "
+        "Result: In our API Gateway project, the system demonstrated reliable high-concurrency throughput."
+    )
+    ev_c3_honest = evaluator.evaluate_answer(q_data, ans_requests_honest, "STAR", candidate_evidence=ev_requests_extra)
+
+    ans_requests = (
+        "Situation: Our API gateway needed higher concurrency. "
+        "Task: Scale request processing with Flask. "
+        "Action: I implemented asynchronous request handlers in Python. "
+        "Result: In our API Gateway project, I served 94 requests per second."
+    )
+    ev_c3 = evaluator.evaluate_answer(q_data, ans_requests, "STAR", candidate_evidence=ev_requests_extra)
+    assert len(ev_c3["claims_analysis"]["unsupported_claims"]) > 0
+    assert len(ev_c3["claims_analysis"]["resume_supported_claims"]) == 0
+    assert any("compatible unit" in w.lower() or "unit" in w.lower() for w in ev_c3["evidence_grounding_warnings"])
+    assert ev_c3["individual_criterion_scores"]["specificity_examples"]["score"] <= ev_c3_honest["individual_criterion_scores"]["specificity_examples"]["score"]
+    assert ev_c3["overall_score"] < ev_c3_honest["overall_score"]
+
+    # 4. 94 seconds remains valid
+    ev_seconds = {
+        "skills": ["Python", "Docker"],
+        "projects": [{
+            "title": "Build Optimizer",
+            "technologies": "Python, Docker",
+            "description": "Optimized container build pipeline with Python and Docker and reduced compile time to 94 seconds.",
+            "exact_excerpt": "reduced compile time to 94 seconds."
+        }]
+    }
+    ans_c4 = (
+        "Situation: Build times were excessively slow. "
+        "Task: Optimize compiler runtime in Python. "
+        "Action: I tuned build scripts and docker layers. "
+        "Result: In our Build Optimizer project, I achieved 94 seconds compile time."
+    )
+    ev_c4 = evaluator.evaluate_answer(q_data, ans_c4, "STAR", candidate_evidence=ev_seconds)
+    assert len(ev_c4["claims_analysis"]["resume_supported_claims"]) > 0
+    assert len(ev_c4["claims_analysis"]["unsupported_claims"]) == 0
+    assert ev_c4["criterion_scores"]["evidence_consistency"]["status"] == "pass"
+    assert ev_c4["individual_criterion_scores"]["specificity_examples"]["score"] >= 60.0
+
+    # 5. 94s remains valid if explicitly supported
+    ans_c5 = (
+        "Situation: Build times were excessively slow. "
+        "Task: Optimize compiler runtime in Python. "
+        "Action: I tuned build scripts and docker layers. "
+        "Result: In our Build Optimizer project, I achieved 94s compile time."
+    )
+    ev_c5 = evaluator.evaluate_answer(q_data, ans_c5, "STAR", candidate_evidence=ev_seconds)
+    assert len(ev_c5["claims_analysis"]["resume_supported_claims"]) > 0
+    assert len(ev_c5["claims_analysis"]["unsupported_claims"]) == 0
+    assert ev_c5["criterion_scores"]["evidence_consistency"]["status"] == "pass"
+    assert ev_c5["individual_criterion_scores"]["specificity_examples"]["score"] >= 60.0
+
+    # 6. 94% remains valid
+    ev_percent = {
+        "skills": ["Python", "PyTorch"],
+        "projects": [{
+            "title": "Multimodal Semantic Matcher",
+            "technologies": "Python, PyTorch",
+            "description": "Implemented cross-modal dense retrieval with PyTorch, achieving 94% Macro F1.",
+            "exact_excerpt": "achieving 94% Macro F1."
+        }]
+    }
+    ans_c6 = (
+        "Situation: In our multimodal semantic search project, retrieval accuracy was critical. "
+        "Task: Fine-tune the dense encoder without overfitting. "
+        "Action: I developed a two-tower neural network with custom contrastive loss in PyTorch. "
+        "Result: In our Multimodal Semantic Matcher project, I achieved 94% Macro F1 on the benchmark."
+    )
+    ev_c6 = evaluator.evaluate_answer(q_data, ans_c6, "STAR", candidate_evidence=ev_percent)
+    assert len(ev_c6["claims_analysis"]["resume_supported_claims"]) > 0
+    assert len(ev_c6["claims_analysis"]["unsupported_claims"]) == 0
+    assert ev_c6["criterion_scores"]["evidence_consistency"]["status"] == "pass"
+    assert ev_c6["individual_criterion_scores"]["specificity_examples"]["score"] >= 60.0
