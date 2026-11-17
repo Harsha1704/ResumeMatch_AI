@@ -89,13 +89,14 @@ def test_api_interview_studio(client):
 
 
 def test_api_analyze_json_flow(client):
+    token = client.get("/api/csrf-token").get_json()["csrf_token"]
     payload = {
         "resume_text": "Experienced Machine Learning Engineer with Python, Scikit-learn, SQL, Docker, and PyTorch.",
         "job_description": "Wanted: Machine Learning Engineer with Python, SQL, and Docker. Experience with PyTorch preferred.",
         "target_role": "Machine Learning Engineer",
         "model_backend": "production"
     }
-    resp = client.post("/api/analyze", json=payload)
+    resp = client.post("/api/analyze", json=payload, headers={"X-CSRF-Token": token})
     assert resp.status_code == 200
     data = resp.get_json()
     assert data["status"] == "success"

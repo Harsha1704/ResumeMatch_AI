@@ -84,8 +84,11 @@ Phase 6 constitutes the comprehensive final integration, end-to-end regression a
 - **Cross-Session Authorization (BOLA / IDOR Elimination)**:
   - *Vulnerability Discovered*: In `app.py`, `GET /api/analysis/<analysis_id>` and `GET /api/skill-gap?id=...` did not enforce `session["allowed_analyses"]` checks. If an attacker guessed or provided a valid foreign analysis ID, `api_get_analysis` returned the victim candidate's confidential resume data, while `api_skill_gap` silently fell back to sample preview without returning 403.
   - *Correction*: Unified authorization via `_resolve_authorized_analysis(aid)`. Requesting an unauthorized foreign analysis ID strictly returns `403 Forbidden` across all four analysis endpoints (`/api/analysis/<id>`, `/api/skill-gap`, `/api/career-mentor`, `/api/interview-studio`). Non-existent IDs return `404 Not Found`.
-- **CSRF Protection**:
-  - State-changing interview endpoints (`/api/interview-studio/generate`, `/api/interview/sessions` [POST/DELETE], `/api/interview/reset`, `/api/career-mentor/evaluate-role`) enforce fail-closed CSRF validation via `_validate_interview_csrf()`.
+- **CSRF Protection & Token Delivery (Phase 6.1 Hardening)**:
+  - Added session-bound `GET /api/csrf-token` endpoint for decoupled Vercel -> Render cross-origin token delivery.
+  - Universal fail-closed CSRF validation (`_validate_csrf`) enforced across all 13 state-changing mutation endpoints without test bypasses (`/api/analyze` [JSON/multipart], `/api/mentor/update-name`, `/api/mentor/progress`, `/api/mentor/reset-progress`, `/api/candidate/update-role`, `/api/candidate/confirm-education`, `/api/career-mentor/evaluate-role`, `/api/interview-studio/generate`, `/api/interview/sessions` [POST/DELETE], `/api/interview-practice/submit`, `/api/interview/confirm-activity`, `/api/interview/reset`, `/api/interview/evaluate`).
+  - React client service (`api.ts`) safely retrieves, caches in-memory, and attaches `X-CSRF-Token` on all mutations with `credentials: 'include'`. Missing, invalid, or cross-session mismatched tokens strictly return 403 Forbidden.
+  - Programmatic ML inference (`/api/match`) is documented as stateless and unauthenticated, safely bypassing CSRF.
 - **Input Validation & Parsing Safety**:
   - 16 MB maximum file upload limit (`MAX_CONTENT_LENGTH`).
   - Supported extensions strictly checked (`.pdf`, `.docx`, `.txt`).

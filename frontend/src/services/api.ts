@@ -10,22 +10,82 @@ import type {
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
-function getCsrfToken(): string | undefined {
-  if (typeof document === 'undefined') return undefined;
-  const match = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]+)/);
-  if (match) return decodeURIComponent(match[1]);
-  const meta = document.querySelector('meta[name="csrf-token"]');
-  if (meta) return meta.getAttribute('content') || undefined;
-  return undefined;
+let cachedCsrfToken: string | null = null;
+let csrfTokenPromise: Promise<string> | null = null;
+
+export async function fetchCsrfToken(): Promise<string> {
+  const fullUrl = `${API_BASE}/api/csrf-token`;
+  const response = await fetch(fullUrl, {
+    method: 'GET',
+    credentials: 'include',
+    headers: {
+      'Accept': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to retrieve CSRF token: HTTP ${response.status}`);
+  }
+
+  const data = await response.json();
+  if (!data?.csrf_token) {
+    throw new Error('CSRF endpoint returned invalid response');
+  }
+
+  cachedCsrfToken = data.csrf_token;
+  return data.csrf_token;
+}
+
+export async function getCsrfToken(): Promise<string> {
+  if (cachedCsrfToken) {
+    return cachedCsrfToken;
+  }
+  // Fallback to cookie or meta tag if present
+  if (typeof document !== 'undefined') {
+    const match = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]+)/);
+    if (match) {
+      cachedCsrfToken = decodeURIComponent(match[1]);
+      return cachedCsrfToken;
+    }
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    if (meta && meta.getAttribute('content')) {
+      cachedCsrfToken = meta.getAttribute('content')!;
+      return cachedCsrfToken;
+    }
+  }
+  if (!csrfTokenPromise) {
+    csrfTokenPromise = fetchCsrfToken().finally(() => {
+      csrfTokenPromise = null;
+    });
+  }
+  return csrfTokenPromise;
+}
+
+export function clearCsrfToken(): void {
+  cachedCsrfToken = null;
+  csrfTokenPromise = null;
 }
 
 async function fetchJson<T>(url: string, options: RequestInit = {}): Promise<T> {
   const fullUrl = url.startsWith('http') ? url : `${API_BASE}${url}`;
-  const csrf = getCsrfToken();
+  const method = (options.method || 'GET').toUpperCase();
+  const isMutation = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method);
+
   const defaultHeaders: Record<string, string> = {
     'Accept': 'application/json',
-    ...(csrf ? { 'X-CSRF-Token': csrf } : {}),
   };
+
+  if (isMutation) {
+    try {
+      const csrf = await getCsrfToken();
+      if (csrf) {
+        defaultHeaders['X-CSRF-Token'] = csrf;
+      }
+    } catch (err) {
+      console.warn('Could not retrieve CSRF token before mutation:', err);
+    }
+  }
+
   const response = await fetch(fullUrl, {
     ...options,
     headers: {
@@ -36,6 +96,9 @@ async function fetchJson<T>(url: string, options: RequestInit = {}): Promise<T> 
   });
 
   if (!response.ok) {
+    if (response.status === 403) {
+      clearCsrfToken();
+    }
     let errorDetail = `HTTP ${response.status}: ${response.statusText}`;
     try {
       const errJson = await response.json();
@@ -79,7 +142,12 @@ export const api = {
 
   async analyzeResume(formData: FormData): Promise<{ status: string; analysis_id: string; data: AnalysisResult }> {
     const fullUrl = `${API_BASE}/api/analyze`;
-    const csrf = getCsrfToken();
+    let csrf: string | undefined;
+    try {
+      csrf = await getCsrfToken();
+    } catch (err) {
+      console.warn('Could not retrieve CSRF token before resume upload:', err);
+    }
     const response = await fetch(fullUrl, {
       method: 'POST',
       body: formData,
@@ -90,6 +158,9 @@ export const api = {
       },
     });
     if (!response.ok) {
+      if (response.status === 403) {
+        clearCsrfToken();
+      }
       let err = `Upload failed (${response.status})`;
       try {
         const j = await response.json();

@@ -307,21 +307,26 @@ def test_19_flask_routes_integration():
     assert b"Career Mentor" in resp.data
 
     # 2. Update display name
+    token = client.get("/api/csrf-token").get_json()["csrf_token"]
+    headers = {"X-CSRF-Token": token}
+
     resp_name = client.post("/api/mentor/update-name",
                             data=json.dumps({"preferred_name": "Harsha"}),
-                            content_type="application/json")
+                            content_type="application/json",
+                            headers=headers)
     assert resp_name.status_code == 200
     assert resp_name.get_json()["preferred_name"] == "Harsha"
 
     # 3. Update task progress
     resp_prog = client.post("/api/mentor/progress",
                             data=json.dumps({"task_key": "docker_stage_1", "status": "Completed"}),
-                            content_type="application/json")
+                            content_type="application/json",
+                            headers=headers)
     assert resp_prog.status_code == 200
     assert resp_prog.get_json()["status"] == "success"
 
     # 4. Reset progress
-    resp_rst = client.post("/api/mentor/reset-progress")
+    resp_rst = client.post("/api/mentor/reset-progress", headers=headers)
     assert resp_rst.status_code == 200
 
 

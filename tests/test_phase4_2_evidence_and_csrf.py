@@ -303,6 +303,9 @@ def test_analysis_id_safe_validation():
 
     with client.session_transaction() as sess:
         sess["allowed_analyses"] = ["valid_auth_aid_001"]
+        sess["csrf_token"] = "valid_tok"
+
+    token_hdr = {"X-CSRF-Token": "valid_tok"}
 
     ANALYSIS_CACHE["valid_auth_aid_001"] = {
         "candidate_profile": {"name": {"full_name": "Authorized Candidate"}, "skills": [], "projects": []},
@@ -337,7 +340,8 @@ def test_analysis_id_safe_validation():
     resp_404 = client.post(
         "/api/career-mentor/evaluate-role",
         data=json.dumps({"role_name": "Backend Engineer", "analysis_id": "non_existent_id_abc"}),
-        content_type="application/json"
+        content_type="application/json",
+        headers=token_hdr
     )
     assert resp_404.status_code == 404
     assert "not found" in resp_404.get_json()["message"].lower()
@@ -346,7 +350,8 @@ def test_analysis_id_safe_validation():
     resp_403 = client.post(
         "/api/career-mentor/evaluate-role",
         data=json.dumps({"role_name": "Backend Engineer", "analysis_id": "unauthorized_aid_999"}),
-        content_type="application/json"
+        content_type="application/json",
+        headers=token_hdr
     )
     assert resp_403.status_code == 403
     assert "Unauthorized access" in resp_403.get_json()["message"]
@@ -355,7 +360,8 @@ def test_analysis_id_safe_validation():
     resp_200 = client.post(
         "/api/career-mentor/evaluate-role",
         data=json.dumps({"role_name": "Backend Engineer", "analysis_id": "valid_auth_aid_001"}),
-        content_type="application/json"
+        content_type="application/json",
+        headers=token_hdr
     )
     assert resp_200.status_code == 200
     assert resp_200.get_json()["status"] == "success"

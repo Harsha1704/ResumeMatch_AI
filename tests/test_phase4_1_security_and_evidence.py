@@ -135,9 +135,11 @@ def test_career_mentor_analysis_ownership_isolation():
     # Authorize each client for their respective analysis
     with client_a.session_transaction() as sess_a:
         sess_a["allowed_analyses"] = [aid_a]
+        sess_a["csrf_token"] = "tok_a"
 
     with client_b.session_transaction() as sess_b:
         sess_b["allowed_analyses"] = [aid_b]
+        sess_b["csrf_token"] = "tok_b"
 
     # Client A accesses analysis A -> 200 OK
     resp_a_own = client_a.get(f"/api/career-mentor?id={aid_a}")
@@ -149,11 +151,12 @@ def test_career_mentor_analysis_ownership_isolation():
     assert resp_b_cross.status_code == 403
     assert "Unauthorized access" in resp_b_cross.get_json()["message"]
 
-    # Client B evaluates role on analysis A -> 403 Forbidden
+    # Client B evaluates role on analysis A -> 403 Forbidden (CSRF token provided, ownership check fails)
     resp_b_eval_cross = client_b.post(
         "/api/career-mentor/evaluate-role",
         data=json.dumps({"role_name": "Backend Engineer", "analysis_id": aid_a}),
-        content_type="application/json"
+        content_type="application/json",
+        headers={"X-CSRF-Token": "tok_b"}
     )
     assert resp_b_eval_cross.status_code == 403
     assert "Unauthorized access" in resp_b_eval_cross.get_json()["message"]
@@ -162,7 +165,8 @@ def test_career_mentor_analysis_ownership_isolation():
     resp_a_eval_own = client_a.post(
         "/api/career-mentor/evaluate-role",
         data=json.dumps({"role_name": "Backend Engineer", "analysis_id": aid_a}),
-        content_type="application/json"
+        content_type="application/json",
+        headers={"X-CSRF-Token": "tok_a"}
     )
     assert resp_a_eval_own.status_code == 200
     assert resp_a_eval_own.get_json()["role_evaluation"]["role_title"] == "Backend Engineer"
@@ -175,6 +179,9 @@ def test_career_mentor_analysis_ownership_isolation():
 def test_career_mentor_unknown_id_and_sample_behavior():
     """Verify unknown IDs return 404 and sample IDs return sample preview without leakage."""
     client = app.test_client()
+    with client.session_transaction() as sess:
+        sess["csrf_token"] = "valid_tok"
+    token_hdr = {"X-CSRF-Token": "valid_tok"}
 
     # 1. Unknown analysis ID -> 404 Not Found
     resp_unknown = client.get("/api/career-mentor?id=non_existent_analysis_xyz")
@@ -184,7 +191,8 @@ def test_career_mentor_unknown_id_and_sample_behavior():
     resp_eval_unknown = client.post(
         "/api/career-mentor/evaluate-role",
         data=json.dumps({"role_name": "Backend Engineer", "analysis_id": "non_existent_xyz"}),
-        content_type="application/json"
+        content_type="application/json",
+        headers=token_hdr
     )
     assert resp_eval_unknown.status_code == 404
     assert "not found" in resp_eval_unknown.get_json()["message"].lower()
@@ -199,7 +207,8 @@ def test_career_mentor_unknown_id_and_sample_behavior():
         resp_eval_sample = client.post(
             "/api/career-mentor/evaluate-role",
             data=json.dumps({"role_name": "Machine Learning Engineer", "analysis_id": sample_id}),
-            content_type="application/json"
+            content_type="application/json",
+            headers=token_hdr
         )
         assert resp_eval_sample.status_code == 200
         assert resp_eval_sample.get_json()["role_evaluation"]["role_title"] == "Machine Learning Engineer"

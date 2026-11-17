@@ -233,10 +233,11 @@ def test_10_full_14_day_schedule_accounting():
 # -------------------------------------------------------------------------
 def test_11_candidate_confirmation_flow():
     client = app.test_client()
+    token = client.get("/api/csrf-token").get_json()["csrf_token"]
     resp = client.post("/api/interview/confirm-activity", json={
         "activity_key": "pytest_unit_testing",
         "confirmed": True
-    })
+    }, headers={"X-CSRF-Token": token})
     assert resp.status_code == 200
     data = resp.get_json()
     assert data["status"] == "success"

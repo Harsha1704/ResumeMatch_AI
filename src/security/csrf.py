@@ -29,6 +29,6 @@ def validate_csrf_token(form_token: Optional[str]) -> bool:
     Uses constant-time comparison to prevent timing attacks.
     """
     expected = session.get("csrf_token")
-    if not expected or not form_token:
+    if not expected or not form_token or not isinstance(form_token, str) or not isinstance(expected, str):
         return False
     return secrets.compare_digest(expected, form_token)

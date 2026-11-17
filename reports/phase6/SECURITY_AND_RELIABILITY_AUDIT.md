@@ -46,17 +46,47 @@ All discovered security vulnerabilities were eliminated with minimal safe code m
   - Added `"Accept"` to allowed request headers in CORS.
 - **Verification**: Verified by `test_06_cors_configuration_and_preflight_headers` and `test_08_interview_session_ownership_and_safe_deletion_csrf`.
 
-### 2.3 State-Changing CSRF Enforcement — VERIFIED
-- **Implementation**:
-  - All state-changing mutation endpoints enforce fail-closed CSRF validation:
-    - `POST /api/interview-studio/generate`
-    - `POST /api/interview/sessions`
-    - `DELETE /api/interview/sessions/<id>`
-    - `POST /api/interview/reset`
-    - `POST /api/career-mentor/evaluate-role`
-  - In production mode (`APP_ENV == "production"`), requests must include a valid CSRF token matching the session token via `X-CSRF-Token` header or payload. Missing or mismatched tokens strictly return `403 Forbidden`.
-  - In testing mode (`TESTING = True`), CSRF validation operates fail-closed whenever tokens are supplied.
-- **Verification**: Verified by Phase 4 and Phase 5 CSRF test suites (`test_26_csrf_enforcement_all_state_changing_endpoints` and `test_08_interview_session_ownership_and_safe_deletion_csrf`).
+### 2.3 State-Changing CSRF Enforcement & Token Delivery (Phase 6.1 Hardening) — RESOLVED & VERIFIED
+- **Vulnerability & Challenge**:
+  - The React frontend is deployed separately (Vercel CDN) from the Flask API backend (Render).
+  - Previous implementations relied on template injection for CSRF tokens or attempted to read `csrf_token` from `document.cookie` or meta tags.
+  - Because `SESSION_COOKIE_HTTPONLY = True`, JavaScript cannot read the session cookie, and a static SPA on Vercel does not have server-side rendered meta tags.
+  - Furthermore, previous validations contained test-mode bypasses (`if not is_testing`), allowing mutations without valid CSRF tokens during automated test runs.
+- **Architectural Remediation**:
+  1. **Session-Bound Token Delivery Endpoint (`GET /api/csrf-token`)**:
+     - Added dedicated endpoint in `app.py` returning `{"status": "success", "csrf_token": <64-char-hex>}`.
+     - Token is bound to the active Flask session via `src.security.csrf.generate_csrf_token()`.
+     - Cross-origin credentialed requests from whitelisted frontend origins receive the token alongside the `HttpOnly` session cookie (`SameSite=None, Secure=True` in production; `SameSite=Lax` in development).
+  2. **Universal Fail-Closed CSRF Validation (`_validate_csrf`)**:
+     - Implemented unified, fail-closed CSRF validator `_validate_csrf(data=None)`.
+     - Checks `X-CSRF-Token` request header, JSON body `csrf_token`, or multipart form field `csrf_token`.
+     - Validates in constant time against `session.get("csrf_token")` using `secrets.compare_digest`.
+     - Rejects non-string inputs safely to prevent type confusion vulnerabilities.
+     - **Removed all testing bypasses**: Validation is strictly enforced across ALL environments including `app.config["TESTING"] = True`. Missing, invalid, or cross-session mismatched tokens strictly return `403 Forbidden` (`{"status": "error", "message": "CSRF token missing or invalid"}`).
+  3. **Universal Endpoint Coverage**:
+     - Audited and applied `_validate_csrf` to all 13 state-changing mutation endpoints:
+       - `/api/analyze` (JSON & multipart file upload)
+       - `/api/mentor/update-name`
+       - `/api/mentor/progress`
+       - `/api/mentor/reset-progress`
+       - `/api/candidate/update-role`
+       - `/api/candidate/confirm-education`
+       - `/api/career-mentor/evaluate-role`
+       - `/api/interview-studio/generate`
+       - `/api/interview/sessions` (POST)
+       - `/api/interview/sessions/<session_id>` (DELETE)
+       - `/api/interview-practice/submit`
+       - `/api/interview/confirm-activity`
+       - `/api/interview/reset`
+       - `/api/interview/evaluate`
+     - Documented stateless exception: `/api/match` is explicitly unauthenticated, read-only/stateless ML inference protected by IP rate limiting without session mutations.
+  4. **React Client In-Memory Token Management (`frontend/src/services/api.ts`)**:
+     - Implemented `getCsrfToken()`, `fetchCsrfToken()`, and `clearCsrfToken()`.
+     - Retains token safely in memory (no insecure localStorage or client-side plain-text cookie persistence).
+     - Automatically fetches token on first mutation, caches it for subsequent calls, and attaches `X-CSRF-Token` header.
+     - Both `fetchJson` and `analyzeResume` automatically attach the header on mutating requests (`POST`, `PUT`, `PATCH`, `DELETE`).
+     - On any 403 Forbidden response, `clearCsrfToken()` clears the cached token to allow clean re-acquisition.
+- **Verification**: Verified by dedicated adversarial suite [`tests/test_phase6_1_csrf_security.py`](file:///d:/skillsync1/tests/test_phase6_1_csrf_security.py) (41 test cases covering missing token, invalid token, cross-session token forgery, legitimate mutations, multipart uploads, and cross-origin preflight).
 
 ### 2.4 Document Parsing Limits & Archive Bomb Protection — VERIFIED
 - **File Upload Limits**:

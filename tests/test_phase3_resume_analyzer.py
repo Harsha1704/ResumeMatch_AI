@@ -781,7 +781,8 @@ def test_api_analyze_password_protected_upload(client):
         "job_description": "Software Engineer\nRequirements: Python, SQL",
         "resume_file": (io.BytesIO(pdf_bytes), "locked.pdf")
     }
-    resp = client.post("/api/analyze", data=data, content_type="multipart/form-data")
+    token = client.get("/api/csrf-token").get_json()["csrf_token"]
+    resp = client.post("/api/analyze", data=data, content_type="multipart/form-data", headers={"X-CSRF-Token": token})
     assert resp.status_code == 400
     res_json = resp.get_json()
     assert res_json["status"] == "error"

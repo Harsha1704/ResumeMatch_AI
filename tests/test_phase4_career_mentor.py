@@ -288,18 +288,23 @@ def test_role_evaluation_custom_endpoint():
     ANALYSIS_CACHE[test_aid] = SAMPLE_FULL_ANALYSIS
     with client.session_transaction() as sess:
         sess["allowed_analyses"] = [test_aid]
+        sess["csrf_token"] = "valid_tok"
+
+    token_hdr = {"X-CSRF-Token": "valid_tok"}
 
     # 1. Missing role_name -> 400 Bad Request
     resp_empty = client.post("/api/career-mentor/evaluate-role",
                              data=json.dumps({"analysis_id": test_aid}),
-                             content_type="application/json")
+                             content_type="application/json",
+                             headers=token_hdr)
     assert resp_empty.status_code == 400
     assert "Missing role_name" in resp_empty.get_json()["message"]
 
     # 2. Valid role_name -> 200 OK
     resp_valid = client.post("/api/career-mentor/evaluate-role",
                              data=json.dumps({"role_name": "Backend Engineer", "analysis_id": test_aid}),
-                             content_type="application/json")
+                             content_type="application/json",
+                             headers=token_hdr)
     assert resp_valid.status_code == 200
     payload = resp_valid.get_json()
     assert payload["status"] == "success"
@@ -311,7 +316,8 @@ def test_role_evaluation_custom_endpoint():
     # 3. Custom / unlisted role title -> 200 OK with heuristic evaluation
     resp_custom = client.post("/api/career-mentor/evaluate-role",
                               data=json.dumps({"role_name": "Distributed Cloud Architect", "analysis_id": test_aid}),
-                              content_type="application/json")
+                              content_type="application/json",
+                              headers=token_hdr)
     assert resp_custom.status_code == 200
     eval_custom = resp_custom.get_json()["role_evaluation"]
     assert eval_custom["role_title"] == "Distributed Cloud Architect"
@@ -489,15 +495,19 @@ def test_api_career_mentor_contract_and_session_isolation():
 
     with client_a.session_transaction() as sess:
         sess["allowed_analyses"] = [aid]
+        sess["csrf_token"] = "tok_a"
     with client_b.session_transaction() as sess:
         sess["allowed_analyses"] = [aid]
+        sess["csrf_token"] = "tok_b"
 
     client_a.post("/api/mentor/update-name",
                   data=json.dumps({"preferred_name": "Alice"}),
-                  content_type="application/json")
+                  content_type="application/json",
+                  headers={"X-CSRF-Token": "tok_a"})
     client_b.post("/api/mentor/update-name",
                   data=json.dumps({"preferred_name": "Bob"}),
-                  content_type="application/json")
+                  content_type="application/json",
+                  headers={"X-CSRF-Token": "tok_b"})
 
     resp_a = client_a.get(f"/api/career-mentor?id={aid}")
     resp_b = client_b.get(f"/api/career-mentor?id={aid}")

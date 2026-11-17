@@ -106,12 +106,13 @@ def test_02_cross_session_analysis_access_rejected_with_403():
     """Verify that unauthorized sessions cannot access another candidate's analysis across any module."""
     # Session 1: uploads and analyzes resume
     with app.test_client() as c1:
+        tok1 = c1.get("/api/csrf-token").get_json()["csrf_token"]
         payload = {
             "resume_text": "Experienced Python and AWS Cloud Engineer with 5 years experience.",
             "job_description": "Seeking Python and AWS Engineer with Docker experience.",
             "target_role": "Cloud Infrastructure Engineer"
         }
-        res1 = c1.post("/api/analyze", json=payload)
+        res1 = c1.post("/api/analyze", json=payload, headers={"X-CSRF-Token": tok1})
         assert res1.status_code == 200
         analysis_id = res1.get_json()["analysis_id"]
 
@@ -202,7 +203,8 @@ def test_05_candidate_evidence_consistency_across_modules(client):
         "job_description": "Seeking ML Engineer with Python, PyTorch, SQL, and Docker.",
         "target_role": "Senior ML Engineer"
     }
-    res = client.post("/api/analyze", json=payload)
+    tok = client.get("/api/csrf-token").get_json()["csrf_token"]
+    res = client.post("/api/analyze", json=payload, headers={"X-CSRF-Token": tok})
     assert res.status_code == 200
     data = res.get_json()
     aid = data["analysis_id"]
@@ -254,8 +256,9 @@ def test_07_scoring_and_ml_deterministic_consistency(client):
         "resume_text": "Experienced Python Software Engineer with Flask, Django, SQL, and Docker.",
         "job_description": "Wanted: Python Engineer with SQL and Flask experience.",
     }
-    r1 = client.post("/api/analyze", json=payload)
-    r2 = client.post("/api/analyze", json=payload)
+    tok = client.get("/api/csrf-token").get_json()["csrf_token"]
+    r1 = client.post("/api/analyze", json=payload, headers={"X-CSRF-Token": tok})
+    r2 = client.post("/api/analyze", json=payload, headers={"X-CSRF-Token": tok})
     d1 = r1.get_json()["data"]
     d2 = r2.get_json()["data"]
 
@@ -276,8 +279,9 @@ def test_08_interview_session_ownership_and_safe_deletion_csrf():
     """Verify that interview session creation, access, and deletion strictly enforce ownership and CSRF."""
     # Session 1: creates an interview session
     with app.test_client() as c1:
+        tok1 = c1.get("/api/csrf-token").get_json()["csrf_token"]
         # Create session
-        r_create = c1.post("/api/interview/sessions", json={"mode": "technical", "difficulty": "Medium", "max_questions": 5})
+        r_create = c1.post("/api/interview/sessions", json={"mode": "technical", "difficulty": "Medium", "max_questions": 5}, headers={"X-CSRF-Token": tok1})
         assert r_create.status_code == 201
         sid = r_create.get_json()["session"]["session_id"]
 
@@ -296,11 +300,10 @@ def test_08_interview_session_ownership_and_safe_deletion_csrf():
 
     # Owner deletes session with CSRF protection
     with app.test_client() as c1_again:
-        # In testing mode without header, delete fails closed if csrf is active, or succeeds
-        # Let's verify owner deletion
+        tok_del = c1_again.get("/api/csrf-token").get_json()["csrf_token"]
         with c1_again.session_transaction() as sess:
             sess["interview_owner_id"] = r_create.get_json()["session"]["owner_id"]
-        r_del = c1_again.delete(f"/api/interview/sessions/{sid}")
+        r_del = c1_again.delete(f"/api/interview/sessions/{sid}", headers={"X-CSRF-Token": tok_del})
         assert r_del.status_code == 200
 
 

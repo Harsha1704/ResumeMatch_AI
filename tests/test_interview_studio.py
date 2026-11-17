@@ -389,6 +389,7 @@ def test_23_flask_routes_integration():
     assert b"Your Interview Answer:" in resp_prac.data
 
     # 4. Instant AJAX evaluation endpoint
+    token = client.get("/api/csrf-token").get_json()["csrf_token"]
     eval_payload = {
         "user_answer": "Situation: We used Flask. Action: I implemented REST routes. Result: The latency was 20ms.",
         "question_id": "test_q_1",
@@ -398,7 +399,8 @@ def test_23_flask_routes_integration():
     }
     resp_eval = client.post("/api/interview/evaluate",
                             data=json.dumps(eval_payload),
-                            content_type="application/json")
+                            content_type="application/json",
+                            headers={"X-CSRF-Token": token})
     assert resp_eval.status_code == 200
     eval_json = resp_eval.get_json()
     assert eval_json["evaluator_label"] == "Heuristic Answer Feedback"

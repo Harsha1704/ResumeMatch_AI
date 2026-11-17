@@ -84,7 +84,7 @@ def test_split_reproducibility():
     import time
     from experiments.dataset_improvement.scripts.create_dual_unseen_split import create_dual_unseen_partition
     t1, v1, _, _ = create_dual_unseen_partition(seed=20)
-    time.sleep(0.05)
+    time.sleep(0.25)
     t2, v2, _, _ = create_dual_unseen_partition(seed=20)
     assert t1["pair_id"].tolist() == t2["pair_id"].tolist()
     assert v1["pair_id"].tolist() == v2["pair_id"].tolist()

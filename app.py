@@ -87,6 +87,37 @@ def inject_security_context():
         "csrf_token": generate_csrf_token()
     }
 
+
+def _validate_csrf(data: Optional[Dict] = None):
+    """
+    Universal fail-closed CSRF validation for state-changing endpoints.
+    Accepts token via:
+      1. 'X-CSRF-Token' HTTP request header
+      2. 'csrf_token' field in JSON request body
+      3. 'csrf_token' field in multipart / urlencoded form data
+    Fails closed (403 Forbidden) across ALL environments (including TESTING)
+    if token is missing, invalid, or cross-session mismatched.
+    """
+    csrf_token = (
+        request.headers.get("X-CSRF-Token") or
+        (data.get("csrf_token") if isinstance(data, dict) else None) or
+        request.form.get("csrf_token")
+    )
+    session_csrf = session.get("csrf_token")
+    if not session_csrf or not csrf_token or not validate_csrf_token(csrf_token):
+        return jsonify({"status": "error", "message": "CSRF token missing or invalid"}), 403
+    return None
+
+# Backward compatibility alias
+_validate_interview_csrf = _validate_csrf
+
+
+@app.route("/api/csrf-token", methods=["GET"])
+def api_get_csrf_token():
+    """Returns a secure CSRF token bound to the caller's Flask session."""
+    token = generate_csrf_token()
+    return jsonify({"status": "success", "csrf_token": token}), 200
+
 # In-memory storage for analysis results (keyed by analysis_id)
 # Secure: does not write private resumes to public static directories
 ANALYSIS_CACHE: Dict[str, Dict] = {}
@@ -1069,6 +1100,9 @@ def career_mentor():
 def api_mentor_update_name():
     """Updates candidate's preferred display name in current session."""
     data = request.get_json(silent=True) or {}
+    csrf_err = _validate_csrf(data)
+    if csrf_err:
+        return csrf_err
     new_name = data.get("preferred_name", "").strip()
     if not new_name:
         return jsonify({"status": "error", "message": "Name cannot be empty"}), 400
@@ -1086,6 +1120,9 @@ def api_mentor_update_name():
 def api_mentor_progress():
     """Updates status for a specific preparation roadmap milestone."""
     data = request.get_json(silent=True) or {}
+    csrf_err = _validate_csrf(data)
+    if csrf_err:
+        return csrf_err
     task_key = data.get("task_key", "").strip()
     status = data.get("status", "").strip()
 
@@ -1110,6 +1147,10 @@ def api_mentor_progress():
 @app.route("/api/mentor/reset-progress", methods=["POST"])
 def api_mentor_reset_progress():
     """Resets progress tracker for the current session."""
+    data = request.get_json(silent=True) if request.is_json else None
+    csrf_err = _validate_csrf(data)
+    if csrf_err:
+        return csrf_err
     sid = session.get("session_tracker_id")
     if sid and sid in MENTOR_PROGRESS_TRACKERS:
         MENTOR_PROGRESS_TRACKERS[sid] = CandidateProgressTracker()
@@ -1120,6 +1161,9 @@ def api_mentor_reset_progress():
 def api_candidate_update_role():
     """Updates candidate target role in current session."""
     data = request.get_json(silent=True) or {}
+    csrf_err = _validate_csrf(data)
+    if csrf_err:
+        return csrf_err
     new_role = data.get("target_role", "").strip()
     if not new_role:
         return jsonify({"status": "error", "message": "Target role cannot be empty"}), 400
@@ -1131,6 +1175,9 @@ def api_candidate_update_role():
 def api_candidate_confirm_education():
     """Confirms candidate educational degree qualification in current session."""
     data = request.get_json(silent=True) or {}
+    csrf_err = _validate_csrf(data)
+    if csrf_err:
+        return csrf_err
     edu = data.get("education", "").strip()
     if not edu:
         return jsonify({"status": "error", "message": "Education cannot be empty"}), 400
@@ -1194,6 +1241,12 @@ def api_analyze():
     Accepts multipart form data or JSON for resume upload/text analysis.
     Returns JSON analysis result with analysis_id and complete parsed structures.
     """
+    # CSRF Protection: fail-closed enforcement
+    payload = request.get_json(silent=True) if request.is_json else None
+    csrf_err = _validate_csrf(payload)
+    if csrf_err:
+        return csrf_err
+
     # Rate Limiting
     client_ip = request.remote_addr or "127.0.0.1"
     allowed, retry_after = upload_rate_limiter.is_allowed(client_ip)
@@ -1386,20 +1439,9 @@ def api_career_mentor_evaluate_role():
         aid = raw_aid.strip()
 
     # CSRF Protection: fail-closed enforcement
-    is_testing = bool(app.config.get("TESTING"))
-    csrf_token = request.headers.get("X-CSRF-Token") or data.get("csrf_token")
-
-    if not is_testing:
-        # In production mode: require both active session token and valid matching request token
-        session_csrf = session.get("csrf_token")
-        if not session_csrf or not csrf_token or not validate_csrf_token(csrf_token):
-            return jsonify({"status": "error", "message": "CSRF token missing or invalid"}), 403
-    else:
-        # In testing mode: if either request token or session token is present, validate fail-closed
-        session_csrf = session.get("csrf_token")
-        if csrf_token is not None or session_csrf is not None:
-            if not session_csrf or not csrf_token or not validate_csrf_token(csrf_token):
-                return jsonify({"status": "error", "message": "CSRF token missing or invalid"}), 403
+    csrf_err = _validate_csrf(data)
+    if csrf_err:
+        return csrf_err
 
     analysis, err = _resolve_authorized_analysis(aid)
     if err:
@@ -1435,26 +1477,8 @@ def _resolve_authorized_interview_analysis(aid: Optional[str]):
     return _resolve_authorized_analysis(aid)
 
 
-def _validate_interview_csrf(data: Optional[Dict] = None):
-    """Fail-closed CSRF validation for Interview Studio state-changing endpoints."""
-    is_testing = bool(app.config.get("TESTING"))
-    csrf_token = (
-        request.headers.get("X-CSRF-Token") or
-        (data.get("csrf_token") if isinstance(data, dict) else None) or
-        request.form.get("csrf_token")
-    )
-    if not is_testing:
-        # In production mode: enforce fail-closed CSRF requiring both session and request tokens
-        session_csrf = session.get("csrf_token")
-        if not session_csrf or not csrf_token or not validate_csrf_token(csrf_token):
-            return jsonify({"status": "error", "message": "CSRF token missing or invalid"}), 403
-    else:
-        # In testing mode: if request csrf_token is supplied, strictly validate fail-closed
-        session_csrf = session.get("csrf_token")
-        if csrf_token is not None:
-            if not session_csrf or not validate_csrf_token(csrf_token):
-                return jsonify({"status": "error", "message": "CSRF token missing or invalid"}), 403
-    return None
+# Backward compatibility alias
+_validate_interview_csrf = _validate_csrf
 
 
 @app.route("/api/interview-studio", methods=["GET"])
