@@ -46,7 +46,7 @@ Phase 6 constitutes the comprehensive final integration, end-to-end regression a
   - Verified `Access-Control-Request-Method: POST` and `Access-Control-Request-Headers` includes `content-type` and `x-csrf-token`.
   - Verified correlated preflight response status 200, `Access-Control-Allow-Origin: https://localhost:3443`, `Access-Control-Allow-Credentials: true`, and `Access-Control-Allow-Headers` permits `X-CSRF-Token`.
   - In Firefox where Marionette does not surface preflight events, server-header evidence (`APIRequestContext` probe) is strictly separated from browser-enforced successful mutation evidence (200 OK).
-  - WebKit Default Behavior Reconciled: Under native WebKit default privacy settings (ITP active), cross-origin third-party cookies are blocked (`sessionCookie === undefined`) and cross-origin mutations fail closed with HTTP 403 Forbidden. No privacy settings were relaxed to force a 200 OK result. In contrast, same-origin WebKit retains the session cookie and succeeds with HTTP 200 OK.
+  - WebKit Local Test Behavior vs. Production Compatibility (Phase 6.8): In the local Playwright cross-origin test context (`localhost` → `127.0.0.1`), native WebKit default privacy settings (ITP active) did not retain the cross-origin session cookie (`sessionCookie === undefined`) and the protected mutation returned HTTP 403 Forbidden. No privacy settings were relaxed to force a synthetic pass. In contrast, local same-origin WebKit testing retained the session cookie and succeeded with HTTP 200 OK. This empirical test finding indicates a likely compatibility risk under the decoupled Vercel → Render architecture, but does not conclusively prove production Safari behavior on live public domains, which remains unverified until deployed and tested on live cloud infrastructure.
   - Missing-token rejection tested separately, confirming 403 Forbidden.
   - Real browser versions tested and dynamically verified via `browser.version()`: Chromium v159.0.8154.6, Firefox v159.0, WebKit v27.2 (Playwright package v1.65.1).
 - **Robust Configurable Python Process Lifecycle**:
@@ -112,9 +112,9 @@ To ensure complete transparency and eliminate assumptions, production configurat
 - **Status**: This architecture is a recommended future remediation; it is **NOT currently deployed or active** on production domains or DNS.
 
 ### E. Actual Production Compatibility (Remains Unverified)
-- Actual production compatibility across all browsers remains **unverified** until custom domains and cloud deployment settings are configured, deployed, and tested in live environments with real user devices.
-- Under the current decoupled production architecture (`https://resumematch-ai.vercel.app` calling `https://resumematch-ai-api.onrender.com`), the application is **incompatible with Safari/WebKit** due to Apple ITP blocking third-party cross-site cookies, causing session-backed mutations to fail closed with HTTP 403 Forbidden.
-- Production compatibility cannot be claimed or guaranteed based solely on local test runs.
+- Actual production compatibility across all browsers remains **unverified** until custom domains and cloud deployment settings are configured, deployed, and tested in live environments with real user devices across target networks.
+- Under the current decoupled production architecture (`https://resumematch-ai.vercel.app` calling `https://resumematch-ai-api.onrender.com`), there is a **likely compatibility risk** for Safari/WebKit users due to Apple ITP restricting third-party cross-site cookies, which would cause session-backed mutations to fail closed with HTTP 403 Forbidden.
+- Production Safari incompatibility has **not been conclusively proven** by local Playwright tests, because local tests exercise loopback origins (`localhost` → `127.0.0.1`) rather than public suffix cloud domains with live Safari heuristic state. Production compatibility cannot be claimed or guaranteed based solely on local test runs.
 
 ---
 
@@ -190,8 +190,8 @@ To ensure complete transparency and eliminate assumptions, production configurat
 
 1. **Vercel Project Settings Update Required**:
    - The secondary `resumematch_ai` project in Vercel remains failing (`LAMBDA_SIZE_EXCEEDED`) until the project administrator updates its Root Directory to `frontend` or deletes the redundant project in the Vercel dashboard. This is an external deployment configuration step outside repository git control.
-2. **Third-Party Cookie Restrictions in Production Safari**:
-   - Until custom domains (`app.resumematch.ai` + `api.resumematch.ai`) or Vercel proxy rewrites are configured in cloud settings, Safari users will experience blocked session cookies due to Apple ITP.
+2. **Likely Third-Party Cookie Restrictions for Safari**:
+   - Under the decoupled Vercel → Render architecture, there is a likely compatibility risk for Safari users due to Apple ITP restricting third-party cross-site cookies, until custom domains (`app.resumematch.ai` + `api.resumematch.ai`) or Vercel proxy rewrites are configured in cloud settings. This risk was observed empirically in local WebKit loopback tests, though live production behavior remains unverified until deployed on custom domains.
 3. **Pre-existing SVD Warning**:
    - 1 runtime warning in `tests/test_fold_preprocessing_isolation.py` (`RuntimeWarning: invalid value encountered in divide` in scikit-learn's truncated SVD explained variance calculation on zero-variance synthetic fold test). Does not affect production matching or scoring.
 
