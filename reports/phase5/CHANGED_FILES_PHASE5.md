@@ -1,8 +1,8 @@
-# ResumeMatch AI — Phase 5 Changed Files Inventory
+# ResumeMatch AI — Phase 5 & 5.1 Changed Files Inventory
 
 **Branch**: `fix/resumematch-final-repair`  
-**Starting Commit**: `8b3972fce48c42a5b2519fad9af477621dc55a3a`  
-**Phase**: Phase 5 — Interview Studio Implementation  
+**Starting Commit Phase 5.1**: `4b5e0ef60ec49c9a81a7f4f1eb0bc4afa23e1056`  
+**Phase**: Phase 5 & 5.1 — Interview Studio Reliability, Evidence Persistence & Hardening  
 **Date**: November 17, 2026  
 
 ---
@@ -11,23 +11,24 @@
 
 | File | Status | Description |
 | :--- | :--- | :--- |
-| [`src/interview/session_store.py`](file:///d:/skillsync1/src/interview/session_store.py) | **Created** | Persistent SQLite-backed storage for interview sessions, questions, answers, evaluations, and progress metrics with WAL mode and owner-based isolation. |
-| [`src/interview/interview_session.py`](file:///d:/skillsync1/src/interview/interview_session.py) | **Modified** | Added `owner_id`, `interview_mode`, `difficulty`, `target_role`, persistent session storage hooks, safe deletion with ownership validation, and summary metrics. |
-| [`src/interview/answer_evaluator.py`](file:///d:/skillsync1/src/interview/answer_evaluator.py) | **Modified** | Implemented deterministic 6-criterion evaluation (relevance, technical accuracy, concept coverage, clarity/structure, specificity/examples, evidence consistency), overall composite score, anti-keyword-stuffing safeguards, evidence grounding warnings, and suggested answer structure. |
-| [`src/interview/question_generator.py`](file:///d:/skillsync1/src/interview/question_generator.py) | **Modified** | Added support for `mode` (`technical`, `behavioral`, `hr`, `mixed`), normalized difficulties (`beginner`, `intermediate`, `advanced`, `all`), target role adaptation, and guaranteed required fields (`question_text`, `category`, `difficulty`, `related_skill`, `reason_for_asking`, `expected_answer_evaluation_criteria`). |
-| [`app.py`](file:///d:/skillsync1/app.py) | **Modified** | Implemented ownership check helpers `_get_or_create_interview_owner_id()` and `_resolve_authorized_interview_analysis()`, CSRF validation helper `_validate_interview_csrf()`, and REST endpoints: `GET/POST /api/interview-studio`, `POST /api/interview-studio/generate`, `POST /api/interview/sessions`, `GET /api/interview/sessions`, `GET /api/interview/sessions/<id>`, `DELETE /api/interview/sessions/<id>`, `GET /api/interview/progress`, `GET /api/interview-practice`, `POST /api/interview-practice/submit`, `GET /api/interview-results`, `POST /api/interview/evaluate`. |
+| [`src/interview/session_store.py`](file:///d:/skillsync1/src/interview/session_store.py) | **Modified** | Persistent SQLite store with WAL mode; added `candidate_evidence_json` column and backward-compatible migration; added structured logging and re-raising of database errors so persistence failures are observable. |
+| [`src/interview/interview_session.py`](file:///d:/skillsync1/src/interview/interview_session.py) | **Modified** | Persisted `candidate_evidence` in `to_dict()` and restored in `from_dict()`; removed swallowed exceptions in `_save_to_store()`, re-raising persistence errors with structured logging. |
+| [`src/interview/answer_evaluator.py`](file:///d:/skillsync1/src/interview/answer_evaluator.py) | **Modified** | Added `_TECH_VALIDATION_RULES` to distinguish `verified` contextual usage from `recognized` name-dropping; added metric and achievement grounding distinguishing `resume_supported_claims`, `candidate_self_reported_claims`, `unsupported_claims`, `general_technical_explanations`, and `truthful_disclosures`; added decimal-safe sentence segmentation and `claims_analysis` output. |
+| [`src/interview/question_generator.py`](file:///d:/skillsync1/src/interview/question_generator.py) | **Modified** | Guaranteed string type on `related_skill` across all question categories; adapted questions by mode and difficulty. |
+| [`src/interview/evidence_mapper.py`](file:///d:/skillsync1/src/interview/evidence_mapper.py) | **Modified** | Extracted projects and internships from both top-level and `candidate_profile` dictionaries for complete evidence synthesis. |
+| [`app.py`](file:///d:/skillsync1/app.py) | **Modified** | Hardened input validation across all routes returning controlled `400` responses; enforced fail-closed CSRF across `/api/interview/evaluate`, `/api/interview/confirm-activity`, `/api/interview/reset`, `/api/interview-studio/generate`, `/api/interview/sessions`, `DELETE /api/interview/sessions/<id>`, and `/api/interview-practice/submit`; added observable 500 error responses on SQLite persistence failures. |
 
 ---
 
-## 2. Frontend Components & Types Modified
+## 2. Frontend Components & Services Modified
 
 | File | Status | Description |
 | :--- | :--- | :--- |
-| [`frontend/src/types/index.ts`](file:///d:/skillsync1/frontend/src/types/index.ts) | **Modified** | Updated `InterviewQuestion`, `HeuristicEvaluation`, `CriterionScore`, added `InterviewSessionItem`, `InterviewProgressSummary`. |
-| [`frontend/src/services/api.ts`](file:///d:/skillsync1/frontend/src/services/api.ts) | **Modified** | Added methods `createInterviewSession`, `getInterviewSessions`, `getInterviewSessionDetail`, `deleteInterviewSession`, `getInterviewProgress`, and updated `getInterviewStudio` and `generateInterviewQuestions` with mode and difficulty parameters. |
-| [`frontend/src/pages/InterviewStudioPage.tsx`](file:///d:/skillsync1/frontend/src/pages/InterviewStudioPage.tsx) | **Modified** | Added mode selection (technical, behavioral, hr, mixed), difficulty selection, candidate context bar, practice history tab with resume and safe delete actions, and question preview showing related skill, reason for asking, and expected evaluation criteria. |
-| [`frontend/src/pages/InterviewPracticePage.tsx`](file:///d:/skillsync1/frontend/src/pages/InterviewPracticePage.tsx) | **Modified** | Added role & mode header, question progress bar, related skill badge, reason for asking callout, expected criteria list, framework hint toggle, live word/timer counts, instant evaluation with 6-criterion score bars, evidence-grounding alerts, and suggested improved answer structure guide. |
-| [`frontend/src/pages/InterviewResultsPage.tsx`](file:///d:/skillsync1/frontend/src/pages/InterviewResultsPage.tsx) | **Modified** | Added overall heuristic score KPI card, category and framework distributions, evidence grounding audit alerts, and per-question expandable review cards with question metadata, candidate answer, 6-criterion score breakdown, strengths, and improvement suggestions. |
+| [`frontend/src/services/api.ts`](file:///d:/skillsync1/frontend/src/services/api.ts) | **Modified** | Added `getCsrfToken()` helper automatically attaching `X-CSRF-Token` headers from cookie/meta to outgoing mutation requests; added optional `csrf_token` parameters. |
+| [`frontend/src/pages/InterviewPracticePage.tsx`](file:///d:/skillsync1/frontend/src/pages/InterviewPracticePage.tsx) | **Modified** | Rendered honest status badges for criterion scores (`verified`, `recognized`, `unverifiable`, `warning`); updated live evaluation displays. |
+| [`frontend/src/pages/InterviewResultsPage.tsx`](file:///d:/skillsync1/frontend/src/pages/InterviewResultsPage.tsx) | **Modified** | Added criterion status badges (`verified`, `recognized`, `warning`) to per-question review cards. |
+| [`frontend/src/pages/InterviewStudioPage.tsx`](file:///d:/skillsync1/frontend/src/pages/InterviewStudioPage.tsx) | **Modified** | Added mode selection, difficulty controls, practice history tab with resume/delete, and question metadata preview. |
+| [`frontend/src/types/index.ts`](file:///d:/skillsync1/frontend/src/types/index.ts) | **Modified** | Updated type definitions for `CriterionScore`, `HeuristicEvaluation`, `InterviewSessionItem`, and `InterviewProgressSummary`. |
 
 ---
 
@@ -35,4 +36,4 @@
 
 | File | Status | Description |
 | :--- | :--- | :--- |
-| [`tests/test_phase5_interview_studio.py`](file:///d:/skillsync1/tests/test_phase5_interview_studio.py) | **Created** | Dedicated 19-test suite verifying session creation, modes, difficulties, question metadata, zero fabrication, 6-criterion answer evaluation, anti-keyword stuffing, unevidenced skill warnings, SQLite persistence, safe deletion, cross-user isolation with independent clients, CSRF protection, and error handling. |
+| [`tests/test_phase5_interview_studio.py`](file:///d:/skillsync1/tests/test_phase5_interview_studio.py) | **Modified** | Expanded from 19 to 28 comprehensive tests covering candidate evidence restoration across restarts, cross-user isolation after restart, duplicate answer submissions, completed session behavior, technical accuracy distinction (`recognized` vs `verified`), unsupported achievement/metric grounding, CSRF enforcement across all state-changing endpoints in production mode, malformed JSON field types rejection, and observable SQLite write failure handling. |

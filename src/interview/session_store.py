@@ -63,7 +63,8 @@ class InterviewSessionStore:
                     questions_json TEXT NOT NULL,
                     answers_json TEXT NOT NULL,
                     evaluations_json TEXT NOT NULL,
-                    results_summary_json TEXT
+                    results_summary_json TEXT,
+                    candidate_evidence_json TEXT
                 )
             """)
             conn.execute("CREATE INDEX IF NOT EXISTS idx_interview_owner ON interview_sessions(owner_id)")
@@ -71,9 +72,21 @@ class InterviewSessionStore:
             conn.execute("CREATE INDEX IF NOT EXISTS idx_interview_created ON interview_sessions(created_at)")
             conn.commit()
 
+            # Backward compatibility: ensure candidate_evidence_json column exists in pre-existing DBs
+            try:
+                cursor = conn.cursor()
+                cursor.execute("PRAGMA table_info(interview_sessions)")
+                columns = [col[1] for col in cursor.fetchall()]
+                if "candidate_evidence_json" not in columns:
+                    conn.execute("ALTER TABLE interview_sessions ADD COLUMN candidate_evidence_json TEXT")
+                    conn.commit()
+            except Exception as e:
+                logger.warning("Could not check/add candidate_evidence_json column: %s", e)
+
     def save_session(self, session_data: Dict[str, Any]) -> bool:
         """
         Inserts or updates an interview session.
+        Raises sqlite3.Error or Exception on failure so persistence errors are observable.
         """
         session_id = session_data["session_id"]
         owner_id = session_data.get("owner_id") or "anonymous"
@@ -94,40 +107,46 @@ class InterviewSessionStore:
         answers_json = json.dumps(session_data.get("answers", {}))
         evaluations_json = json.dumps(session_data.get("evaluations", {}))
         results_summary_json = json.dumps(session_data.get("results_summary")) if session_data.get("results_summary") else None
+        candidate_evidence_json = json.dumps(session_data.get("candidate_evidence") or {})
 
-        with self._get_connection() as conn:
-            conn.execute("""
-                INSERT INTO interview_sessions (
+        try:
+            with self._get_connection() as conn:
+                conn.execute("""
+                    INSERT INTO interview_sessions (
+                        session_id, owner_id, analysis_id, candidate_filename, job_title, target_role,
+                        interview_mode, difficulty, created_at, updated_at, completed_at, is_completed,
+                        elapsed_seconds, current_index, questions_json, answers_json, evaluations_json,
+                        results_summary_json, candidate_evidence_json
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ON CONFLICT(session_id) DO UPDATE SET
+                        owner_id = excluded.owner_id,
+                        analysis_id = excluded.analysis_id,
+                        candidate_filename = excluded.candidate_filename,
+                        job_title = excluded.job_title,
+                        target_role = excluded.target_role,
+                        interview_mode = excluded.interview_mode,
+                        difficulty = excluded.difficulty,
+                        updated_at = excluded.updated_at,
+                        completed_at = excluded.completed_at,
+                        is_completed = excluded.is_completed,
+                        elapsed_seconds = excluded.elapsed_seconds,
+                        current_index = excluded.current_index,
+                        questions_json = excluded.questions_json,
+                        answers_json = excluded.answers_json,
+                        evaluations_json = excluded.evaluations_json,
+                        results_summary_json = excluded.results_summary_json,
+                        candidate_evidence_json = excluded.candidate_evidence_json
+                """, (
                     session_id, owner_id, analysis_id, candidate_filename, job_title, target_role,
                     interview_mode, difficulty, created_at, updated_at, completed_at, is_completed,
                     elapsed_seconds, current_index, questions_json, answers_json, evaluations_json,
-                    results_summary_json
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ON CONFLICT(session_id) DO UPDATE SET
-                    owner_id = excluded.owner_id,
-                    analysis_id = excluded.analysis_id,
-                    candidate_filename = excluded.candidate_filename,
-                    job_title = excluded.job_title,
-                    target_role = excluded.target_role,
-                    interview_mode = excluded.interview_mode,
-                    difficulty = excluded.difficulty,
-                    updated_at = excluded.updated_at,
-                    completed_at = excluded.completed_at,
-                    is_completed = excluded.is_completed,
-                    elapsed_seconds = excluded.elapsed_seconds,
-                    current_index = excluded.current_index,
-                    questions_json = excluded.questions_json,
-                    answers_json = excluded.answers_json,
-                    evaluations_json = excluded.evaluations_json,
-                    results_summary_json = excluded.results_summary_json
-            """, (
-                session_id, owner_id, analysis_id, candidate_filename, job_title, target_role,
-                interview_mode, difficulty, created_at, updated_at, completed_at, is_completed,
-                elapsed_seconds, current_index, questions_json, answers_json, evaluations_json,
-                results_summary_json
-            ))
-            conn.commit()
-        return True
+                    results_summary_json, candidate_evidence_json
+                ))
+                conn.commit()
+            return True
+        except Exception as e:
+            logger.error("Failed to save interview session %s: %s", session_id, e, exc_info=True)
+            raise
 
     def get_session(self, session_id: str, owner_id: Optional[str] = None) -> Optional[Dict[str, Any]]:
         """
@@ -195,16 +214,21 @@ class InterviewSessionStore:
     def delete_session(self, session_id: str, owner_id: str) -> bool:
         """
         Safely deletes a session only if it belongs to the requesting owner.
+        Raises sqlite3.Error or Exception on database failure.
         """
-        with self._get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute(
-                "DELETE FROM interview_sessions WHERE session_id = ? AND owner_id = ?",
-                (session_id, owner_id)
-            )
-            deleted = cursor.rowcount > 0
-            conn.commit()
-            return deleted
+        try:
+            with self._get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    "DELETE FROM interview_sessions WHERE session_id = ? AND owner_id = ?",
+                    (session_id, owner_id)
+                )
+                deleted = cursor.rowcount > 0
+                conn.commit()
+                return deleted
+        except Exception as e:
+            logger.error("Failed to delete interview session %s: %s", session_id, e, exc_info=True)
+            raise
 
     def get_progress(self, owner_id: str, analysis_id: Optional[str] = None) -> Dict[str, Any]:
         """
@@ -273,6 +297,10 @@ class InterviewSessionStore:
         }
 
     def _row_to_dict(self, row: sqlite3.Row) -> Dict[str, Any]:
+        row_keys = row.keys() if hasattr(row, "keys") else []
+        ev_json = row["candidate_evidence_json"] if "candidate_evidence_json" in row_keys else None
+        candidate_evidence = json.loads(ev_json) if ev_json else {}
+
         return {
             "session_id": row["session_id"],
             "owner_id": row["owner_id"],
@@ -291,7 +319,8 @@ class InterviewSessionStore:
             "questions": json.loads(row["questions_json"]),
             "answers": json.loads(row["answers_json"]),
             "evaluations": json.loads(row["evaluations_json"]),
-            "results_summary": json.loads(row["results_summary_json"]) if row["results_summary_json"] else None
+            "results_summary": json.loads(row["results_summary_json"]) if row["results_summary_json"] else None,
+            "candidate_evidence": candidate_evidence
         }
 
 

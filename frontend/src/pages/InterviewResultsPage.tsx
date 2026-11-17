@@ -281,9 +281,21 @@ export const InterviewResultsPage: React.FC = () => {
                               <span className="font-semibold text-slate-300 capitalize">
                                 {k.replace('_', ' ')}
                               </span>
-                              <span className={`font-bold ${crit.score >= 70 ? 'text-emerald-400' : 'text-amber-400'}`}>
-                                {crit.score}%
-                              </span>
+                              <div className="flex items-center gap-1.5">
+                                {crit.status && (
+                                  <span className={`text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded border ${
+                                    crit.status === 'verified' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                                    crit.status === 'recognized' ? 'bg-sky-500/10 text-sky-400 border-sky-500/20' :
+                                    crit.status === 'warning' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                                    'bg-slate-800 text-slate-400 border-slate-700'
+                                  }`}>
+                                    {crit.status}
+                                  </span>
+                                )}
+                                <span className={`font-bold ${crit.score >= 70 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                                  {crit.score}%
+                                </span>
+                              </div>
                             </div>
                             <ProgressBar percentage={crit.score} color={crit.score >= 70 ? 'emerald' : 'amber'} />
                             <p className="text-[10px] text-slate-400 line-clamp-2 mt-1">

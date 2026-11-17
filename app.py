@@ -855,26 +855,54 @@ def interview_results():
 def api_interview_evaluate():
     """AJAX endpoint for instant heuristic answer evaluation."""
     data = request.get_json(silent=True) or request.form.to_dict()
+    if not isinstance(data, dict):
+        return jsonify({"status": "error", "message": "Malformed request: expected JSON object"}), 400
 
-    # Optional CSRF validation: validate if client provides a CSRF token
-    csrf_token = (
-        request.headers.get("X-CSRF-Token") or
-        (data.get("csrf_token") if isinstance(data, dict) else None)
-    )
-    if csrf_token and not validate_csrf_token(csrf_token):
-        return jsonify({"status": "error", "message": "CSRF token invalid"}), 403
+    # Fail-closed CSRF validation
+    csrf_err = _validate_interview_csrf(data)
+    if csrf_err:
+        return csrf_err
 
-    user_answer = data.get("user_answer", "")
-    question_text = data.get("question_text", "")
-    expected_points = data.get("expected_key_points") or data.get("expected_answer_evaluation_criteria") or []
-    important_concepts = data.get("important_concepts") or []
-    framework_id = data.get("framework_id") or "STAR"
-    related_skill = data.get("related_skill") or data.get("topic") or ""
+    # Strict type validation on all incoming payload attributes
+    raw_user_answer = data.get("user_answer")
+    if raw_user_answer is not None and not isinstance(raw_user_answer, str):
+        return jsonify({"status": "error", "message": "user_answer must be a string"}), 400
+    user_answer = raw_user_answer or ""
 
-    aid = data.get("id") or data.get("analysis_id")
+    raw_question_text = data.get("question_text")
+    if raw_question_text is not None and not isinstance(raw_question_text, str):
+        return jsonify({"status": "error", "message": "question_text must be a string"}), 400
+    question_text = raw_question_text or ""
+
+    raw_points = data.get("expected_key_points") if "expected_key_points" in data else data.get("expected_answer_evaluation_criteria")
+    if raw_points is not None and not isinstance(raw_points, list):
+        return jsonify({"status": "error", "message": "expected_key_points must be a list"}), 400
+    expected_points = raw_points or []
+
+    raw_concepts = data.get("important_concepts")
+    if raw_concepts is not None and not isinstance(raw_concepts, list):
+        return jsonify({"status": "error", "message": "important_concepts must be a list"}), 400
+    important_concepts = raw_concepts or []
+
+    raw_framework = data.get("framework_id")
+    if raw_framework is not None and not isinstance(raw_framework, str):
+        return jsonify({"status": "error", "message": "framework_id must be a string"}), 400
+    framework_id = raw_framework or "STAR"
+
+    raw_skill = data.get("related_skill") if "related_skill" in data else data.get("topic")
+    if raw_skill is not None and not isinstance(raw_skill, str):
+        return jsonify({"status": "error", "message": "related_skill must be a string"}), 400
+    related_skill = raw_skill or ""
+
+    raw_aid = data.get("id") if "id" in data else data.get("analysis_id")
+    if raw_aid is not None and not isinstance(raw_aid, str):
+        return jsonify({"status": "error", "message": "analysis_id must be a string"}), 400
+
     candidate_evidence = None
-    if aid:
-        analysis, _ = _resolve_authorized_interview_analysis(aid)
+    if raw_aid:
+        analysis, err = _resolve_authorized_interview_analysis(raw_aid)
+        if err:
+            return err
         if analysis:
             generator = InterviewQuestionGenerator(analysis)
             candidate_evidence = generator.evidence
@@ -899,7 +927,7 @@ def api_interview_evaluate():
     # Track struggled topics if score is low (< 60) for Career Mentor reinforcement
     score_val = evaluation.get("overall_score") or evaluation.get("score") or 100
     if score_val < 60:
-        topic_name = data.get("topic") or related_skill or (important_concepts[0] if important_concepts else "")
+        topic_name = related_skill or (important_concepts[0] if important_concepts else "")
         if topic_name:
             struggled = session.get("struggled_topics", [])
             if topic_name not in struggled:
@@ -912,11 +940,21 @@ def api_interview_evaluate():
 @app.route("/api/interview/confirm-activity", methods=["POST"])
 def api_interview_confirm_activity():
     """Records candidate confirmation or refusal of unevidenced skill activity."""
-    data = request.get_json(silent=True) or {}
-    activity_key = data.get("activity_key", "").strip()
+    data = request.get_json(silent=True) or request.form.to_dict()
+    if not isinstance(data, dict):
+        return jsonify({"status": "error", "message": "Malformed request: expected JSON object"}), 400
+
+    csrf_err = _validate_interview_csrf(data)
+    if csrf_err:
+        return csrf_err
+
+    raw_key = data.get("activity_key")
+    if not isinstance(raw_key, str) or not raw_key.strip():
+        return jsonify({"status": "error", "message": "Missing or invalid activity_key: must be a non-empty string"}), 400
+
+    activity_key = raw_key.strip()
     confirmed = bool(data.get("confirmed", True))
-    if not activity_key:
-        return jsonify({"status": "error", "message": "Missing activity_key"}), 400
+
     confirmations = session.get("candidate_confirmations", {})
     confirmations[activity_key] = confirmed
     session["candidate_confirmations"] = confirmations
@@ -925,10 +963,19 @@ def api_interview_confirm_activity():
 
 @app.route("/api/interview/reset", methods=["POST"])
 def api_interview_reset():
-    """Clears the active interview session."""
+    """Clears the active interview session with CSRF protection."""
+    data = request.get_json(silent=True) or request.form.to_dict()
+    csrf_err = _validate_interview_csrf(data if isinstance(data, dict) else None)
+    if csrf_err:
+        return csrf_err
+
     session_id = session.pop("active_interview_session_id", None)
     if session_id:
-        InterviewSessionManager.delete_session(session_id)
+        try:
+            InterviewSessionManager.delete_session(session_id)
+        except Exception as e:
+            logger.error("Failed to delete interview session %s on reset: %s", session_id, e, exc_info=True)
+            return jsonify({"status": "error", "message": f"Database failure resetting session: {str(e)}"}), 500
     return jsonify({"status": "reset"}), 200
 
 
@@ -1389,20 +1436,22 @@ def _resolve_authorized_interview_analysis(aid: Optional[str]):
 
 def _validate_interview_csrf(data: Optional[Dict] = None):
     """Fail-closed CSRF validation for Interview Studio state-changing endpoints."""
-    is_testing = bool(app.config.get("TESTING")) or bool(os.environ.get("PYTEST_CURRENT_TEST"))
+    is_testing = bool(app.config.get("TESTING"))
     csrf_token = (
         request.headers.get("X-CSRF-Token") or
         (data.get("csrf_token") if isinstance(data, dict) else None) or
         request.form.get("csrf_token")
     )
     if not is_testing:
+        # In production mode: enforce fail-closed CSRF requiring both session and request tokens
         session_csrf = session.get("csrf_token")
         if not session_csrf or not csrf_token or not validate_csrf_token(csrf_token):
             return jsonify({"status": "error", "message": "CSRF token missing or invalid"}), 403
     else:
+        # In testing mode: if request csrf_token is supplied, strictly validate fail-closed
         session_csrf = session.get("csrf_token")
-        if csrf_token is not None or session_csrf is not None:
-            if not session_csrf or not csrf_token or not validate_csrf_token(csrf_token):
+        if csrf_token is not None:
+            if not session_csrf or not validate_csrf_token(csrf_token):
                 return jsonify({"status": "error", "message": "CSRF token missing or invalid"}), 403
     return None
 
@@ -1460,11 +1509,18 @@ def api_interview_studio():
 def api_interview_studio_generate():
     """Generates questions dynamically or initiates practice mode."""
     data = request.get_json(silent=True) or request.form.to_dict()
+    if not isinstance(data, dict):
+        return jsonify({"status": "error", "message": "Malformed request: expected JSON object"}), 400
+
     csrf_err = _validate_interview_csrf(data)
     if csrf_err:
         return csrf_err
 
-    aid = data.get("id") or request.args.get("id")
+    raw_aid = data.get("id") if "id" in data else data.get("analysis_id")
+    if raw_aid is not None and not isinstance(raw_aid, str):
+        return jsonify({"status": "error", "message": "analysis_id must be a string"}), 400
+    aid = raw_aid or request.args.get("id")
+
     analysis, err = _resolve_authorized_interview_analysis(aid)
     if err:
         return err
@@ -1474,31 +1530,72 @@ def api_interview_studio_generate():
     evidence = generator.evidence
     technical_topics = get_all_technical_topics()
 
-    category = data.get("category", "ALL")
-    difficulty = data.get("difficulty", "All")
-    mode = data.get("mode") or data.get("interview_mode") or "mixed"
-    target_role = data.get("target_role") or data.get("role") or evidence.get("job_title")
+    raw_cat = data.get("category")
+    if raw_cat is not None and not isinstance(raw_cat, str):
+        return jsonify({"status": "error", "message": "category must be a string"}), 400
+    category = raw_cat or "ALL"
 
     # Validate mode
-    valid_modes = ["technical", "behavioral", "hr", "mixed", "all", ""]
-    if mode and mode.lower().strip() not in valid_modes:
-        return jsonify({"status": "error", "message": "Invalid interview mode. Must be one of: technical, behavioral, hr, mixed."}), 400
+    if "mode" in data or "interview_mode" in data:
+        raw_mode = data.get("mode") if "mode" in data else data.get("interview_mode")
+        if not isinstance(raw_mode, str):
+            return jsonify({"status": "error", "message": "mode must be a string"}), 400
+        mode = raw_mode.lower().strip()
+        valid_modes = ["technical", "behavioral", "hr", "mixed", "all"]
+        if mode not in valid_modes:
+            return jsonify({"status": "error", "message": "Invalid interview mode. Must be one of: technical, behavioral, hr, mixed."}), 400
+    else:
+        mode = "mixed"
 
     # Validate difficulty
-    valid_diffs = ["beginner", "intermediate", "advanced", "easy", "medium", "hard", "all", "All", ""]
-    if difficulty and difficulty.lower().strip() not in [d.lower() for d in valid_diffs]:
-        return jsonify({"status": "error", "message": "Invalid difficulty level. Must be one of: beginner, intermediate, advanced, all."}), 400
+    if "difficulty" in data:
+        raw_diff = data.get("difficulty")
+        if not isinstance(raw_diff, str):
+            return jsonify({"status": "error", "message": "difficulty must be a string"}), 400
+        diff = raw_diff.lower().strip()
+        valid_diffs = ["beginner", "intermediate", "advanced", "easy", "medium", "hard", "all"]
+        if diff not in valid_diffs:
+            return jsonify({"status": "error", "message": "Invalid difficulty level. Must be one of: beginner, intermediate, advanced, all."}), 400
+        difficulty = diff
+    else:
+        difficulty = "all"
 
-    try:
-        max_questions = int(data.get("max_questions", 15))
+    # Validate target_role
+    if "target_role" in data or "role" in data:
+        raw_role = data.get("target_role") if "target_role" in data else data.get("role")
+        if raw_role is not None and not isinstance(raw_role, str):
+            return jsonify({"status": "error", "message": "target_role must be a string"}), 400
+        if raw_role and len(raw_role) > 120:
+            return jsonify({"status": "error", "message": "target_role must be 120 characters or fewer"}), 400
+        target_role = raw_role
+    else:
+        target_role = evidence.get("job_title")
+
+    # Validate max_questions
+    if "max_questions" in data:
+        raw_mq = data.get("max_questions")
+        if isinstance(raw_mq, bool) or not (isinstance(raw_mq, int) or (isinstance(raw_mq, str) and raw_mq.isdigit())):
+            return jsonify({"status": "error", "message": "max_questions must be an integer between 1 and 50"}), 400
+        max_questions = int(raw_mq)
         if max_questions < 1 or max_questions > 50:
             return jsonify({"status": "error", "message": "max_questions must be between 1 and 50"}), 400
-    except (ValueError, TypeError):
+    else:
         max_questions = 15
 
-    technical_topic = data.get("technical_topic", "All")
-    framework = (data.get("framework") or "").strip() or None
-    action = data.get("action", "generate")
+    raw_topic = data.get("technical_topic")
+    if raw_topic is not None and not isinstance(raw_topic, str):
+        return jsonify({"status": "error", "message": "technical_topic must be a string"}), 400
+    technical_topic = raw_topic or "All"
+
+    raw_fw = data.get("framework")
+    if raw_fw is not None and not isinstance(raw_fw, str):
+        return jsonify({"status": "error", "message": "framework must be a string"}), 400
+    framework = (raw_fw or "").strip() or None
+
+    raw_action = data.get("action")
+    if raw_action is not None and not isinstance(raw_action, str):
+        return jsonify({"status": "error", "message": "action must be a string"}), 400
+    action = raw_action or "generate"
 
     mentor_skills = session.get("mentor_priority_skills", [])
     questions = generator.generate_questions(
@@ -1515,40 +1612,51 @@ def api_interview_studio_generate():
 
     new_session_id = None
     if action == "practice":
-        new_session = InterviewSessionManager.create_session(
-            questions=questions,
-            analysis_id=analysis.get("analysis_id"),
-            candidate_filename=evidence.get("filename"),
-            job_title=evidence.get("job_title"),
-            target_role=target_role,
-            interview_mode=mode,
-            difficulty=difficulty,
-            owner_id=owner_id,
-            candidate_evidence=evidence
-        )
-        session["active_interview_session_id"] = new_session.session_id
-        new_session_id = new_session.session_id
+        try:
+            new_session = InterviewSessionManager.create_session(
+                questions=questions,
+                analysis_id=analysis.get("analysis_id"),
+                candidate_filename=evidence.get("filename"),
+                job_title=evidence.get("job_title"),
+                target_role=target_role,
+                interview_mode=mode,
+                difficulty=difficulty,
+                owner_id=owner_id,
+                candidate_evidence=evidence
+            )
+            session["active_interview_session_id"] = new_session.session_id
+            new_session_id = new_session.session_id
+        except Exception as e:
+            logger.error("Failed to create practice session: %s", e, exc_info=True)
+            return jsonify({"status": "error", "message": f"Failed to persist practice session: {str(e)}"}), 500
 
     elif action == "practice_single":
-        target_qid = data.get("question_id")
+        raw_qid = data.get("question_id")
+        if raw_qid is not None and not isinstance(raw_qid, str):
+            return jsonify({"status": "error", "message": "question_id must be a string"}), 400
+        target_qid = raw_qid
         single_q = [q for q in questions if q["question_id"] == target_qid]
         if not single_q:
             all_qs = generator.generate_questions(category="ALL", difficulty="All", max_questions=50)
             single_q = [q for q in all_qs if q["question_id"] == target_qid]
         practice_qs = single_q if single_q else questions[:1]
-        new_session = InterviewSessionManager.create_session(
-            questions=practice_qs,
-            analysis_id=analysis.get("analysis_id"),
-            candidate_filename=evidence.get("filename"),
-            job_title=evidence.get("job_title"),
-            target_role=target_role,
-            interview_mode=mode,
-            difficulty=difficulty,
-            owner_id=owner_id,
-            candidate_evidence=evidence
-        )
-        session["active_interview_session_id"] = new_session.session_id
-        new_session_id = new_session.session_id
+        try:
+            new_session = InterviewSessionManager.create_session(
+                questions=practice_qs,
+                analysis_id=analysis.get("analysis_id"),
+                candidate_filename=evidence.get("filename"),
+                job_title=evidence.get("job_title"),
+                target_role=target_role,
+                interview_mode=mode,
+                difficulty=difficulty,
+                owner_id=owner_id,
+                candidate_evidence=evidence
+            )
+            session["active_interview_session_id"] = new_session.session_id
+            new_session_id = new_session.session_id
+        except Exception as e:
+            logger.error("Failed to create single question practice session: %s", e, exc_info=True)
+            return jsonify({"status": "error", "message": f"Failed to persist practice session: {str(e)}"}), 500
 
     return jsonify({
         "status": "success",
@@ -1563,11 +1671,18 @@ def api_interview_studio_generate():
 def api_interview_create_session():
     """Explicit REST endpoint to create a role- and mode-specific practice session."""
     data = request.get_json(silent=True) or request.form.to_dict()
+    if not isinstance(data, dict):
+        return jsonify({"status": "error", "message": "Malformed request: expected JSON object"}), 400
+
     csrf_err = _validate_interview_csrf(data)
     if csrf_err:
         return csrf_err
 
-    aid = data.get("analysis_id") or data.get("id")
+    raw_aid = data.get("analysis_id") if "analysis_id" in data else data.get("id")
+    if raw_aid is not None and not isinstance(raw_aid, str):
+        return jsonify({"status": "error", "message": "analysis_id must be a string"}), 400
+    aid = raw_aid
+
     analysis, err = _resolve_authorized_interview_analysis(aid)
     if err:
         return err
@@ -1576,28 +1691,62 @@ def api_interview_create_session():
     generator = InterviewQuestionGenerator(analysis)
     evidence = generator.evidence
 
-    mode = data.get("mode") or data.get("interview_mode") or "mixed"
-    difficulty = data.get("difficulty") or "all"
-    target_role = data.get("target_role") or data.get("role") or evidence.get("job_title")
-
     # Validate mode
-    valid_modes = ["technical", "behavioral", "hr", "mixed", "all", ""]
-    if mode and mode.lower().strip() not in valid_modes:
-        return jsonify({"status": "error", "message": "Invalid interview mode. Must be one of: technical, behavioral, hr, mixed."}), 400
+    if "mode" in data or "interview_mode" in data:
+        raw_mode = data.get("mode") if "mode" in data else data.get("interview_mode")
+        if not isinstance(raw_mode, str):
+            return jsonify({"status": "error", "message": "mode must be a string"}), 400
+        mode = raw_mode.lower().strip()
+        valid_modes = ["technical", "behavioral", "hr", "mixed", "all"]
+        if mode not in valid_modes:
+            return jsonify({"status": "error", "message": "Invalid interview mode. Must be one of: technical, behavioral, hr, mixed."}), 400
+    else:
+        mode = "mixed"
 
     # Validate difficulty
-    valid_diffs = ["beginner", "intermediate", "advanced", "easy", "medium", "hard", "all", "All", ""]
-    if difficulty and difficulty.lower().strip() not in [d.lower() for d in valid_diffs]:
-        return jsonify({"status": "error", "message": "Invalid difficulty level. Must be one of: beginner, intermediate, advanced, all."}), 400
+    if "difficulty" in data:
+        raw_diff = data.get("difficulty")
+        if not isinstance(raw_diff, str):
+            return jsonify({"status": "error", "message": "difficulty must be a string"}), 400
+        diff = raw_diff.lower().strip()
+        valid_diffs = ["beginner", "intermediate", "advanced", "easy", "medium", "hard", "all"]
+        if diff not in valid_diffs:
+            return jsonify({"status": "error", "message": "Invalid difficulty level. Must be one of: beginner, intermediate, advanced, all."}), 400
+        difficulty = diff
+    else:
+        difficulty = "all"
 
-    try:
-        max_questions = int(data.get("max_questions", 10))
+    # Validate target_role
+    if "target_role" in data or "role" in data:
+        raw_role = data.get("target_role") if "target_role" in data else data.get("role")
+        if raw_role is not None and not isinstance(raw_role, str):
+            return jsonify({"status": "error", "message": "target_role must be a string"}), 400
+        if raw_role and len(raw_role) > 120:
+            return jsonify({"status": "error", "message": "target_role must be 120 characters or fewer"}), 400
+        target_role = raw_role
+    else:
+        target_role = evidence.get("job_title")
+
+    # Validate max_questions
+    if "max_questions" in data:
+        raw_mq = data.get("max_questions")
+        if isinstance(raw_mq, bool) or not (isinstance(raw_mq, int) or (isinstance(raw_mq, str) and raw_mq.isdigit())):
+            return jsonify({"status": "error", "message": "max_questions must be an integer between 1 and 50"}), 400
+        max_questions = int(raw_mq)
         if max_questions < 1 or max_questions > 50:
             return jsonify({"status": "error", "message": "max_questions must be between 1 and 50"}), 400
-    except (ValueError, TypeError):
+    else:
         max_questions = 10
 
-    questions = generator.generate_questions(
+    # Validate questions if explicitly provided
+    custom_questions = None
+    if "questions" in data:
+        raw_qs = data.get("questions")
+        if not isinstance(raw_qs, list):
+            return jsonify({"status": "error", "message": "questions must be a list"}), 400
+        custom_questions = raw_qs
+
+    questions = custom_questions if custom_questions is not None else generator.generate_questions(
         category=data.get("category", "ALL"),
         difficulty=difficulty,
         max_questions=max_questions,
@@ -1607,18 +1756,22 @@ def api_interview_create_session():
         candidate_confirmations=session.get("candidate_confirmations", {})
     )
 
-    new_session = InterviewSessionManager.create_session(
-        questions=questions,
-        analysis_id=analysis.get("analysis_id"),
-        candidate_filename=evidence.get("filename"),
-        job_title=evidence.get("job_title"),
-        target_role=target_role,
-        interview_mode=mode,
-        difficulty=difficulty,
-        owner_id=owner_id,
-        candidate_evidence=evidence
-    )
-    session["active_interview_session_id"] = new_session.session_id
+    try:
+        new_session = InterviewSessionManager.create_session(
+            questions=questions,
+            analysis_id=analysis.get("analysis_id"),
+            candidate_filename=evidence.get("filename"),
+            job_title=evidence.get("job_title"),
+            target_role=target_role,
+            interview_mode=mode,
+            difficulty=difficulty,
+            owner_id=owner_id,
+            candidate_evidence=evidence
+        )
+        session["active_interview_session_id"] = new_session.session_id
+    except Exception as e:
+        logger.error("Failed to create and persist practice session: %s", e, exc_info=True)
+        return jsonify({"status": "error", "message": f"Failed to persist practice session: {str(e)}"}), 500
 
     return jsonify({
         "status": "success",
@@ -1642,6 +1795,9 @@ def api_interview_list_sessions():
 @app.route("/api/interview/sessions/<session_id>", methods=["GET"])
 def api_interview_get_session(session_id: str):
     """Retrieves detail of a specific practice session with ownership enforcement."""
+    if not isinstance(session_id, str) or not session_id.strip():
+        return jsonify({"status": "error", "message": "Invalid session_id"}), 400
+
     owner_id = _get_or_create_interview_owner_id()
     session_obj = InterviewSessionManager.get_session(session_id)
     if not session_obj:
@@ -1659,6 +1815,9 @@ def api_interview_get_session(session_id: str):
 @app.route("/api/interview/sessions/<session_id>", methods=["DELETE"])
 def api_interview_delete_session(session_id: str):
     """Safely deletes an interview session with ownership verification and CSRF protection."""
+    if not isinstance(session_id, str) or not session_id.strip():
+        return jsonify({"status": "error", "message": "Invalid session_id"}), 400
+
     csrf_err = _validate_interview_csrf()
     if csrf_err:
         return csrf_err
@@ -1670,7 +1829,12 @@ def api_interview_delete_session(session_id: str):
     if session_obj.owner_id != owner_id:
         return jsonify({"status": "error", "message": "Unauthorized access to requested session."}), 403
 
-    deleted = InterviewSessionManager.delete_session(session_id, owner_id=owner_id)
+    try:
+        deleted = InterviewSessionManager.delete_session(session_id, owner_id=owner_id)
+    except Exception as e:
+        logger.error("Failed to delete practice session %s: %s", session_id, e, exc_info=True)
+        return jsonify({"status": "error", "message": f"Database failure during session deletion: {str(e)}"}), 500
+
     if session.get("active_interview_session_id") == session_id:
         session.pop("active_interview_session_id", None)
 
@@ -1698,7 +1862,8 @@ def api_interview_progress():
 def api_interview_practice():
     """Retrieves current practice question and progress."""
     owner_id = _get_or_create_interview_owner_id()
-    session_id = request.args.get("session_id") or session.get("active_interview_session_id")
+    raw_sid = request.args.get("session_id")
+    session_id = raw_sid or session.get("active_interview_session_id")
 
     if session_id:
         practice_session = InterviewSessionManager.get_session(session_id)
@@ -1710,15 +1875,19 @@ def api_interview_practice():
         analysis = _get_active_analysis()
         generator = InterviewQuestionGenerator(analysis)
         questions = generator.generate_questions(category="ALL", difficulty="All", max_questions=10)
-        practice_session = InterviewSessionManager.create_session(
-            questions=questions,
-            analysis_id=analysis.get("analysis_id"),
-            candidate_filename=generator.evidence.get("filename"),
-            job_title=generator.evidence.get("job_title"),
-            owner_id=owner_id,
-            candidate_evidence=generator.evidence
-        )
-        session["active_interview_session_id"] = practice_session.session_id
+        try:
+            practice_session = InterviewSessionManager.create_session(
+                questions=questions,
+                analysis_id=analysis.get("analysis_id"),
+                candidate_filename=generator.evidence.get("filename"),
+                job_title=generator.evidence.get("job_title"),
+                owner_id=owner_id,
+                candidate_evidence=generator.evidence
+            )
+            session["active_interview_session_id"] = practice_session.session_id
+        except Exception as e:
+            logger.error("Failed to auto-create practice session: %s", e, exc_info=True)
+            return jsonify({"status": "error", "message": f"Failed to persist practice session: {str(e)}"}), 500
 
     question = practice_session.get_current_question()
     return jsonify({
@@ -1735,14 +1904,34 @@ def api_interview_practice():
 def api_interview_practice_submit():
     """Saves practice answer and navigates next, prev, or finish."""
     data = request.get_json(silent=True) or request.form.to_dict()
+    if not isinstance(data, dict):
+        return jsonify({"status": "error", "message": "Malformed request: expected JSON object"}), 400
+
     csrf_err = _validate_interview_csrf(data)
     if csrf_err:
         return csrf_err
 
     owner_id = _get_or_create_interview_owner_id()
-    session_id = data.get("session_id")
-    if not session_id:
-        return jsonify({"status": "error", "message": "Missing session_id"}), 400
+
+    raw_sid = data.get("session_id")
+    if not isinstance(raw_sid, str) or not raw_sid.strip():
+        return jsonify({"status": "error", "message": "Missing or invalid session_id: must be a non-empty string"}), 400
+    session_id = raw_sid.strip()
+
+    raw_idx = data.get("question_index")
+    if raw_idx is None or isinstance(raw_idx, bool) or not (isinstance(raw_idx, int) or (isinstance(raw_idx, str) and raw_idx.isdigit())):
+        return jsonify({"status": "error", "message": "Invalid question_index: must be an integer"}), 400
+    q_idx = int(raw_idx)
+
+    raw_ans = data.get("user_answer")
+    if raw_ans is not None and not isinstance(raw_ans, str):
+        return jsonify({"status": "error", "message": "user_answer must be a string"}), 400
+    user_answer = raw_ans or ""
+
+    raw_dir = data.get("direction", "next")
+    if not isinstance(raw_dir, str) or raw_dir.lower().strip() not in ("next", "prev", "finish", "current"):
+        return jsonify({"status": "error", "message": "direction must be one of: next, prev, finish, current"}), 400
+    direction = raw_dir.lower().strip()
 
     practice_session = InterviewSessionManager.get_session(session_id)
     if not practice_session:
@@ -1750,33 +1939,29 @@ def api_interview_practice_submit():
     if practice_session.owner_id != owner_id:
         return jsonify({"status": "error", "message": "Unauthorized access to requested practice session."}), 403
 
-    try:
-        q_idx = int(data.get("question_index", 0))
-    except (ValueError, TypeError):
-        return jsonify({"status": "error", "message": "Invalid question_index"}), 400
-
     if q_idx < 0 or q_idx >= len(practice_session.questions):
         return jsonify({"status": "error", "message": "Question index out of range"}), 400
 
-    user_answer = data.get("user_answer", "")
-    direction = data.get("direction", "next")
+    try:
+        eval_res = practice_session.submit_answer(
+            q_idx,
+            user_answer,
+            candidate_evidence=practice_session.candidate_evidence
+        )
 
-    eval_res = practice_session.submit_answer(
-        q_idx,
-        user_answer,
-        candidate_evidence=practice_session.candidate_evidence
-    )
+        if direction == "prev":
+            practice_session.prev_question()
+        elif direction == "finish":
+            practice_session.complete_session()
+        else:
+            practice_session.next_question()
 
-    if direction == "prev":
-        practice_session.prev_question()
-    elif direction == "finish":
-        practice_session.complete_session()
-    else:
-        practice_session.next_question()
-
-    is_finished = (direction == "finish") or (practice_session.current_index >= len(practice_session.questions))
-    if is_finished and not practice_session.is_completed:
-        practice_session.complete_session()
+        is_finished = (direction == "finish") or (practice_session.current_index >= len(practice_session.questions))
+        if is_finished and not practice_session.is_completed:
+            practice_session.complete_session()
+    except Exception as e:
+        logger.error("Failed to persist practice answer for session %s: %s", session_id, e, exc_info=True)
+        return jsonify({"status": "error", "message": f"Database failure persisting answer: {str(e)}"}), 500
 
     return jsonify({
         "status": "success",
@@ -1793,7 +1978,11 @@ def api_interview_practice_submit():
 def api_interview_results():
     """Retrieves practice session results and feedback summary."""
     owner_id = _get_or_create_interview_owner_id()
-    session_id = request.args.get("session_id") or session.get("active_interview_session_id")
+    raw_sid = request.args.get("session_id")
+    if raw_sid is not None and not isinstance(raw_sid, str):
+        return jsonify({"status": "error", "message": "session_id must be a string"}), 400
+
+    session_id = raw_sid or session.get("active_interview_session_id")
     if not session_id:
         return jsonify({"status": "error", "message": "No active practice session found."}), 404
 
@@ -1803,7 +1992,12 @@ def api_interview_results():
     if practice_session.owner_id != owner_id:
         return jsonify({"status": "error", "message": "Unauthorized access to requested session results."}), 403
 
-    results = practice_session.complete_session()
+    try:
+        results = practice_session.complete_session()
+    except Exception as e:
+        logger.error("Failed to finalize practice session %s: %s", session_id, e, exc_info=True)
+        return jsonify({"status": "error", "message": f"Database failure finalizing session results: {str(e)}"}), 500
+
     return jsonify({"status": "success", "results": results}), 200
 
 

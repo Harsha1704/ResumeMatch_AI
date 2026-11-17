@@ -1648,10 +1648,10 @@ class InterviewQuestionGenerator:
                             if self.evidence.get("skills") else "Technical Stack"
                         )
                     elif cat_letter == "B":
-                        q["related_skill"] = (
-                            self.evidence.get("projects", [{}])[0].get("technologies", "System Architecture")
-                            if self.evidence.get("projects") else "Project Development"
-                        )
+                        techs = self.evidence.get("projects", [{}])[0].get("technologies", "System Architecture")
+                        if isinstance(techs, list):
+                            techs = ", ".join(techs)
+                        q["related_skill"] = techs if techs else "Project Development"
                     elif cat_letter == "C":
                         q["related_skill"] = "Professional Collaboration"
                     elif cat_letter == "D":
@@ -1665,6 +1665,11 @@ class InterviewQuestionGenerator:
                         q["related_skill"] = q.get("topic", "Behavioral Competency")
                     else:
                         q["related_skill"] = "Engineering Skills"
+
+                if isinstance(q.get("related_skill"), list):
+                    q["related_skill"] = ", ".join(str(s) for s in q["related_skill"])
+                elif not isinstance(q.get("related_skill"), str):
+                    q["related_skill"] = str(q.get("related_skill") or "Engineering Skills")
 
                 # Reason for asking
                 if not q.get("reason_for_asking"):

@@ -626,4 +626,392 @@ def test_19_question_index_out_of_bounds(sample_candidate_analysis):
     assert "range" in resp_oob.get_json()["message"].lower()
 
 
+# =========================================================================
+# 7. Phase 5.1 Reliability, Evidence Persistence, and Hardening Tests
+# =========================================================================
+
+from src.interview.interview_session import ACTIVE_SESSIONS
 from src.interview.evidence_mapper import extract_candidate_evidence
+import sqlite3
+
+
+def test_20_session_restart_and_evidence_restoration(sample_candidate_analysis):
+    """Verify candidate evidence is preserved across memory restarts and reloaded correctly."""
+    analysis = ANALYSIS_CACHE[sample_candidate_analysis]
+    generator = InterviewQuestionGenerator(analysis)
+    questions = generator.generate_questions(max_questions=3)
+
+    session = InterviewSessionManager.create_session(
+        questions=questions,
+        analysis_id=sample_candidate_analysis,
+        candidate_filename="Harsha_ML_Resume.pdf",
+        job_title="Senior Machine Learning Engineer",
+        owner_id="restart_user_001",
+        candidate_evidence=generator.evidence
+    )
+    sid = session.session_id
+    assert session.candidate_evidence is not None
+    assert "PyTorch" in session.candidate_evidence.get("skills", [])
+
+    # Submit first answer
+    session.submit_answer(0, "I developed data pipelines using Python and SQL.")
+
+    # Simulate server restart by clearing in-memory active sessions
+    ACTIVE_SESSIONS.clear()
+    assert sid not in ACTIVE_SESSIONS
+
+    # Reload from persistent SQLite store
+    reloaded = InterviewSessionManager.get_session(sid, owner_id="restart_user_001")
+    assert reloaded is not None
+    assert reloaded.session_id == sid
+    assert reloaded.candidate_evidence is not None
+    assert "PyTorch" in reloaded.candidate_evidence.get("skills", [])
+
+    # Evaluate answer with unevidenced technologies on the reloaded session
+    # Candidate resume does not have Kubernetes or Docker
+    eval_res = reloaded.submit_answer(1, "I deployed the system using Kubernetes and Docker on AWS cloud.")
+    warnings = eval_res.get("evidence_grounding_warnings", [])
+    assert len(warnings) > 0
+    assert any("Kubernetes" in w or "Docker" in w or "Aws" in w for w in warnings)
+
+
+def test_21_cross_user_isolation_after_restart(sample_candidate_analysis):
+    """Verify cross-user ownership isolation remains strictly enforced after in-memory restarts."""
+    analysis = ANALYSIS_CACHE[sample_candidate_analysis]
+    generator = InterviewQuestionGenerator(analysis)
+    questions = generator.generate_questions(max_questions=2)
+
+    session = InterviewSessionManager.create_session(
+        questions=questions,
+        analysis_id=sample_candidate_analysis,
+        owner_id="user_alpha",
+        candidate_evidence=generator.evidence
+    )
+    sid = session.session_id
+
+    # Restart
+    ACTIVE_SESSIONS.clear()
+
+    # User Beta attempts retrieval
+    beta_session = InterviewSessionManager.get_session(sid, owner_id="user_beta")
+    assert beta_session is None
+
+    # Test via Flask API client
+    client_b = app.test_client()
+    with client_b.session_transaction() as sess:
+        sess["interview_owner_id"] = "user_beta"
+        sess["csrf_token"] = "valid_beta_token"
+
+    resp_get = client_b.get(f"/api/interview/sessions/{sid}")
+    assert resp_get.status_code == 403
+
+    resp_sub = client_b.post(
+        "/api/interview-practice/submit",
+        data=json.dumps({"session_id": sid, "question_index": 0, "user_answer": "Unauthorized", "csrf_token": "valid_beta_token"}),
+        content_type="application/json"
+    )
+    assert resp_sub.status_code == 403
+
+
+def test_22_duplicate_and_updated_answer_submissions(sample_candidate_analysis):
+    """Verify resubmitting an answer to the same question updates state without duplicating."""
+    analysis = ANALYSIS_CACHE[sample_candidate_analysis]
+    generator = InterviewQuestionGenerator(analysis)
+    questions = generator.generate_questions(max_questions=3)
+
+    session = InterviewSessionManager.create_session(
+        questions=questions,
+        analysis_id=sample_candidate_analysis,
+        owner_id="dup_test_user",
+        candidate_evidence=generator.evidence
+    )
+
+    # Initial submission
+    res1 = session.submit_answer(0, "First attempt answer discussing Python.")
+    assert "0" in session.answers
+    assert session.answers["0"] == "First attempt answer discussing Python."
+
+    # Resubmission / update
+    res2 = session.submit_answer(0, "Refined attempt using Python and PyTorch neural network architecture.")
+    assert len(session.answers) == 1
+    assert session.answers["0"] == "Refined attempt using Python and PyTorch neural network architecture."
+    assert session.evaluations["0"]["overall_score"] >= res1.get("overall_score", 0.0)
+
+
+def test_23_completed_session_behavior(sample_candidate_analysis):
+    """Verify session completion preserves completion timestamp, status, and summary metrics."""
+    analysis = ANALYSIS_CACHE[sample_candidate_analysis]
+    generator = InterviewQuestionGenerator(analysis)
+    questions = generator.generate_questions(max_questions=2)
+
+    session = InterviewSessionManager.create_session(
+        questions=questions,
+        analysis_id=sample_candidate_analysis,
+        owner_id="complete_user",
+        candidate_evidence=generator.evidence
+    )
+
+    session.submit_answer(0, "Answer for question 0 using Python.")
+    session.submit_answer(1, "Answer for question 1 using SQL.")
+
+    summary = session.complete_session()
+    assert session.is_completed is True
+    assert session.completed_at is not None
+    assert summary["completed_questions"] == 2
+    assert summary["completion_rate_pct"] == 100.0
+
+    # Ensure restart preserves is_completed
+    ACTIVE_SESSIONS.clear()
+    reloaded = InterviewSessionManager.get_session(session.session_id, owner_id="complete_user")
+    assert reloaded is not None
+    assert reloaded.is_completed is True
+    assert reloaded.completed_at is not None
+
+
+def test_24_technical_terms_distinguish_recognized_from_verified():
+    """Verify simply mentioning Python, React, SQL, or Docker does NOT mark them as verified."""
+    evaluator = HeuristicAnswerEvaluator()
+    q_data = {
+        "question_text": "Describe your software stack and implementation experience.",
+        "expected_key_points": ["Software architecture", "Tool selection"],
+        "important_concepts": ["architecture"],
+        "recommended_answer_framework": "STAR"
+    }
+
+    # Case A: Name-dropping technical entities without contextual validation rules
+    answer_name_drop = (
+        "Situation: In my software engineering journey, I worked across multiple stacks. "
+        "Task: I was responsible for choosing appropriate frameworks and databases. "
+        "Action: I used Python, React, SQL, and Docker to develop the application. "
+        "Result: The system was delivered cleanly and fulfilled all user requirements."
+    )
+    ev_dropped = evaluator.evaluate_answer(q_data, answer_name_drop, "STAR")
+    assert ev_dropped["status"] == "evaluated"
+    tech_crit = ev_dropped["criterion_scores"]["technical_accuracy"]
+
+    # Must be recognized, NOT verified!
+    assert tech_crit["status"] == "recognized"
+    assert "Recognized technical terms" in tech_crit["details"]
+    claims = ev_dropped["claims_analysis"]
+    assert len(claims["recognized_technical_entities"]) > 0
+    assert len(claims["verified_technical_entities"]) == 0
+
+    # Case B: Concrete technical usage matching validation rules
+    answer_verified_sql = (
+        "Situation: In our data tier, query performance was slow. "
+        "Task: My goal was to optimize SQL queries for relational data retrieval. "
+        "Action: I wrote optimized SQL queries using SELECT, JOIN, and WHERE clauses with indexing on user_id. "
+        "Result: Query execution completed efficiently with verified data integrity."
+    )
+    ev_sql = evaluator.evaluate_answer(q_data, answer_verified_sql, "STAR")
+    assert ev_sql["criterion_scores"]["technical_accuracy"]["status"] == "verified"
+    assert "sql" in ev_sql["claims_analysis"]["verified_technical_entities"]
+
+    # Case C: Concrete Docker validation rule
+    answer_verified_docker = (
+        "Situation: We needed containerized deployments. "
+        "Task: I was assigned to package our microservices into containers. "
+        "Action: I created a Dockerfile using multi-stage builds and configured docker-compose volumes for local testing. "
+        "Result: The container deployment reduced image footprint and passed all smoke tests."
+    )
+    ev_docker = evaluator.evaluate_answer(q_data, answer_verified_docker, "STAR")
+    assert ev_docker["criterion_scores"]["technical_accuracy"]["status"] == "verified"
+    assert "docker" in ev_docker["claims_analysis"]["verified_technical_entities"]
+
+
+def test_25_unsupported_metrics_and_achievement_grounding(sample_candidate_analysis):
+    """Verify unestablished metrics trigger warnings while truthful disclosures and verified metrics are handled honestly."""
+    evaluator = HeuristicAnswerEvaluator()
+    candidate_evidence = extract_candidate_evidence(ANALYSIS_CACHE[sample_candidate_analysis])
+    q_data = {
+        "question_text": "Describe the scale and performance of your projects.",
+        "expected_key_points": ["Performance metrics", "System throughput"],
+        "recommended_answer_framework": "STAR"
+    }
+
+    # Case A: Fabricated / unsupported performance metrics
+    ans_unsupported = (
+        "Situation: Our backend service handled production traffic. "
+        "Task: I was responsible for performance tuning under extreme load. "
+        "Action: I scaled the service and optimized connection pooling. "
+        "Result: I achieved 99.99% uptime, reduced latency by 85%, and scaled the system to 500000 users."
+    )
+    ev_unsupported = evaluator.evaluate_answer(q_data, ans_unsupported, "STAR", candidate_evidence=candidate_evidence)
+    assert len(ev_unsupported["claims_analysis"]["unsupported_claims"]) > 0
+    assert ev_unsupported["criterion_scores"]["evidence_consistency"]["status"] == "warning"
+    assert any("not established by your submitted resume" in w for w in ev_unsupported["evidence_grounding_warnings"])
+
+    # Case B: Resume-supported metric (94% Macro F1 is in Harsha_ML_Resume.pdf project description)
+    ans_supported = (
+        "Situation: In our multimodal semantic search project, retrieval accuracy was critical. "
+        "Task: I was tasked with fine-tuning the dense encoder without overfitting. "
+        "Action: I developed a two-tower neural network with custom contrastive loss in PyTorch. "
+        "Result: I achieved 94% Macro F1 on the validation benchmark suite."
+    )
+    ev_supported = evaluator.evaluate_answer(q_data, ans_supported, "STAR", candidate_evidence=candidate_evidence)
+    assert len(ev_supported["claims_analysis"]["resume_supported_claims"]) > 0
+    assert ev_supported["criterion_scores"]["evidence_consistency"]["status"] == "pass"
+
+    # Case C: Truthful candidate disclosure
+    ans_disclosure = (
+        "Situation: In this coursework project, we developed a prototype recommendation engine. "
+        "Task: My responsibility was implementing the core matrix factorization algorithm. "
+        "Action: I have not yet deployed this to production, as this was an academic project. "
+        "Result: We validated the offline precision and recall on the test dataset."
+    )
+    ev_disclosure = evaluator.evaluate_answer(q_data, ans_disclosure, "STAR", candidate_evidence=candidate_evidence)
+    assert len(ev_disclosure["claims_analysis"]["truthful_disclosures"]) > 0
+    assert any("candid and honest" in s.lower() for s in ev_disclosure["strengths"])
+
+    # Case D: General technical explanation
+    ans_general = (
+        "Situation: When architecting distributed databases, timeout configuration is important. "
+        "Task: Explaining connection pooling behavior. "
+        "Action: By default, PostgreSQL connection poolers limit threads with default timeout typically 30 seconds. "
+        "Result: This prevents out-of-memory errors on concurrent client spikes."
+    )
+    ev_general = evaluator.evaluate_answer(q_data, ans_general, "STAR", candidate_evidence=candidate_evidence)
+    assert len(ev_general["claims_analysis"]["general_technical_explanations"]) > 0
+    assert len(ev_general["claims_analysis"]["unsupported_claims"]) == 0
+
+
+def test_26_csrf_enforcement_all_state_changing_endpoints(sample_candidate_analysis):
+    """Verify CSRF fail-closed policy on every state-changing endpoint when in production mode."""
+    client = app.test_client()
+    original_testing = app.config.get("TESTING")
+    try:
+        app.config["TESTING"] = False
+        token = secrets.token_hex(32)
+
+        # 1. POST /api/interview/evaluate
+        with client.session_transaction() as sess:
+            sess["csrf_token"] = token
+            sess["allowed_analyses"] = [sample_candidate_analysis]
+
+        resp_no_csrf = client.post("/api/interview/evaluate", data=json.dumps({"user_answer": "test"}), content_type="application/json")
+        assert resp_no_csrf.status_code == 403
+
+        resp_bad_csrf = client.post("/api/interview/evaluate", data=json.dumps({"user_answer": "test", "csrf_token": "bad"}), content_type="application/json")
+        assert resp_bad_csrf.status_code == 403
+
+        resp_ok_csrf = client.post("/api/interview/evaluate", data=json.dumps({"user_answer": "test", "csrf_token": token}), content_type="application/json")
+        assert resp_ok_csrf.status_code == 200
+
+        # 2. POST /api/interview/confirm-activity
+        resp_confirm_no_csrf = client.post("/api/interview/confirm-activity", data=json.dumps({"activity_key": "k"}), content_type="application/json")
+        assert resp_confirm_no_csrf.status_code == 403
+
+        resp_confirm_ok = client.post("/api/interview/confirm-activity", data=json.dumps({"activity_key": "k", "csrf_token": token}), content_type="application/json")
+        assert resp_confirm_ok.status_code == 200
+
+        # 3. POST /api/interview/reset
+        resp_reset_no_csrf = client.post("/api/interview/reset", data=json.dumps({}), content_type="application/json")
+        assert resp_reset_no_csrf.status_code == 403
+
+        resp_reset_ok = client.post("/api/interview/reset", data=json.dumps({"csrf_token": token}), content_type="application/json")
+        assert resp_reset_ok.status_code == 200
+
+        # 4. POST /api/interview/sessions
+        resp_sess_no_csrf = client.post("/api/interview/sessions", data=json.dumps({"analysis_id": sample_candidate_analysis}), content_type="application/json")
+        assert resp_sess_no_csrf.status_code == 403
+
+        resp_sess_ok = client.post("/api/interview/sessions", data=json.dumps({"analysis_id": sample_candidate_analysis, "csrf_token": token}), content_type="application/json")
+        assert resp_sess_ok.status_code == 201
+        created_sid = resp_sess_ok.get_json()["session"]["session_id"]
+
+        # 5. POST /api/interview-practice/submit
+        resp_sub_no_csrf = client.post("/api/interview-practice/submit", data=json.dumps({"session_id": created_sid, "question_index": 0, "user_answer": "abc"}), content_type="application/json")
+        assert resp_sub_no_csrf.status_code == 403
+
+        resp_sub_ok = client.post("/api/interview-practice/submit", data=json.dumps({"session_id": created_sid, "question_index": 0, "user_answer": "abc", "csrf_token": token}), content_type="application/json")
+        assert resp_sub_ok.status_code == 200
+
+        # 6. DELETE /api/interview/sessions/<session_id>
+        resp_del_no_csrf = client.delete(f"/api/interview/sessions/{created_sid}")
+        assert resp_del_no_csrf.status_code == 403
+
+        resp_del_ok = client.delete(f"/api/interview/sessions/{created_sid}", headers={"X-CSRF-Token": token})
+        assert resp_del_ok.status_code == 200
+
+    finally:
+        app.config["TESTING"] = original_testing
+
+
+def test_27_malformed_json_field_types_rejection(sample_candidate_analysis):
+    """Verify controlled 400 responses for malformed types across all endpoints without unhandled 500s."""
+    client = app.test_client()
+    with client.session_transaction() as sess:
+        sess["allowed_analyses"] = [sample_candidate_analysis]
+        sess["csrf_token"] = "valid_tok"
+
+    token_hdr = {"X-CSRF-Token": "valid_tok"}
+
+    # 1. Invalid mode type (int instead of str)
+    r1 = client.post("/api/interview/sessions", data=json.dumps({"analysis_id": sample_candidate_analysis, "mode": 12345}), content_type="application/json", headers=token_hdr)
+    assert r1.status_code == 400
+    assert "mode" in r1.get_json()["message"]
+
+    # 2. Invalid difficulty type (list instead of str)
+    r2 = client.post("/api/interview/sessions", data=json.dumps({"analysis_id": sample_candidate_analysis, "difficulty": ["hard"]}), content_type="application/json", headers=token_hdr)
+    assert r2.status_code == 400
+    assert "difficulty" in r2.get_json()["message"]
+
+    # 3. Invalid max_questions type (bool or invalid string)
+    r3 = client.post("/api/interview/sessions", data=json.dumps({"analysis_id": sample_candidate_analysis, "max_questions": True}), content_type="application/json", headers=token_hdr)
+    assert r3.status_code == 400
+    assert "max_questions" in r3.get_json()["message"]
+
+    r3_str = client.post("/api/interview/sessions", data=json.dumps({"analysis_id": sample_candidate_analysis, "max_questions": "many"}), content_type="application/json", headers=token_hdr)
+    assert r3_str.status_code == 400
+
+    # 4. Invalid target_role type (int)
+    r4 = client.post("/api/interview/sessions", data=json.dumps({"analysis_id": sample_candidate_analysis, "target_role": 999}), content_type="application/json", headers=token_hdr)
+    assert r4.status_code == 400
+
+    # 5. Invalid analysis_id type (dict)
+    r5 = client.post("/api/interview/sessions", data=json.dumps({"analysis_id": {"id": 1}}), content_type="application/json", headers=token_hdr)
+    assert r5.status_code == 400
+
+    # 6. Invalid evaluate payload types (user_answer as int, expected_key_points as str)
+    r6 = client.post("/api/interview/evaluate", data=json.dumps({"user_answer": 123}), content_type="application/json", headers=token_hdr)
+    assert r6.status_code == 400
+
+    r7 = client.post("/api/interview/evaluate", data=json.dumps({"expected_key_points": "not_a_list"}), content_type="application/json", headers=token_hdr)
+    assert r7.status_code == 400
+
+    r8 = client.post("/api/interview/evaluate", data=json.dumps({"important_concepts": 456}), content_type="application/json", headers=token_hdr)
+    assert r8.status_code == 400
+
+    # 7. Invalid submit types (session_id as int, question_index as bool)
+    r9 = client.post("/api/interview-practice/submit", data=json.dumps({"session_id": 1234, "question_index": 0}), content_type="application/json", headers=token_hdr)
+    assert r9.status_code == 400
+
+    r10 = client.post("/api/interview-practice/submit", data=json.dumps({"session_id": "sid_str", "question_index": True}), content_type="application/json", headers=token_hdr)
+    assert r10.status_code == 400
+
+
+def test_28_sqlite_write_failure_observable_handling(sample_candidate_analysis, monkeypatch):
+    """Verify SQLite persistence errors return 500 and are observably handled without silent data corruption."""
+    client = app.test_client()
+    with client.session_transaction() as sess:
+        sess["allowed_analyses"] = [sample_candidate_analysis]
+        sess["csrf_token"] = "valid_tok"
+
+    token_hdr = {"X-CSRF-Token": "valid_tok"}
+
+    # Mock save_session to simulate disk I/O failure
+    def mock_failing_save(self, session_data):
+        raise sqlite3.OperationalError("disk I/O error: disk full")
+
+    monkeypatch.setattr(InterviewSessionStore, "save_session", mock_failing_save)
+
+    resp = client.post(
+        "/api/interview/sessions",
+        data=json.dumps({"analysis_id": sample_candidate_analysis}),
+        content_type="application/json",
+        headers=token_hdr
+    )
+    assert resp.status_code == 500
+    err_json = resp.get_json()
+    assert err_json["status"] == "error"
+    assert "Failed to persist practice session" in err_json["message"]

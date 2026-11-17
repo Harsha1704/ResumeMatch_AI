@@ -1,25 +1,29 @@
-# ResumeMatch AI — Phase 5 Implementation Report: Evidence-Grounded Interview Studio
+# ResumeMatch AI — Phase 5 & Phase 5.1 Implementation Report: Evidence-Grounded Interview Studio
 
 **Date**: November 17, 2026  
 **Repository**: `Harsha1704/ResumeMatch_AI`  
 **Branch**: `fix/resumematch-final-repair`  
-**Baseline Commit**: `8b3972fce48c42a5b2519fad9af477621dc55a3a`  
-**Implementation Phase**: Phase 5 — Interview Studio Implementation  
+**Starting Commit Phase 5.1**: `4b5e0ef60ec49c9a81a7f4f1eb0bc4afa23e1056`  
+**Implementation Phase**: Phase 5 & 5.1 — Interview Studio Reliability, Evidence Persistence & Hardening  
 
 ---
 
 ## 1. Executive Summary
 
-Phase 5 delivers a complete, production-oriented, evidence-grounded **Interview Studio** fully integrated into ResumeMatch AI. The system provides candidates with a realistic, deterministic interview preparation environment that generates tailored questions based on their verified resume evidence and target job requirements, evaluates written answers against six transparent coaching criteria, guards against keyword stuffing and unevidenced claims, and maintains durable practice history and progress tracking.
+Phase 5 & 5.1 deliver a production-quality, evidence-grounded **Interview Studio** fully integrated into ResumeMatch AI. The system provides candidates with a realistic, deterministic interview preparation environment that generates tailored questions based on their verified resume evidence and target job requirements, evaluates written answers against six transparent coaching criteria, guards against keyword stuffing and unevidenced claims, and maintains durable practice history and progress tracking with zero LLM hallucination.
 
-### Key Achievements
-1. **Evidence-Grounded Question Generation**: Questions are synthesized deterministically from candidate resume evidence (demonstrated skills, projects, internships), target job requirements, identified skill gaps, and curated domain knowledge banks without generative LLM hallucinations.
-2. **Deterministic 6-Criterion Answer Evaluation**: Submitted answers are evaluated across Relevance (20%), Technical Accuracy (20%), Concept Coverage (20%), Clarity and Structure (15%), Specificity and Examples (15%), and Evidence Consistency (10%).
-3. **Strict Zero-Fabrication & Truthfulness Safeguards**: Prevents inventing candidate metrics, project accomplishments, or unevidenced technologies; explicitly flags unevidenced technology claims with `evidence_grounding_warnings`; and marks domain-specific claims as `unverifiable` when ground truth is absent.
-4. **Anti-Keyword-Stuffing Detection**: Token frequency and repetition ratios identify unnatural keyword repetition and penalize stuffed responses.
-5. **Persistent Practice History & Progress**: Durable SQLite storage with Write-Ahead Logging (WAL) preserves sessions, questions, answers, and evaluations with strict multi-user ownership isolation and safe deletion.
-6. **Robust Security & CSRF Enforcement**: Fail-closed CSRF enforcement on state-changing endpoints, strict 403/404 ownership boundaries on analysis and session access tested with two independent Flask clients.
-7. **Polished React 19 / Tailwind CSS v4 Frontend**: Modern responsive interface supporting interview mode selection (technical, behavioral, hr, mixed), difficulty tiers (beginner, intermediate, advanced, all), live answer editor with timer and word count, instant evaluation drawer with criterion score bars, and comprehensive session review.
+Phase 5.1 specifically hardens the interview studio:
+1. **Candidate Evidence Restoration Across Restarts**: Preserves `candidate_evidence` in SQLite via `candidate_evidence_json`, restores it upon session reload, maintains backward compatibility with older database schemas, and ensures reloaded sessions continue to enforce evidence grounding during answer evaluation.
+2. **Honest Technical Accuracy Verification**: Differentiates genuinely verified technical claims from recognized keyword mentions and unverifiable domain terms using `_TECH_VALIDATION_RULES`. Simply mentioning Python, React, SQL, or Docker receives `recognized` status rather than claiming automated technical verification.
+3. **Structured Achievement and Metric Grounding**: Analyzes answer assertions against candidate resume evidence, categorizing claims into:
+   - `resume_supported_claims`: metrics and accomplishments substantiated by verified project descriptions.
+   - `candidate_self_reported_claims`: qualitative assertions without resume-conflicting claims.
+   - `unsupported_claims`: unestablished metrics or scale numbers triggering clear coaching warnings.
+   - `general_technical_explanations`: theoretical or architectural explanations not claiming personal accomplishments.
+   - `truthful_disclosures`: candid admissions of lacking production experience or metrics, praised in coaching feedback for transparency.
+4. **Uniform Fail-Closed CSRF Enforcement**: Applies strict CSRF fail-closed validation across all state-changing endpoints (`POST /api/interview/evaluate`, `POST /api/interview/confirm-activity`, `POST /api/interview/reset`, `POST /api/interview-studio/generate`, `POST /api/interview/sessions`, `DELETE /api/interview/sessions/<session_id>`, `POST /api/interview-practice/submit`).
+5. **Hardened API Input Validation**: Validates JSON types before calling string methods or processing values across `mode`, `difficulty`, `target_role`, `analysis_id`, `session_id`, `user_answer`, `question_index`, `max_questions`, `expected_key_points`, and `important_concepts`, returning controlled `400` responses without unhandled 500s or silent conversions to default values.
+6. **Observable Persistence Failures**: Removes swallowed exceptions in session persistence, adds structured logging, and returns controlled `500` status with descriptive error messages when SQLite operations fail.
 
 ---
 
@@ -40,124 +44,117 @@ Phase 5 delivers a complete, production-oriented, evidence-grounded **Interview 
 |  - GET /api/interview-practice        : Active practice question & progress                             |
 |  - POST /api/interview-practice/submit: Answer submission, deterministic evaluation & navigation        |
 |  - GET /api/interview-results         : Session completion results & per-question feedback review       |
-|  - POST /api/interview/evaluate       : Instant heuristic feedback on answer drafts                     |
+|  - POST /api/interview/evaluate       : Instant heuristic feedback with fail-closed CSRF               |
 +---------------------------------------------------------------------------------------------------------+
                                    |                                |
                                    v                                v
 +---------------------------------------------------+  +--------------------------------------------------+
 |      Question Generation Engine                   |  |          Heuristic Answer Evaluator              |
 |      (src/interview/question_generator.py)        |  |          (src/interview/answer_evaluator.py)     |
+|  - Role & difficulty filtering                    |  |  - 6 Criteria: Relevance, Tech Accuracy,        |
+|  - Candidate resume grounding                     |  |    Concept Coverage, Structure, Specificity,     |
+|  - Complete answers & structured criteria         |  |    Evidence Consistency                          |
+|  - Pedagogical steps & follow-up Q&As             |  |  - Anti-keyword stuffing detection               |
+|                                                   |  |  - Defined validation rules vs recognized terms  |
+|                                                   |  |  - Grounded achievement & metric categorization  |
 +---------------------------------------------------+  +--------------------------------------------------+
-| - Mode filtering: technical, behavioral, hr, mixed|  | - Criterion 1: Relevance to Question (20%)       |
-| - Difficulty mapping: beginner, intermediate,     |  | - Criterion 2: Technical Accuracy (20%)          |
-|   advanced, all                                   |  | - Criterion 3: Concept Coverage (20%)            |
-| - Target role alignment                           |  | - Criterion 4: Clarity & Structure (15%)         |
-| - Required fields: question_text, category,       |  | - Criterion 5: Specificity & Examples (15%)      |
-|   difficulty, related_skill, reason_for_asking,   |  | - Criterion 6: Evidence Consistency (10%)       |
-|   expected_answer_evaluation_criteria             |  | - Overall Composite Score (0-100)                |
-| - Zero-fabrication grounding check                |  | - Anti-keyword-stuffing penalty                  |
-+---------------------------------------------------+  | - Evidence grounding warnings banner             |
-                                                       | - Suggested improved answer structure guide      |
-                                                       +--------------------------------------------------+
-                                                                                |
-                                                                                v
+                                   |                                |
+                                   +----------------+---------------+
+                                                    v
 +---------------------------------------------------------------------------------------------------------+
-|                                    Session Storage & Persistence                                        |
-|                       (src/interview/interview_session.py & session_store.py)                            |
-+---------------------------------------------------------------------------------------------------------+
-| - InterviewSessionManager: In-memory cache + persistent store coordinator                               |
-| - InterviewSessionStore: SQLite database (data/cache/interview_sessions.sqlite) with WAL mode           |
-| - Schema: session_id, owner_id, analysis_id, target_role, mode, difficulty, questions, answers,         |
-|   evaluations, results_summary, timestamps, completion status                                            |
-| - Safe Deletion: Only the session owner can delete a session record                                     |
+|      Persistent Session Storage (src/interview/session_store.py & interview_session.py)                 |
+|  - SQLite (data/cache/interview_sessions.sqlite) in WAL mode                                            |
+|  - Multi-user isolation by owner_id                                                                     |
+|  - candidate_evidence_json preserved across restarts                                                    |
+|  - Transactional consistency & observable write failure logging                                         |
 +---------------------------------------------------------------------------------------------------------+
 ```
 
 ---
 
-## 3. Answer Evaluation Methodology (6 Criteria)
+## 3. Evaluation Criteria & Grounding Methodology
 
-The `HeuristicAnswerEvaluator` scores submitted answers on a 0–100 scale using explainable rules without black-box generative models:
+### Deterministic 6-Criterion Scoring Framework
 
-| Criterion | Weight | Evaluation Logic | Status / Output |
-| :--- | :---: | :--- | :--- |
-| **Relevance** | 20% | Semantic token overlap between answer and question prompt / core concepts. Penalizes answers that evade the question or dump unrelated keywords. | Score (0-100) + status (`pass`/`needs_improvement`) + term match details. |
-| **Technical Accuracy** | 20% | Verifies contextual usage of standard engineering technologies and libraries. Niche or esoteric technical claims lacking authoritative ground truth are marked `unverifiable` rather than falsely verified. | Score (0-100) + status (`verified`/`unverifiable`) + usage notes. |
-| **Concept Coverage** | 20% | Measures coverage percentage against `expected_key_points` and `important_concepts` using stemmed token matching. | Score (0-100) + covered points list + missing concepts list. |
-| **Clarity & Structure** | 15% | Evaluates adherence to the recommended communication framework (STAR, PREP, PAR, CAR, etc.) and penalizes duplicate sentences. | Score (0-100) + sections addressed + sections missing. |
-| **Specificity & Examples** | 15% | Inspects the presence of concrete numerical metrics (percentages, latency, throughput, scale), named libraries, and project implementation contexts. | Score (0-100) + evidence detection indicator. |
-| **Evidence Consistency** | 10% | Cross-references technical entities and claims against the candidate's verified resume profile. Claims involving unevidenced technologies trigger warning banners. | Score (0-100) + status (`pass`/`warning`) + audit warning messages. |
+| Criterion | Weight | Evaluation Method & Safeguards |
+| :--- | :--- | :--- |
+| **Relevance** | 20% | Keyword overlap against prompt tokens; penalizes extreme repetition and keyword stuffing (>35% single-token frequency or <25% unique token ratio). |
+| **Technical Accuracy** | 20% | Distinguishes `verified` (domain validation rule genuinely satisfied in context) from `recognized` (name-dropping without validated usage) and `unverifiable` (outside rule bank). |
+| **Concept Coverage** | 20% | Evaluates coverage of `expected_key_points` (70% subweight) and `important_concepts` (30% subweight) using stemming and boundary-aware matching. |
+| **Clarity & Structure** | 15% | Evaluates structural progression against the designated framework (STAR, PREP, CAR, PAR, SOAR, PEEL, WHAT-WHY-HOW); penalizes verbatim duplicate sentences. |
+| **Specificity & Examples** | 15% | Rewards quantified results, latency/throughput metrics, named architectural tools, and project contexts. |
+| **Evidence Consistency** | 10% | Validates claims against candidate's verified resume profile; flags unevidenced technologies and unsupported metrics with actionable warnings. |
 
-$$\text{Overall Score} = 0.20 \times \text{Relevance} + 0.20 \times \text{Accuracy} + 0.20 \times \text{Coverage} + 0.15 \times \text{Clarity} + 0.15 \times \text{Specificity} + 0.10 \times \text{Consistency}$$
+### Technical Verification vs. Heuristic Recognition
 
----
+```
+[Answer Contains Technical Terms]
+            |
+            v
+   Are terms in _TECH_VALIDATION_RULES?
+            |
+    +-------+-------+
+    | Yes           | No
+    v               v
+Do terms satisfy contextual rules?    Status: UNVERIFIABLE
+    |                                 Score: 65%
+    +-------+-------+                 Note: Outside automated rule bank
+    | Yes           | No
+    v               v
+Status: VERIFIED    Status: RECOGNIZED
+Score: 85%          Score: 70%
+Note: Contextually  Note: Keyword detected but
+verified usage      usage not rule-validated
+```
 
-## 4. API Endpoints and Validation Rules
+### Achievement & Metric Categorization
 
-| Method | Endpoint | Auth & Validation Rules | Response |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/api/interview-studio` | Validates `id` against user session `allowed_analyses` (403/404). Validates query params `mode`, `difficulty`, `max_questions` (1..50). | 200 OK with evidence, questions, technical topics, recent sessions. |
-| `POST` | `/api/interview-studio/generate` | CSRF fail-closed protected. Validates `id` authorization. Validates `mode` (`technical`, `behavioral`, `hr`, `mixed`), `difficulty` (`beginner`, `intermediate`, `advanced`, `all`), `max_questions` (1..50). | 200 OK with generated questions and optional active session ID. |
-| `POST` | `/api/interview/sessions` | CSRF protected. Validates `analysis_id` ownership. Validates `mode`, `difficulty`, `max_questions`. | 201 Created with persisted session state and initial question. |
-| `GET` | `/api/interview/sessions` | Enforces owner isolation via session-bound `owner_id`. | 200 OK with list of candidate's previous sessions. |
-| `GET` | `/api/interview/sessions/<id>` | Enforces ownership: returns 404 if not found, 403 if owned by another user. | 200 OK with full session detail and questions. |
-| `DELETE`| `/api/interview/sessions/<id>` | CSRF protected. Enforces ownership: returns 404 if not found, 403 if owned by another user. | 200 OK with deletion confirmation. |
-| `GET` | `/api/interview/progress` | Returns aggregated practice progress for authenticated owner. | 200 OK with completion stats, average scores, and struggled topics. |
-| `GET` | `/api/interview-practice` | Enforces ownership on requested `session_id` (403/404). Supplies current question and progress. | 200 OK with question, indices, total count. |
-| `POST` | `/api/interview-practice/submit`| CSRF protected. Validates `session_id` and ownership (403/404). Validates `question_index` bounds (400). Evaluates answer and persists state. | 200 OK with updated navigation state and evaluation results. |
-| `GET` | `/api/interview-results` | Enforces ownership on `session_id` (403/404). Completes session and computes summary metrics. | 200 OK with comprehensive results summary and question reviews. |
-| `POST` | `/api/interview/evaluate` | Evaluates draft answer string across 6 criteria. Validates CSRF if supplied. | 200 OK with full 6-criterion evaluation bundle. |
-
----
-
-## 5. Security Controls & Cross-User Isolation
-
-Security validation was rigorously verified using two independent Flask clients (`client_a` and `client_b`):
-- **Cross-User Protection**: A session created by Client A cannot be retrieved, practiced, evaluated, or deleted by Client B (strictly returns `403 Forbidden`).
-- **Analysis ID Ownership**: Supplying an analysis ID belonging to another user returns `403 Forbidden`; supplying an unknown ID returns `404 Not Found`.
-- **CSRF Protection**: State-changing requests (`POST /api/interview/sessions`, `POST /api/interview-studio/generate`, `POST /api/interview-practice/submit`, `DELETE /api/interview/sessions/<id>`) fail closed with `403 Forbidden` if CSRF tokens are missing or invalid in production mode.
-- **Safe Deletion**: Deletion requests verify that the session's recorded `owner_id` matches the current caller's session identifier before executing the SQLite delete operation.
-
----
-
-## 6. Verification and Test Results
-
-### Dedicated Phase 5 Test Suite (`tests/test_phase5_interview_studio.py`)
-- **19 passed** in 1.19s:
-  - `test_01_interview_creation_authorized_analysis`
-  - `test_02_all_interview_modes`
-  - `test_03_all_difficulty_levels`
-  - `test_04_target_role_customization`
-  - `test_05_question_required_fields_integrity`
-  - `test_06_zero_fabrication_unsupported_candidate_claims`
-  - `test_07_deterministic_answer_evaluation_all_criteria`
-  - `test_08_anti_keyword_stuffing_prevention`
-  - `test_09_unverifiable_technical_claims_honest_status`
-  - `test_10_evidence_grounding_warnings_on_unsupported_skills`
-  - `test_11_session_persistence_lifecycle`
-  - `test_12_practice_history_listing_and_progress`
-  - `test_13_safe_deletion_ownership_enforcement`
-  - `test_14_cross_user_access_isolation_api`
-  - `test_15_unauthorized_and_nonexistent_analysis_ids`
-  - `test_16_csrf_fail_closed_production`
-  - `test_17_invalid_mode_and_difficulty_validation`
-  - `test_18_empty_and_placeholder_submission_handling`
-  - `test_19_question_index_out_of_bounds`
-
-### Cumulative Interview Suites
-- **67 passed** in 2.26s:
-  - `tests/test_phase5_interview_studio.py` (19 passed)
-  - `tests/test_interview_studio.py` (32 passed)
-  - `tests/test_phase2_1_interview_grounding.py` (10 passed)
-  - `tests/test_interview_educational_depth.py` (6 passed)
-
-### Frontend Build & Lint
-- `npm run build`: **Success** (built in 523ms, 0 errors).
-- `npm run lint`: **Clean** (0 errors, 33 pre-existing unused-var warnings).
+1. **Resume-Supported Claims**: First-person achievements whose quantified metrics or outcomes are directly traced to project descriptions or confirmed details in the candidate profile.
+2. **Candidate Self-Reported Claims**: Qualitative first-person assertions that do not assert unevidenced numerical metrics.
+3. **Claims Not Established by Evidence (Unsupported)**: First-person assertions of specific numerical metrics (e.g., "scaled to 500,000 users", "reduced latency by 85%") that are absent from submitted resume evidence. These generate explicit grounding warnings.
+4. **General Technical Explanations**: Theoretical or domain explanations mentioning numbers or metrics (e.g., "PostgreSQL default timeout is 30 seconds") that describe system behavior without claiming personal accomplishment.
+5. **Truthful Candidate Disclosures**: Honest acknowledgments of lack of production deployment or metrics (e.g., "this was an academic project so I did not measure latency"). Praised in coaching feedback for transparency.
 
 ---
 
-## 7. Known Limitations & Phase 6 Boundary
+## 4. Security & Isolation Controls
 
-1. **Heuristic Evaluation Scope**: The answer evaluator uses deterministic, rule-based NLP. It is an educational practice coach and does not simulate or predict accredited human interviewer subjective preferences.
-2. **Phase 6 Boundary**: In accordance with user directives, no Phase 6 functionality (Mock Video/Audio Analysis, Live Speech Recognition, or Automated Deployment) has been started. All work remains strictly committed to `fix/resumematch-final-repair`. No changes have been merged to `main` or deployed.
+1. **Fail-Closed CSRF Enforcement**: All state-changing POST and DELETE endpoints enforce CSRF validation. In production mode (`app.config["TESTING"] = False`), missing or invalid tokens return `403 Forbidden`.
+2. **Analysis ID Authorization**: Validates requested analysis IDs against the active session's authorized list (`allowed_analyses`), returning `403` for unauthorized IDs and `404` for missing cache entries.
+3. **Cross-User Session Boundaries**: Each practice session is bound to an `owner_id`. Multi-user access tests verify that independent clients receive `403` when attempting to inspect, submit answers to, or delete another user's session.
+4. **Observable Persistence Failures**: SQLite write errors are logged with stack traces and returned as `500 Internal Server Error` rather than claiming success.
+
+---
+
+## 5. Verification & Test Results
+
+All verification suites completed cleanly:
+
+| Suite / Check | Command | Result |
+| :--- | :--- | :--- |
+| **Dedicated Phase 5 & 5.1 Suite** | `py -3.14 -m pytest tests/test_phase5_interview_studio.py -v` | **28 passed** in 1.89s |
+| **All Interview Studio Suites** | `py -3.14 -m pytest tests/test_phase5_interview_studio.py tests/test_interview_studio.py tests/test_phase2_1_interview_grounding.py tests/test_interview_educational_depth.py -v` | **76 passed** in 3.07s |
+| **Cumulative Phase 1–5 Suites** | `py -3.14 -m pytest tests/test_phase*.py -q` | **413 passed** in 103.48s |
+| **Full Backend Test Suite** | `py -3.14 -m pytest tests/ -q` | **686 passed**, 1 pre-existing warning in 126.20s |
+| **Frontend Production Build** | `npm.cmd run build --prefix frontend` | **Success** (built in 855ms, 0 errors) |
+| **Frontend Lint** | `npm.cmd run lint --prefix frontend` | **Clean** (0 errors, 33 pre-existing warnings) |
+
+---
+
+## 6. Summary of Hardened APIs
+
+| Endpoint | Method | CSRF | Type Validation | Error Codes |
+| :--- | :--- | :--- | :--- | :--- |
+| `/api/interview-studio` | GET | Safe | Query args validated | 200, 403, 404 |
+| `/api/interview-studio/generate` | POST | Required | `mode`, `difficulty`, `target_role`, `max_questions`, `action` | 200, 400, 403, 404, 500 |
+| `/api/interview/sessions` | POST | Required | `mode`, `difficulty`, `target_role`, `max_questions`, `questions` | 201, 400, 403, 404, 500 |
+| `/api/interview/sessions` | GET | Safe | Session owner filtered | 200 |
+| `/api/interview/sessions/<id>` | GET | Safe | `session_id` string validated | 200, 400, 403, 404 |
+| `/api/interview/sessions/<id>` | DELETE | Required | `session_id` string validated | 200, 400, 403, 404, 500 |
+| `/api/interview/progress` | GET | Safe | Session owner filtered | 200 |
+| `/api/interview-practice` | GET | Safe | `session_id` string validated | 200, 400, 403, 404 |
+| `/api/interview-practice/submit` | POST | Required | `session_id`, `question_index`, `user_answer`, `direction` | 200, 400, 403, 404, 500 |
+| `/api/interview-results` | GET | Safe | `session_id` string validated | 200, 400, 403, 404, 500 |
+| `/api/interview/evaluate` | POST | Required | `user_answer`, `question_text`, `expected_key_points`, `important_concepts` | 200, 400, 403, 404 |
+| `/api/interview/confirm-activity` | POST | Required | `activity_key` non-empty string | 200, 400, 403 |
+| `/api/interview/reset` | POST | Required | CSRF validated | 200, 403, 500 |

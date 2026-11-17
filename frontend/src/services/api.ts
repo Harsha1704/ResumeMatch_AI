@@ -10,12 +10,26 @@ import type {
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
+function getCsrfToken(): string | undefined {
+  if (typeof document === 'undefined') return undefined;
+  const match = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]+)/);
+  if (match) return decodeURIComponent(match[1]);
+  const meta = document.querySelector('meta[name="csrf-token"]');
+  if (meta) return meta.getAttribute('content') || undefined;
+  return undefined;
+}
+
 async function fetchJson<T>(url: string, options: RequestInit = {}): Promise<T> {
   const fullUrl = url.startsWith('http') ? url : `${API_BASE}${url}`;
+  const csrf = getCsrfToken();
+  const defaultHeaders: Record<string, string> = {
+    'Accept': 'application/json',
+    ...(csrf ? { 'X-CSRF-Token': csrf } : {}),
+  };
   const response = await fetch(fullUrl, {
     ...options,
     headers: {
-      'Accept': 'application/json',
+      ...defaultHeaders,
       ...(options.headers || {}),
     },
     credentials: 'omit', // clean cross-origin handling

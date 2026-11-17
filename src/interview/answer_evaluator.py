@@ -46,6 +46,70 @@ class HeuristicAnswerEvaluator:
         "typescript", "javascript", "node.js", "django", "spring boot", "kafka"
     )
 
+    # Defined validation rules to genuinely verify technical usage beyond mere name-dropping
+    _TECH_VALIDATION_RULES = {
+        "python": [
+            r"\bpython\b.*?\b(?:scripts?|code|functions?|classes|modules?|decorators?|generators?|list\s+comprehensions?|multiprocessing|asyncio|type\s+hints?|virtualenv|pip|gil|pandas|numpy|scipy|flask|fastapi|django|pytest)\b",
+            r"\b(?:scripts?|code|functions?|classes|modules?|decorators?|generators?|list\s+comprehensions?|multiprocessing|asyncio|type\s+hints?|virtualenv|pip|gil|pandas|numpy|scipy|flask|fastapi|django|pytest)\b.*?\bpython\b",
+            r"\b(?:built|developed|implemented|wrote|created|analyzed)\s+.*?\b(?:using|with|in)\s+python\b",
+            r"\bpython\s+(?:backend|service|api|pipeline|script|automation|package|library)\b",
+        ],
+        "sql": [
+            r"\b(?:select|insert|update|delete)\b.*?\bfrom\b",
+            r"\bsql\b.*?\b(?:queries|query|joins?|indexing|indexes?|group\s+by|where|schema|transactions?|acid|foreign\s+key|stored\s+procedures?|views?|database|relational)\b",
+            r"\b(?:queries|query|joins?|indexing|indexes?|group\s+by|where|schema|transactions?|acid|foreign\s+key|stored\s+procedures?|views?)\b.*?\bsql\b",
+            r"\b(?:optimized|wrote|executed|indexed)\s+(?:the\s+)?(?:sql\s+)?queries\b",
+        ],
+        "docker": [
+            r"\bdocker\b.*?\b(?:container|containers|image|images|dockerfile|compose|docker-compose|volumes?|daemon|registry|multi-stage)\b",
+            r"\b(?:container|containers|image|images|dockerfile|compose|docker-compose|volumes?|daemon|registry|multi-stage)\b.*?\bdocker\b",
+            r"\b(?:containerized|packaged|deployed)\s+.*?\busing\s+docker\b",
+        ],
+        "react": [
+            r"\breact\b.*?\b(?:components?|hooks?|usestate|useeffect|usememo|usecallback|props|state|virtual\s+dom|jsx|tsx|router|context\s+api|lifecycle)\b",
+            r"\b(?:components?|hooks?|usestate|useeffect|usememo|usecallback|props|state|virtual\s+dom|jsx|tsx|router|context\s+api|lifecycle)\b.*?\breact\b",
+            r"\b(?:built|developed|rendered)\s+.*?\breact\s+components?\b",
+        ],
+        "pytorch": [
+            r"\bpytorch\b.*?\b(?:neural\s+network|architecture|loss|embeddings?|tensors?|model|dense|encoder|training|trained|cuda|dataloader|nn\.module|optimizer|autograd|backward)\b",
+            r"\b(?:neural\s+network|architecture|loss|embeddings?|tensors?|model|dense|encoder|training|trained|cuda|dataloader|nn\.module|optimizer|autograd|backward)\b.*?\bpytorch\b",
+            r"\b(?:trained|fine-tuned|evaluated)\s+.*?\busing\s+pytorch\b",
+        ],
+        "flask": [
+            r"\bflask\b.*?\b(?:routes?|blueprints?|app\.route|request|jsonify|render_template|wsgi|gunicorn|endpoints?)\b",
+            r"\b(?:routes?|blueprints?|app\.route|request|jsonify|render_template|wsgi|gunicorn|endpoints?)\b.*?\bflask\b",
+            r"\b(?:built|implemented)\s+.*?\bflask\s+(?:api|backend|service|endpoints?)\b",
+        ],
+        "fastapi": [
+            r"\bfastapi\b.*?\b(?:pydantic|routes?|endpoints?|async|uvicorn|depends|openapi|api)\b",
+            r"\b(?:pydantic|routes?|endpoints?|async|uvicorn|depends|openapi|api)\b.*?\bfastapi\b",
+        ],
+        "git": [
+            r"\bgit\b.*?\b(?:commit|commits|branch|branches|merge|rebase|push|pull\s+request|pr|repository|repo|conflict)\b",
+            r"\b(?:commit|commits|branch|branches|merge|rebase|push|pull\s+request|pr|repository|repo|conflict)\b.*?\bgit\b",
+        ],
+        "linux": [
+            r"\blinux\b.*?\b(?:shell|bash|kernel|cron|systemd|permissions?|chmod|grep|process|terminal|cli)\b",
+            r"\b(?:shell|bash|kernel|cron|systemd|permissions?|chmod|grep|process|terminal|cli)\b.*?\blinux\b",
+        ],
+        "redis": [
+            r"\bredis\b.*?\b(?:cache|caching|in-memory|ttl|key-value|pub/sub|cluster|eviction)\b",
+            r"\b(?:cache|caching|in-memory|ttl|key-value|pub/sub|cluster|eviction)\b.*?\bredis\b",
+        ],
+        "kubernetes": [
+            r"\b(?:kubernetes|k8s)\b.*?\b(?:pods?|deployments?|services?|cluster|ingress|replica|configmap)\b",
+            r"\b(?:pods?|deployments?|services?|cluster|ingress|replica|configmap)\b.*?\b(?:kubernetes|k8s)\b",
+        ],
+        "aws": [
+            r"\baws\b.*?\b(?:s3|ec2|lambda|rds|dynamodb|iam|cloudwatch|sqs|sns|vpc)\b",
+            r"\b(?:s3|ec2|lambda|rds|dynamodb|iam|cloudwatch|sqs|sns|vpc)\b.*?\baws\b",
+        ],
+        "rest api": [
+            r"\brest\s+api\b.*?\b(?:endpoints?|http|get|post|put|delete|json|status\s+codes?|payload|headers?)\b",
+            r"\b(?:endpoints?|http|get|post|put|delete|json|status\s+codes?|payload|headers?)\b.*?\brest\s+api\b",
+        ],
+    }
+
     def _tokens(self, value: str) -> List[str]:
         return [
             token.lower() for token in re.findall(r"[a-zA-Z][a-zA-Z0-9+#.-]*", value or "")
@@ -197,6 +261,16 @@ class HeuristicAnswerEvaluator:
                 "specificity_examples": {"score": 0.0, "status": "insufficient", "details": "No concrete examples or metrics provided."},
                 "evidence_consistency": {"score": 0.0, "status": "insufficient", "details": "No resume-grounded evidence provided."}
             }
+            empty_claims = {
+                "resume_supported_claims": [],
+                "candidate_self_reported_claims": [],
+                "unsupported_claims": [],
+                "general_technical_explanations": [],
+                "truthful_disclosures": [],
+                "verified_technical_entities": [],
+                "recognized_technical_entities": [],
+                "unverifiable_technical_entities": []
+            }
             return {
                 "evaluator_label": self.LABEL,
                 "disclaimer": self.DISCLAIMER,
@@ -207,6 +281,7 @@ class HeuristicAnswerEvaluator:
                 "score": 0.0,
                 "individual_criterion_scores": empty_crit_scores,
                 "criterion_scores": empty_crit_scores,
+                "claims_analysis": empty_claims,
                 "framework_adherence": {
                     "framework": fw["name"], "framework_id": fw_id,
                     "sections_addressed": [], "sections_missing": missing_sections,
@@ -305,7 +380,8 @@ class HeuristicAnswerEvaluator:
         # ---------------------------------------------------------------------
         # 3. Clarity & Structure (Framework Adherence)
         # ---------------------------------------------------------------------
-        sentences = [s.strip() for s in re.split(r"[.!?]+", text) if len(s.strip()) > 8]
+        # Split sentences preserving decimal numbers (e.g. 99.99%, 3.5ms)
+        sentences = [s.strip() for s in re.split(r"(?<!\d)[.!?]+(?!\d)\s*", text) if len(s.strip()) > 5]
         sections_addressed, sections_missing = self._framework_sections(
             fw_id, fw["steps"], text, sentences, word_count
         )
@@ -323,7 +399,7 @@ class HeuristicAnswerEvaluator:
         # 4. Specificity & Concrete Examples
         # ---------------------------------------------------------------------
         has_metrics = bool(re.search(
-            r"\b\d+(?:\.\d+)?\s*(?:%|ms|seconds?|minutes?|users|queries|gb|mb|records|rows|tests)\b",
+            r"\b\d+(?:\.\d+)?\s*(?:%|ms|seconds?|minutes?|users|queries|gb|mb|records|rows|tests)(?![a-zA-Z0-9])",
             lower
         ))
         matched_entities = [entity for entity in self._TECHNICAL_ENTITIES
@@ -340,32 +416,53 @@ class HeuristicAnswerEvaluator:
         # ---------------------------------------------------------------------
         # 5. Technical Accuracy Where Verifiable
         # ---------------------------------------------------------------------
-        # Checks if technical entities are used consistently with verified syntax/domains
-        unverifiable_claims = []
+        # Differentiates verified technical usage from recognized keyword mentions and unverifiable domains
         verified_claims = []
+        recognized_claims = []
+        unverifiable_claims = []
+
         for ent in matched_entities:
-            # Check contextual usage
-            if ent in ("python", "java", "sql", "docker", "pytorch", "react"):
-                verified_claims.append(ent)
+            rules = self._TECH_VALIDATION_RULES.get(ent)
+            if rules:
+                if any(re.search(pat, lower) for pat in rules):
+                    verified_claims.append(ent)
+                else:
+                    recognized_claims.append(ent)
             else:
                 unverifiable_claims.append(ent)
 
-        if matched_entities:
-            tech_accuracy_status = "verified" if verified_claims else "unverifiable"
-            tech_accuracy_score = 85.0 if verified_claims else 70.0
-            tech_notes = (
-                f"Verified standard usage for: {', '.join(verified_claims)}." if verified_claims
-                else "Technical claims contain domain terms outside automated verification bank; marked as unverifiable."
-            )
+        if verified_claims:
+            tech_accuracy_status = "verified"
+            tech_accuracy_score = 85.0
+            verified_names = [e.capitalize() for e in verified_claims]
+            tech_notes = f"Verified standard technical usage for: {', '.join(verified_names)}."
+        elif recognized_claims:
+            tech_accuracy_status = "recognized"
+            tech_accuracy_score = 70.0
+            rec_names = [e.capitalize() for e in recognized_claims]
+            tech_notes = f"Recognized technical terms: {', '.join(rec_names)}. Contextual usage was not validated by automated rule verification."
+        elif unverifiable_claims:
+            tech_accuracy_status = "unverifiable"
+            tech_accuracy_score = 65.0
+            unv_names = [e.capitalize() for e in unverifiable_claims]
+            tech_notes = f"Technical claims contain domain terms outside automated verification bank: {', '.join(unv_names)}; marked as unverifiable."
         else:
             tech_accuracy_status = "unverifiable"
             tech_accuracy_score = 60.0
             tech_notes = "Answer lacks concrete technical entities to verify against standard architectural knowledge."
 
         # ---------------------------------------------------------------------
-        # 6. Evidence Consistency with Candidate Resume
+        # 6. Evidence Consistency with Candidate Resume & Metric Grounding
         # ---------------------------------------------------------------------
         grounding_warnings = []
+        resume_supported_claims = []
+        candidate_self_reported_claims = []
+        unsupported_claims = []
+        general_technical_explanations = []
+        truthful_disclosures = []
+
+        resume_corpus = ""
+        candidate_skills = set()
         if candidate_evidence:
             candidate_skills = {
                 s.lower().strip() for s in (
@@ -374,22 +471,90 @@ class HeuristicAnswerEvaluator:
                     candidate_evidence.get("all_skills", [])
                 )
             }
-            # Check if user claimed technologies completely absent from candidate's extracted profile
+            proj_texts = [
+                str(p.get("description", "")) + " " + str(p.get("exact_excerpt", "")) + " " + str(p.get("confirmed_details", ""))
+                for p in candidate_evidence.get("projects", []) if isinstance(p, dict)
+            ]
+            intern_texts = [
+                str(i.get("description", "")) + " " + str(i.get("exact_excerpt", "")) + " " + str(i.get("confirmed_details", ""))
+                for i in candidate_evidence.get("internships", []) if isinstance(i, dict)
+            ]
+            resume_corpus = (
+                " ".join(proj_texts + intern_texts + [
+                    str(candidate_evidence.get("experience_summary", "")),
+                    str(candidate_evidence.get("education", ""))
+                ])
+            ).lower()
+
+            # Check unevidenced technologies
             for ent in matched_entities:
                 if ent not in candidate_skills and not any(ent in cs for cs in candidate_skills):
                     grounding_warnings.append(
                         f"Technology '{ent.capitalize()}' is mentioned in your answer but was not evidenced in your resume. Be ready to explain how you learned or applied it."
                     )
 
+        # Sentence-level achievement and metric grounding
+        metric_pat = re.compile(
+            r"\b\d+(?:\.\d+)?\s*(?:%|percent|ms|milliseconds?|seconds?|minutes?|hours?|users|queries|requests|req/s|rps|gb|mb|tb|records|rows|tests)(?![a-zA-Z0-9])",
+            re.IGNORECASE
+        )
+        personal_pat = re.compile(
+            r"\b(?:i|my\s+team|we|my\s+project|my\s+code|my\s+pipeline|my\s+implementation)\b.*?\b(?:achieved|improved|reduced|increased|boosted|optimized|scaled|cut|accelerated|delivered|handled|processed|served|decreased)\b",
+            re.IGNORECASE
+        )
+        disclosure_pat = re.compile(
+            r"\b(?:i\s+have\s+not\s+(?:yet\s+)?(?:deployed|worked|measured|used)|i\s+did\s+not\s+(?:measure|have|track)|this\s+was\s+(?:a\s+)?(?:coursework|academic|learning|practice|hobby)\s+project|do\s+not\s+have\s+(?:production|real-world)\s+metrics?|currently\s+learning|haven't\s+(?:yet\s+)?used)\b",
+            re.IGNORECASE
+        )
+        general_pat = re.compile(
+            r"\b(?:typically|generally|by\s+default|in\s+theory|standard|architecture|defined\s+as|complexity\s+is|runs\s+in|defaults?\s+to)\b",
+            re.IGNORECASE
+        )
+
+        for s in sentences:
+            s_lower = s.lower()
+            has_m = bool(metric_pat.search(s_lower))
+            is_personal = bool(personal_pat.search(s_lower)) or (
+                bool(re.search(r"\b(?:i|my|we)\b", s_lower)) and
+                bool(re.search(r"\b(?:achieved|improved|reduced|increased|boosted|optimized|scaled|cut|accelerated|delivered|handled|processed|served|decreased)\b", s_lower))
+            )
+            is_disclosure = bool(disclosure_pat.search(s_lower))
+            is_general = bool(general_pat.search(s_lower))
+
+            if is_disclosure:
+                truthful_disclosures.append(s)
+            elif is_personal and has_m:
+                metric_matches = metric_pat.findall(s_lower)
+                metric_in_resume = any(m.lower().strip() in resume_corpus for m in metric_matches) if resume_corpus else False
+                if metric_in_resume:
+                    resume_supported_claims.append(s)
+                elif candidate_evidence and resume_corpus:
+                    unsupported_claims.append(s)
+                    grounding_warnings.append(
+                        f"Achievement claim '{s}' asserts metrics not established by your submitted resume evidence. Avoid citing unverified numbers in interviews."
+                    )
+                else:
+                    candidate_self_reported_claims.append(s)
+            elif is_personal:
+                candidate_self_reported_claims.append(s)
+            elif has_m or is_general:
+                general_technical_explanations.append(s)
+
+        # Calculate consistency score
+        if candidate_evidence:
+            penalties = len(grounding_warnings) * 15.0
+            consistency_score = max(40.0, 100.0 - penalties)
             if grounding_warnings:
-                consistency_score = max(50.0, 100.0 - (len(grounding_warnings) * 15.0))
-                consistency_details = f"Caution: {len(grounding_warnings)} technical claim(s) lack grounding in your submitted resume."
+                consistency_details = f"Caution: {len(grounding_warnings)} claim(s) or technology mention(s) lack grounding in your submitted resume."
+                consistency_status = "warning"
             else:
                 consistency_score = 95.0
                 consistency_details = "Answer claims align cleanly with verified resume technologies and experiences."
+                consistency_status = "pass"
         else:
             consistency_score = 85.0
             consistency_details = "Standard question evaluation (candidate resume evidence not attached)."
+            consistency_status = "pass"
 
         # ---------------------------------------------------------------------
         # Overall Composite Score Calculation
@@ -439,7 +604,7 @@ class HeuristicAnswerEvaluator:
             "evidence_consistency": {
                 "score": consistency_score,
                 "weight_pct": 10,
-                "status": "pass" if not grounding_warnings else "warning",
+                "status": consistency_status,
                 "details": consistency_details
             }
         }
@@ -475,13 +640,22 @@ class HeuristicAnswerEvaluator:
         else:
             strengths.append(f"Covered all {len(sections_addressed)} parts of the {fw['name']} framework.")
 
+        if truthful_disclosures:
+            strengths.append(f"Candid and honest disclosure: '{truthful_disclosures[0]}'. Interviewers value transparency regarding practical constraints.")
+
+        if resume_supported_claims:
+            strengths.append(f"Resume-grounded achievement: '{resume_supported_claims[0]}' is substantiated by your submitted project records.")
+
         if evidence_detected:
-            evidence_parts = matched_entities[:4]
+            evidence_parts = [e.capitalize() for e in (verified_claims or recognized_claims)[:4]]
             if has_metrics:
                 evidence_parts.append("quantified result")
             strengths.append("Included concrete evidence: " + ", ".join(evidence_parts) + ".")
         else:
             improvements.append("Support your answer with a real project example, named tools, or a verified result.")
+
+        if unsupported_claims:
+            improvements.append("Avoid asserting unevidenced metrics or performance numbers that cannot be verified in your resume artifacts.")
 
         if has_duplicate_sentences:
             improvements.append("Avoid repeating the same sentence; make each sentence add new information.")
@@ -499,6 +673,17 @@ class HeuristicAnswerEvaluator:
             else "Moderate" if word_count >= 40 else "Brief"
         )
 
+        claims_analysis = {
+            "resume_supported_claims": resume_supported_claims,
+            "candidate_self_reported_claims": candidate_self_reported_claims,
+            "unsupported_claims": unsupported_claims,
+            "general_technical_explanations": general_technical_explanations,
+            "truthful_disclosures": truthful_disclosures,
+            "verified_technical_entities": verified_claims,
+            "recognized_technical_entities": recognized_claims,
+            "unverifiable_technical_entities": unverifiable_claims
+        }
+
         return {
             "evaluator_label": self.LABEL,
             "disclaimer": self.DISCLAIMER,
@@ -509,6 +694,7 @@ class HeuristicAnswerEvaluator:
             "score": overall_score,
             "individual_criterion_scores": criterion_scores,
             "criterion_scores": criterion_scores,
+            "claims_analysis": claims_analysis,
             "framework_adherence": {
                 "framework": fw["name"], "framework_id": fw_id,
                 "sections_addressed": sections_addressed,

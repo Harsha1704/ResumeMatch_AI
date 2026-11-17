@@ -38,8 +38,9 @@ def extract_candidate_evidence(analysis_data: Optional[Dict[str, Any]]) -> Dict[
             "experience_summary": "Professional experience not established from available resume data."
         }
 
-    projects_raw = analysis_data.get("projects") or analysis_data.get("relevant_projects") or []
-    internships_raw = analysis_data.get("internships") or analysis_data.get("experience") or []
+    cand_profile = analysis_data.get("candidate_profile") or {} if isinstance(analysis_data.get("candidate_profile"), dict) else {}
+    projects_raw = analysis_data.get("projects") or analysis_data.get("relevant_projects") or cand_profile.get("projects") or cand_profile.get("relevant_projects") or []
+    internships_raw = analysis_data.get("internships") or analysis_data.get("experience") or cand_profile.get("internships") or cand_profile.get("experience") or []
 
     # Clean projects
     cleaned_projects = []

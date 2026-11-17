@@ -5,12 +5,15 @@ Ensures strict session isolation without leaking private data across users.
 Persists session state and history to durable SQLite storage.
 """
 
+import logging
 import time
 import uuid
 from typing import Dict, List, Any, Optional
 
 from .answer_evaluator import HeuristicAnswerEvaluator
 from .session_store import get_interview_session_store
+
+logger = logging.getLogger(__name__)
 
 # In-memory storage for active practice sessions keyed by session_id
 ACTIVE_SESSIONS: Dict[str, "InterviewSession"] = {}
@@ -242,7 +245,8 @@ class InterviewSession:
             "questions": self.questions,
             "answers": self.answers,
             "evaluations": self.evaluations,
-            "results_summary": summary or (self.get_results_summary() if self.is_completed else None)
+            "results_summary": summary or (self.get_results_summary() if self.is_completed else None),
+            "candidate_evidence": self.candidate_evidence or {}
         }
 
     @classmethod
@@ -256,7 +260,8 @@ class InterviewSession:
             interview_mode=data.get("interview_mode", "mixed"),
             difficulty=data.get("difficulty", "all"),
             owner_id=data.get("owner_id", "anonymous"),
-            session_id=data.get("session_id")
+            session_id=data.get("session_id"),
+            candidate_evidence=data.get("candidate_evidence") or {}
         )
         session.created_at = data.get("created_at", time.time())
         session.updated_at = data.get("updated_at", session.created_at)
@@ -266,14 +271,17 @@ class InterviewSession:
         session.current_index = data.get("current_index", 0)
         session.answers = data.get("answers", {})
         session.evaluations = data.get("evaluations", {})
+        session.candidate_evidence = data.get("candidate_evidence") or {}
         return session
 
-    def _save_to_store(self, summary: Optional[Dict[str, Any]] = None):
+    def _save_to_store(self, summary: Optional[Dict[str, Any]] = None) -> bool:
+        """Persists current session state to durable SQLite storage."""
         try:
             store = get_interview_session_store()
-            store.save_session(self.to_dict(summary=summary))
-        except Exception:
-            pass
+            return store.save_session(self.to_dict(summary=summary))
+        except Exception as e:
+            logger.error("Failed to persist interview session %s to store: %s", self.session_id, e, exc_info=True)
+            raise
 
 
 class InterviewSessionManager:
@@ -363,8 +371,9 @@ class InterviewSessionManager:
                     deleted = cursor.rowcount > 0
                     conn.commit()
                     return deleted
-        except Exception:
-            return True
+        except Exception as e:
+            logger.error("Failed to delete interview session %s: %s", session_id, e, exc_info=True)
+            raise
 
     @staticmethod
     def list_sessions(owner_id: str, analysis_id: Optional[str] = None, limit: int = 50) -> List[Dict[str, Any]]:
