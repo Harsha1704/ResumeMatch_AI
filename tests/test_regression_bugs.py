@@ -409,9 +409,11 @@ def test_dataset_percentage_denominators():
 def test_consistent_counts_across_views():
     app.config["TESTING"] = True
     with app.test_client() as client:
+        tok = client.get("/api/csrf-token").get_json()["csrf_token"]
         form_data = {
             "resume_text": "Experienced Python and Docker developer with SQL skills.",
-            "job_description": "Required: Python, Docker, Kubernetes, AWS. Preferred: Redis."
+            "job_description": "Required: Python, Docker, Kubernetes, AWS. Preferred: Redis.",
+            "csrf_token": tok
         }
         resp = client.post("/analyze", data=form_data, follow_redirects=False)
         assert resp.status_code == 302

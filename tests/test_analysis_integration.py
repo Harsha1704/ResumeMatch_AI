@@ -24,10 +24,12 @@ def test_analyze_page_get(client):
 
 def test_analyze_flow_with_pasted_text(client):
     """Verify POST /analyze with pasted text processes and redirects to /results."""
+    tok = client.get("/api/csrf-token").get_json()["csrf_token"]
     form_data = {
         "resume_text": "Senior Developer with 6 years experience in Python, Django, SQL, and Docker.",
         "job_description": "Wanted: Senior Python Engineer with Python, Django, Docker, and Kubernetes. Minimum 5 years exp.",
-        "target_role": "Platform Automation Engineer"
+        "target_role": "Platform Automation Engineer",
+        "csrf_token": tok
     }
 
     resp = client.post("/analyze", data=form_data, follow_redirects=False)
@@ -57,9 +59,11 @@ def test_analyze_flow_with_uploaded_file(client):
     file_content = b"Data Scientist with 3 years of experience in Python, Machine Learning, and PyTorch."
     file_bytes = (io.BytesIO(file_content), "candidate_resume.txt")
 
+    tok = client.get("/api/csrf-token").get_json()["csrf_token"]
     form_data = {
         "resume_file": file_bytes,
-        "job_description": "Data Scientist required with Python, Machine Learning, Scikit-learn, and AWS."
+        "job_description": "Data Scientist required with Python, Machine Learning, Scikit-learn, and AWS.",
+        "csrf_token": tok
     }
 
     resp = client.post("/analyze", data=form_data, content_type="multipart/form-data", follow_redirects=False)
@@ -69,7 +73,8 @@ def test_analyze_flow_with_uploaded_file(client):
 
 def test_empty_submission_validation(client):
     """Verify submitting empty form triggers redirect back with warning."""
-    resp = client.post("/analyze", data={}, follow_redirects=True)
+    tok = client.get("/api/csrf-token").get_json()["csrf_token"]
+    resp = client.post("/analyze", data={"csrf_token": tok}, follow_redirects=True)
     assert resp.status_code == 200
     # Should stay on analyze page
     assert b"Target Job Description" in resp.data
@@ -87,9 +92,11 @@ def test_unauthorized_session_access_protection():
     app.config["TESTING"] = False
     with app.test_client() as c1:
         # Submit analysis in session 1
+        tok1 = c1.get("/api/csrf-token").get_json()["csrf_token"]
         form_data = {
             "resume_text": "Python Developer with 3 years experience.",
-            "job_description": "Seeking Python engineer with 2 years experience."
+            "job_description": "Seeking Python engineer with 2 years experience.",
+            "csrf_token": tok1
         }
         res1 = c1.post("/analyze", data=form_data, follow_redirects=False)
         assert res1.status_code == 302
@@ -112,10 +119,12 @@ def test_unauthorized_session_access_protection():
 
 def test_target_role_length_validation(client):
     """Reject overly long role overrides before running model inference."""
+    tok = client.get("/api/csrf-token").get_json()["csrf_token"]
     form_data = {
         "resume_text": "Senior Developer with Python and Docker experience.",
         "job_description": "Python developer required with Python and Docker.",
         "target_role": "A" * 121,
+        "csrf_token": tok
     }
     response = client.post("/analyze", data=form_data, follow_redirects=True)
     assert response.status_code == 200

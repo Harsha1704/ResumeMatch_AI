@@ -161,11 +161,10 @@ def index():
 def analyze():
     """Resume analysis and compatibility prediction endpoint."""
     if request.method == "POST":
-        # 1. CSRF Protection
-        csrf_token = request.form.get("csrf_token")
-        if not validate_csrf_token(csrf_token) and not app.config.get("TESTING"):
-            flash("Security check failed: CSRF token missing or invalid. Please refresh the page.", "danger")
-            return redirect(url_for("analyze"))
+        # 1. CSRF Protection: fail-closed enforcement
+        csrf_err = _validate_csrf()
+        if csrf_err:
+            return csrf_err
 
         # 2. Rate Limiting
         client_ip = request.remote_addr or "127.0.0.1"
@@ -766,6 +765,11 @@ def interview_studio():
 @app.route("/interview-studio/generate", methods=["POST"])
 def interview_studio_generate():
     """Generates questions with selected parameters or transitions into Practice Mode."""
+    # CSRF Protection: fail-closed enforcement
+    csrf_err = _validate_csrf()
+    if csrf_err:
+        return csrf_err
+
     analysis = _get_active_analysis()
     generator = InterviewQuestionGenerator(analysis)
     evidence = generator.evidence
@@ -864,6 +868,11 @@ def interview_practice():
 @app.route("/interview-practice/submit", methods=["POST"])
 def interview_practice_submit():
     """Saves practice answer and navigates next, prev, or finish."""
+    # CSRF Protection: fail-closed enforcement
+    csrf_err = _validate_csrf()
+    if csrf_err:
+        return csrf_err
+
     session_id = request.form.get("session_id")
     practice_session = InterviewSessionManager.get_session(session_id)
     if not practice_session:

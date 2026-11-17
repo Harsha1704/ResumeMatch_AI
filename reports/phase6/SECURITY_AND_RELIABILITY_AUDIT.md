@@ -46,11 +46,12 @@ All discovered security vulnerabilities were eliminated with minimal safe code m
   - Added `"Accept"` to allowed request headers in CORS.
 - **Verification**: Verified by `test_06_cors_configuration_and_preflight_headers` and `test_08_interview_session_ownership_and_safe_deletion_csrf`.
 
-### 2.3 State-Changing CSRF Enforcement & Token Delivery (Phase 6.1 Hardening) — RESOLVED & VERIFIED
+### 2.3 State-Changing CSRF Enforcement, Token Delivery & Legacy Mutation Hardening (Phase 6.1 & Phase 6.2) — RESOLVED & VERIFIED
 - **Vulnerability & Challenge**:
   - The React frontend is deployed separately (Vercel CDN) from the Flask API backend (Render).
   - Previous implementations relied on template injection for CSRF tokens or attempted to read `csrf_token` from `document.cookie` or meta tags.
   - Because `SESSION_COOKIE_HTTPONLY = True`, JavaScript cannot read the session cookie, and a static SPA on Vercel does not have server-side rendered meta tags.
+  - Legacy HTML form routes (`POST /analyze`, `POST /interview-studio/generate`, `POST /interview-practice/submit`) were initially unvalidated for CSRF, leaving legacy session-backed workflows open to cross-site request forgery.
   - Furthermore, previous validations contained test-mode bypasses (`if not is_testing`), allowing mutations without valid CSRF tokens during automated test runs.
 - **Architectural Remediation**:
   1. **Session-Bound Token Delivery Endpoint (`GET /api/csrf-token`)**:
@@ -59,34 +60,76 @@ All discovered security vulnerabilities were eliminated with minimal safe code m
      - Cross-origin credentialed requests from whitelisted frontend origins receive the token alongside the `HttpOnly` session cookie (`SameSite=None, Secure=True` in production; `SameSite=Lax` in development).
   2. **Universal Fail-Closed CSRF Validation (`_validate_csrf`)**:
      - Implemented unified, fail-closed CSRF validator `_validate_csrf(data=None)`.
-     - Checks `X-CSRF-Token` request header, JSON body `csrf_token`, or multipart form field `csrf_token`.
+     - Checks `X-CSRF-Token` request header, JSON body `csrf_token`, or multipart/urlencoded form field `csrf_token`.
      - Validates in constant time against `session.get("csrf_token")` using `secrets.compare_digest`.
      - Rejects non-string inputs safely to prevent type confusion vulnerabilities.
-     - **Removed all testing bypasses**: Validation is strictly enforced across ALL environments including `app.config["TESTING"] = True`. Missing, invalid, or cross-session mismatched tokens strictly return `403 Forbidden` (`{"status": "error", "message": "CSRF token missing or invalid"}`).
-  3. **Universal Endpoint Coverage**:
-     - Audited and applied `_validate_csrf` to all 13 state-changing mutation endpoints:
-       - `/api/analyze` (JSON & multipart file upload)
-       - `/api/mentor/update-name`
-       - `/api/mentor/progress`
-       - `/api/mentor/reset-progress`
-       - `/api/candidate/update-role`
-       - `/api/candidate/confirm-education`
-       - `/api/career-mentor/evaluate-role`
-       - `/api/interview-studio/generate`
-       - `/api/interview/sessions` (POST)
-       - `/api/interview/sessions/<session_id>` (DELETE)
-       - `/api/interview-practice/submit`
-       - `/api/interview/confirm-activity`
-       - `/api/interview/reset`
-       - `/api/interview/evaluate`
-     - Documented stateless exception: `/api/match` is explicitly unauthenticated, read-only/stateless ML inference protected by IP rate limiting without session mutations.
-  4. **React Client In-Memory Token Management (`frontend/src/services/api.ts`)**:
+     - **Removed all testing bypasses**: Validation is strictly enforced across ALL environments including `app.config["TESTING"] = True`. Missing, invalid, or cross-session mismatched tokens strictly return `403 Forbidden` (`{"status": "error", "message": "CSRF token missing or invalid"}` for API requests or HTTP 403 Forbidden with description for HTML form submissions).
+  3. **Universal Endpoint Coverage & Full Mutation Inventory**:
+     - Audited and applied `_validate_csrf` to all 17 state-changing mutation endpoints (14 JSON/multipart API routes and 3 legacy HTML form routes):
+       - `POST /analyze` (Legacy HTML form & file upload; mutates session `allowed_analyses` and cache)
+       - `POST /interview-studio/generate` (Legacy HTML form; generates interview session and mutates active session)
+       - `POST /interview-practice/submit` (Legacy HTML form; records practice answer in SQLite store)
+       - `POST /api/analyze` (JSON & multipart file upload; mutates session `allowed_analyses` and cache)
+       - `POST /api/mentor/update-name` (JSON; mutates session preferred name)
+       - `POST /api/mentor/progress` (JSON; mutates milestone tracking)
+       - `POST /api/mentor/reset-progress` (JSON; resets session milestone tracking)
+       - `POST /api/candidate/update-role` (JSON; mutates session target role)
+       - `POST /api/candidate/confirm-education` (JSON; mutates session education attestation)
+       - `POST /api/career-mentor/evaluate-role` (JSON; reads session dossier, mutates career mentor context)
+       - `POST /api/interview-studio/generate` (JSON; creates SQLite session, mutates `active_interview_session_id`)
+       - `POST /api/interview/sessions` (POST; creates SQLite practice session & ownership)
+       - `DELETE /api/interview/sessions/<session_id>` (DELETE; deletes SQLite practice session)
+       - `POST /api/interview-practice/submit` (JSON; persists answers in SQLite store)
+       - `POST /api/interview/confirm-activity` (JSON; mutates session candidate confirmations)
+       - `POST /api/interview/reset` (JSON; resets SQLite store & active session)
+       - `POST /api/interview/evaluate` (JSON; AJAX evaluator bound to active session)
+     - **Documented Safe Exception (`POST /api/match`)**:
+       - `POST /api/match` is an unauthenticated, stateless ML inference endpoint. It accepts a resume string and job description string and returns match score and predicted class. It neither reads nor mutates Flask sessions, cookies, or database records. It is protected against abuse by a strict sliding-window IP rate limiter (`api_rate_limiter`, 60 req/min). Bypassing CSRF for this endpoint is standard, safe, and necessary for external programmatic integrations.
+  4. **React Client In-Memory Fail-Closed Token Management (`frontend/src/services/api.ts`)**:
      - Implemented `getCsrfToken()`, `fetchCsrfToken()`, and `clearCsrfToken()`.
      - Retains token safely in memory (no insecure localStorage or client-side plain-text cookie persistence).
-     - Automatically fetches token on first mutation, caches it for subsequent calls, and attaches `X-CSRF-Token` header.
-     - Both `fetchJson` and `analyzeResume` automatically attach the header on mutating requests (`POST`, `PUT`, `PATCH`, `DELETE`).
-     - On any 403 Forbidden response, `clearCsrfToken()` clears the cached token to allow clean re-acquisition.
-- **Verification**: Verified by dedicated adversarial suite [`tests/test_phase6_1_csrf_security.py`](file:///d:/skillsync1/tests/test_phase6_1_csrf_security.py) (41 test cases covering missing token, invalid token, cross-session token forgery, legitimate mutations, multipart uploads, and cross-origin preflight).
+     - **Fail-Closed Enforcement**: If CSRF token retrieval fails or returns empty, mutations are aborted immediately *before* calling `fetch` on the mutation endpoint. No unauthenticated or tokenless request is transmitted.
+     - On 403 Forbidden responses, `clearCsrfToken()` clears the cached token without automatically retrying or replaying mutations (mutations must never be replayed without explicit user intent).
+     - Both `fetchJson` and `analyzeResume` enforce fail-closed token retrieval and attach `X-CSRF-Token` header.
+  5. **Legacy HTML Form Template Hardening**:
+     - Embedded `<input type="hidden" name="csrf_token" value="{{ csrf_token }}">` into all form blocks across `templates/interview_studio.html`, `templates/interview_practice.html`, and `templates/analyze.html`.
+- **Verification**: Verified by dedicated adversarial suites:
+  - [`tests/test_phase6_1_csrf_security.py`](file:///d:/skillsync1/tests/test_phase6_1_csrf_security.py) (41 test cases covering API token delivery, JSON/multipart validation, and cross-session isolation).
+  - [`tests/test_phase6_2_legacy_csrf.py`](file:///d:/skillsync1/tests/test_phase6_2_legacy_csrf.py) (13 test cases covering legacy form routes, cross-session rejection, and multi-mutation session continuity).
+  - [`frontend/tests/api_csrf.test.mjs`](file:///d:/skillsync1/frontend/tests/api_csrf.test.mjs) (6 unit tests verifying fail-closed token retrieval aborts mutations, header attachment, in-memory caching, and 403 clearing without auto-replay).
+
+### 2.4 Production Browser Cookie Compatibility Analysis — VERIFIED & DOCUMENTED
+- **Cross-Site Context**:
+  - The production single-page application is hosted at `https://resumematch-ai.vercel.app` (Vercel CDN).
+  - The production REST API backend is hosted at `https://resumematch-ai-api.onrender.com` (Render).
+  - Because `vercel.app` and `onrender.com` are distinct entries on the Public Suffix List (PSL), requests from the Vercel app to the Render API are classified by modern browsers as **cross-site (third-party)**.
+- **Browser Behavior Across Modern Engines**:
+  1. **Safari (Apple WebKit / Intelligent Tracking Prevention - ITP)**:
+     - By default, Safari blocks all third-party cookies regardless of `SameSite=None; Secure`.
+     - When Safari visits `resumematch-ai.vercel.app`, any `Set-Cookie` header issued by `resumematch-ai-api.onrender.com` is stripped or partitioned. Subsequent credentialed requests omit the session cookie, causing session loss and CSRF token mismatches.
+  2. **Chrome / Chromium (Google Privacy Sandbox & Tracking Protection)**:
+     - Google is rolling out Tracking Protection, which restricts third-party cookies by default for a growing percentage of users and partitions them under CHIPS (`Partitioned` attribute). Without CHIPS or same-site apex, cross-site cookies are blocked.
+  3. **Firefox (Mozilla Gecko / Total Cookie Protection - ETP)**:
+     - Firefox assigns each top-level website a separate cookie jar (cookie partitioning). While cross-site cookies with `SameSite=None; Secure` may work within a single site's partition, third-party cookie restrictions frequently drop cookies in incognito or privacy-enhanced modes.
+- **Recommended Production Architectures (Zero-Code / DNS-Level Resolutions)**:
+  - *Per strict guidelines, production domains were not altered. The following two standard architectures are documented for deployment administrators:*
+  - **Architecture 1: Same-Site Custom Domains (Recommended)**
+    - Point both the frontend and backend to custom subdomains sharing the same registrable apex domain:
+      - Frontend: `https://app.resumematch.ai`
+      - Backend: `https://api.resumematch.ai`
+    - Configure Flask session cookie domain: `SESSION_COOKIE_DOMAIN = ".resumematch.ai"` and `SESSION_COOKIE_SAMESITE = "Lax"`.
+    - Under this architecture, requests between `app.resumematch.ai` and `api.resumematch.ai` are **same-site (first-party)**. Safari ITP, Chrome Tracking Protection, and Firefox Total Cookie Protection never block same-site cookies, completely eliminating the cross-site cookie problem.
+  - **Architecture 2: Reverse Proxy / Vercel API Rewrites**
+    - Configure Vercel URL rewrites in `frontend/vercel.json`:
+      ```json
+      {
+        "rewrites": [
+          { "source": "/api/:path*", "destination": "https://resumematch-ai-api.onrender.com/api/:path*" }
+        ]
+      }
+      ```
+    - The browser makes requests strictly to `https://resumematch-ai.vercel.app/api/...`.
+    - The browser treats all requests as 100% same-origin (`resumematch-ai.vercel.app`). No cross-site or third-party cookies are involved. Session cookies are delivered as first-party `SameSite=Lax` cookies, with zero browser compatibility friction.
 
 ### 2.4 Document Parsing Limits & Archive Bomb Protection — VERIFIED
 - **File Upload Limits**:
@@ -130,3 +173,30 @@ All discovered security vulnerabilities were eliminated with minimal safe code m
 | **Persistence & Concurrency** | **PASS** | SQLite WAL mode, 30s busy timeout, atomic rollback on persistence failure |
 | **Information Disclosure** | **PASS** | Sanitized error responses, zero stack trace leakage, zero LLM prompt injection surface |
 | **Machine Learning Safety** | **PASS** | Frozen model artifact SHA256 verification, zero LLM runtime dependency, deterministic scoring |
+
+---
+
+## 4. Complete Mutating Endpoint Inventory (18 Routes Total)
+
+The following inventory details all state-changing endpoints in ResumeMatch AI (`POST`, `PUT`, `PATCH`, `DELETE`), their payload formats, state mutation behavior, session dependency, and CSRF protection mechanisms:
+
+| # | Route | Method | Payload Format | Mutates State | Session Auth | CSRF Enforced | Security Notes & Exception Justification |
+| :---: | :--- | :---: | :--- | :---: | :---: | :---: | :--- |
+| 1 | `POST /analyze` | POST | Form (multipart / urlencoded) | Yes | Yes | **Yes** (`_validate_csrf`) | Legacy HTML resume submission. Mutates `session["allowed_analyses"]` and server analysis cache. Protected with fail-closed CSRF validation; rejected with 403 Forbidden on missing/invalid token. |
+| 2 | `POST /interview-studio/generate` | POST | Form (urlencoded) | Yes | Yes | **Yes** (`_validate_csrf`) | Legacy HTML studio question generation and practice initialization. Mutates SQLite session store and `session["active_interview_session_id"]`. Protected with fail-closed CSRF validation. |
+| 3 | `POST /interview-practice/submit` | POST | Form (urlencoded) | Yes | Yes | **Yes** (`_validate_csrf`) | Legacy HTML practice answer submission. Mutates SQLite practice answer records and navigates. Protected with fail-closed CSRF validation. |
+| 4 | `POST /api/analyze` | POST | JSON / Multipart Form | Yes | Yes | **Yes** (`_validate_csrf`) | Core SPA resume analysis endpoint. Mutates `session["allowed_analyses"]` and in-memory cache. Enforces fail-closed CSRF via header or form field. |
+| 5 | `POST /api/candidate/confirm-education` | POST | JSON | Yes | Yes | **Yes** (`_validate_csrf`) | Candidate education attestation. Mutates `session["candidate_confirmations"]`. |
+| 6 | `POST /api/candidate/update-role` | POST | JSON | Yes | Yes | **Yes** (`_validate_csrf`) | Target position update. Mutates `session["candidate_target_role"]` (capped at 120 chars). |
+| 7 | `POST /api/career-mentor/evaluate-role` | POST | JSON | Yes | Yes | **Yes** (`_validate_csrf`) | Role alignment evaluation. Reads authorized session dossier; mutates mentor context (capped at 100 chars). |
+| 8 | `POST /api/interview-practice/submit` | POST | JSON | Yes | Yes | **Yes** (`_validate_csrf`) | Submits candidate answer. Mutates SQLite session store and answer history. |
+| 9 | `POST /api/interview-studio/generate` | POST | JSON | Yes | Yes | **Yes** (`_validate_csrf`) | Generates interview questions, binds candidate evidence, and creates SQLite practice session. Mutates `session["active_interview_session_id"]`. |
+| 10 | `POST /api/interview/confirm-activity` | POST | JSON | Yes | Yes | **Yes** (`_validate_csrf`) | Confirms candidate project/internship activity. Mutates `session["candidate_confirmations"]`. |
+| 11 | `POST /api/interview/evaluate` | POST | JSON | Yes | Yes | **Yes** (`_validate_csrf`) | AJAX instant answer scoring. Bound to active session; evaluates claim grounding against candidate evidence. |
+| 12 | `POST /api/interview/reset` | POST | JSON | Yes | Yes | **Yes** (`_validate_csrf`) | Resets active interview session and clears practice answers in SQLite store. |
+| 13 | `POST /api/interview/sessions` | POST | JSON | Yes | Yes | **Yes** (`_validate_csrf`) | Creates new Interview Practice session in SQLite store; binds ownership to `session["interview_owner_id"]`. |
+| 14 | `DELETE /api/interview/sessions/<session_id>` | DELETE | None (URL parameter) | Yes | Yes | **Yes** (`_validate_csrf`) | Permanently deletes SQLite interview session. Enforces session ownership check (`interview_owner_id`) and CSRF validation. |
+| 15 | `POST /api/mentor/progress` | POST | JSON | Yes | Yes | **Yes** (`_validate_csrf`) | Updates career roadmap milestone completion checkboxes. Mutates session milestone progress tracker. |
+| 16 | `POST /api/mentor/reset-progress` | POST | JSON | Yes | Yes | **Yes** (`_validate_csrf`) | Resets career roadmap milestone tracker. Mutates session progress dictionary. |
+| 17 | `POST /api/mentor/update-name` | POST | JSON | Yes | Yes | **Yes** (`_validate_csrf`) | Updates candidate display name. Mutates `session["candidate_preferred_name"]`. |
+| 18 | `POST /api/match` | POST | JSON | **No** | **No** | **No (Safe Exception)** | **Stateless ML Inference Exception**: Programmatic matching endpoint. Accepts `{resume_text, job_description}` and runs frozen TF-IDF + Logistic Regression inference. It does NOT read or mutate Flask sessions, cookies, or database records. Protected by a sliding-window IP rate limiter (`api_rate_limiter`, 60 req/min). Bypassing CSRF is safe, necessary, and standard for external programmatic API consumers. |

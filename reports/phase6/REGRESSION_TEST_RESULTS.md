@@ -13,13 +13,15 @@ All test suites were executed on Python 3.14 (Backend) and Node.js / Vite 8 (Fro
 
 | Test Suite / Quality Gate | Execution Command | Result | Duration | Exit Code |
 | :--- | :--- | :--- | :--- | :--- |
+| **Dedicated Phase 6.2 Legacy Routes CSRF Suite** | `py -3.14 -m pytest tests/test_phase6_2_legacy_csrf.py -v` | **13 passed** | 2.75s | `0` |
 | **Dedicated Phase 6.1 CSRF & API Security Suite** | `py -3.14 -m pytest tests/test_phase6_1_csrf_security.py -v` | **41 passed** | 2.92s | `0` |
 | **Dedicated Phase 6 Integration Suite** | `py -3.14 -m pytest tests/test_phase6_integration_audit.py -v` | **9 passed** | 3.40s | `0` |
 | **Dedicated Phase 5 Interview Studio Suite** | `py -3.14 -m pytest tests/test_phase5_interview_studio.py -v` | **38 passed** | 2.06s | `0` |
 | **All Interview Studio Suites** | `py -3.14 -m pytest tests/test_phase5_interview_studio.py tests/test_interview_studio.py tests/test_phase2_1_interview_grounding.py tests/test_interview_educational_depth.py -v` | **86 passed** | 3.23s | `0` |
-| **Cumulative Phase 1–6.1 Regression Suites** | `powershell -Command "py -3.14 -m pytest (Get-ChildItem tests/test_phase*.py) -q"` | **473 passed** | 98.85s | `0` |
-| **Full Backend Regression Suite** | `py -3.14 -m pytest tests/ -q` | **746 passed**, 1 pre-existing warning | 125.10s | `0` |
-| **Frontend Production Build** | `npm.cmd run build --prefix frontend` | **Success** (built in 470ms, 0 errors) | 0.47s | `0` |
+| **Cumulative Phase 1–6.2 Regression Suites** | `powershell -Command "py -3.14 -m pytest (Get-ChildItem tests/test_phase*.py) -q"` | **486 passed** | 99.89s | `0` |
+| **Full Backend Regression Suite** | `py -3.14 -m pytest tests/ -q` | **759 passed**, 1 pre-existing warning | ~125s | `0` |
+| **Frontend CSRF Unit Tests (Node)** | `npm test --prefix frontend` | **6 passed** | 0.09s | `0` |
+| **Frontend Production Build** | `npm.cmd run build --prefix frontend` | **Success** (built in 453ms, 0 errors) | 0.45s | `0` |
 | **Frontend Static Analysis & Lint** | `npm.cmd run lint --prefix frontend` | **Clean** (0 errors, 33 pre-existing style warnings) | 0.02s | `0` |
 
 ---
@@ -47,6 +49,7 @@ All test suites were executed on Python 3.14 (Backend) and Node.js / Vite 8 (Fro
 | `tests/test_phase5_interview_studio.py` | 38 | Interview Studio session persistence, SQLite rollback, numeric precision, unit token boundaries, compound rate ordering |
 | `tests/test_phase6_integration_audit.py` | 9 | End-to-end 10-module contract integrity, BOLA 403 isolation, CORS preflight with DELETE, ML scoring determinism |
 | `tests/test_phase6_1_csrf_security.py` | 41 | Fail-closed CSRF enforcement, GET /api/csrf-token, X-CSRF-Token validation on 13 endpoints, cross-session isolation |
+| `tests/test_phase6_2_legacy_csrf.py` | 13 | Legacy form routes CSRF enforcement (POST /analyze, /interview-studio/generate, /interview-practice/submit), multi-mutation session continuity |
 | `tests/test_phase7e_dual_unseen_training.py` | 8 | Dual-unseen data splits, zero leakage guards, group-disjoint validation |
 | `tests/test_phase10_quality_audit.py` | 25 | Quality audit, human-in-the-loop review package verification |
 | `tests/test_phase12f_automated_learning.py` | 18 | Contrastive loss, hard-negative mining, embedding validation |
@@ -70,4 +73,4 @@ All test suites were executed on Python 3.14 (Backend) and Node.js / Vite 8 (Fro
 | `tests/test_phase12i11_statistical_audit.py` | 4 | Final statistical audit |
 | `tests/test_phase12i12_statistical_verification.py` | 4 | Forensic reproducibility |
 | `tests/test_phase13_model_improvement.py` | 12 | Model 5 challenger evaluation and comparison gates |
-| **Total Phase Tests** | **473** | **100% Passed (0 Failed, 0 Skipped)** |
+| **Total Phase Tests** | **486** | **100% Passed (0 Failed, 0 Skipped)** |

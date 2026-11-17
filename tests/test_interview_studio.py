@@ -370,11 +370,13 @@ def test_23_flask_routes_integration():
     assert b"Interview Intelligence Studio" in resp.data
 
     # 2. Studio question generation
+    tok = client.get("/api/csrf-token").get_json()["csrf_token"]
     resp_gen = client.post("/interview-studio/generate", data={
         "category": "E",
         "difficulty": "Easy",
         "max_questions": "5",
-        "action": "generate"
+        "action": "generate",
+        "csrf_token": tok
     })
     assert resp_gen.status_code == 200
 
@@ -383,7 +385,8 @@ def test_23_flask_routes_integration():
         "category": "ALL",
         "difficulty": "Medium",
         "max_questions": "5",
-        "action": "practice"
+        "action": "practice",
+        "csrf_token": tok
     }, follow_redirects=True)
     assert resp_prac.status_code == 200
     assert b"Your Interview Answer:" in resp_prac.data
@@ -538,9 +541,10 @@ def test_30_practice_mode_concept_tracking():
 def test_31_practice_single_question_route():
     """31. Verify launching practice mode for a specific question ID."""
     client = app.test_client()
+    tok = client.get("/api/csrf-token").get_json()["csrf_token"]
     resp = client.post(
         "/interview-studio/generate",
-        data={"action": "practice_single", "question_id": "tb_py_01"},
+        data={"action": "practice_single", "question_id": "tb_py_01", "csrf_token": tok},
         follow_redirects=True
     )
     assert resp.status_code == 200

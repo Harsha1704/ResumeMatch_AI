@@ -26,10 +26,13 @@ Phase 6 constitutes the comprehensive final integration, end-to-end regression a
 10. **Dataset Explorer** (`/datasets`)
 
 ### Primary Audit Verdict
-- **Backend Core**: 100% pass across 705 unit, regression, and integration tests (zero failures, 1 pre-existing SVD variance division warning in scikit-learn).
-- **Cumulative Phase Regression**: 100% pass across 432 phase-specific adversarial regression tests (`test_phase*.py`).
-- **Frontend SPA**: React 19 + TypeScript + Vite 8 production build succeeded in 474ms with 0 errors; Oxlint static analysis clean (0 errors, 33 pre-existing style/unused-var warnings).
+- **Backend Core**: 100% pass across 759 unit, regression, and integration tests (zero failures, 1 pre-existing SVD variance division warning in scikit-learn).
+- **Cumulative Phase Regression**: 100% pass across 486 phase-specific adversarial regression tests (`test_phase*.py`).
+- **Frontend SPA**: React 19 + TypeScript + Vite 8 production build succeeded in 453ms with 0 errors; Oxlint static analysis clean (0 errors, 33 pre-existing style/unused-var warnings); 6 Node unit tests for fail-closed CSRF pass.
 - **Cross-Session Security**: Eliminated authorization bypass and Broken Object Level Authorization (BOLA/IDOR) on `/api/analysis/<id>` and `/api/skill-gap`, establishing unified 403 Forbidden enforcement across all four analysis-consuming endpoints.
+- **Fail-Closed CSRF Protection (Phase 6.1 & 6.2)**: 17 state-changing endpoints strictly validated against session-bound CSRF tokens without testing bypasses (including legacy HTML form routes `POST /analyze`, `POST /interview-studio/generate`, and `POST /interview-practice/submit`); 1 documented stateless exception (`POST /api/match`).
+- **Frontend Fail-Closed Token Retrieval**: React client (`frontend/src/services/api.ts`) aborts mutating requests before calling fetch if CSRF token retrieval fails; 403 responses clear cached tokens without auto-replay.
+- **Production Browser Cookie Compatibility**: Evaluated cross-site `SameSite=None; Secure` limitations under Safari ITP, Chrome Privacy Sandbox, and Firefox ETP; documented zero-code Same-Site Custom Domain and Vercel Reverse Proxy architectures.
 - **CORS & Preflight**: Added `DELETE` and `PUT` to Flask-CORS allowed methods, and updated React `api.ts` to `credentials: 'include'` for reliable cross-origin session continuity between Vercel and Render.
 - **Vercel CI Failure**: Root cause diagnosed and verified with concrete structural and deployment evidence.
 
@@ -143,8 +146,12 @@ To resolve the failing `resumematch_ai` Vercel check without modifying code:
 | File | Defect Identified | Root Cause | Implemented Resolution |
 | :--- | :--- | :--- | :--- |
 | [`app.py`](file:///d:/skillsync1/app.py) | BOLA / IDOR on `/api/analysis/<id>` and `/api/skill-gap` | Endpoints did not verify `session["allowed_analyses"]` for requested IDs | Implemented `_resolve_authorized_analysis(aid)` returning 403 Forbidden for foreign IDs and 404 for non-existent IDs. |
+| [`app.py`](file:///d:/skillsync1/app.py) | Unprotected legacy HTML mutation routes | `POST /analyze`, `POST /interview-studio/generate`, and `POST /interview-practice/submit` lacked CSRF validation | Applied fail-closed `_validate_csrf()` returning 403 Forbidden on missing/invalid tokens. |
 | [`app.py`](file:///d:/skillsync1/app.py) | CORS preflight rejection on `DELETE` | `methods` in Flask-CORS only allowed `["GET", "POST", "OPTIONS"]` | Added `"DELETE"` and `"PUT"` to allowed methods; added `"Accept"` to allowed headers. |
-| [`frontend/src/services/api.ts`](file:///d:/skillsync1/frontend/src/services/api.ts) | Cross-origin session cookie dropping | `fetchJson` set `credentials: 'omit'`; `analyzeResume` omitted credentials | Changed to `credentials: 'include'` on all API calls and attached CSRF tokens to resume uploads. |
+| [`frontend/src/services/api.ts`](file:///d:/skillsync1/frontend/src/services/api.ts) | Cross-origin session cookie dropping & non-fail-closed CSRF | `credentials: 'omit'` and continuing mutations after CSRF token fetch failure | Changed to `credentials: 'include'`; abort mutations immediately before fetch if CSRF token retrieval fails; clear cache on 403 without auto-replay. |
+| [`templates/*.html`](file:///d:/skillsync1/templates/interview_studio.html) | Missing CSRF tokens in legacy HTML forms | Form tags lacked hidden `csrf_token` input elements | Added `<input type="hidden" name="csrf_token" value="{{ csrf_token }}">` to all forms in `interview_studio.html`, `interview_practice.html`, and `analyze.html`. |
+| [`tests/test_phase6_2_legacy_csrf.py`](file:///d:/skillsync1/tests/test_phase6_2_legacy_csrf.py) | Missing regression coverage for legacy mutation routes | Legacy form routes were not covered under CSRF testing | Created 13 dedicated regression tests verifying fail-closed CSRF rejection and valid session continuity. |
+| [`frontend/tests/api_csrf.test.mjs`](file:///d:/skillsync1/frontend/tests/api_csrf.test.mjs) | Missing frontend CSRF unit tests | No automated tests validating fail-closed token retrieval | Created 6 Node.js unit tests verifying token caching, header attachment, fail-closed abortion, and no auto-replay on 403. |
 | [`tests/test_phase6_integration_audit.py`](file:///d:/skillsync1/tests/test_phase6_integration_audit.py) | Absence of end-to-end integration test suite | Phase 6 audit required dedicated verification of all 10 modules | Created 9 comprehensive integration tests covering contracts, BOLA isolation, 404s, CORS preflight, evidence consistency, and ML determinism. |
 
 ---

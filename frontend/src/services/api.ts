@@ -8,7 +8,7 @@ import type {
   HeuristicEvaluation
 } from '../types';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
+const API_BASE = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL) || '';
 
 let cachedCsrfToken: string | null = null;
 let csrfTokenPromise: Promise<string> | null = null;
@@ -76,14 +76,12 @@ async function fetchJson<T>(url: string, options: RequestInit = {}): Promise<T> 
   };
 
   if (isMutation) {
-    try {
-      const csrf = await getCsrfToken();
-      if (csrf) {
-        defaultHeaders['X-CSRF-Token'] = csrf;
-      }
-    } catch (err) {
-      console.warn('Could not retrieve CSRF token before mutation:', err);
+    // Fail-closed: Must obtain a valid CSRF token before performing any mutation.
+    const csrf = await getCsrfToken();
+    if (!csrf || typeof csrf !== 'string' || csrf.trim() === '') {
+      throw new Error('CSRF token could not be established. Mutation aborted.');
     }
+    defaultHeaders['X-CSRF-Token'] = csrf;
   }
 
   const response = await fetch(fullUrl, {
@@ -98,6 +96,15 @@ async function fetchJson<T>(url: string, options: RequestInit = {}): Promise<T> 
   if (!response.ok) {
     if (response.status === 403) {
       clearCsrfToken();
+      let errorDetail = 'Security check failed: session expired or CSRF token invalid. Please refresh.';
+      try {
+        const errJson = await response.json();
+        if (errJson.message) errorDetail = errJson.message;
+        else if (errJson.error_message) errorDetail = errJson.error_message;
+      } catch {
+        // ignore
+      }
+      throw new Error(errorDetail);
     }
     let errorDetail = `HTTP ${response.status}: ${response.statusText}`;
     try {
@@ -142,11 +149,10 @@ export const api = {
 
   async analyzeResume(formData: FormData): Promise<{ status: string; analysis_id: string; data: AnalysisResult }> {
     const fullUrl = `${API_BASE}/api/analyze`;
-    let csrf: string | undefined;
-    try {
-      csrf = await getCsrfToken();
-    } catch (err) {
-      console.warn('Could not retrieve CSRF token before resume upload:', err);
+    // Fail-closed: Abort upload before fetch if CSRF token cannot be established
+    const csrf = await getCsrfToken();
+    if (!csrf || typeof csrf !== 'string' || csrf.trim() === '') {
+      throw new Error('CSRF token could not be established. Resume upload aborted.');
     }
     const response = await fetch(fullUrl, {
       method: 'POST',
@@ -154,12 +160,21 @@ export const api = {
       credentials: 'include',
       headers: {
         'Accept': 'application/json',
-        ...(csrf ? { 'X-CSRF-Token': csrf } : {}),
+        'X-CSRF-Token': csrf,
       },
     });
     if (!response.ok) {
       if (response.status === 403) {
         clearCsrfToken();
+        let errorDetail = 'Security check failed: session expired or CSRF token invalid. Please refresh.';
+        try {
+          const errJson = await response.json();
+          if (errJson.message) errorDetail = errJson.message;
+          else if (errJson.error_message) errorDetail = errJson.error_message;
+        } catch {
+          // ignore
+        }
+        throw new Error(errorDetail);
       }
       let err = `Upload failed (${response.status})`;
       try {
