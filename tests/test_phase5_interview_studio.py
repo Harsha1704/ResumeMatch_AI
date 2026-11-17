@@ -1488,3 +1488,216 @@ def test_35_adversarial_metric_grounding_and_scoring_integrity(sample_candidate_
     assert len(ev_c8["claims_analysis"]["unsupported_claims"]) == 0
     assert ev_c8["criterion_scores"]["evidence_consistency"]["status"] == "pass"
     assert ev_c8["individual_criterion_scores"]["specificity_examples"]["score"] >= 60.0
+
+
+def test_36_strict_numeric_and_unit_verification(sample_candidate_analysis):
+    """
+    Phase 5.4 regression test suite covering strict numeric and unit verification:
+    1. Resume 94.5%, answer 94% -> unsupported.
+    2. Resume 94%, answer 94.5% -> unsupported.
+    3. Resume 94.0%, answer 94% -> unsupported under explicit strict precision policy.
+    4. Resume 94 with no unit, answer 94% -> unsupported (fail closed on missing resume unit).
+    5. Resume 94 with no unit, answer 94 seconds -> unsupported (fail closed on missing resume unit).
+    6. Resume 1,000 requests, answer 1000 requests -> accepted as equivalent through safe normalization.
+    7. Resume 50%, answer 5% -> unsupported.
+    8. Existing valid 94% Macro F1 evidence -> still supported.
+    9. Existing project attribution and domain mismatch tests -> remain passing.
+    Asserts both claim classification and specificity/overall scoring: unsupported claims never receive metric credit.
+    """
+    evaluator = HeuristicAnswerEvaluator()
+    candidate_evidence = extract_candidate_evidence(ANALYSIS_CACHE[sample_candidate_analysis])
+
+    q_data = {
+        "question_text": "Describe your technical implementation results and quantified outcomes.",
+        "expected_key_points": ["Implementation architecture", "Verified results"],
+        "recommended_answer_framework": "STAR"
+    }
+
+    # Baseline honest answer without any numeric metric
+    ans_baseline = (
+        "Situation: In our multimodal semantic search project, retrieval accuracy was critical. "
+        "Task: Fine-tune the dense encoder without overfitting. "
+        "Action: I developed a two-tower neural network with custom contrastive loss in PyTorch. "
+        "Result: In our multimodal semantic search project, the model demonstrated superior ranking on validation benchmarks."
+    )
+    ev_baseline = evaluator.evaluate_answer(q_data, ans_baseline, "STAR", candidate_evidence=candidate_evidence)
+    baseline_spec = ev_baseline["individual_criterion_scores"]["specificity_examples"]["score"]
+    baseline_score = ev_baseline["overall_score"]
+
+    # Case 1: Resume 94.5%, answer 94% -> unsupported
+    ev_94_5 = {
+        "projects": [{
+            "title": "Multimodal Semantic Matcher",
+            "description": "Dense vector retrieval achieving 94.5% Macro F1 with PyTorch.",
+            "exact_excerpt": "achieving 94.5% Macro F1 with PyTorch."
+        }]
+    }
+    ans_c1 = (
+        "Situation: In our multimodal semantic search project, retrieval accuracy was critical. "
+        "Task: Fine-tune the dense encoder without overfitting. "
+        "Action: I developed a two-tower neural network with custom contrastive loss in PyTorch. "
+        "Result: In our multimodal semantic search project, I achieved 94% Macro F1 on the benchmark."
+    )
+    ev_c1 = evaluator.evaluate_answer(q_data, ans_c1, "STAR", candidate_evidence=ev_94_5)
+    assert len(ev_c1["claims_analysis"]["unsupported_claims"]) > 0
+    assert len(ev_c1["claims_analysis"]["resume_supported_claims"]) == 0
+    assert any("94" in w and ("94.5" in w or "not evidenced" in w.lower()) for w in ev_c1["evidence_grounding_warnings"])
+    assert ev_c1["individual_criterion_scores"]["specificity_examples"]["score"] <= baseline_spec
+    assert ev_c1["overall_score"] < baseline_score
+
+    # Case 2: Resume 94%, answer 94.5% -> unsupported
+    ans_c2 = (
+        "Situation: In our multimodal semantic search project, retrieval accuracy was critical. "
+        "Task: Fine-tune the dense encoder without overfitting. "
+        "Action: I developed a two-tower neural network with custom contrastive loss in PyTorch. "
+        "Result: In our multimodal semantic search project, I achieved 94.5% Macro F1 on the benchmark."
+    )
+    ev_c2 = evaluator.evaluate_answer(q_data, ans_c2, "STAR", candidate_evidence=candidate_evidence)
+    assert len(ev_c2["claims_analysis"]["unsupported_claims"]) > 0
+    assert len(ev_c2["claims_analysis"]["resume_supported_claims"]) == 0
+    assert any("94.5" in w for w in ev_c2["evidence_grounding_warnings"])
+    assert ev_c2["individual_criterion_scores"]["specificity_examples"]["score"] <= baseline_spec
+    assert ev_c2["overall_score"] < baseline_score
+
+    # Case 3: Resume 94.0%, answer 94% -> unsupported under explicit strict precision policy
+    ev_94_0 = {
+        "projects": [{
+            "title": "Multimodal Semantic Matcher",
+            "description": "Dense vector retrieval achieving 94.0% Macro F1 with PyTorch.",
+            "exact_excerpt": "achieving 94.0% Macro F1 with PyTorch."
+        }]
+    }
+    ans_c3 = (
+        "Situation: In our multimodal semantic search project, retrieval accuracy was critical. "
+        "Task: Fine-tune the dense encoder without overfitting. "
+        "Action: I developed a two-tower neural network with custom contrastive loss in PyTorch. "
+        "Result: In our multimodal semantic search project, I achieved 94% Macro F1 on the benchmark."
+    )
+    ev_c3 = evaluator.evaluate_answer(q_data, ans_c3, "STAR", candidate_evidence=ev_94_0)
+    assert len(ev_c3["claims_analysis"]["unsupported_claims"]) > 0
+    assert len(ev_c3["claims_analysis"]["resume_supported_claims"]) == 0
+    assert any("94" in w and ("precision" in w.lower() or "strict precision" in w.lower() or "94.0" in w) for w in ev_c3["evidence_grounding_warnings"])
+    assert ev_c3["individual_criterion_scores"]["specificity_examples"]["score"] <= baseline_spec
+    assert ev_c3["overall_score"] < baseline_score
+
+    # Case 4: Resume 94 with no unit, answer 94% -> unsupported (fail closed on missing resume unit)
+    ev_94_no_unit = {
+        "projects": [{
+            "title": "Multimodal Semantic Matcher",
+            "description": "Implemented cross-modal dense retrieval with PyTorch, completing 94 benchmark runs.",
+            "exact_excerpt": "completing 94 benchmark runs."
+        }]
+    }
+    ans_c4 = (
+        "Situation: In our multimodal semantic search project, retrieval accuracy was critical. "
+        "Task: Fine-tune the dense encoder without overfitting. "
+        "Action: I developed a two-tower neural network with custom contrastive loss in PyTorch. "
+        "Result: In our multimodal semantic search project, I achieved 94% Macro F1 on the benchmark."
+    )
+    ev_c4 = evaluator.evaluate_answer(q_data, ans_c4, "STAR", candidate_evidence=ev_94_no_unit)
+    assert len(ev_c4["claims_analysis"]["unsupported_claims"]) > 0
+    assert len(ev_c4["claims_analysis"]["resume_supported_claims"]) == 0
+    assert any("compatible unit" in w.lower() or "unit" in w.lower() for w in ev_c4["evidence_grounding_warnings"])
+    assert ev_c4["individual_criterion_scores"]["specificity_examples"]["score"] <= baseline_spec
+    assert ev_c4["overall_score"] < baseline_score
+
+    # Case 5: Resume 94 with no unit, answer 94 seconds -> unsupported (fail closed on missing resume unit)
+    ans_c5 = (
+        "Situation: Build times were excessively slow. "
+        "Task: Optimize compiler runtime. "
+        "Action: I tuned build scripts and docker layers. "
+        "Result: I achieved 94 seconds runtime for the full compilation suite."
+    )
+    ev_c5 = evaluator.evaluate_answer(q_data, ans_c5, "STAR", candidate_evidence=ev_94_no_unit)
+    assert len(ev_c5["claims_analysis"]["unsupported_claims"]) > 0
+    assert len(ev_c5["claims_analysis"]["resume_supported_claims"]) == 0
+    assert any("compatible unit" in w.lower() or "unit" in w.lower() for w in ev_c5["evidence_grounding_warnings"])
+    assert ev_c5["individual_criterion_scores"]["specificity_examples"]["score"] <= baseline_spec
+    assert ev_c5["overall_score"] < baseline_score
+
+    # Case 6: Resume 1,000 requests, answer 1000 requests -> accept only if safely normalized
+    ev_1000_comma = {
+        "skills": ["Python", "Flask"],
+        "projects": [{
+            "title": "High-Throughput API Gateway",
+            "technologies": "Python, Flask",
+            "description": "Engineered asynchronous API Gateway with Python and Flask, serving 1,000 requests per second.",
+            "exact_excerpt": "serving 1,000 requests per second."
+        }]
+    }
+    ans_c6 = (
+        "Situation: Our API gateway needed to handle heavy traffic spikes. "
+        "Task: Optimize request processing concurrency in Python and Flask. "
+        "Action: I implemented non-blocking asynchronous event loops with connection pooling. "
+        "Result: In our High-Throughput API Gateway project, I served 1000 requests per second with high stability."
+    )
+    ev_c6 = evaluator.evaluate_answer(q_data, ans_c6, "STAR", candidate_evidence=ev_1000_comma)
+    assert len(ev_c6["claims_analysis"]["resume_supported_claims"]) > 0
+    assert len(ev_c6["claims_analysis"]["unsupported_claims"]) == 0
+    assert ev_c6["criterion_scores"]["evidence_consistency"]["status"] == "pass"
+    assert ev_c6["individual_criterion_scores"]["specificity_examples"]["score"] >= 60.0
+
+    # Case 7: Resume 50%, answer 5% -> unsupported
+    ev_50 = {
+        "projects": [{
+            "title": "Model Compression",
+            "description": "Quantized deep neural networks with PyTorch, achieving 50% reduction in memory.",
+            "exact_excerpt": "achieving 50% reduction in memory."
+        }]
+    }
+    ans_c7 = (
+        "Situation: Embedded inference required minimal memory footprints. "
+        "Task: Compress model weights without degrading accuracy. "
+        "Action: I applied 8-bit dynamic quantization in PyTorch. "
+        "Result: In our Model Compression project, I achieved 5% reduction in model size."
+    )
+    ev_c7 = evaluator.evaluate_answer(q_data, ans_c7, "STAR", candidate_evidence=ev_50)
+    assert len(ev_c7["claims_analysis"]["unsupported_claims"]) > 0
+    assert len(ev_c7["claims_analysis"]["resume_supported_claims"]) == 0
+    assert any("5%" in w or "not evidenced" in w.lower() for w in ev_c7["evidence_grounding_warnings"])
+    assert ev_c7["individual_criterion_scores"]["specificity_examples"]["score"] <= baseline_spec
+    assert ev_c7["overall_score"] < baseline_score
+
+    # Case 8: Existing valid 94% Macro F1 evidence -> still supported
+    ans_c8 = (
+        "Situation: In our multimodal semantic search project, retrieval accuracy was critical. "
+        "Task: Fine-tune the dense encoder without overfitting. "
+        "Action: I developed a two-tower neural network with custom contrastive loss in PyTorch. "
+        "Result: In our multimodal semantic search project, I achieved 94% Macro F1 on the benchmark."
+    )
+    ev_c8 = evaluator.evaluate_answer(q_data, ans_c8, "STAR", candidate_evidence=candidate_evidence)
+    assert len(ev_c8["claims_analysis"]["resume_supported_claims"]) > 0
+    assert len(ev_c8["claims_analysis"]["unsupported_claims"]) == 0
+    assert ev_c8["criterion_scores"]["evidence_consistency"]["status"] == "pass"
+    assert ev_c8["individual_criterion_scores"]["specificity_examples"]["score"] >= 60.0
+
+    # Case 9: Existing project attribution and domain mismatch tests remain passing
+    # Attribution mismatch
+    ev_attr_mismatch = {
+        "projects": [
+            {"title": "Fraud Detection Pipeline", "description": "Processed financial transactions."},
+            {"title": "Multimodal Semantic Matcher", "description": "Dense vector retrieval achieving 94% Macro F1."}
+        ]
+    }
+    ans_c9_attr = (
+        "Situation: We were classifying fraudulent financial transactions. "
+        "Task: Maximize precision on rare fraud classes. "
+        "Action: I developed tree-based models and tuned hyperparameters. "
+        "Result: In my Fraud Detection Pipeline project, I achieved 94% Macro F1 on the benchmark."
+    )
+    ev_c9_attr = evaluator.evaluate_answer(q_data, ans_c9_attr, "STAR", candidate_evidence=ev_attr_mismatch)
+    assert len(ev_c9_attr["claims_analysis"]["unsupported_claims"]) > 0
+    assert len(ev_c9_attr["claims_analysis"]["resume_supported_claims"]) == 0
+    assert any("fraud detection pipeline" in w.lower() and "multimodal semantic matcher" in w.lower() for w in ev_c9_attr["evidence_grounding_warnings"])
+
+    # Domain mismatch
+    ans_c9_domain = (
+        "Situation: Developing an automated audio transcription system. "
+        "Task: Maximize acoustic classification accuracy. "
+        "Action: I built an acoustic feature extractor and acoustic classifier. "
+        "Result: In our audio pipeline, I achieved 94% accuracy in speech audio recognition."
+    )
+    ev_c9_domain = evaluator.evaluate_answer(q_data, ans_c9_domain, "STAR", candidate_evidence=candidate_evidence)
+    assert len(ev_c9_domain["claims_analysis"]["unsupported_claims"]) > 0
+    assert len(ev_c9_domain["claims_analysis"]["resume_supported_claims"]) == 0
+    assert any("speech" in w.lower() or "audio" in w.lower() for w in ev_c9_domain["evidence_grounding_warnings"])
