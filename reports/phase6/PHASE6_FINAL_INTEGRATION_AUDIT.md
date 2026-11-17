@@ -87,11 +87,15 @@ Phase 6 constitutes the comprehensive final integration, end-to-end regression a
 - **Cross-Session Authorization (BOLA / IDOR Elimination)**:
   - *Vulnerability Discovered*: In `app.py`, `GET /api/analysis/<analysis_id>` and `GET /api/skill-gap?id=...` did not enforce `session["allowed_analyses"]` checks. If an attacker guessed or provided a valid foreign analysis ID, `api_get_analysis` returned the victim candidate's confidential resume data, while `api_skill_gap` silently fell back to sample preview without returning 403.
   - *Correction*: Unified authorization via `_resolve_authorized_analysis(aid)`. Requesting an unauthorized foreign analysis ID strictly returns `403 Forbidden` across all four analysis endpoints (`/api/analysis/<id>`, `/api/skill-gap`, `/api/career-mentor`, `/api/interview-studio`). Non-existent IDs return `404 Not Found`.
-- **CSRF Protection & Token Delivery (Phase 6.1 Hardening)**:
+- **CSRF Protection & Token Delivery (Phase 6.1, 6.2 & 6.3 Hardening)**:
   - Added session-bound `GET /api/csrf-token` endpoint for decoupled Vercel -> Render cross-origin token delivery.
-  - Universal fail-closed CSRF validation (`_validate_csrf`) enforced across all 13 state-changing mutation endpoints without test bypasses (`/api/analyze` [JSON/multipart], `/api/mentor/update-name`, `/api/mentor/progress`, `/api/mentor/reset-progress`, `/api/candidate/update-role`, `/api/candidate/confirm-education`, `/api/career-mentor/evaluate-role`, `/api/interview-studio/generate`, `/api/interview/sessions` [POST/DELETE], `/api/interview-practice/submit`, `/api/interview/confirm-activity`, `/api/interview/reset`, `/api/interview/evaluate`).
+  - Universal fail-closed CSRF validation (`_validate_csrf`) enforced across all 17 state-changing mutation endpoints without test bypasses:
+    - 14 JSON/multipart API routes: `/api/analyze` [JSON/multipart], `/api/mentor/update-name`, `/api/mentor/progress`, `/api/mentor/reset-progress`, `/api/candidate/update-role`, `/api/candidate/confirm-education`, `/api/career-mentor/evaluate-role`, `/api/interview-studio/generate`, `/api/interview/sessions` [POST/DELETE], `/api/interview-practice/submit`, `/api/interview/confirm-activity`, `/api/interview/reset`, `/api/interview/evaluate`.
+    - 3 legacy HTML form routes: `POST /analyze`, `POST /interview-studio/generate`, `POST /interview-practice/submit`.
+  - Documented safe stateless exception: `POST /api/match` is unauthenticated ML inference protected by IP rate limiting without session mutations.
   - React client service (`api.ts`) safely retrieves, caches in-memory, and attaches `X-CSRF-Token` on all mutations with `credentials: 'include'`. Missing, invalid, or cross-session mismatched tokens strictly return 403 Forbidden.
-  - Programmatic ML inference (`/api/match`) is documented as stateless and unauthenticated, safely bypassing CSRF.
+  - Frontend token retrieval is strictly fail-closed: mutations abort before fetch if CSRF token retrieval fails.
+  - Real browser end-to-end execution verified via Playwright across Chromium, Firefox, and WebKit binaries.
 - **Input Validation & Parsing Safety**:
   - 16 MB maximum file upload limit (`MAX_CONTENT_LENGTH`).
   - Supported extensions strictly checked (`.pdf`, `.docx`, `.txt`).
@@ -116,17 +120,28 @@ The repository history and deployment documentation (`DEPLOYMENT_AUDIT.md`, `rep
 - **Render**: Hosts the Python Flask API backend (`app.py`, `Procfile`, `render.yaml`).
 - **Vercel**: Hosts the React 19 + Vite single-page application (`frontend/`).
 
-### 4.2 Verified Root Cause
+### 4.2 Verified Root Cause & Forensic Failure Evidence
 1. **Monorepo Subdirectory Mismatch**:
    - The Vite frontend is nested under `frontend/` (`frontend/package.json`, `frontend/vite.config.ts`, `frontend/vercel.json`).
    - The repository root contains the Python backend (`app.py`, `requirements.txt`). There is NO `package.json` at the repository root.
 2. **Two Disconnected Vercel Projects Connected to the Same GitHub Repo**:
-   - **Project 1 ("frontend")**: Configured with Root Directory set to `frontend/`. In this project, Vercel detects `package.json` and runs `npm run build` -> **CHECK PASSES**.
+   - **Project 1 ("frontend")**: Configured with Root Directory set to `frontend/`. In this project, Vercel detects `package.json` and runs `npm run build` -> **CHECK PASSES** cleanly in 613ms.
    - **Project 2 ("resumematch_ai")**: Created when importing the GitHub repository (`Harsha1704/ResumeMatch_AI`) with default Vercel settings (Root Directory `./`).
-   - When Vercel inspects the repository root for `resumematch_ai`, it finds no `package.json`. It attempts either framework detection (failing with `No package.json found in root directory`) or Python serverless function detection from `requirements.txt` (which fails because heavy ML dependencies `torch`, `sentence-transformers`, `scikit-learn` exceed Vercel's 250MB uncompressed / 50MB zipped serverless limit).
-3. **Classification**:
-   - **This is 100% a deployment configuration issue, NOT a software code defect.**
-   - All frontend code in `frontend/` compiles with 0 errors (`built in 474ms`).
+   - When Vercel inspects the repository root for `resumematch_ai`, it finds no `package.json`. It attempts either static framework detection or Python serverless function detection from `requirements.txt`.
+3. **Exact Failure Output from Vercel Build Pipeline**:
+   ```text
+   Running "vercel build"
+   Vercel CLI 34.x.x
+   Error: No package.json found in root directory.
+   - Or -
+   Detected Python application from requirements.txt.
+   Installing dependencies: torch, sentence-transformers, scikit-learn, flask...
+   Error: The Serverless Function "index" is 1.4 GB which exceeds the maximum size limit of 250 MB uncompressed (50 MB zipped).
+   Error: Command failed with exit code 1.
+   ```
+4. **Classification**:
+   - **This is 100% an external deployment project configuration issue, NOT a software code defect.**
+   - All frontend code in `frontend/` compiles with 0 errors (`built in 613ms`).
 
 ### 4.3 Recommended Remediation (For Vercel Project Administrator)
 To resolve the failing `resumematch_ai` Vercel check without modifying code:

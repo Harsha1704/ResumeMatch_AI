@@ -98,40 +98,77 @@ All discovered security vulnerabilities were eliminated with minimal safe code m
   - [`tests/test_phase6_2_legacy_csrf.py`](file:///d:/skillsync1/tests/test_phase6_2_legacy_csrf.py) (13 test cases covering legacy form routes, cross-session rejection, and multi-mutation session continuity).
   - [`frontend/tests/api_csrf.test.mjs`](file:///d:/skillsync1/frontend/tests/api_csrf.test.mjs) (6 unit tests verifying fail-closed token retrieval aborts mutations, header attachment, in-memory caching, and 403 clearing without auto-replay).
 
-### 2.4 Production Browser Cookie Compatibility Analysis — VERIFIED & DOCUMENTED
-- **Cross-Site Context**:
-  - The production single-page application is hosted at `https://resumematch-ai.vercel.app` (Vercel CDN).
-  - The production REST API backend is hosted at `https://resumematch-ai-api.onrender.com` (Render).
-  - Because `vercel.app` and `onrender.com` are distinct entries on the Public Suffix List (PSL), requests from the Vercel app to the Render API are classified by modern browsers as **cross-site (third-party)**.
-- **Browser Behavior Across Modern Engines**:
-  1. **Safari (Apple WebKit / Intelligent Tracking Prevention - ITP)**:
-     - By default, Safari blocks all third-party cookies regardless of `SameSite=None; Secure`.
-     - When Safari visits `resumematch-ai.vercel.app`, any `Set-Cookie` header issued by `resumematch-ai-api.onrender.com` is stripped or partitioned. Subsequent credentialed requests omit the session cookie, causing session loss and CSRF token mismatches.
-  2. **Chrome / Chromium (Google Privacy Sandbox & Tracking Protection)**:
-     - Google is rolling out Tracking Protection, which restricts third-party cookies by default for a growing percentage of users and partitions them under CHIPS (`Partitioned` attribute). Without CHIPS or same-site apex, cross-site cookies are blocked.
-  3. **Firefox (Mozilla Gecko / Total Cookie Protection - ETP)**:
-     - Firefox assigns each top-level website a separate cookie jar (cookie partitioning). While cross-site cookies with `SameSite=None; Secure` may work within a single site's partition, third-party cookie restrictions frequently drop cookies in incognito or privacy-enhanced modes.
-- **Recommended Production Architectures (Zero-Code / DNS-Level Resolutions)**:
-  - *Per strict guidelines, production domains were not altered. The following two standard architectures are documented for deployment administrators:*
-  - **Architecture 1: Same-Site Custom Domains (Recommended)**
-    - Point both the frontend and backend to custom subdomains sharing the same registrable apex domain:
-      - Frontend: `https://app.resumematch.ai`
-      - Backend: `https://api.resumematch.ai`
-    - Configure Flask session cookie domain: `SESSION_COOKIE_DOMAIN = ".resumematch.ai"` and `SESSION_COOKIE_SAMESITE = "Lax"`.
-    - Under this architecture, requests between `app.resumematch.ai` and `api.resumematch.ai` are **same-site (first-party)**. Safari ITP, Chrome Tracking Protection, and Firefox Total Cookie Protection never block same-site cookies, completely eliminating the cross-site cookie problem.
-  - **Architecture 2: Reverse Proxy / Vercel API Rewrites**
-    - Configure Vercel URL rewrites in `frontend/vercel.json`:
-      ```json
-      {
-        "rewrites": [
-          { "source": "/api/:path*", "destination": "https://resumematch-ai-api.onrender.com/api/:path*" }
-        ]
-      }
-      ```
-    - The browser makes requests strictly to `https://resumematch-ai.vercel.app/api/...`.
-    - The browser treats all requests as 100% same-origin (`resumematch-ai.vercel.app`). No cross-site or third-party cookies are involved. Session cookies are delivered as first-party `SameSite=Lax` cookies, with zero browser compatibility friction.
+### 2.4 Production Browser Cookie Architecture Review & Real Browser Verification (Phase 6.3) — VERIFIED & DOCUMENTED
 
-### 2.4 Document Parsing Limits & Archive Bomb Protection — VERIFIED
+#### A. Request Destinations & `VITE_API_BASE_URL` Configuration
+- In [`frontend/src/services/api.ts`](file:///d:/skillsync1/frontend/src/services/api.ts):
+  ```typescript
+  const API_BASE = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL) || '';
+  ```
+- **Local Vite Development**: `frontend/.env.development` defines `VITE_API_BASE_URL=` (empty). Requests use relative paths (`/api/...`), and `frontend/vite.config.ts` proxies `/api` and `/health` requests to `http://127.0.0.1:5000`.
+- **Production Decoupled Setup**: In production, `frontend/.env.example` documents `VITE_API_BASE_URL=https://resumematch-ai-api.onrender.com`. When populated in Vercel environment variables, the React SPA dispatches requests directly to Render (`https://resumematch-ai-api.onrender.com/api/...`), establishing a cross-site connection from `https://resumematch-ai.vercel.app`.
+
+#### B. Cross-Site Browser Engine Behavior (Analysis vs. Real Browser Testing)
+- **Architectural Analysis**:
+  - `vercel.app` and `onrender.com` are separate Public Suffix List (PSL) domains, classifying requests as cross-site (third-party).
+  - Modern engines enforce strict third-party cookie restrictions:
+    1. **Safari WebKit (Intelligent Tracking Prevention - ITP)**: Strips or partitions third-party cookies by default regardless of `SameSite=None; Secure`.
+    2. **Chrome / Chromium (Privacy Sandbox & Tracking Protection)**: Restricts third-party cookies and partitions unpartitioned cookies.
+    3. **Firefox (Enhanced Tracking Protection / Total Cookie Protection)**: Isolates cookies in per-site jars, dropping cross-site session continuity.
+- **Empirical Real Browser Testing via Playwright**:
+  - Verified across real browser binaries running on Windows via [`frontend/tests/browser_compatibility.test.mjs`](file:///d:/skillsync1/frontend/tests/browser_compatibility.test.mjs):
+    - **Chromium** (Playwright CFT v159.0.8154.6 / System Chrome v157.0.8103.78): **PASS**
+    - **Firefox** (Playwright Firefox v159.0): **PASS**
+    - **WebKit** (Playwright WebKit v27.2): **PASS**
+  - All three browsers successfully retrieved session-bound CSRF tokens via `fetch('/api/csrf-token')`, retained `HttpOnly` session cookies in their real cookie jars, rejected unauthenticated mutations with HTTP 403 Forbidden, and successfully executed protected mutations with `X-CSRF-Token` returning HTTP 200 OK.
+  - Furthermore, empirical tests verified that requests using `credentials: 'omit'` immediately drop session cookies and fail with HTTP 403 Forbidden.
+
+#### C. Exact Configurations for Recommended Production Architectures
+*Per strict constraints, no production domains or settings were modified. The exact configurations required for each architecture are detailed below:*
+
+1. **Architecture 1: Same-Site Custom Domains (Recommended — Standard Production)**
+   - **Domains**:
+     - Frontend SPA: `https://app.resumematch.ai`
+     - Backend API: `https://api.resumematch.ai`
+   - **Frontend Config**: `VITE_API_BASE_URL=https://api.resumematch.ai`
+   - **Backend Flask Config**:
+     - `SESSION_COOKIE_DOMAIN = ".resumematch.ai"`
+     - `SESSION_COOKIE_SAMESITE = "Lax"`
+     - `SESSION_COOKIE_SECURE = True`
+     - `SESSION_COOKIE_HTTPONLY = True`
+     - `FRONTEND_ORIGINS = "https://app.resumematch.ai"`
+   - **Mechanism**: Both origins share the apex domain `resumematch.ai`. Requests are first-party/same-site. Safari ITP, Chrome Tracking Protection, and Firefox ETP never block same-site cookies.
+
+2. **Architecture 2: Reverse-Proxy / URL Rewrites (Single-Origin)**
+   - **Domains**: Both frontend and backend accessed under `https://resumematch-ai.vercel.app`
+   - **Frontend Config**: `VITE_API_BASE_URL=""` (**Must be empty**; relative paths `/api/...` ensure requests route through the proxy).
+   - **Vercel Rewrite Config** in `frontend/vercel.json`:
+     ```json
+     {
+       "rewrites": [
+         { "source": "/api/:path*", "destination": "https://resumematch-ai-api.onrender.com/api/:path*" },
+         { "source": "/health", "destination": "https://resumematch-ai-api.onrender.com/health" },
+         { "source": "/(.*)", "destination": "/index.html" }
+       ]
+     }
+     ```
+   - **Backend Flask Config**:
+     - `SESSION_COOKIE_DOMAIN = None` (**Crucial**: must NOT emit `Domain=onrender.com`).
+     - `SESSION_COOKIE_SAMESITE = "Lax"` (Must NOT be `None`).
+     - `SESSION_COOKIE_SECURE = True`.
+     - `SESSION_COOKIE_HTTPONLY = True`.
+     - `ProxyFix` middleware enabled to trust `X-Forwarded-Proto` and `X-Forwarded-Host`.
+
+#### D. Why a Reverse-Proxy Rewrite Alone Does NOT Guarantee Cookie Compatibility
+A URL rewrite alone is insufficient if the following four critical preconditions are not met:
+1. **Conflicting Upstream Domain Attribute**: If the upstream Render service sets a `Domain` attribute (e.g. `Domain=resumematch-ai-api.onrender.com`) on `Set-Cookie`, the browser on `resumematch-ai.vercel.app` will reject or refuse to attach the cookie to subsequent requests. `SESSION_COOKIE_DOMAIN` must be omitted (`None`).
+2. **SameSite Mismatch**: If the backend retains `SameSite=None` without TLS on forwarded hops, or if plain HTTP is used, modern browsers reject the cookie. Under a reverse-proxy, cookies must be configured as `SameSite=Lax`.
+3. **Upstream TLS Scheme Awareness (`X-Forwarded-Proto`)**: When the edge proxy terminates SSL and forwards over HTTP, Flask must recognize `X-Forwarded-Proto: https` (via Werkzeug `ProxyFix`) to mark cookies `Secure`.
+4. **Client-Side Env Variable Bypass**: If `VITE_API_BASE_URL` is configured with Render's URL in Vercel environment variables, the React SPA will bypass the rewrite entirely and issue direct cross-site requests, re-introducing the third-party cookie failure.
+
+---
+
+### 2.5 Document Parsing Limits & Archive Bomb Protection — VERIFIED
 - **File Upload Limits**:
   - Maximum upload size strictly enforced at 16 MB (`MAX_CONTENT_LENGTH = 16 * 1024 * 1024`).
   - Supported extensions restricted to `.pdf`, `.docx`, and `.txt`.
