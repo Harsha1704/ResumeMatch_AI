@@ -37,6 +37,9 @@ NON_DEMONSTRATED_PATTERNS = [
     r"\b(?:is|are)\s+preferred\b",
     r"\b(?:preferred|desirable)\s+(?:qualification|skill|tool)\b",
     r"\brole\s+requirement\b",
+    # Listing / mentions without implementation
+    r"\b(?:is|are|was|were)\s+listed\s+in\b",
+    r"\b(?:is|are|was|were)\s+mentioned\s+in\b",
 ]
 
 # Action verbs and active engineering context indicators required for full demonstrated credit.
@@ -127,8 +130,16 @@ def find_supporting_excerpt_for_skill(skill_name: str, text: Optional[str]) -> O
         if not any(matches_skill_token(s_clean, term) for term in search_terms):
             continue
 
-        # Split sentence into clauses (by semicolons, contrasting conjunctions, or parentheticals)
-        clauses = re.split(r";\s*|\s*,\s*(?:but|however|whereas|while)\s*|\s+but\s+", s_clean)
+        # Split sentence into clauses (by semicolons, contrasting conjunctions, coordinating clause boundaries, or parentheticals)
+        clause_split_pattern = (
+            r";\s*"
+            r"|,\s*(?:but|however|whereas|while|although|though|yet|instead of|rather than)\s*"
+            r"|\s+(?:but|however|whereas|while|although|though|instead of|rather than)\s+"
+            r"|,\s*(?:and\s+then|then)\s+"
+            r"|,\s*(?:and|or)\s+(?=[^,;]+?\b(?:was|were|is|are|am|did|do|does|have|has|had|will|would|can|could|should|developed|built|used|implemented|tested|created|designed|architected|configured|optimized|automated|maintained|wrote|coded|engineered|programmed|led|managed)\b)"
+            r"|\s+and\s+(?=(?:i|we|they|he|she|it|the)\b|(?:was|were|is|are)\b|(?:developed|built|used|implemented|tested|created|designed|architected|configured|optimized|automated|maintained|wrote|coded|engineered|programmed|led|managed)\b)"
+        )
+        clauses = re.split(clause_split_pattern, s_clean, flags=re.IGNORECASE)
 
         # Check clauses that specifically mention the skill
         skill_clauses = [c for c in clauses if any(matches_skill_token(c, term) for term in search_terms)]
@@ -149,28 +160,33 @@ def find_supporting_excerpt_for_skill(skill_name: str, text: Optional[str]) -> O
             # 2. Check for contextual evidence of actual use / implementation / activity
             cl_words = set(re.findall(r"\b[a-z]{3,}\b", cl_lower))
             if cl_words.intersection(DEMONSTRATED_ACTION_VERBS):
-                has_demonstrated_clause = True
-                break
-
-        if has_demonstrated_clause:
-            # Overarching sentence rejection check: e.g. "Python was considered but not used"
-            whole_lower = s_clean.lower()
-            overarching_rejection = False
-            for pat in [
-                r"\b(?:was|were|is)\s+considered\s+but\s+not\s+used\b",
-                r"\bconsidered\s+(?:[a-z0-9#+.]+\s+)?but\s+not\s+used\b",
-                r"\bnot\s+used\b",
-                r"\bdid\s+not\s+use\b",
-                r"\bnever\s+used\b",
-                r"\b(?:is|are|was|were)\s+required\s+for\s+(?:this|the|a)\s+(?:role|job|position)\b",
-                r"\bdiscussed\s+during\s+planning\b",
-                r"\b(?:was|were|is)\s+discussed\s+(?:during|in|at)\b"
-            ]:
-                if re.search(pat, whole_lower):
-                    overarching_rejection = True
+                # 3. Verify overarching negation specifically targeted at this skill
+                skill_negated = False
+                for term in search_terms:
+                    escaped = re.escape(term)
+                    # Check if negation directly attaches to the skill within the clause
+                    if re.search(rf"\b{escaped}\b[^,;]*?\b(?:not\s+used|never\s+used|did\s+not\s+use|considered\s+but\s+not\s+used|evaluated\s+and\s+rejected)\b", cl_lower):
+                        skill_negated = True
+                        break
+                    if re.search(rf"\b(?:not\s+used|never\s+used|did\s+not\s+use|considered\s+but\s+not\s+used|evaluated\s+and\s+rejected)\b[^,;]*?\b{escaped}\b", cl_lower):
+                        skill_negated = True
+                        break
+                if not skill_negated:
+                    has_demonstrated_clause = True
                     break
 
-            if overarching_rejection:
+        if has_demonstrated_clause:
+            # Whole-sentence direct negation check targeted at this skill
+            skill_whole_negated = False
+            for term in search_terms:
+                escaped = re.escape(term)
+                if re.search(rf"\b{escaped}\b\s+(?:was|were|is)\s+considered\s+but\s+not\s+used\b", s_clean, flags=re.IGNORECASE):
+                    skill_whole_negated = True
+                    break
+                if re.search(rf"\b(?:was|were|is)\s+considered\s+but\s+not\s+used\b.*?\b{escaped}\b", s_clean, flags=re.IGNORECASE):
+                    skill_whole_negated = True
+                    break
+            if skill_whole_negated:
                 continue
 
             if len(s_clean) > 140:
