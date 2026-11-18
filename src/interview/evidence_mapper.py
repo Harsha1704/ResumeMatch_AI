@@ -34,12 +34,13 @@ def extract_candidate_evidence(analysis_data: Optional[Dict[str, Any]]) -> Dict[
             "missing_skills": [],
             "required_skills": [],
             "preferred_skills": [],
-            "education": "Degree not specified",
-            "experience_summary": "Experience not established"
+            "education": "Education details not established from available resume data.",
+            "experience_summary": "Professional experience not established from available resume data."
         }
 
-    projects_raw = analysis_data.get("projects") or analysis_data.get("relevant_projects") or []
-    internships_raw = analysis_data.get("internships") or []
+    cand_profile = analysis_data.get("candidate_profile") or {} if isinstance(analysis_data.get("candidate_profile"), dict) else {}
+    projects_raw = analysis_data.get("projects") or analysis_data.get("relevant_projects") or cand_profile.get("projects") or cand_profile.get("relevant_projects") or []
+    internships_raw = analysis_data.get("internships") or analysis_data.get("experience") or cand_profile.get("internships") or cand_profile.get("experience") or []
 
     # Clean projects
     cleaned_projects = []
@@ -50,10 +51,18 @@ def extract_candidate_evidence(analysis_data: Optional[Dict[str, Any]]) -> Dict[
             if isinstance(p_techs, str):
                 p_techs = [t.strip() for t in p_techs.split(",") if t.strip()]
             p_desc = p.get("description") or p.get("project_description") or ""
+            user_conf = bool(p.get("user_confirmed") or p.get("candidate_confirmed"))
+            conf_details = str(p.get("confirmed_details") or p.get("user_confirmed_details") or "")
             cleaned_projects.append({
                 "title": p_title,
                 "technologies": p_techs,
-                "description": p_desc
+                "description": p_desc,
+                "has_description": bool(p_desc.strip()),
+                "exact_excerpt": p.get("exact_excerpt") or p_desc,
+                "user_confirmed": user_conf,
+                "confirmed_details": conf_details,
+                "has_testing_evidence": bool(re.search(r"\b(?:unit[\s-]tests?|integration[\s-]tests?|pytest|unittest|tdd|ci/cd|automated tests?)\b", p_desc, re.I)),
+                "has_metrics_evidence": bool(re.search(r"\b(?:\d+%\s*|\d+x\s*|\d+\s*(?:ms|sec|users|req/s|qps))\b", p_desc, re.I))
             })
 
     # Clean internships
@@ -69,12 +78,19 @@ def extract_candidate_evidence(analysis_data: Optional[Dict[str, Any]]) -> Dict[
             techs = i.get("technologies") or i.get("tools") or []
             if isinstance(techs, str):
                 techs = [t.strip() for t in techs.split(",") if t.strip()]
+            user_conf = bool(i.get("user_confirmed") or i.get("candidate_confirmed"))
+            conf_details = str(i.get("confirmed_details") or i.get("user_confirmed_details") or "")
             cleaned_internships.append({
                 "organization": org,
                 "position": pos,
                 "dates": dates,
                 "responsibilities": resps,
-                "technologies": techs
+                "technologies": techs,
+                "has_responsibilities": bool(resps and any(r.strip() for r in resps)),
+                "user_confirmed": user_conf,
+                "confirmed_details": conf_details,
+                "has_testing_evidence": bool(any(re.search(r"\b(?:unit[\s-]tests?|integration[\s-]tests?|pytest|unittest|tdd|ci/cd|automated tests?)\b", r, re.I) for r in resps)),
+                "has_metrics_evidence": bool(any(re.search(r"\b(?:\d+%\s*|\d+x\s*|\d+\s*(?:ms|sec|users|req/s|qps))\b", r, re.I) for r in resps))
             })
 
     # Skills
@@ -86,11 +102,33 @@ def extract_candidate_evidence(analysis_data: Optional[Dict[str, Any]]) -> Dict[
     job_title = analysis_data.get("job_title") or "Target Technical Role"
 
     # Education notes
-    edu_info = analysis_data.get("education_analysis", {})
-    edu_text = edu_info.get("notes") or "Verified against degree mentions in parsed resume."
+    edu_info = analysis_data.get("education_analysis") or {}
+    edu_notes = edu_info.get("notes")
+    edu_degrees = edu_info.get("degrees") or analysis_data.get("education_degrees") or []
+    if edu_notes and edu_notes != "Verified against degree mentions in parsed resume." and "not confidently" not in edu_notes.lower() and "not established" not in edu_notes.lower():
+        edu_text = edu_notes
+    elif edu_degrees:
+        edu_text = f"Verified degree: {', '.join(edu_degrees)}"
+    else:
+        edu_text = "Education details not established from available resume data."
 
     # Experience summary
-    exp_summary = analysis_data.get("experience_summary", {}).get("display_summary", "Professional experience verified")
+    exp_info = analysis_data.get("experience_summary") or {}
+    exp_display = exp_info.get("display_summary")
+    work_exp = analysis_data.get("work_experience") or []
+    years = exp_info.get("years", 0)
+
+    if exp_display and exp_display != "Professional experience verified" and "not established" not in exp_display.lower():
+        exp_summary = exp_display
+    elif years > 0 or len(internships_raw) > 0 or len(work_exp) > 0:
+        exp_summary = exp_display or f"Established experience across {len(internships_raw) + len(work_exp)} verified role(s)."
+    else:
+        exp_summary = "Professional experience not established from available resume data."
+
+    # Unified evidence registry integration
+    ev_dossier = analysis_data.get("evidence_registry") or {}
+    demonstrated_skills = ev_dossier.get("demonstrated_skills") or analysis_data.get("solidly_evidenced_skills") or []
+    partially_evidenced_skills = ev_dossier.get("partially_evidenced_skills") or analysis_data.get("partially_evidenced_skills") or []
 
     return {
         "has_data": True,
@@ -99,12 +137,15 @@ def extract_candidate_evidence(analysis_data: Optional[Dict[str, Any]]) -> Dict[
         "projects": cleaned_projects,
         "internships": cleaned_internships,
         "skills": resume_skills,
+        "demonstrated_skills": demonstrated_skills,
+        "partially_evidenced_skills": partially_evidenced_skills,
         "matched_skills": matched_skills,
         "missing_skills": missing_skills,
         "required_skills": required_skills,
         "preferred_skills": preferred_skills,
         "education": edu_text,
-        "experience_summary": exp_summary
+        "experience_summary": exp_summary,
+        "evidence_registry": ev_dossier
     }
 
 
@@ -122,89 +163,175 @@ def ground_guidance_in_evidence(
     if context_type == "project":
         title = evidence_item.get("title", "your technical project")
         tech_list = evidence_item.get("technologies", [])
-        techs = ", ".join(tech_list) if tech_list else "the verified project stack"
+        techs = ", ".join(tech_list) if tech_list else "the project technology stack"
         desc = evidence_item.get("description", "").strip()
-        desc_brief = f"designed to address: '{desc}'" if desc else "developed as a production-grade software solution"
+        user_confirmed = bool(evidence_item.get("user_confirmed") or evidence_item.get("candidate_confirmed"))
+        conf_details = str(evidence_item.get("confirmed_details") or evidence_item.get("user_confirmed_details") or "").strip()
+
+        if desc:
+            sit_text = f"In '{title}', the verified project objective was: '{desc}', utilizing {techs}."
+        else:
+            sit_text = f"In '{title}', software development centered on {techs} [Candidate to specify: Project objective and problem scope; not detailed in resume text]."
+
+        if user_confirmed and conf_details:
+            sit_text += f" [Candidate Confirmed: {conf_details}]"
+
+        task_placeholder = (
+            f"[Candidate Confirmed Objective: {conf_details}]" if (user_confirmed and conf_details)
+            else f"[Candidate to specify: Specific system objective, functional requirements, or ownership scope for '{title}']"
+        )
+        action_placeholder = f"[Candidate to specify: Concrete architectural design, component decomposition, and implementation steps using {techs}]"
+        result_placeholder = f"[Candidate to specify: Quantifiable outcome or verification metric, e.g. latency, throughput, test coverage, or business deliverable for '{title}']"
 
         if f_id in ["STAR", "STAR+L"]:
-            return {
-                "Situation": f"In '{title}', the engineering goal was to build a reliable solution {desc_brief}, utilizing {techs} to manage core business workflows.",
-                "Task": f"My specific objective was to architect a decoupled, testable system that ingests client inputs, validates payloads, and produces deterministic outputs without runtime crashes.",
-                "Action": f"I designed modular software components separating concerns across {techs}: enforcing explicit data contracts, authoring automated unit tests for edge cases, and profiling execution latency.",
-                "Result": f"The completed service verified functional requirements with reproducible builds, passing automated test suites with verified test execution.",
-                "Learning": f"This project reinforced the architectural value of modular boundary isolation: when data schemas are explicitly validated at system entry points, downstream components remain robust and simple to refactor."
+            res_dict = {
+                "Situation": sit_text,
+                "Task": task_placeholder,
+                "Action": action_placeholder,
+                "Result": result_placeholder,
             }
+            if f_id == "STAR+L":
+                res_dict["Learning"] = f"[Candidate to specify: Key architectural lesson, trade-off, or maintainability insight learned while building '{title}']"
+            return res_dict
         elif f_id in ["PAR", "CAR"]:
             key_first = "Problem" if f_id == "PAR" else "Challenge"
+            prob_text = (
+                f"In '{title}', the verified requirement was: '{desc}', utilizing {techs}." if desc
+                else f"In '{title}', development utilized {techs} [Candidate to specify: Concrete technical challenge or requirement]."
+            )
+            if user_confirmed and conf_details:
+                prob_text += f" [Candidate Confirmed: {conf_details}]"
             return {
-                key_first: f"In '{title}', the engineering requirement was to deliver decoupled, reliable components using {techs}.",
-                "Action": f"I implemented modular services using {techs}, enforcing strict schema validation and automated error handling across all execution paths.",
-                "Result": f"The completed system satisfied all acceptance criteria with reproducible builds and reliable test execution."
+                key_first: prob_text,
+                "Action": f"[Candidate to specify: Concrete implementation steps, service boundaries, and validation logic using {techs}]",
+                "Result": f"[Candidate to specify: Deliverable outcome, verification results, or performance metrics achieved for '{title}']"
             }
         elif f_id == "SOAR":
             return {
-                "Situation": f"Architected '{title}' using {techs} to solve {desc_brief}.",
-                "Obstacles": f"The key engineering constraint was preventing processing latency spikes and maintaining state integrity across unexpected input payloads.",
-                "Actions": f"I structured the application into distinct ingestion, transformation, and persistence layers, integrating input validation and structured logging across {techs}.",
-                "Results": f"Achieved deterministic execution and clean separation of concerns, facilitating continuous testing and safe subsequent feature enhancements."
+                "Situation": sit_text,
+                "Obstacles": f"[Candidate to specify: Key engineering obstacle, processing constraint, or defect encountered in '{title}']",
+                "Actions": f"[Candidate to specify: Architectural layers, data validation, and persistence mechanisms integrated across {techs}]",
+                "Results": f"[Candidate to specify: Verifiable execution results, modularity benefits, or performance metrics achieved]"
             }
         elif f_id == "PEEL":
+            ev_str = f"Verified resume excerpt: '{desc}'" if desc else f"[Candidate to specify: Concrete requirement, benchmark, or functional evidence for selecting {techs}]"
+            if user_confirmed and conf_details:
+                ev_str += f" [Candidate Confirmed: {conf_details}]"
             return {
-                "Point": f"In '{title}', I selected {techs} to ensure architectural modularity, maintainability, and deterministic data flow.",
-                "Evidence": f"[Cite concrete benchmark data, compatibility, or functional evidence for selecting {techs}]",
-                "Explanation": f"This modular decomposition prevented tight coupling, allowing each pipeline stage to be tested in isolation and updated without cascading regression side effects.",
-                "Link": f"[Link this technology choice back to the overall success of '{title}']"
+                "Point": f"In '{title}', {techs} was selected to implement system functionality.",
+                "Evidence": ev_str,
+                "Explanation": f"[Candidate to specify: How component modularity and separation of concerns were established using {techs}]",
+                "Link": f"[Link this technology choice back to the overall deliverable and success of '{title}']"
             }
         elif f_id == "PREP":
+            ex_str = f"Verified resume implementation: '{desc}'" if desc else f"[Candidate to specify: Concrete module or data transformation example using {techs}]"
+            if user_confirmed and conf_details:
+                ex_str += f" [Candidate Confirmed: {conf_details}]"
             return {
-                "Point": f"The architecture of '{title}' prioritizes modular separation of concerns using {techs}.",
-                "Reason": "Monolithic scripts become fragile as requirements grow, whereas decoupled modules allow independent testing and localized error boundaries.",
-                "Example": f"For instance, isolating data transformations from the HTTP transport layer enabled thorough unit testing with mock fixtures before integrating live storage.",
-                "Point_Conclusion": f"This architectural pattern ensures '{title}' remains resilient, maintainable, and straightforward for any engineer to extend."
+                "Point": f"The technical design of '{title}' centers on {techs}.",
+                "Reason": f"[Candidate to specify: Architectural rationale and decoupling benefits for this technology choice]",
+                "Example": ex_str,
+                "Point_Conclusion": f"[Candidate to specify: How this architectural pattern ensures maintainability and extensibility for '{title}']"
             }
         else:  # WHAT-WHY-HOW
+            what_str = (
+                f"'{title}' is a software application utilizing {techs} to address: '{desc}'." if desc
+                else f"'{title}' is a software application built with {techs} [Candidate to specify: Functional scope]."
+            )
+            if user_confirmed and conf_details:
+                what_str += f" [Candidate Confirmed: {conf_details}]"
             return {
-                "What": f"'{title}' is a modular software application built using {techs} to address {desc_brief}.",
-                "Why": f"I initiated this architecture because tightly coupled systems fail unpredictably under edge cases and resist continuous testing.",
-                "How": f"I structured the system into distinct ingestion, processing, and output layers, enforcing interface contracts and verifying each layer through automated unit test suites."
+                "What": what_str,
+                "Why": f"[Candidate to specify: Core motivation and architectural goals behind launching this system]",
+                "How": f"[Candidate to specify: Layered component structure, data flow, and validation logic implemented using {techs}]"
             }
 
     elif context_type == "internship":
         org = evidence_item.get("organization", "your internship organization")
+        pos = evidence_item.get("position", "Intern")
         dates = evidence_item.get("dates", "during the internship")
         tech_list = evidence_item.get("technologies", [])
-        techs = ", ".join(tech_list) if tech_list else "professional software engineering tools"
+        techs = ", ".join(tech_list) if tech_list else ""
         resp_list = evidence_item.get("responsibilities", [])
-        resps = "; ".join(resp_list) if resp_list else "assigned engineering duties"
+        resps = "; ".join(resp_list) if resp_list else ""
+        user_confirmed = bool(evidence_item.get("user_confirmed") or evidence_item.get("candidate_confirmed"))
+        conf_details = str(evidence_item.get("confirmed_details") or evidence_item.get("user_confirmed_details") or "").strip()
+
+        if resps and techs:
+            sit_intern = f"At {org} ({dates}) as a {pos}, verified contributions centered on: {resps} using {techs}."
+        elif resps:
+            sit_intern = f"At {org} ({dates}) as a {pos}, verified contributions centered on: {resps}."
+        elif techs:
+            sit_intern = f"At {org} ({dates}) as a {pos} using {techs} [Candidate to specify: Assigned engineering scope; not detailed in resume text]."
+        else:
+            sit_intern = f"At {org} ({dates}) as a {pos} [Candidate to specify: Assigned engineering scope; not detailed in resume text]."
+
+        if user_confirmed and conf_details:
+            sit_intern += f" [Candidate Confirmed: {conf_details}]"
+
+        task_placeholder = f"[Candidate to specify: Specific feature, module, or repository ticket assigned at {org}]"
+        action_placeholder = f"[Candidate to specify: Codebase research, modular implementation" + (f" using {techs}" if techs else "") + f", and testing steps taken at {org}]"
+        result_placeholder = f"[Candidate to specify: Code review outcome, merged pull request deliverable, or production impact achieved at {org}]"
 
         if f_id in ["STAR", "STAR+L"]:
-            return {
-                "Situation": f"During my internship at {org} ({dates}), I worked as part of an engineering team contributing to {resps} using {techs}.",
-                "Task": f"My assignment was to deliver tested, production-ready code modules adhering to the repository's architectural standards.",
-                "Action": f"I analyzed existing codebase conventions, authored modular feature code using {techs}, created unit and integration test fixtures, and iterated on code review feedback from senior engineers.",
-                "Result": f"My pull requests were reviewed, approved, and merged into the main development branch, successfully delivering the feature without introducing regressions.",
-                "Learning": f"The experience taught me that engineering in production requires designing for maintainability, writing defensive tests, and communicating proactively when encountering ambiguity."
+            res_dict = {
+                "Situation": sit_intern,
+                "Task": task_placeholder,
+                "Action": action_placeholder,
+                "Result": result_placeholder,
             }
+            if f_id == "STAR+L":
+                res_dict["Learning"] = f"[Candidate to specify: Key engineering practice, code review takeaway, or operational lesson learned at {org}]"
+            return res_dict
         elif f_id in ["CAR", "PAR"]:
             key_first = "Challenge" if f_id == "CAR" else "Problem"
+            if resps and techs:
+                prob_text = f"At {org}, the engineering objective was to contribute to {resps} using {techs}."
+            elif resps:
+                prob_text = f"At {org}, the engineering objective was to contribute to {resps}."
+            elif techs:
+                prob_text = f"At {org}, engineering contributions utilized {techs} [Candidate to specify: Concrete problem addressed; not detailed in resume text]."
+            else:
+                prob_text = f"At {org} as a {pos} [Candidate to specify: Concrete problem addressed; not detailed in resume text]."
+
+            if user_confirmed and conf_details:
+                prob_text += f" [Candidate Confirmed: {conf_details}]"
             return {
-                key_first: f"At {org}, the team required reliable implementation of {resps} while maintaining strict backward compatibility with existing services.",
-                "Action": f"I researched the codebase dependencies, developed the solution incrementally using {techs}, authored automated test suites, and addressed senior code review critique.",
-                "Result": f"Successfully merged high-quality code into production repositories, fulfilling sprint deliverables and improving overall module test coverage."
+                key_first: prob_text,
+                "Action": f"[Candidate to specify: Implementation methodology, codebase dependencies navigated, and testing executed" + (f" using {techs}" if techs else "") + "]",
+                "Result": f"[Candidate to specify: Merged deliverable, sprint outcome, or module quality improvements delivered at {org}]"
             }
         elif f_id == "PREP":
+            if resps and techs:
+                prep_pt = f"Work at {org} ({dates}) as a {pos} provided experience contributing to {resps} using {techs}."
+            elif resps:
+                prep_pt = f"Work at {org} ({dates}) as a {pos} provided experience contributing to {resps}."
+            elif techs:
+                prep_pt = f"Work at {org} ({dates}) as a {pos} utilizing {techs} [Candidate to specify: Scope of assigned engineering contributions; not detailed in resume text]."
+            else:
+                prep_pt = f"Work at {org} ({dates}) as a {pos} [Candidate to specify: Scope of assigned engineering contributions; not detailed in resume text]."
+
             return {
-                "Point": f"My internship at {org} established my ability to deliver tested, collaborative code within professional engineering environments.",
-                "Reason": "Academic coursework rarely requires adhering to shared codebases, rigorous pull request standards, and continuous integration pipelines.",
-                "Example": f"Contributing to {resps} using {techs} required writing descriptive tests, handling boundary cases, and refining implementations based on senior engineering feedback.",
-                "Point_Conclusion": "This practical experience confirmed my readiness to contribute effectively and reliably to your development team from day one."
+                "Point": prep_pt,
+                "Reason": "[Candidate to specify: Team standards and continuous integration workflows followed]",
+                "Example": f"[Candidate to specify: Concrete code contribution, PR review iteration, or test authored at {org}]",
+                "Point_Conclusion": "[Candidate to specify: How this industry experience prepares you for team-based production delivery]"
             }
         else:
+            if resps and techs:
+                peel_pt = f"During the internship at {org}, work involved {resps} using {techs}."
+            elif resps:
+                peel_pt = f"During the internship at {org}, work involved {resps}."
+            elif techs:
+                peel_pt = f"During the internship at {org} utilizing {techs} [Candidate to specify: Scope of assigned engineering tasks; not detailed in resume text]."
+            else:
+                peel_pt = f"During the internship at {org} as a {pos} [Candidate to specify: Scope of assigned engineering tasks; not detailed in resume text]."
+
             return {
-                "Point": f"During my internship at {org}, I contributed to {resps} using {techs}.",
-                "Reason": "This provided direct exposure to production engineering standards, code reviews, and automated CI/CD validation.",
-                "Example": f"For instance, I authored modular features and unit tests, systematically verifying behavior before submitting pull requests for peer review.",
-                "Point_Conclusion": "This experience demonstrated that I write clean, maintainable, and well-tested code that meets industry quality standards."
+                "Point": peel_pt,
+                "Reason": "[Candidate to specify: Production standards, code reviews, and CI/CD validation experienced]",
+                "Example": f"[Candidate to specify: Concrete feature, refactoring, or test authored" + (f" using {techs}" if techs else "") + "]",
+                "Point_Conclusion": "[Candidate to specify: How this demonstrated writing clean, maintainable, and well-tested code]"
             }
 
     elif context_type == "skill_gap":
@@ -213,8 +340,8 @@ def ground_guidance_in_evidence(
         return {
             "Point": f"While my primary portfolio projects emphasize related technologies, I have proactively begun developing practical competence in {skill} for the {job} position.",
             "Reason": f"{skill} is a core requirement for this role, and mastering its architectural patterns ensures I can build reliable production features within your stack.",
-            "Example": f"I have been reviewing official {skill} documentation, completing hands-on labs, and building focused proof-of-concept prototypes to verify implementation mechanics.",
-            "Point_Conclusion": f"My proven track record of rapidly mastering complex frameworks ensures I will ramp up to production velocity in {skill} quickly."
+            "Example": f"[Candidate to specify: Concrete ramp-up actions, e.g. reviewing official {skill} documentation, completing labs, or building a proof-of-concept prototype]",
+            "Point_Conclusion": f"[Candidate to specify: Planned timeline or verified readiness to achieve production velocity in {skill}]"
         }
 
     return {}
@@ -232,6 +359,9 @@ def build_grounded_project_answers(
     title = project.get("title", "Technical Project")
     tech_list = project.get("technologies", [])
     desc = project.get("description", "").strip()
+    user_confirmed = bool(project.get("user_confirmed") or project.get("candidate_confirmed"))
+    confirmed_details = str(project.get("confirmed_details") or project.get("user_confirmed_details") or "").strip()
+
     if desc:
         clean_d = re.sub(
             r"^(?:built|developed|designed|created|engineered|implemented|trained|deployed|constructed|architected)\s+(?:an?|the)?\s*",
@@ -239,9 +369,11 @@ def build_grounded_project_answers(
             desc,
             flags=re.I
         ).strip()
-        desc_clean = f"the implementation of a {clean_d}" if clean_d and not clean_d.startswith(("the ", "a ", "an ")) else (clean_d or "a modular software application")
+        desc_clean = f"the implementation of a {clean_d}" if clean_d and not clean_d.startswith(("the ", "a ", "an ")) else (clean_d or "the project software requirements")
+        verified_obj_note = f"Verified Project Objective: '{desc}'"
     else:
-        desc_clean = "a modular software application"
+        desc_clean = f"software functionality using {', '.join(tech_list) if tech_list else 'the project stack'}"
+        verified_obj_note = "Project objective details not established from available resume text"
 
     # Derive specific technology role statements
     tech_explanations = []
@@ -254,34 +386,46 @@ def build_grounded_project_answers(
     verified_evidence = [
         f"Verified Project Title: '{title}'",
         f"Verified Technologies: {', '.join(tech_list) if tech_list else 'Not explicitly enumerated'}",
-        f"Verified Project Objective: '{desc}'" if desc else "General practical development portfolio"
+        verified_obj_note
     ]
+    if user_confirmed and confirmed_details:
+        verified_evidence.append(f"Candidate Confirmed Details: '{confirmed_details}'")
 
     t0 = tech_list[0] if len(tech_list) > 0 else "Python"
     t1 = tech_list[1] if len(tech_list) > 1 else "Flask"
     t2 = tech_list[2] if len(tech_list) > 2 else "PostgreSQL"
 
     if question_kind == "arch":
-        simpler = (
-            f"In '{title}', I designed a modular layered architecture to solve {desc_clean}. "
-            f"I structured the system so that each technology handled a distinct responsibility: {tech_explanation_str}. "
-            f"This strict separation of concerns ensured that data flowed through predictable interfaces and allowed each module to be tested in isolation."
-        )
+        if desc:
+            simpler = (
+                f"In '{title}', the objective was to implement {desc_clean} using {', '.join(tech_list) if tech_list else 'the stack'}. "
+                f"[Candidate to specify: Architectural approach and component boundaries chosen]. "
+                f"[General Technical Guidance]: In standard architectures using this stack, each component handles a decoupled responsibility ({tech_explanation_str}), "
+                f"ensuring data flows through predictable interfaces."
+            )
+        else:
+            simpler = (
+                f"In '{title}' ({', '.join(tech_list) if tech_list else 'technologies not specified'}), [Candidate to specify: Primary functional scope and architectural design]. "
+                f"[General Technical Guidance]: In standard architectures using this stack, each component handles a decoupled responsibility ({tech_explanation_str}), "
+                f"ensuring data flows through predictable interfaces."
+            )
 
         tech_roles_spoken = []
         for t in tech_list[:3]:
             prof = get_technology_profile(t)
             tech_roles_spoken.append(f"For the {t} component, it {prof['role']}, while it {prof['trade_off']}.")
 
-        roles_paragraph = " ".join(tech_roles_spoken) if tech_roles_spoken else f"I separated {t0} core business logic from {t1} routing and {t2} persistence."
+        roles_paragraph = " ".join(tech_roles_spoken) if tech_roles_spoken else f"Separating {t0} core business logic from {t1} routing and {t2} persistence ensures testability and clean boundaries."
 
         detailed = (
-            f"In '{title}', my primary engineering objective centered on {desc_clean}. "
-            f"When planning the architecture, I structured the system into distinct operational layers rather than building a tightly coupled monolithic script. "
-            f"{roles_paragraph} "
-            f"A core architectural consideration was ensuring that data flowed predictably between components, with clear contract interfaces and automated input validation. "
-            f"One trade-off I evaluated was keeping the service lightweight and fast to iterate on rather than introducing unnecessary distributed infrastructure early. "
-            f"The completed implementation met our functional design criteria, allowing each pipeline stage to be tested in isolation with consistent execution and predictable throughput."
+            f"To structure an architectural response for '{title}' (utilizing {', '.join(tech_list) if tech_list else 'the project stack'}), frame your explanation around clear engineering design decisions:\n"
+            f"1. Problem Scope: " + (f"The project focused on {desc_clean}." if desc else "[Candidate to specify: Specific functional problem and system scope].") + "\n"
+            f"2. Component Decomposition: [Candidate to specify: How you structured application layers across the component stack].\n"
+            f"3. Technology Responsibilities (General Technical Guidance): In typical architectures using these tools, {roles_paragraph} [Candidate to specify: Why you selected these tools and your actual component boundaries].\n"
+            f"4. Interface Contracts: [Candidate to specify: How data contracts and schema validation were enforced at boundaries].\n"
+            f"5. Trade-Off Evaluation: [Candidate to specify: Key engineering trade-off evaluated, e.g. operational simplicity vs distributed complexity].\n\n"
+            f"[Illustrative Model Scenario — Not candidate resume data]: In an application utilizing modular services, an engineer structures the service into decoupled layers: "
+            f"transport controllers handle HTTP routing and validation, domain modules process business rules, and repository abstractions manage database transactions. [/Illustrative Model Scenario]"
         )
 
         why_this_works = (
@@ -293,11 +437,11 @@ def build_grounded_project_answers(
         steps = [
             {
                 "step": "Step 1: Frame the Functional Problem & System Scope",
-                "complete_explanation": f"In '{title}', the primary software requirement centered on {desc_clean}. Clearly articulating the functional requirements upfront proves that technical decisions were guided by business objectives rather than a desire to experiment with unneeded frameworks.",
+                "complete_explanation": f"In '{title}', clearly frame the system scope: " + (f"centering on {desc_clean}." if desc else "defining the core functional requirements upfront proves that technical decisions were guided by business objectives rather than unneeded frameworks."),
                 "reasoning": "Interviewers need to confirm that you ground architectural design in actual business constraints and user requirements.",
                 "concrete_example": f"Defining clear functional contracts: ingesting input payloads, validating attributes, and outputting structured responses for '{title}'.",
                 "connection_to_question": "Directly explains the core motivation behind launching this project and setting its architectural boundaries.",
-                "detail": f"In '{title}', the primary software requirement centered on {desc_clean}. Clearly articulating the functional requirements upfront proves that technical decisions were guided by business objectives rather than a desire to experiment with unneeded frameworks."
+                "detail": f"In '{title}', clearly frame the system scope: " + (f"centering on {desc_clean}." if desc else "defining the core functional requirements upfront proves that technical decisions were guided by business objectives rather than unneeded frameworks.")
             },
             {
                 "step": f"Step 2: Map {t0} to the Core Computational Layer",
@@ -333,11 +477,11 @@ def build_grounded_project_answers(
             },
             {
                 "step": "Step 6: Evaluate Architectural Trade-Offs & Maintainability",
-                "complete_explanation": "I deliberately chose a modular monolithic architecture over distributed microservices. While microservices offer independent deployment, a modular monolith drastically reduced operational latency, simplified local developer onboarding, and avoided network serialization overhead.",
+                "complete_explanation": "When planning software architectures, engineers evaluate modular architectures against distributed microservices. While microservices offer independent deployment, a modular architecture drastically reduces operational latency, simplifies local developer onboarding, and avoids network serialization overhead.",
                 "reasoning": "Mature engineers choose the simplest architecture that satisfies system requirements rather than prematurely adopting distributed complexity.",
                 "concrete_example": "Structuring the codebase into distinct packages with clear import rules instead of deploying separate distributed services.",
                 "connection_to_question": "Proves architectural maturity and the ability to evaluate real-world engineering trade-offs.",
-                "detail": "I deliberately chose a modular monolithic architecture over distributed microservices. While microservices offer independent deployment, a modular monolith drastically reduced operational latency, simplified local developer onboarding, and avoided network serialization overhead."
+                "detail": "When planning software architectures, engineers evaluate modular architectures against distributed microservices. While microservices offer independent deployment, a modular architecture drastically reduces operational latency, simplifies local developer onboarding, and avoids network serialization overhead."
             }
         ]
 
@@ -370,11 +514,12 @@ def build_grounded_project_answers(
             {
                 "question": "How did you design automated testing across the different operational layers of this architecture?",
                 "reference_answer": (
-                    "A testing pyramid approach validates each layer in isolation without relying on slow end-to-end runs. "
-                    "At the base, unit tests evaluate computational helper functions and data transformation logic using synthetic test fixtures. "
-                    "For the service layer, mocking external network calls and persistence drivers asserts that business logic executes correctly across happy and edge-case paths. "
-                    "At the integration level, ephemeral test containers run database migration scripts and verify that SQL queries function against real schemas. "
-                    "Finally, API integration tests using test clients verify HTTP status codes, headers, and error response contracts."
+                    f"[Illustrative Scenario — Not candidate resume data]: A testing pyramid approach validates architectural layers in isolation without relying on slow end-to-end runs. "
+                    f"At the base, unit tests evaluate computational helper functions and data transformation logic using synthetic test fixtures. "
+                    f"For the service layer, mocking external network calls and persistence drivers asserts that business logic executes correctly across happy and edge-case paths. "
+                    f"At the integration level, ephemeral test containers run database migration scripts and verify that SQL queries function against real schemas. "
+                    f"Finally, API integration tests using test clients verify HTTP status codes, headers, and error response contracts. [/Illustrative Scenario] "
+                    f"[Candidate to specify: Automated testing strategy implemented for '{title}']."
                 ),
                 "technical_justification": "Isolated unit tests provide instant sub-second feedback, while integration tests verify that interface contracts and database drivers execute properly.",
                 "practical_example": "Using Pytest fixtures with unittest.mock to mock database connections in unit tests, and Docker testcontainers for integration runs.",
@@ -410,7 +555,7 @@ def build_grounded_project_answers(
             f"5. Regression Prevention: Author automated unit and integration tests asserting expected behavior across boundary cases to ensure the issue is permanently resolved.\n\n"
             f"[Illustrative Model Scenario — Not candidate resume data]: During payload processing, unhandled Unicode characters in input strings caused 500 exceptions in downstream parsers. "
             f"The engineer reproduced the exception with a targeted Pytest fixture, refactored the ingestion boundary to sanitize encodings using explicit UTF-8 validation, "
-            f"and committed the test case to the CI pipeline to permanently prevent regressions."
+            f"and committed the test case to the CI pipeline to permanently prevent regressions. [/Illustrative Model Scenario]"
         )
 
         why_this_works = (
@@ -422,11 +567,11 @@ def build_grounded_project_answers(
         steps = [
             {
                 "step": "Step 1: Frame the Symptom & Operational Impact",
-                "complete_explanation": f"In '{title}', the failure manifested as intermittent exceptions during payload processing, causing unexpected pipeline interruptions. Defining the failure symptom objectively demonstrates professional composure under technical stress.",
+                "complete_explanation": f"When troubleshooting '{title}', first state the concrete failure symptom objectively—such as unexpected runtime exceptions or pipeline interruptions—to demonstrate professional composure under technical stress.",
                 "reasoning": "Engineers must separate observable symptoms from underlying root causes to avoid premature, ineffective code modifications.",
                 "concrete_example": "Logging 500 Internal Server errors during large JSON batch ingestion with unhandled Unicode characters.",
                 "connection_to_question": "Directly frames the specific roadblock encountered during development.",
-                "detail": f"In '{title}', the failure manifested as intermittent exceptions during payload processing, causing unexpected pipeline interruptions. Defining the failure symptom objectively demonstrates professional composure under technical stress."
+                "detail": f"When troubleshooting '{title}', first state the concrete failure symptom objectively—such as unexpected runtime exceptions or pipeline interruptions—to demonstrate professional composure under technical stress."
             },
             {
                 "step": "Step 2: Reproduce the Failure in an Isolated Environment",
@@ -474,10 +619,10 @@ def build_grounded_project_answers(
             {
                 "question": "How did you verify that your fix did not introduce performance regressions or latency spikes?",
                 "reference_answer": (
-                    "To verify performance neutrality, an engineer executes automated benchmark runs comparing processing throughput before and after the patch. "
-                    "Utilizing profiler modules such as Python's timeit and cProfile on synthetic benchmark datasets verifies latency budgets. "
-                    "Profiling confirms whether introducing schema validation adds negligible overhead—under 0.3 milliseconds per payload. "
-                    "Additionally, verifying that memory allocation remains stable across prolonged batch runs confirms zero memory leaks."
+                    f"[Illustrative Scenario — Not candidate resume data]: To verify performance neutrality, an engineer executes automated benchmark runs comparing processing throughput before and after the patch. "
+                    f"Utilizing profiler modules such as Python's timeit and cProfile on synthetic benchmark datasets verifies latency budgets. "
+                    f"Profiling confirms whether introducing schema validation adds negligible latency overhead [Candidate to specify: e.g. < 1ms per payload], while verifying that memory allocations remain stable across prolonged runs. [/Illustrative Scenario] "
+                    f"[Candidate to specify: Profiling or benchmarking methods used in '{title}']."
                 ),
                 "technical_justification": "Defensive input validation must be profiled to ensure sanitization loops do not introduce O(N^2) bottlenecks.",
                 "practical_example": "Profiling JSON validation using `python -m cProfile -s cumtime process_batch.py` before and after refactoring.",
@@ -538,7 +683,7 @@ def build_grounded_project_answers(
             f"3. Test Isolation & Mocking: Detail how external dependencies (such as {t2} databases or network services) were decoupled using mock fixtures for fast, deterministic execution.\n"
             f"4. Continuous Verification: Describe how tests were executed in automated workflows to maintain reproducible verification across feature iterations.\n\n"
             f"[Illustrative Model Scenario — Not candidate resume data]: In a service using {t0} and {t1}, an engineer defines parametrized unit tests in Pytest covering normal inputs and malformed payloads, "
-            f"uses unittest.mock to simulate database responses, and enforces branch coverage thresholds in continuous integration."
+            f"uses unittest.mock to simulate database responses, and enforces branch coverage thresholds in continuous integration. [/Illustrative Model Scenario]"
         )
 
         why_this_works = (
@@ -549,11 +694,11 @@ def build_grounded_project_answers(
         steps = [
             {
                 "step": "Step 1: Establish Reliability Criteria & Test Metrics",
-                "complete_explanation": f"For '{title}', functional correctness required ensuring that every valid payload yielded an expected output, and every invalid payload was rejected cleanly without crashing the process. Defining test criteria upfront establishes measurable verification benchmarks.",
+                "complete_explanation": f"When articulating verification for '{title}', define functional correctness criteria upfront: ensuring valid inputs produce deterministic outputs, and invalid payloads are rejected cleanly without unhandled crashes. Defining test criteria upfront establishes measurable verification benchmarks.",
                 "reasoning": "Clear testing criteria prevent subjective evaluations and establish objective release standards.",
                 "concrete_example": "Targeting 85%+ branch coverage and zero unhandled 500 status codes across test suites.",
                 "connection_to_question": "Sets the baseline definition of correctness and system reliability.",
-                "detail": f"For '{title}', functional correctness required ensuring that every valid payload yielded an expected output, and every invalid payload was rejected cleanly without crashing the process. Defining test criteria upfront establishes measurable verification benchmarks."
+                "detail": f"When articulating verification for '{title}', define functional correctness criteria upfront: ensuring valid inputs produce deterministic outputs, and invalid payloads are rejected cleanly without unhandled crashes. Defining test criteria upfront establishes measurable verification benchmarks."
             },
             {
                 "step": "Step 2: Author Parametrized Unit Tests with Pytest",
@@ -601,10 +746,10 @@ def build_grounded_project_answers(
             {
                 "question": "What is the difference between unit tests, integration tests, and end-to-end tests in your project?",
                 "reference_answer": (
-                    "In '{title}', unit tests focus on isolated individual functions—such as data parsers or scoring calculations—with all external dependencies mocked, executing in milliseconds. "
-                    "Integration tests verify the boundaries between connected subsystems, such as confirming that our API routes interact properly with the database and execute migration scripts accurately. "
-                    "End-to-end tests simulate the complete user journey from HTTP request to persisted database output, verifying that the entire system functions coherently in a production-like environment. "
-                    "We maintain an extensive base of unit tests for fast developer feedback, supported by targeted integration tests to verify database contracts."
+                    f"[Illustrative Scenario — Not candidate resume data]: In software architectures like '{title}', unit tests focus on isolated individual functions—such as data parsers or scoring calculations—with all external dependencies mocked, executing in milliseconds. "
+                    f"Integration tests verify the boundaries between connected subsystems, such as confirming that API routes interact properly with the database and execute migration scripts accurately. "
+                    f"End-to-end tests simulate the complete user journey from HTTP request to persisted database output, verifying that the entire system functions coherently in a production-like environment. [/Illustrative Scenario] "
+                    f"[Candidate to specify: Testing layers implemented or planned for '{title}']."
                 ),
                 "technical_justification": "The testing pyramid allocates the majority of tests to fast unit tests, with targeted integration and E2E tests verifying boundary contracts.",
                 "practical_example": "A unit test checks string formatting; an integration test executes a SELECT query against PostgreSQL; an E2E test submits a multipart resume upload via HTTP.",
@@ -669,11 +814,11 @@ def build_grounded_project_answers(
         steps = [
             {
                 "step": "Step 1: Diagnose Single-Node Architectural Bottlenecks",
-                "complete_explanation": f"In '{title}', compute-heavy data operations currently run synchronously within the HTTP worker process. When concurrent users submit requests simultaneously, worker threads become blocked, causing response queueing and elevating p99 latencies.",
+                "complete_explanation": f"When evaluating scalability for '{title}', analyze single-node architectural limits: identifying whether compute-heavy data operations run synchronously within the HTTP worker process and how concurrent traffic affects response latencies.",
                 "reasoning": "Scaling begins with profiling current resource bottlenecks (CPU, memory, disk I/O, or connection limits) before writing code.",
                 "concrete_example": "Identifying that payload parsing and scoring operations hold HTTP connection threads open for multiple seconds.",
                 "connection_to_question": "Directly analyzes the current architectural scaling limits.",
-                "detail": f"In '{title}', compute-heavy data operations currently run synchronously within the HTTP worker process. When concurrent users submit requests simultaneously, worker threads become blocked, causing response queueing and elevating p99 latencies."
+                "detail": f"When evaluating scalability for '{title}', analyze single-node architectural limits: identifying whether compute-heavy data operations run synchronously within the HTTP worker process and how concurrent traffic affects response latencies."
             },
             {
                 "step": "Step 2: Decouple Compute Tasks via Asynchronous Task Queues",
@@ -734,11 +879,12 @@ def build_grounded_project_answers(
             {
                 "question": "How would you design a caching strategy to handle stale data and cache invalidation under heavy write traffic?",
                 "reference_answer": (
-                    "Cache invalidation requires balancing read performance against data freshness. "
-                    "For '{title}', I would adopt a Cache-Aside pattern combined with explicit event-driven invalidation. "
-                    "When records are updated, the database transaction commits first; upon successful commit, the application invalidates or updates the specific Redis cache keys. "
-                    "To guard against race conditions and network failures where invalidation messages drop, every cached key is assigned a reasonable time-to-live (TTL), such as 15 minutes. "
-                    "For high-concurrency read scenarios with frequent writes, I would implement mutex locks around cache misses (preventing cache stampedes) and versioned cache keys."
+                    f"Cache invalidation requires balancing read performance against data freshness. "
+                    f"For '{title}', an engineer can adopt a Cache-Aside pattern combined with explicit event-driven invalidation. "
+                    f"When records are updated, the database transaction commits first; upon successful commit, the application invalidates or updates the specific Redis cache keys. "
+                    f"To guard against race conditions and network failures where invalidation messages drop, every cached key is assigned a reasonable time-to-live (TTL), such as 15 minutes. "
+                    f"For high-concurrency read scenarios with frequent writes, implementing mutex locks around cache misses (preventing cache stampedes) and versioned cache keys is effective. "
+                    f"[Candidate to specify: Caching design evaluated for '{title}']."
                 ),
                 "technical_justification": "Cache-Aside with TTL bounds data staleness, while explicit post-commit invalidation guarantees immediate consistency for active users.",
                 "practical_example": "Executing `db.session.commit()`, followed immediately by `redis.delete(f'candidate:{candidate_id}')`.",
@@ -748,9 +894,9 @@ def build_grounded_project_answers(
                 "question": "What metrics would you monitor to determine exactly when to trigger horizontal autoscaling?",
                 "reference_answer": (
                     "Autoscaling should not rely on CPU utilization alone, because compute-bound and I/O-bound workloads exhibit distinct bottlenecks. "
-                    "For our web tier, I would monitor HTTP request rate, active connection count, and p95 request duration, scaling up when p95 latency exceeds 500ms or when CPU crosses 70%. "
+                    "For a web tier, engineers monitor HTTP request rate, active connection count, and p95 request duration, scaling up when p95 latency exceeds 500ms or when CPU crosses 70%. "
                     "For background worker queues, the most critical metric is queue depth (backlog length) and job latency: if the queue has more than 50 pending jobs per worker, the autoscaler adds worker pods. "
-                    "Furthermore, I configure stabilization windows (cooldown periods) of 3 to 5 minutes to prevent thrashing (rapid scaling up and down)."
+                    "Furthermore, configuring stabilization windows (cooldown periods) of 3 to 5 minutes prevents thrashing (rapid scaling up and down)."
                 ),
                 "technical_justification": "Queue depth directly reflects processing lag, whereas CPU utilization can lag behind sudden traffic surges.",
                 "practical_example": "Configuring Kubernetes KEDA (Kubernetes Event-driven Autoscaling) to autoscale worker deployments based on Redis queue length.",
@@ -783,7 +929,13 @@ def build_grounded_project_answers(
         "missing_personal_details": missing_info,
         "verified_evidence": verified_evidence,
         "recommended_framework": framework,
-        "examples": f"In '{title}', {', '.join(tech_list[:2]) if tech_list else 'the stack'} decoupled presentation from backend processing logic."
+        "examples": (
+            f"In '{title}', verified objective: '{desc}'." if desc else (
+                f"Project record '{title}' (technologies: {', '.join(tech_list)}). [Candidate to specify: Architecture and component design]." if tech_list else (
+                    f"Project record '{title}'. [Candidate to specify: Architecture and component design]."
+                )
+            )
+        )
     }
 
 
@@ -800,37 +952,66 @@ def build_grounded_internship_answers(
     pos = internship.get("position", "Intern")
     dates = internship.get("dates", "during my internship")
     tech_list = internship.get("technologies", [])
-    techs = ", ".join(tech_list) if tech_list else "professional software engineering tools"
+    techs = ", ".join(tech_list) if tech_list else ""
     resp_list = internship.get("responsibilities", [])
-    resps = "; ".join(resp_list) if resp_list else "software engineering duties"
+    resps = "; ".join(resp_list) if resp_list else ""
+    resps_display = resps if resps else "[Internship responsibilities not specified in resume]"
 
     verified_evidence = [
         f"Verified Organization: {org}",
         f"Verified Position: {pos}",
         f"Verified Dates: {dates}",
-        f"Verified Responsibilities: {resps}",
-        f"Verified Tools: {techs}"
+        f"Verified Responsibilities: {resps}" if resps else "Internship responsibilities not established in resume text",
+        f"Verified Tools: {techs}" if tech_list else "Specific technologies not established in resume text"
     ]
 
     t0 = tech_list[0] if len(tech_list) > 0 else "Python"
     t1 = tech_list[1] if len(tech_list) > 1 else "Git"
 
     if question_kind == "resp":
-        simpler = (
-            f"When discussing your internship at {org} ({dates}) as a {pos}, highlight how you contributed to {resps} using {techs}. "
-            f"Structure your response: [Candidate to specify: Specific feature or service assigned] -> "
-            f"Adhering to team conventions, modular code design, and testing -> "
-            f"[Candidate to specify: Merged deliverable or outcome]."
-        )
+        if resps and techs:
+            simpler = (
+                f"When discussing your internship at {org} ({dates}) as a {pos}, highlight how you contributed to {resps} using {techs}. "
+                f"Structure your response: [Candidate to specify: Specific feature or service assigned] -> "
+                f"Adhering to team conventions, modular code design, and testing -> "
+                f"[Candidate to specify: Merged deliverable or outcome]."
+            )
+            scope_desc = f"Your contributions centered on {resps} using {techs}"
+        elif resps:
+            simpler = (
+                f"When discussing your internship at {org} ({dates}) as a {pos}, highlight how you contributed to {resps}. "
+                f"Structure your response: [Candidate to specify: Specific feature or service assigned] -> "
+                f"Adhering to team conventions, modular code design, and testing -> "
+                f"[Candidate to specify: Merged deliverable or outcome]."
+            )
+            scope_desc = f"Your contributions centered on {resps}"
+        elif techs:
+            simpler = (
+                f"When discussing your internship at {org} ({dates}) as a {pos}, highlight how you contributed using {techs}: "
+                f"[Candidate to specify: Specific feature or service assigned; not detailed in resume text]. "
+                f"Structure your response: [Candidate to specify: Specific feature or service assigned] -> "
+                f"Adhering to team conventions, modular code design, and testing -> "
+                f"[Candidate to specify: Merged deliverable or outcome]."
+            )
+            scope_desc = f"Your contributions centered on [Candidate to specify: Assigned engineering tasks using {techs}; not detailed in resume text]"
+        else:
+            simpler = (
+                f"When discussing your internship at {org} ({dates}) as a {pos}, focus on: "
+                f"[Candidate to specify: Assigned engineering tasks; not detailed in resume text]. "
+                f"Structure your response: [Candidate to specify: Specific feature or service assigned] -> "
+                f"Adhering to team conventions, modular code design, and testing -> "
+                f"[Candidate to specify: Merged deliverable or outcome]."
+            )
+            scope_desc = "[Candidate to specify: Assigned engineering scope; not detailed in resume text]"
 
         detailed = (
             f"To present a compelling overview of your internship at {org} ({dates}) as a {pos}, frame your experience around professional software development standards:\n"
-            f"1. Context & Scope: Your contributions centered on {resps} using {techs} within an established team codebase.\n"
+            f"1. Context & Scope: {scope_desc} within an established team codebase.\n"
             f"2. Development Process: [Candidate to specify: How you researched existing abstractions, authored modular code, and adhered to coding conventions].\n"
             f"3. Verification & Testing: Detail how you verified functionality with automated tests before opening pull requests.\n"
             f"4. Peer Review & Integration: [Candidate to specify: Iterating on code reviews with senior engineers to deliver merged, production-ready code].\n\n"
             f"[Illustrative Model Scenario — Not candidate resume data]: An intern contributing to backend services reads existing codebase abstractions, "
-            f"implements modular endpoint handlers in feature branches, authors Pytest fixtures for boundary cases, and refactors code based on peer review before merging to main."
+            f"implements modular endpoint handlers in feature branches, authors Pytest fixtures for boundary cases, and refactors code based on peer review before merging to main. [/Illustrative Model Scenario]"
         )
 
         why_this_works = (
@@ -844,31 +1025,40 @@ def build_grounded_internship_answers(
                 "step": "Step 1: Frame the Organizational Context & Engineering Team Scope",
                 "complete_explanation": f"At {org} ({dates}), the role of {pos} involved working within the development team. Presenting the team environment and dates first provides interviewers with clear operational context and establishes professional legitimacy.",
                 "reasoning": "Clear contextual framing grounds subsequent technical discussions in verified professional experience.",
-                "concrete_example": f"Working as a {pos} alongside senior engineers and product managers within an agile team at {org}.",
+                "concrete_example": f"[Candidate to specify: Engineering team structure and assigned scope as a {pos} at {org}].",
                 "connection_to_question": "Directly sets the foundation for discussing assigned responsibilities.",
                 "detail": f"At {org} ({dates}), the role of {pos} involved working within the development team. Presenting the team environment and dates first provides interviewers with clear operational context and establishes professional legitimacy."
             },
             {
                 "step": "Step 2: Map Assigned Responsibilities to Production Features",
-                "complete_explanation": f"Core day-to-day engineering responsibilities focused on {resps}. Rather than working on disconnected toy scripts, the assignment required authoring modular service code that integrated directly into existing team repositories.",
+                "complete_explanation": (
+                    f"Core day-to-day engineering responsibilities focused on {resps}." if resps
+                    else "Core day-to-day engineering responsibilities should be clearly defined: [Candidate to specify: Assigned tasks; not detailed in resume text]."
+                ) + " Rather than working on disconnected toy scripts, the assignment required authoring modular service code that integrated directly into existing team repositories.",
                 "reasoning": "Demonstrating that you contributed to real software repositories proves readiness for full-time engineering duties.",
-                "concrete_example": f"Implementing modular endpoints, data validation schemas, or database query optimizations using {techs}.",
+                "concrete_example": (
+                    f"[Candidate to specify: Concrete endpoints, validation schemas, or database query optimizations authored using {techs}]." if techs
+                    else "[Candidate to specify: Concrete endpoints, validation schemas, or database query optimizations authored]."
+                ),
                 "connection_to_question": "Articulates the concrete engineering scope of the internship.",
-                "detail": f"Core day-to-day engineering responsibilities focused on {resps}. Rather than working on disconnected toy scripts, the assignment required authoring modular service code that integrated directly into existing team repositories."
+                "detail": (
+                    f"Core day-to-day engineering responsibilities focused on {resps}." if resps
+                    else "Core day-to-day engineering responsibilities should be clearly defined: [Candidate to specify: Assigned tasks; not detailed in resume text]."
+                ) + " Rather than working on disconnected toy scripts, the assignment required authoring modular service code that integrated directly into existing team repositories."
             },
             {
-                "step": f"Step 3: Technical Execution & Implementation with {techs}",
-                "complete_explanation": f"Utilize {techs} to build modular, maintainable software components following team design patterns. Focus on clean function decomposition, descriptive variable naming, and strict adherence to repository coding conventions.",
+                "step": "Step 3: Technical Execution & Implementation" + (f" with {techs}" if techs else ""),
+                "complete_explanation": (f"Utilize {techs}" if techs else "Utilize assigned engineering tools") + " to build modular, maintainable software components following team design patterns. Focus on clean function decomposition, descriptive variable naming, and strict adherence to repository coding conventions.",
                 "reasoning": "Engineering teams value consistency, clean architecture, and adherence to existing patterns over idiosyncratic coding styles.",
-                "concrete_example": f"Authoring reusable utility functions and schema models adhering to PEP 8 or enterprise style guides using {techs}.",
+                "concrete_example": (f"[Candidate to specify: Utility functions or schema models adhering to enterprise style guides using {techs}]." if techs else "[Candidate to specify: Utility functions or schema models adhering to enterprise style guides]."),
                 "connection_to_question": "Explains hands-on tool mastery and software implementation craft.",
-                "detail": f"Utilize {techs} to build modular, maintainable software components following team design patterns. Focus on clean function decomposition, descriptive variable naming, and strict adherence to repository coding conventions."
+                "detail": (f"Utilize {techs}" if techs else "Utilize assigned engineering tools") + " to build modular, maintainable software components following team design patterns. Focus on clean function decomposition, descriptive variable naming, and strict adherence to repository coding conventions."
             },
             {
                 "step": "Step 4: Author Unit Tests & Verify Local Regression Freedom",
                 "complete_explanation": "Before submitting code for review, author automated unit tests covering both expected happy paths and edge cases. Running the full local test suite verifies that changes introduce zero functional regressions across existing features.",
                 "reasoning": "Submitting thoroughly tested pull requests saves senior engineer review time and demonstrates engineering responsibility.",
-                "concrete_example": "Writing automated test fixtures with assertions validating new feature outputs and boundary error handling.",
+                "concrete_example": "[Candidate to specify: Automated test fixtures with assertions validating new feature outputs and boundary error handling].",
                 "connection_to_question": "Proves rigorous software validation and testing discipline.",
                 "detail": "Before submitting code for review, author automated unit tests covering both expected happy paths and edge cases. Running the full local test suite verifies that changes introduce zero functional regressions across existing features."
             },
@@ -876,17 +1066,17 @@ def build_grounded_internship_answers(
                 "step": "Step 5: Peer Code Review & Incorporating Senior Engineering Critique",
                 "complete_explanation": "Submit code via Git pull requests with clear summary descriptions of changes. Engaging constructively with senior engineering feedback during code reviews demonstrates professional maturity and rapid iteration.",
                 "reasoning": "The ability to receive feedback gracefully and iterate quickly is one of the highest-value signals of a strong junior/mid-level engineer.",
-                "concrete_example": "Refactoring a database query after a senior engineer pointed out an unindexed column join during PR review.",
+                "concrete_example": "[Candidate to specify: Constructive refactoring implemented following senior engineer feedback during PR review].",
                 "connection_to_question": "Demonstrates team collaboration, communication, and professional growth.",
                 "detail": "Submit code via Git pull requests with clear summary descriptions of changes. Engaging constructively with senior engineering feedback during code reviews demonstrates professional maturity and rapid iteration."
             },
             {
                 "step": "Step 6: Verified Pull Request Merge & Production Delivery",
-                "complete_explanation": "Once approved, my changes passed continuous integration validation checks and were merged into the main development branch. Delivering verified code into shared team repositories confirmed my ability to deliver production value.",
+                "complete_explanation": "Delivering tested, reviewed, and approved pull requests into the shared development repository confirms an engineer's ability to create production value and align with team delivery standards.",
                 "reasoning": "Merged code represents the ultimate deliverable and proves full alignment with team delivery standards.",
-                "concrete_example": "Merging pull requests that passed all automated CI status checks and deploying to staging environments.",
+                "concrete_example": "[Candidate to specify: Pull requests merged through CI status checks or deployed to staging environments].",
                 "connection_to_question": "Concludes with verified tangible impact and completed deliverables.",
-                "detail": "Once approved, my changes passed continuous integration validation checks and were merged into the main development branch. Delivering verified code into shared team repositories confirmed my ability to deliver production value."
+                "detail": "Delivering tested, reviewed, and approved pull requests into the shared development repository confirms an engineer's ability to create production value and align with team delivery standards."
             }
         ]
 
@@ -894,11 +1084,12 @@ def build_grounded_internship_answers(
             {
                 "question": f"What was the most challenging technical problem you were assigned at {org}?",
                 "reference_answer": (
-                    f"The most challenging technical problem was navigating an unfamiliar, multi-thousand-line codebase to implement {resps} without breaking existing functionality. "
-                    f"Because documentation was incomplete for legacy modules, I had to read existing unit tests and trace execution flow using debuggers to understand data dependencies. "
-                    f"I identified that existing endpoints lacked boundary validation, which occasionally triggered unhandled exceptions under null inputs. "
-                    f"I drafted a design proposal for refactoring the module with explicit schema checks, discussed it with my mentor, and implemented the solution with comprehensive regression tests. "
-                    f"Delivering that fix without regressions gave me immense confidence in tackling complex enterprise codebases."
+                    f"[Illustrative Scenario — Not candidate resume data]: A common challenge is navigating an unfamiliar codebase to implement assignments without breaking existing functionality. "
+                    f"When legacy module documentation is incomplete, an engineer can trace execution flow using interactive debuggers to understand data dependencies. "
+                    f"Reviewing existing unit tests and call hierarchies reveals implicit architectural contracts and boundary validation requirements. "
+                    f"Drafting a concise design proposal and discussing it with a senior mentor aligns the engineering approach before writing implementation code. "
+                    f"Delivering the solution backed by automated regression tests ensures that new functionality integrates without introducing regressions across dependent services. [/Illustrative Scenario] "
+                    f"[Candidate to specify: The specific challenging technical problem assigned to you at {org}]."
                 ),
                 "technical_justification": "Navigating legacy code and tracing dependencies without breaking backwards compatibility is the primary daily challenge in enterprise engineering.",
                 "practical_example": "Using grep, IDE call hierarchies, and pytest execution traces to map function call paths across microservices.",
@@ -907,23 +1098,26 @@ def build_grounded_internship_answers(
             {
                 "question": "How did you balance asking questions with working independently during your internship?",
                 "reference_answer": (
-                    "I adhered to a structured '30-minute rule' to balance autonomy with team efficiency. "
-                    "When encountering a technical blocker, I spent dedicated time reading documentation, inspecting logs, and attempting minimal reproductions independently. "
-                    "If I remained blocked after 30 minutes, I reached out to a senior teammate—not with an open-ended complaint, but with a concise summary of what I was trying to accomplish, the exact error encountered, the 2 or 3 hypotheses I tested, and why they failed. "
-                    "Senior engineers appreciated this approach because it showed initiative, respected their focus time, and allowed them to unblock me in minutes."
+                    "[Illustrative Scenario — Not candidate resume data]: A proven framework for junior engineers is the '30-minute rule' to balance autonomy with team efficiency. "
+                    "When encountering a technical blocker, spend dedicated time reading documentation, inspecting logs, and attempting minimal reproductions independently. "
+                    "If still blocked after focused troubleshooting, reach out to a senior teammate with a structured technical summary. "
+                    "Clearly state what you are trying to accomplish, the exact error encountered, the hypotheses tested, and why each failed. "
+                    "Senior engineers appreciate this approach because it shows initiative, respects team focus time, and enables rapid resolution. [/Illustrative Scenario] "
+                    f"[Candidate to specify: How you structured asking questions and working autonomously at {org}]."
                 ),
                 "technical_justification": "Senior engineers want junior developers who attempt independent troubleshooting but know when to seek guidance before wasting hours.",
                 "practical_example": "Posting in Slack: 'Attempting to run DB migration 04; getting Foreign Key constraint error on users table. Checked schema and verified user_id 10 exists. Is there a seed script prerequisite?'",
                 "interview_takeaway": "Frame asking for help as a collaborative, structured process: state the goal, what you attempted, and your specific question."
             },
             {
-                "question": "What software engineering practices did you adopt at {org} that you continue to use in personal projects?",
+                "question": f"What software engineering practices did you adopt at {org} that you continue to use in personal projects?",
                 "reference_answer": (
-                    "My internship permanently instilled three core engineering habits that I now apply to every codebase. "
-                    "First, atomic Git commits: making focused, single-purpose commits with clear descriptive messages rather than large batch dumps. "
-                    "Second, defensive boundary validation: validating all inputs at system entry points using explicit type contracts before passing data to domain functions. "
+                    "[Illustrative Scenario — Not candidate resume data]: Core professional engineering habits developed during an internship often include three key practices. "
+                    "First, making atomic Git commits with focused, single-purpose changes and descriptive Conventional Commit messages. "
+                    "Second, enforcing defensive boundary validation by validating all inputs at system entry points using explicit type contracts. "
                     "Third, authoring automated regression tests alongside feature code rather than treating testing as a rushed post-development afterthought. "
-                    "These practices dramatically reduce debugging time and make my repositories immediately accessible to other developers."
+                    "These disciplined habits reduce debugging time and keep shared repositories maintainable for all teammates. [/Illustrative Scenario] "
+                    f"[Candidate to specify: Key software engineering practices you adopted during your time at {org}]."
                 ),
                 "technical_justification": "Atomic commits and automated testing are industry standards that ensure long-term codebase maintainability and bisectability.",
                 "practical_example": "Writing conventional commit messages (`feat: add schema validation for candidate upload`) and authoring failing tests first.",
@@ -941,9 +1135,10 @@ def build_grounded_internship_answers(
         framework = "STAR"
 
     elif question_kind == "learn":
+        scope_context = f"while contributing to {resps} using {techs}" if resps else f"while contributing using {techs}"
         simpler = (
             f"When discussing key lessons from {org}, frame your reflections around production software engineering craft: "
-            f"[Candidate to specify: Most significant technical or procedural insight gained while contributing to {resps} using {techs}]."
+            f"[Candidate to specify: Most significant technical or procedural insight gained {scope_context}]."
         )
 
         detailed = (
@@ -952,7 +1147,7 @@ def build_grounded_internship_answers(
             f"2. Collaborative Review Culture: [Candidate to specify: Key constructive feedback received from senior mentors that refined your craft].\n"
             f"3. Proactive Clarification: Eliminating requirement ambiguity through early technical discussions.\n\n"
             f"[Illustrative Model Scenario — Not candidate resume data]: A software engineer learns that writing defensive unit tests and asking clarifying questions during sprint planning "
-            f"saves days of refactoring compared to making unverified assumptions."
+            f"saves days of refactoring compared to making unverified assumptions. [/Illustrative Model Scenario]"
         )
 
         why_this_works = (
@@ -964,51 +1159,51 @@ def build_grounded_internship_answers(
         steps = [
             {
                 "step": "Step 1: Reflect on the Academic vs Production Engineering Contrast",
-                "complete_explanation": f"At {org}, the immediate revelation was contrasting academic coding—which is typically temporary and individual—with production software engineering, which involves long-lived systems maintained by cross-functional teams.",
+                "complete_explanation": f"At {org}, reflecting on professional engineering highlights the contrast between academic coding—which is typically temporary and individual—and production software engineering, which involves long-lived systems maintained by cross-functional teams.",
                 "reasoning": "Recognizing this difference demonstrates mature technical self-awareness and readiness for industry expectations.",
                 "concrete_example": "Realizing that code written today must be easily understood by teammates six months from now without explanation.",
                 "connection_to_question": "Establishes the core insight and foundation of the learning experience.",
-                "detail": f"At {org}, the immediate revelation was contrasting academic coding—which is typically temporary and individual—with production software engineering, which involves long-lived systems maintained by cross-functional teams."
+                "detail": f"At {org}, reflecting on professional engineering highlights the contrast between academic coding—which is typically temporary and individual—and production software engineering, which involves long-lived systems maintained by cross-functional teams."
             },
             {
                 "step": "Step 2: Appreciate Code Readability & Descriptive Naming Over Brevity",
-                "complete_explanation": "During code reviews, senior mentors emphasized that concise or clever one-liners are liabilities if they obscure intent. I learned to choose descriptive variable and function names that document their purpose self-evidently.",
+                "complete_explanation": "In professional engineering teams, code readability and descriptive naming take precedence over clever brevity. Descriptive variable and function names document their purpose self-evidently, reducing reviewer cognitive load.",
                 "reasoning": "Readable code decreases cognitive load for reviewers, accelerates onboarding, and reduces bug injection rates.",
                 "concrete_example": "Renaming ambiguous variables like `d` and `res` to `candidate_records` and `parsed_output_envelope`.",
                 "connection_to_question": "Illustrates concrete improvements in code quality standards.",
-                "detail": "During code reviews, senior mentors emphasized that concise or clever one-liners are liabilities if they obscure intent. I learned to choose descriptive variable and function names that document their purpose self-evidently."
+                "detail": "In professional engineering teams, code readability and descriptive naming take precedence over clever brevity. Descriptive variable and function names document their purpose self-evidently, reducing reviewer cognitive load."
             },
             {
                 "step": "Step 3: Internalize Automated Testing as a Living Specification",
-                "complete_explanation": "I learned that unit tests are not just verification tools; they serve as living documentation describing how components are expected to behave. Reading existing tests helped me understand legacy modules faster than reading architecture docs.",
+                "complete_explanation": "Automated tests function as living documentation describing how components are expected to behave. Reading existing tests helps engineers understand legacy modules faster and prevents specification drift.",
                 "reasoning": "Tests cannot drift out of sync with code behavior because failing tests break the continuous integration build.",
                 "concrete_example": "Writing test cases that clearly document expected error behaviors when external APIs return 503 Service Unavailable.",
                 "connection_to_question": "Connects testing discipline to long-term software maintainability.",
-                "detail": "I learned that unit tests are not just verification tools; they serve as living documentation describing how components are expected to behave. Reading existing tests helped me understand legacy modules faster than reading architecture docs."
+                "detail": "Automated tests function as living documentation describing how components are expected to behave. Reading existing tests helps engineers understand legacy modules faster and prevents specification drift."
             },
             {
                 "step": "Step 4: Master Constructive Code Review Etiquette",
-                "complete_explanation": "I learned to approach code reviews as collaborative learning opportunities rather than personal critiques. I actively studied senior engineer comments, asked questions to understand architectural principles, and reviewed teammate PRs to learn new patterns.",
+                "complete_explanation": "Approaching code reviews as collaborative learning opportunities rather than personal critiques fosters collective code ownership and continuous mentorship across engineering teams.",
                 "reasoning": "Healthy code review culture fosters collective code ownership and continuous mentorship across engineering teams.",
                 "concrete_example": "Engaging constructively with PR comments regarding database query performance and updating implementations promptly.",
                 "connection_to_question": "Demonstrates interpersonal maturity and team collaboration.",
-                "detail": "I learned to approach code reviews as collaborative learning opportunities rather than personal critiques. I actively studied senior engineer comments, asked questions to understand architectural principles, and reviewed teammate PRs to learn new patterns."
+                "detail": "Approaching code reviews as collaborative learning opportunities rather than personal critiques fosters collective code ownership and continuous mentorship across engineering teams."
             },
             {
                 "step": "Step 5: Practice Proactive Requirement Clarification",
-                "complete_explanation": "I discovered that ambiguous requirements lead to wasted engineering effort. Clarifying assumptions, edge cases, and acceptance criteria with product managers before writing code prevented days of subsequent refactoring.",
+                "complete_explanation": "Ambiguous requirements lead to wasted engineering effort. Clarifying assumptions, edge cases, and acceptance criteria before writing code prevents costly downstream refactoring.",
                 "reasoning": "Fixing an ambiguous requirement during design costs minutes; fixing it after deployment requires database migrations and rollbacks.",
                 "concrete_example": "Authoring brief implementation summaries outlining proposed API request/response formats before coding.",
                 "connection_to_question": "Highlights proactive communication and engineering efficiency.",
-                "detail": "I discovered that ambiguous requirements lead to wasted engineering effort. Clarifying assumptions, edge cases, and acceptance criteria with product managers before writing code prevented days of subsequent refactoring."
+                "detail": "Ambiguous requirements lead to wasted engineering effort. Clarifying assumptions, edge cases, and acceptance criteria before writing code prevents costly downstream refactoring."
             },
             {
                 "step": "Step 6: Translate Professional Lessons into Ongoing Engineering Craft",
-                "complete_explanation": "This experience permanently elevated how I approach software design. I now structure every project—personal or professional—with clean modularity, automated test coverage, and clear documentation.",
+                "complete_explanation": "Reflecting on industry experience elevates software design craft: structuring code with clean modularity, automated test coverage, and clear documentation by default.",
                 "reasoning": "True learning is reflected in consistent, permanent behavior change across all engineering tasks.",
                 "concrete_example": "Setting up GitHub Actions CI pipelines and linting rules on all new software repositories by default.",
                 "connection_to_question": "Concludes with permanent personal development and value for future employers.",
-                "detail": "This experience permanently elevated how I approach software design. I now structure every project—personal or professional—with clean modularity, automated test coverage, and clear documentation."
+                "detail": "Reflecting on industry experience elevates software design craft: structuring code with clean modularity, automated test coverage, and clear documentation by default."
             }
         ]
 
@@ -1016,10 +1211,12 @@ def build_grounded_internship_answers(
             {
                 "question": "Can you share a specific code review comment that fundamentally improved how you write software?",
                 "reference_answer": (
-                    "During a pull request for a data ingestion feature, I had written a function that caught generic `Exception` and logged a one-line warning. "
-                    "A senior engineer commented: 'Catching generic Exception masks underlying bugs like syntax errors or memory issues, and silent logs make failures impossible to detect in production.' "
-                    "They guided me to catch specific exceptions—like `KeyError` or `ValueError`—and handle each with appropriate logging and fallback defaults. "
-                    "That comment fundamentally changed my mindset: error handling is not just about keeping the application from crashing, but about maintaining system observability and state predictability."
+                    "[Illustrative Scenario — Not candidate resume data]: In professional code reviews, senior engineers frequently advise against catching blanket exceptions. "
+                    "Catching generic `Exception` masks underlying bugs like syntax errors or memory issues, while silent logs make production failures impossible to detect. "
+                    "Refactoring to catch specific exceptions—like `KeyError` or `ValueError`—preserves system observability and deterministic error handling. "
+                    "Handling distinct error types with appropriate logging and fallback defaults ensures defensive error resilience. "
+                    "This mindset shift reinforces that robust software must fail loudly and informatively rather than hiding anomalies. [/Illustrative Scenario] "
+                    f"[Candidate to specify: A concrete code review critique or technical guidance received at {org}]."
                 ),
                 "technical_justification": "Catching generic exceptions hides critical programming bugs, swallows keyboard interrupts, and makes root-cause analysis nearly impossible in production.",
                 "practical_example": "Refactoring `except Exception:` into `except (KeyError, ValueError) as e: logger.warning('Malformed schema: %s', e); raise CustomValidationError(e)`.",
@@ -1028,10 +1225,12 @@ def build_grounded_internship_answers(
             {
                 "question": "How did your Git version control habits change as a result of working on a shared team repository?",
                 "reference_answer": (
-                    "Before my internship, I frequently committed large, sweeping changes with generic messages like 'fixed stuff' or 'updated files.' "
-                    "At {org}, working on a team with multiple engineers merging concurrently taught me the vital importance of atomic Git commits and descriptive Conventional Commit messages. "
-                    "I learned to keep commits focused on a single logical change, author informative commit bodies explaining the 'why' behind decisions, and rebase feature branches cleanly against main before opening pull requests. "
-                    "This discipline made code reviews significantly faster and allowed teammates to use `git bisect` seamlessly if bugs were ever introduced."
+                    f"[Illustrative Scenario — Not candidate resume data]: Working on a shared team repository at {org} highlights the vital necessity of disciplined version control. "
+                    "Engineers maintain atomic Git commits focused on a single logical change with clear summary descriptions. "
+                    "Authoring informative Conventional Commit messages explains the underlying 'why' behind architectural decisions. "
+                    "Rebasing feature branches cleanly against main before opening pull requests keeps commit history linear and bisectable. "
+                    "This discipline makes code reviews significantly faster and simplifies pinpointing regressions if unexpected defects emerge. [/Illustrative Scenario] "
+                    f"[Candidate to specify: How your Git and branch management habits developed at {org}]."
                 ),
                 "technical_justification": "Atomic commits and clean Git history enable automated changelog generation and simplify pinpointing regressions via git bisect.",
                 "practical_example": "Using `git rebase -i` to squash exploratory commits into a clean `feat(auth): add JWT expiration validation` commit.",
@@ -1040,10 +1239,12 @@ def build_grounded_internship_answers(
             {
                 "question": "How do you handle situations where product requirements or task specifications are ambiguous?",
                 "reference_answer": (
-                    "When requirements are ambiguous, I never make silent assumptions and hope for the best, because assumptions usually lead to rework. "
-                    "Instead, I draft a quick technical summary or RFC (Request for Comments) outlining my understanding of the problem, the edge cases I identified, and 2 or 3 proposed implementation options with their trade-offs. "
-                    "I then reach out to the product owner or technical lead to align on the expected behavior before writing feature code. "
-                    "This structured communication ensures everyone agrees on acceptance criteria and eliminates surprises during code review."
+                    "[Illustrative Scenario — Not candidate resume data]: When task requirements are ambiguous, making silent assumptions often results in costly engineering rework. "
+                    "Best practice is to avoid unverified assumptions by drafting a brief technical summary or RFC outlining identified edge cases and proposed implementation options. "
+                    "Reaching out to the product owner or technical lead confirms testable acceptance criteria before writing feature code. "
+                    "This structured communication ensures full team alignment across edge cases and prevents misaligned deliverables. "
+                    "Documenting agreed constraints directly in task tickets or test specifications creates permanent clarity for reviewers. [/Illustrative Scenario] "
+                    f"[Candidate to specify: How you resolved requirement ambiguity or unblocking at {org}]."
                 ),
                 "technical_justification": "Aligning on testable acceptance criteria before writing code eliminates miscommunication and prevents costly downstream architectural rewrites.",
                 "practical_example": "Authoring a quick 3-bullet Slack message to the product manager: 'For candidate uploads, if a PDF contains non-extractable scanned images, should we fail with a 422 error or return partial text with an OCR notice?'",
@@ -1068,14 +1269,15 @@ def build_grounded_internship_answers(
             f"[Candidate to specify: Approved pull request or delivered outcome]."
         )
 
+        solve_context = f"for {resps}" if resps else f"at {org}"
         detailed = (
             f"Structure your explanation of an assigned task at {org} into four disciplined phases:\n"
-            f"1. Problem Understanding: Analyzing task requirements and existing codebase dependencies for {resps}.\n"
+            f"1. Problem Understanding: Analyzing task requirements and existing codebase dependencies {solve_context}.\n"
             f"2. Implementation Craft: Developing modular solutions incrementally using {techs} on isolated feature branches.\n"
             f"3. Testing & Edge Cases: [Candidate to specify: Unit or integration tests authored to verify edge cases].\n"
             f"4. Code Review & Delivery: Incorporating peer review feedback to deliver merged, production-ready code [Candidate to specify: Delivered outcome].\n\n"
             f"[Illustrative Model Scenario — Not candidate resume data]: Given a task to optimize payload processing, an engineer profiles execution paths, "
-            f"introduces modular schema validation, adds Pytest test cases covering boundary inputs, and submits a documented pull request that passes CI."
+            f"introduces modular schema validation, adds Pytest test cases covering boundary inputs, and submits a documented pull request that passes CI. [/Illustrative Model Scenario]"
         )
 
         why_this_works = (
@@ -1085,51 +1287,51 @@ def build_grounded_internship_answers(
         steps = [
             {
                 "step": "Step 1: Frame the Specific Engineering Assignment",
-                "complete_explanation": f"At {org}, I was assigned a targeted engineering ticket involving {techs}. Clearly framing the specific assignment—such as optimizing an endpoint, fixing a pipeline edge case, or implementing a new data schema—establishes tangible technical focus.",
+                "complete_explanation": f"When discussing assigned work at {org}, frame the specific engineering ticket involving {techs} clearly—such as optimizing an endpoint, fixing an edge case, or implementing a new data schema—to establish tangible technical focus.",
                 "reasoning": "Interviewers want to see how you approach concrete, bounded tickets in production software systems.",
-                "concrete_example": f"Assigned ticket: 'Refactor candidate document parser to handle multi-page PDF tables using {techs}'.",
+                "concrete_example": f"[Candidate to specify: Ticket or assignment scope involving {techs} at {org}].",
                 "connection_to_question": "Directly defines the technical problem and assignment scope.",
-                "detail": f"At {org}, I was assigned a targeted engineering ticket involving {techs}. Clearly framing the specific assignment—such as optimizing an endpoint, fixing a pipeline edge case, or implementing a new data schema—establishes tangible technical focus."
+                "detail": f"When discussing assigned work at {org}, frame the specific engineering ticket involving {techs} clearly—such as optimizing an endpoint, fixing an edge case, or implementing a new data schema—to establish tangible technical focus."
             },
             {
                 "step": "Step 2: Research Existing Codebase & Trace Data Flow",
-                "complete_explanation": "Before authoring new code, I spent time studying existing modules, reading unit tests, and tracing execution paths with debuggers. This ensured that my proposed solution adhered to existing architecture and reused existing utility patterns.",
+                "complete_explanation": "Before authoring new code, spend time studying existing modules, reading unit tests, and tracing execution paths with debuggers. This ensures that the proposed solution adheres to existing architecture and reuses existing utility patterns.",
                 "reasoning": "Rushing into coding without understanding existing abstractions often results in redundant functions and broken assumptions.",
-                "concrete_example": "Inspecting existing parser classes and noting how error handlers reported validation failures to the web controller.",
+                "concrete_example": "[Candidate to specify: Existing modules, parser classes, or schemas inspected before authoring changes].",
                 "connection_to_question": "Demonstrates thorough engineering due diligence and codebase respect.",
-                "detail": "Before authoring new code, I spent time studying existing modules, reading unit tests, and tracing execution paths with debuggers. This ensured that my proposed solution adhered to existing architecture and reused existing utility patterns."
+                "detail": "Before authoring new code, spend time studying existing modules, reading unit tests, and tracing execution paths with debuggers. This ensures that the proposed solution adheres to existing architecture and reuses existing utility patterns."
             },
             {
                 "step": "Step 3: Develop Incremental Modular Solution in Feature Branch",
-                "complete_explanation": "I created a dedicated Git feature branch and implemented the changes in small, self-contained commits. I structured the solution to isolate new functionality into modular functions, avoiding sprawling modifications to legacy code.",
+                "complete_explanation": "Developing changes on dedicated Git feature branches with small, self-contained commits ensures modifications are modular, digestible for reviewers, and straightforward to roll back if necessary.",
                 "reasoning": "Modular, incremental changes keep pull requests small, digestible for reviewers, and simple to roll back if necessary.",
-                "concrete_example": "Authoring a helper module `table_extractor.py` that processes table boundaries independently from raw text parsing.",
+                "concrete_example": f"[Candidate to specify: Modular helper functions or service components authored using {techs}].",
                 "connection_to_question": "Details the technical implementation craft and modular design.",
-                "detail": "I created a dedicated Git feature branch and implemented the changes in small, self-contained commits. I structured the solution to isolate new functionality into modular functions, avoiding sprawling modifications to legacy code."
+                "detail": "Developing changes on dedicated Git feature branches with small, self-contained commits ensures modifications are modular, digestible for reviewers, and straightforward to roll back if necessary."
             },
             {
                 "step": "Step 4: Author Unit Tests & Validate Edge Cases",
-                "complete_explanation": "I authored comprehensive unit tests evaluating the new module against edge cases—including malformed document structures, empty inputs, and unusual encodings—confirming that the module degraded gracefully under all conditions.",
+                "complete_explanation": "Authoring unit tests evaluating the new code against edge cases—including malformed inputs and boundary conditions—confirms that the module degrades gracefully and protects against future regressions.",
                 "reasoning": "Automated tests prove that the new code functions correctly and guarantees against future regression bugs.",
-                "concrete_example": "Creating Pytest test fixtures with sample documents asserting 100% extraction accuracy on tabular data.",
+                "concrete_example": "[Candidate to specify: Unit tests or test fixtures authored to validate tabular or edge-case inputs].",
                 "connection_to_question": "Demonstrates testing rigor and functional validation.",
-                "detail": "I authored comprehensive unit tests evaluating the new module against edge cases—including malformed document structures, empty inputs, and unusual encodings—confirming that the module degraded gracefully under all conditions."
+                "detail": "Authoring unit tests evaluating the new code against edge cases—including malformed inputs and boundary conditions—confirms that the module degrades gracefully and protects against future regressions."
             },
             {
                 "step": "Step 5: Consult Senior Mentors on Architectural Edge Cases",
-                "complete_explanation": "When an integration edge case emerged concerning how database transactions interacted with parser retries, I consulted with a senior engineer. I presented the problem, my analysis, and two potential solutions, quickly aligning on the optimal approach.",
+                "complete_explanation": "When an integration edge case emerges concerning how database transactions interact with parser retries, consulting with senior engineers aligns the team on the optimal approach quickly.",
                 "reasoning": "Knowing when to seek guidance on subtle architectural interactions prevents costly rework and deepens domain knowledge.",
-                "concrete_example": "Discussing whether parser retry attempts should execute inside or outside the main database transaction scope.",
+                "concrete_example": "[Candidate to specify: Architectural trade-off or integration question discussed with senior teammates].",
                 "connection_to_question": "Highlights collaborative problem solving and communication efficiency.",
-                "detail": "When an integration edge case emerged concerning how database transactions interacted with parser retries, I consulted with a senior engineer. I presented the problem, my analysis, and two potential solutions, quickly aligning on the optimal approach."
+                "detail": "When an integration edge case emerges concerning how database transactions interact with parser retries, consulting with senior engineers aligns the team on the optimal approach quickly."
             },
             {
                 "step": "Step 6: Submit Pull Request & Verify Merged Production Delivery",
-                "complete_explanation": "I submitted a clean pull request with detailed before-and-after descriptions, screenshots, and test execution logs. After incorporating minor review feedback, the pull request was approved and merged into the team repository.",
+                "complete_explanation": "Submitting a clean pull request with detailed descriptions and test execution evidence, followed by incorporating peer review feedback, completes the professional delivery lifecycle.",
                 "reasoning": "Delivering tested, reviewed, and merged code fulfills the complete software engineering lifecycle.",
-                "concrete_example": "Opening PR #142 with pass verification from CI pipelines, merged into main branch.",
+                "concrete_example": "[Candidate to specify: Pull request approved and merged into main branch].",
                 "connection_to_question": "Concludes with completed deliverable and positive team impact.",
-                "detail": "I submitted a clean pull request with detailed before-and-after descriptions, screenshots, and test execution logs. After incorporating minor review feedback, the pull request was approved and merged into the team repository."
+                "detail": "Submitting a clean pull request with detailed descriptions and test execution evidence, followed by incorporating peer review feedback, completes the professional delivery lifecycle."
             }
         ]
 
@@ -1137,10 +1339,12 @@ def build_grounded_internship_answers(
             {
                 "question": "What tools or techniques did you use to trace execution flow during this task?",
                 "reference_answer": (
-                    "To trace execution flow without guessing, I combined interactive breakpoint debugging with structured diagnostic logging. "
-                    "I used IDE debuggers to step through execution lines, inspecting local variable states, call stacks, and return values at each pipeline stage. "
-                    "When debugging asynchronous tasks or background jobs where interactive breakpoints are difficult to pause, I injected structured JSON log statements with execution timestamps and task IDs. "
-                    "This allowed me to trace the exact path data traveled through the system and pinpoint where anomalies occurred in seconds."
+                    "[Illustrative Scenario — Not candidate resume data]: To trace execution flow effectively, an engineer combines interactive breakpoint debugging with structured diagnostic logging. "
+                    "Interactive IDE debuggers allow stepping through execution lines to inspect local variable states, call stacks, and return values at each pipeline stage. "
+                    "For asynchronous tasks or background jobs, injecting structured JSON log statements with execution timestamps and task IDs enables offline analysis. "
+                    "This dual strategy allows tracing the exact path data traveled through the system and pinpointing anomalies rapidly. "
+                    "Systematic logging also creates an audit trail that simplifies reproducing transient defects in staging environments. [/Illustrative Scenario] "
+                    f"[Candidate to specify: Diagnostic tools and debugging methods used at {org}]."
                 ),
                 "technical_justification": "Interactive debuggers provide fine-grained variable inspection, while structured logging is essential for tracing asynchronous distributed pipelines.",
                 "practical_example": "Setting conditional breakpoints in VS Code or injecting `logger.debug('Payload shape: %s', payload.keys(), extra={'task_id': task_id})`.",
@@ -1149,10 +1353,12 @@ def build_grounded_internship_answers(
             {
                 "question": "How did you ensure that your changes did not break backward compatibility for existing consumers?",
                 "reference_answer": (
-                    "Preserving backward compatibility is critical in shared production codebases. "
-                    "First, I adhered to additive change principles: rather than altering existing function signatures or modifying existing JSON response keys, I introduced optional parameters with sensible defaults and added new fields. "
-                    "Second, I ran the entire existing integration test suite locally before pushing changes, verifying that all pre-existing tests passed without modification. "
-                    "Finally, I authored negative tests confirming that clients calling the endpoint with legacy payloads continued to receive valid, expected responses."
+                    "[Illustrative Scenario — Not candidate resume data]: Preserving backward compatibility in shared production codebases requires adhering to disciplined design principles. "
+                    "First, developers follow additive change rules: introducing optional parameters with sensible defaults rather than altering existing function signatures or payload keys. "
+                    "Second, running the entire pre-existing integration test suite locally verifies that existing behaviors remain completely unaffected. "
+                    "Finally, authoring negative tests confirms that clients calling endpoints with legacy payloads continue to receive expected responses. "
+                    "This defensive compatibility approach ensures microservices can deploy independently without breaking dependent consumer systems. [/Illustrative Scenario] "
+                    f"[Candidate to specify: Backward compatibility measures applied at {org}]."
                 ),
                 "technical_justification": "Additive changes and default parameters preserve API contract compatibility, preventing cascading client breaks across distributed microservices.",
                 "practical_example": "Adding `def parse_document(doc, extract_tables=False):` preserving legacy invocation `parse_document(doc)` without breaking existing callers.",
@@ -1161,10 +1367,12 @@ def build_grounded_internship_answers(
             {
                 "question": "If you were assigned a similar task today, what would you do differently to accelerate delivery?",
                 "reference_answer": (
-                    "If assigned a similar task today, I would invest time upfront in constructing a minimal synthetic test suite and reproduction fixture before touching production code. "
-                    "During the internship, I initially spent time manually testing payloads through the full application stack, which slowed down iteration cycles. "
-                    "Now, I immediately isolate the problem into a fast unit test that runs in sub-seconds. "
-                    "This test-driven approach allows me to iterate on implementation logic with instantaneous feedback, reducing total development time by at least 40%."
+                    "[Illustrative Scenario — Not candidate resume data]: To accelerate delivery on similar engineering tasks, developers invest time upfront in constructing a minimal synthetic test fixture before writing production code. "
+                    "Rather than manually testing payloads through the full application stack, isolating problems into fast unit tests provides instantaneous feedback. "
+                    "Developing against automated tests eliminates slow deployment cycles and allows rapid iteration on complex logic [Candidate to specify: Iteration time reduction, e.g. 40%]. "
+                    "This test-driven approach guarantees that boundary cases are covered and defect resolution is provably verified. "
+                    "Investing in isolated test harnesses upfront consistently yields faster delivery and fewer production regressions. [/Illustrative Scenario] "
+                    f"[Candidate to specify: What you would do differently based on your experience at {org}]."
                 ),
                 "technical_justification": "Isolated unit test fixtures provide sub-second feedback loops, eliminating the latency of full-stack redeployments during development.",
                 "practical_example": "Writing a failing pytest test using a captured mock payload before writing a single line of production code.",
@@ -1197,5 +1405,13 @@ def build_grounded_internship_answers(
         "missing_personal_details": missing_info,
         "verified_evidence": verified_evidence,
         "recommended_framework": framework,
-        "examples": f"At {org}, completed practical duties ({resps}) using {techs} following git and code review conventions."
+        "examples": (
+            f"At {org}, verified responsibilities ({resps}) using {techs}." if (resps and techs) else (
+                f"At {org}, verified responsibilities ({resps})." if resps else (
+                    f"At {org}, verified internship as {pos} using {techs}." if techs else (
+                        f"At {org}, verified internship as {pos}."
+                    )
+                )
+            )
+        )
     }

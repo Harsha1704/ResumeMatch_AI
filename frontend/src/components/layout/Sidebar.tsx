@@ -8,6 +8,7 @@ import {
   GraduationCap,
   Sparkles,
   PlayCircle,
+  Mic,
   Award,
   BarChart3,
   Database,
@@ -40,6 +41,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       items: [
         { name: 'Career Mentor', path: '/career-mentor', icon: GraduationCap },
         { name: 'Interview Studio', path: '/interview-studio', icon: Sparkles },
+        { name: 'Voice Interview Room', path: '/interview-voice', icon: Mic },
         { name: 'Practice Mode', path: '/interview-practice', icon: PlayCircle },
         { name: 'Practice Results', path: '/interview-results', icon: Award },
       ],

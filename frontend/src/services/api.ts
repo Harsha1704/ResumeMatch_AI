@@ -7,18 +7,86 @@ import type {
   ModelPerformanceData,
   HeuristicEvaluation
 } from '../types';
+import type {
+  VoiceStartPayload,
+  VoiceStartResponse,
+  VoiceQuestionResponse,
+  VoiceAnswerResponse,
+  VoiceFollowupResponse,
+  VoiceEndResponse,
+  VoiceHistoryItem,
+  VoiceSessionDetail
+} from '../types/voice';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
+const API_BASE = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL) || '';
+
+let cachedCsrfToken: string | null = null;
+let csrfTokenPromise: Promise<string> | null = null;
+
+export async function fetchCsrfToken(): Promise<string> {
+  const fullUrl = `${API_BASE}/api/csrf-token`;
+  try {
+    const response = await fetch(fullUrl, {
+      method: 'GET',
+      credentials: 'include',
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+    if (!response.ok) return '';
+    const data = await response.json();
+    cachedCsrfToken = data?.csrf_token || '';
+    return cachedCsrfToken || '';
+  } catch {
+    return '';
+  }
+}
+
+export async function getCsrfToken(): Promise<string> {
+  if (cachedCsrfToken) return cachedCsrfToken;
+  if (typeof document !== 'undefined') {
+    const match = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]+)/);
+    if (match) {
+      cachedCsrfToken = decodeURIComponent(match[1]);
+      return cachedCsrfToken;
+    }
+  }
+  if (!csrfTokenPromise) {
+    csrfTokenPromise = fetchCsrfToken().finally(() => {
+      csrfTokenPromise = null;
+    });
+  }
+  return csrfTokenPromise;
+}
+
+export function clearCsrfToken(): void {
+  cachedCsrfToken = null;
+  csrfTokenPromise = null;
+}
 
 async function fetchJson<T>(url: string, options: RequestInit = {}): Promise<T> {
   const fullUrl = url.startsWith('http') ? url : `${API_BASE}${url}`;
+  const method = (options.method || 'GET').toUpperCase();
+  const isMutation = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method);
+
+  const defaultHeaders: Record<string, string> = {
+    'Accept': 'application/json',
+  };
+
+  if (isMutation) {
+    const csrf = await getCsrfToken();
+    if (csrf) {
+      defaultHeaders['X-CSRF-Token'] = csrf;
+    }
+  }
+
   const response = await fetch(fullUrl, {
     ...options,
     headers: {
-      'Accept': 'application/json',
+      ...defaultHeaders,
       ...(options.headers || {}),
     },
-    credentials: 'omit', // clean cross-origin handling
+    credentials: 'include',
   });
 
   if (!response.ok) {
@@ -256,6 +324,62 @@ export const api = {
     return fetchJson<{ status: string }>('/api/interview/reset', {
       method: 'POST',
     });
+  },
+
+  // =========================================================================
+  // Voice Interview Room Endpoints
+  // =========================================================================
+
+  async startVoiceSession(payload: VoiceStartPayload): Promise<VoiceStartResponse> {
+    return fetchJson<VoiceStartResponse>('/api/interview/voice/start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async getVoiceQuestion(sessionId: string, direction = 'current'): Promise<VoiceQuestionResponse> {
+    const params = new URLSearchParams({ session_id: sessionId, direction });
+    return fetchJson<VoiceQuestionResponse>(`/api/interview/voice/question?${params.toString()}`);
+  },
+
+  async submitVoiceAnswer(sessionId: string, questionIndex: number, answerText: string): Promise<VoiceAnswerResponse> {
+    return fetchJson<VoiceAnswerResponse>('/api/interview/voice/answer', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        session_id: sessionId,
+        question_index: questionIndex,
+        answer_text: answerText,
+      }),
+    });
+  },
+
+  async getVoiceFollowup(sessionId: string, questionIndex: number): Promise<VoiceFollowupResponse> {
+    return fetchJson<VoiceFollowupResponse>('/api/interview/voice/followup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        session_id: sessionId,
+        question_index: questionIndex,
+      }),
+    });
+  },
+
+  async endVoiceSession(sessionId: string): Promise<VoiceEndResponse> {
+    return fetchJson<VoiceEndResponse>('/api/interview/voice/end', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: sessionId }),
+    });
+  },
+
+  async getVoiceHistory(limit = 50): Promise<{ status: string; history: VoiceHistoryItem[]; count: number }> {
+    return fetchJson<{ status: string; history: VoiceHistoryItem[]; count: number }>(`/api/interview/voice/history?limit=${limit}`);
+  },
+
+  async getVoiceSessionDetail(sessionId: string): Promise<{ status: string; detail: VoiceSessionDetail }> {
+    return fetchJson<{ status: string; detail: VoiceSessionDetail }>(`/api/interview/voice/history/${encodeURIComponent(sessionId)}`);
   },
 
   getExportUrl(type: string, protocol = 'job_disjoint_val', model = 'hybrid_config_d') {

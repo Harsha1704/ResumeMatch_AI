@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Dict, Optional
 import os
 import json
+import uuid
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, session
 
 import logging
@@ -21,6 +22,18 @@ from src.interview import (
     InterviewQuestionGenerator,
     HeuristicAnswerEvaluator,
     get_all_technical_topics,
+    GeminiVoiceService,
+    get_voice_rate_limiter,
+    LocalVoiceInterviewService,
+    LocalVoiceInterviewError,
+    LocalVoiceSessionNotFoundError,
+    LocalVoiceAccessDeniedError,
+    LocalVoiceValidationError,
+)
+from src.interview.gemini_voice_service import (
+    GeminiVoiceQuotaExceededError,
+    GeminiVoiceAuthError,
+    GeminiVoiceConfigError,
 )
 
 logger = logging.getLogger(__name__)
@@ -88,6 +101,41 @@ def inject_security_context():
 
 # In-memory storage for analysis results (keyed by analysis_id)
 # Secure: does not write private resumes to public static directories
+def _validate_interview_csrf(data: Optional[Dict] = None):
+    csrf_token = (
+        request.headers.get("X-CSRF-Token") or
+        (data.get("csrf_token") if isinstance(data, dict) else None) or
+        request.form.get("csrf_token")
+    )
+    session_csrf = session.get("csrf_token")
+    if not session_csrf or not csrf_token or not validate_csrf_token(csrf_token):
+        return jsonify({"status": "error", "message": "CSRF token missing or invalid"}), 403
+    return None
+
+
+@app.route("/api/csrf-token", methods=["GET"])
+def api_get_csrf_token():
+    """Returns a secure CSRF token bound to the caller's Flask session."""
+    token = generate_csrf_token()
+    return jsonify({"status": "success", "csrf_token": token}), 200
+
+
+def _get_or_create_interview_owner_id() -> str:
+    """Retrieves session-bound interview owner ID or initializes a fresh one."""
+    owner_id = session.get("interview_owner_id")
+    if not owner_id:
+        owner_id = str(uuid.uuid4())
+        session["interview_owner_id"] = owner_id
+    return owner_id
+
+
+def _resolve_authorized_interview_analysis(aid: Optional[str]):
+    """Resolves active analysis for interview session."""
+    if aid and aid.strip() in ANALYSIS_CACHE:
+        return ANALYSIS_CACHE[aid.strip()], None
+    return _get_active_analysis(aid), None
+
+
 ANALYSIS_CACHE: Dict[str, Dict] = {}
 
 
@@ -766,11 +814,13 @@ def interview_practice():
         analysis = _get_active_analysis()
         generator = InterviewQuestionGenerator(analysis)
         questions = generator.generate_questions(category="ALL", difficulty="All", max_questions=10)
+        owner_id = _get_or_create_interview_owner_id()
         practice_session = InterviewSessionManager.create_session(
             questions=questions,
             analysis_id=analysis.get("analysis_id"),
             candidate_filename=generator.evidence.get("filename"),
-            job_title=generator.evidence.get("job_title")
+            job_title=generator.evidence.get("job_title"),
+            owner_id=owner_id
         )
         session["active_interview_session_id"] = practice_session.session_id
 
@@ -1153,7 +1203,7 @@ def api_get_analysis(analysis_id: str):
     """Retrieves cached analysis result or returns authentic demo sample."""
     if not analysis_id or analysis_id not in ANALYSIS_CACHE:
         if analysis_id in ("sample", "demo", "sample-preview"):
-            sample = _get_active_analysis(None)
+            sample = _get_active_analysis("sample")
             return jsonify({"status": "success", "analysis": sample}), 200
         # If cache contains any entry, offer it
         sample = _get_active_analysis(None)
@@ -1331,11 +1381,13 @@ def api_interview_practice():
         analysis = _get_active_analysis()
         generator = InterviewQuestionGenerator(analysis)
         questions = generator.generate_questions(category="ALL", difficulty="All", max_questions=10)
+        owner_id = _get_or_create_interview_owner_id()
         practice_session = InterviewSessionManager.create_session(
             questions=questions,
             analysis_id=analysis.get("analysis_id"),
             candidate_filename=generator.evidence.get("filename"),
-            job_title=generator.evidence.get("job_title")
+            job_title=generator.evidence.get("job_title"),
+            owner_id=owner_id
         )
         session["active_interview_session_id"] = practice_session.session_id
 
@@ -1391,6 +1443,414 @@ def api_interview_results():
 
     results = practice_session.complete_session()
     return jsonify({"status": "success", "results": results}), 200
+
+
+@app.route("/api/interview/voice/token", methods=["POST"])
+def api_interview_voice_token():
+    """
+    Creates a restricted ephemeral authentication token for the Google Gemini Live API.
+    Strictly constrained to ₹0 Free Tier budget:
+      1. Fail-closed CSRF validation.
+      2. Authenticated user and interview session ownership verification.
+      3. Validates session eligibility (uncompleted sessions only).
+      4. Explicit candidate consent check (required for Google Free Tier terms).
+      5. Sliding-window client rate limiting to prevent free-tier exhaustion.
+      6. Free-tier model validation (rejects paid models and billable tools).
+      7. Sanitizes resume context, stripping candidate PII.
+      8. Mints short-lived ephemeral token via Google AI Studio auth_tokens.
+      9. Never exposes permanent GEMINI_API_KEY.
+    """
+    data = request.get_json(silent=True) or request.form.to_dict()
+    if not isinstance(data, dict):
+        return jsonify({"status": "error", "message": "Malformed request: expected JSON object"}), 400
+
+    # 1. CSRF Protection: fail-closed
+    csrf_err = _validate_interview_csrf(data)
+    if csrf_err:
+        return csrf_err
+
+    # 2. Authentication & Ownership Verification
+    owner_id = _get_or_create_interview_owner_id()
+
+    raw_sid = data.get("session_id")
+    if not isinstance(raw_sid, str) or not raw_sid.strip():
+        return jsonify({"status": "error", "message": "Missing or invalid session_id: must be a non-empty string"}), 400
+    session_id = raw_sid.strip()
+
+    try:
+        practice_session = InterviewSessionManager.get_session(session_id)
+    except Exception as e:
+        logger.error("Failed to load interview session %s: %s", session_id, e, exc_info=True)
+        return jsonify({"status": "error", "message": f"Database failure loading session: {str(e)}"}), 500
+
+    if not practice_session:
+        return jsonify({"status": "error", "message": "Interview session not found"}), 404
+
+    if practice_session.owner_id != owner_id:
+        return jsonify({"status": "error", "message": "Unauthorized access to requested interview session"}), 403
+
+    if practice_session.is_completed:
+        return jsonify({"status": "error", "message": "Completed interview sessions cannot be re-opened for voice mode"}), 400
+
+    # 3. Privacy & Candidate Consent Verification
+    if not data.get("candidate_consent"):
+        return jsonify({
+            "status": "error",
+            "message": "Candidate consent is required for Google Gemini Free Tier processing. Please review and accept the privacy disclosure."
+        }), 400
+
+    # 4. Free-Tier Rate Limiting
+    rate_limiter = get_voice_rate_limiter()
+    if not rate_limiter.is_allowed(owner_id):
+        return jsonify({
+            "status": "error",
+            "message": "Voice session rate limit reached (maximum 5 requests per 10 minutes). Please wait before requesting another session."
+        }), 429
+
+    # 5. Model Eligibility Validation (Strict ₹0 Budget)
+    requested_model = data.get("model") or GeminiVoiceService.get_configured_model()
+    is_valid, validation_msg = GeminiVoiceService.validate_model_eligibility(requested_model)
+    if not is_valid:
+        return jsonify({
+            "status": "error",
+            "message": validation_msg
+        }), 400
+
+    # 6. Context Building (PII-stripped)
+    context_data = GeminiVoiceService.build_voice_interview_context(practice_session)
+
+    # 7. Ephemeral Token Generation
+    mock_token = data.get("_mock_token_response") if APP_ENV == "testing" else None
+    try:
+        token_info = GeminiVoiceService.create_ephemeral_token(
+            model=requested_model,
+            mock_response=mock_token
+        )
+    except GeminiVoiceQuotaExceededError as e:
+        logger.warning("Gemini voice quota exceeded for session %s: %s", session_id, e)
+        return jsonify({
+            "status": "error",
+            "message": str(e),
+            "code": "QUOTA_EXHAUSTED"
+        }), 429
+    except GeminiVoiceConfigError as e:
+        logger.warning("Gemini voice configuration error: %s", e)
+        return jsonify({
+            "status": "error",
+            "message": str(e),
+            "code": "CONFIG_ERROR"
+        }), 503
+    except GeminiVoiceAuthError as e:
+        logger.error("Gemini voice auth error: %s", e)
+        return jsonify({
+            "status": "error",
+            "message": str(e),
+            "code": "AUTH_FAILURE"
+        }), 502
+    except Exception as e:
+        logger.error("Unexpected error creating voice token: %s", e, exc_info=True)
+        return jsonify({
+            "status": "error",
+            "message": "Internal error establishing voice interview session credentials"
+        }), 500
+
+    return jsonify({
+        "status": "success",
+        "session_id": session_id,
+        "token": token_info.get("token"),
+        "model": token_info.get("model", requested_model),
+        "websocket_url": token_info.get("websocket_url", "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent"),
+        "expires_in_seconds": token_info.get("expires_in_seconds", 1800),
+        "target_role": context_data.get("target_role"),
+        "candidate_context_summary": {
+            "skills_count": len(context_data.get("sanitized_skills", [])),
+            "projects_count": len(context_data.get("sanitized_projects", [])),
+            "difficulty": context_data.get("difficulty")
+        },
+        "system_instruction": context_data.get("system_instruction")
+    }), 200
+
+
+# =========================================================================
+# Phase 2C: Local Voice Interview Intelligence Endpoints (Strict ₹0 Budget)
+# =========================================================================
+
+@app.route("/api/interview/voice/start", methods=["POST"])
+def api_interview_voice_start():
+    """
+    Initializes a local, evidence-grounded voice interview session.
+    Operates 100% on CPU with zero cloud LLM dependencies or costs.
+    """
+    data = request.get_json(silent=True) or request.form.to_dict()
+    if not isinstance(data, dict):
+        return jsonify({"status": "error", "message": "Malformed request: expected JSON object"}), 400
+
+    # Fail-closed CSRF validation
+    csrf_err = _validate_interview_csrf(data)
+    if csrf_err:
+        return csrf_err
+
+    owner_id = _get_or_create_interview_owner_id()
+
+    # Extract optional analysis reference
+    raw_aid = data.get("analysis_id") or data.get("id")
+    analysis_id = str(raw_aid).strip() if raw_aid and isinstance(raw_aid, str) else None
+
+    analysis_data = None
+    if analysis_id:
+        analysis_data, _ = _resolve_authorized_interview_analysis(analysis_id)
+
+    target_role = data.get("target_role") or data.get("job_title")
+    difficulty = data.get("difficulty", "all")
+    interview_mode = data.get("interview_mode", "mixed")
+    resume_text = data.get("resume_text")
+    job_description = data.get("job_description")
+    max_questions = data.get("max_questions", 10)
+
+    try:
+        max_q_int = int(max_questions)
+        if max_q_int < 1 or max_q_int > 25:
+            max_q_int = 10
+    except (ValueError, TypeError):
+        max_q_int = 10
+
+    try:
+        res = LocalVoiceInterviewService.start_session(
+            owner_id=owner_id,
+            analysis_data=analysis_data,
+            analysis_id=analysis_id,
+            target_role=target_role,
+            difficulty=difficulty,
+            interview_mode=interview_mode,
+            resume_text=resume_text,
+            job_description=job_description,
+            max_questions=max_q_int
+        )
+        session["active_interview_session_id"] = res["session_id"]
+        return jsonify(res), 200
+    except LocalVoiceValidationError as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
+    except Exception as e:
+        logger.error("Failed to start local voice interview: %s", e, exc_info=True)
+        return jsonify({"status": "error", "message": "Failed to initialize local interview session"}), 500
+
+
+@app.route("/api/interview/voice/question", methods=["GET"])
+def api_interview_voice_question():
+    """
+    Retrieves the current, next, or previous interview question.
+    Supplies spoken prompt text for browser speech synthesis.
+    """
+    owner_id = _get_or_create_interview_owner_id()
+    session_id = request.args.get("session_id") or session.get("active_interview_session_id")
+    direction = request.args.get("direction", "current")
+
+    if not session_id:
+        return jsonify({"status": "error", "message": "Missing required session_id parameter"}), 400
+
+    try:
+        res = LocalVoiceInterviewService.get_question(
+            session_id=str(session_id).strip(),
+            owner_id=owner_id,
+            direction=direction
+        )
+        return jsonify(res), 200
+    except LocalVoiceSessionNotFoundError as e:
+        return jsonify({"status": "error", "message": str(e)}), 404
+    except LocalVoiceAccessDeniedError as e:
+        return jsonify({"status": "error", "message": str(e)}), 403
+    except LocalVoiceValidationError as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
+    except Exception as e:
+        logger.error("Failed to get question for voice session %s: %s", session_id, e, exc_info=True)
+        return jsonify({"status": "error", "message": "Failed to retrieve interview question"}), 500
+
+
+@app.route("/api/interview/voice/answer", methods=["POST"])
+def api_interview_voice_answer():
+    """
+    Submits candidate's spoken answer (recognized text from browser speech recognition).
+    Evaluates response heuristically and returns natural spoken feedback for TTS.
+    """
+    data = request.get_json(silent=True) or request.form.to_dict()
+    if not isinstance(data, dict):
+        return jsonify({"status": "error", "message": "Malformed request: expected JSON object"}), 400
+
+    csrf_err = _validate_interview_csrf(data)
+    if csrf_err:
+        return csrf_err
+
+    owner_id = _get_or_create_interview_owner_id()
+
+    session_id = data.get("session_id") or session.get("active_interview_session_id")
+    if not session_id or not isinstance(session_id, str):
+        return jsonify({"status": "error", "message": "Missing or invalid session_id"}), 400
+
+    raw_idx = data.get("question_index")
+    if raw_idx is None:
+        return jsonify({"status": "error", "message": "Missing question_index"}), 400
+    try:
+        q_idx = int(raw_idx)
+    except (ValueError, TypeError):
+        return jsonify({"status": "error", "message": "question_index must be an integer"}), 400
+
+    raw_ans = data.get("answer_text")
+    if raw_ans is None or not isinstance(raw_ans, str):
+        return jsonify({"status": "error", "message": "answer_text must be a string"}), 400
+
+    try:
+        res = LocalVoiceInterviewService.submit_answer(
+            session_id=str(session_id).strip(),
+            owner_id=owner_id,
+            question_index=q_idx,
+            answer_text=raw_ans
+        )
+        return jsonify(res), 200
+    except LocalVoiceSessionNotFoundError as e:
+        return jsonify({"status": "error", "message": str(e)}), 404
+    except LocalVoiceAccessDeniedError as e:
+        return jsonify({"status": "error", "message": str(e)}), 403
+    except LocalVoiceValidationError as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
+    except Exception as e:
+        logger.error("Failed to submit voice answer for session %s: %s", session_id, e, exc_info=True)
+        return jsonify({"status": "error", "message": "Failed to evaluate candidate answer"}), 500
+
+
+@app.route("/api/interview/voice/followup", methods=["POST"])
+def api_interview_voice_followup():
+    """
+    Generates an adaptive follow-up question grounded in candidate's response.
+    Returns spoken follow-up script for browser TTS.
+    """
+    data = request.get_json(silent=True) or request.form.to_dict()
+    if not isinstance(data, dict):
+        return jsonify({"status": "error", "message": "Malformed request: expected JSON object"}), 400
+
+    csrf_err = _validate_interview_csrf(data)
+    if csrf_err:
+        return csrf_err
+
+    owner_id = _get_or_create_interview_owner_id()
+
+    session_id = data.get("session_id") or session.get("active_interview_session_id")
+    if not session_id or not isinstance(session_id, str):
+        return jsonify({"status": "error", "message": "Missing or invalid session_id"}), 400
+
+    raw_idx = data.get("question_index")
+    if raw_idx is None:
+        return jsonify({"status": "error", "message": "Missing question_index"}), 400
+    try:
+        q_idx = int(raw_idx)
+    except (ValueError, TypeError):
+        return jsonify({"status": "error", "message": "question_index must be an integer"}), 400
+
+    try:
+        res = LocalVoiceInterviewService.generate_adaptive_followup(
+            session_id=str(session_id).strip(),
+            owner_id=owner_id,
+            question_index=q_idx
+        )
+        return jsonify(res), 200
+    except LocalVoiceSessionNotFoundError as e:
+        return jsonify({"status": "error", "message": str(e)}), 404
+    except LocalVoiceAccessDeniedError as e:
+        return jsonify({"status": "error", "message": str(e)}), 403
+    except LocalVoiceValidationError as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
+    except Exception as e:
+        logger.error("Failed to generate followup for session %s: %s", session_id, e, exc_info=True)
+        return jsonify({"status": "error", "message": "Failed to generate adaptive follow-up"}), 500
+
+
+@app.route("/api/interview/voice/end", methods=["POST"])
+def api_interview_voice_end():
+    """
+    Concludes the voice interview session and produces a comprehensive performance report.
+    Supplies final spoken remarks for browser speech synthesis.
+    """
+    data = request.get_json(silent=True) or request.form.to_dict()
+    if not isinstance(data, dict):
+        return jsonify({"status": "error", "message": "Malformed request: expected JSON object"}), 400
+
+    csrf_err = _validate_interview_csrf(data)
+    if csrf_err:
+        return csrf_err
+
+    owner_id = _get_or_create_interview_owner_id()
+
+    session_id = data.get("session_id") or session.get("active_interview_session_id")
+    if not session_id or not isinstance(session_id, str):
+        return jsonify({"status": "error", "message": "Missing or invalid session_id"}), 400
+
+    try:
+        res = LocalVoiceInterviewService.complete_session(
+            session_id=str(session_id).strip(),
+            owner_id=owner_id
+        )
+        return jsonify(res), 200
+    except LocalVoiceSessionNotFoundError as e:
+        return jsonify({"status": "error", "message": str(e)}), 404
+    except LocalVoiceAccessDeniedError as e:
+        return jsonify({"status": "error", "message": str(e)}), 403
+    except LocalVoiceValidationError as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
+    except Exception as e:
+        logger.error("Failed to complete voice session %s: %s", session_id, e, exc_info=True)
+        return jsonify({"status": "error", "message": "Failed to conclude interview session"}), 500
+
+
+@app.route("/api/interview/voice/history", methods=["GET"])
+def api_interview_voice_history():
+    """
+    Retrieves the history of voice interview sessions for the authenticated session owner.
+    """
+    owner_id = _get_or_create_interview_owner_id()
+    limit = request.args.get("limit", 50)
+    try:
+        limit_int = int(limit)
+        if limit_int < 1 or limit_int > 100:
+            limit_int = 50
+    except (ValueError, TypeError):
+        limit_int = 50
+
+    try:
+        history = LocalVoiceInterviewService.get_voice_history(owner_id=owner_id, limit=limit_int)
+        return jsonify({"status": "success", "history": history, "count": len(history)}), 200
+    except LocalVoiceValidationError as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
+    except Exception as e:
+        logger.error("Failed to retrieve voice interview history for %s: %s", owner_id, e, exc_info=True)
+        return jsonify({"status": "error", "message": "Failed to retrieve voice interview history"}), 500
+
+
+@app.route("/api/interview/voice/history/<session_id>", methods=["GET"])
+def api_interview_voice_history_detail(session_id):
+    """
+    Retrieves full details for a specific voice session including questions, answers,
+    evaluations, ordered transcript, and final performance report.
+    """
+    owner_id = _get_or_create_interview_owner_id()
+    if not session_id or not isinstance(session_id, str):
+        return jsonify({"status": "error", "message": "Missing or invalid session_id"}), 400
+
+    try:
+        detail = LocalVoiceInterviewService.get_voice_session_detail(
+            session_id=session_id.strip(),
+            owner_id=owner_id
+        )
+        return jsonify({"status": "success", "detail": detail}), 200
+    except LocalVoiceSessionNotFoundError as e:
+        return jsonify({"status": "error", "message": str(e)}), 404
+    except LocalVoiceAccessDeniedError as e:
+        return jsonify({"status": "error", "message": str(e)}), 403
+    except LocalVoiceValidationError as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
+    except Exception as e:
+        logger.error("Failed to retrieve voice session detail for %s: %s", session_id, e, exc_info=True)
+        return jsonify({"status": "error", "message": "Failed to retrieve voice session detail"}), 500
+
+
 
 
 if __name__ == "__main__":

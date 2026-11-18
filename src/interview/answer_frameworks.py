@@ -339,7 +339,7 @@ def build_completed_framework_demonstration(framework_id: str, question_dict: Di
         ]
     elif fw_key == "STAR":
         if category == "F":
-            sit = f"[Illustrative Model Scenario — Not candidate resume data]: In an engineering team context involving {topic} ({ev_str}), a technical milestone or system challenge arose."
+            sit = f"[Illustrative Model Scenario — Not candidate resume data]: In an engineering team context involving {topic} ({ev_str}), a technical milestone or system challenge arose. [/Illustrative Model Scenario]"
             tsk = f"[Candidate to specify: Your specific individual assignment or objective regarding: '{question_dict.get('question_text', topic)}']"
             act = f"[Candidate to specify: Concrete technical or interpersonal steps taken, e.g. refactoring code, communicating with stakeholders, or pairing with colleagues]"
             res = f"[Candidate to specify: Tangible deliverable, resolution metric, or stakeholder outcome achieved]"
@@ -362,7 +362,7 @@ def build_completed_framework_demonstration(framework_id: str, question_dict: Di
         ]
     elif fw_key == "STAR+L":
         if category == "F":
-            sit = f"[Illustrative Model Scenario — Not candidate resume data]: In a team project involving {topic} ({ev_str}), an engineering trade-off or challenge was encountered."
+            sit = f"[Illustrative Model Scenario — Not candidate resume data]: In a team project involving {topic} ({ev_str}), an engineering trade-off or challenge was encountered. [/Illustrative Model Scenario]"
             tsk = f"[Candidate to specify: The objective or conflict to resolve: '{question_dict.get('question_text', topic)}']"
             act = f"[Candidate to specify: Systematic steps taken to analyze and resolve the issue]"
             res = f"[Candidate to specify: Outcome achieved with verified deliverable]"

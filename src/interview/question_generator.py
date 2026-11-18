@@ -124,13 +124,13 @@ class InterviewQuestionGenerator:
             q_id = self._make_id("qa_skill_overview", top_skills_str)
             q_text = f"Your resume highlights experience with {top_skills_str}. Walk me through how you have applied these {focus_label} in your software projects."
             fw_id = preferred_framework or "PREP"
-            short_ans = f"I have applied {top_skills_str} across end-to-end software projects, designing modular architectures, writing automated tests, and optimizing performance."
+            short_ans = f"My experience with {top_skills_str} spans software development projects, applying these technologies to implement functional features and solve engineering problems."
             simpler_ans = f"My experience with {top_skills_str} focuses on building modular systems where each technology handles a clear responsibility, from data storage to API delivery."
             detailed_ans = (
                 f"Throughout my development work, I have focused on applying {top_skills_str} as an integrated engineering toolkit. "
                 f"Rather than learning technologies in isolation, I organize applications into decoupled operational layers: using backend frameworks for routing and API validation, "
-                f"relational or document databases for persistent storage, and automated testing suites to verify system behavior. "
-                f"{proj_context_str}, I combined these tools to deliver end-to-end functionality while adhering to clean code standards and automated test coverage. "
+                f"relational or document databases for persistent storage, and systematic validation to verify system behavior. "
+                f"{proj_context_str}, I combined these tools to deliver end-to-end functionality while adhering to clean code standards. "
                 f"This practical experience allows me to understand both the strengths and the operational constraints of each tool in production environments."
             )
             why_this_works = (
@@ -917,8 +917,16 @@ class InterviewQuestionGenerator:
         for idx, it in enumerate(internships):
             org = it["organization"]
             dates = it["dates"]
-            techs = ", ".join(it["technologies"]) or "practical engineering tools"
-            resps = "; ".join(it["responsibilities"]) or "software development duties"
+            techs = ", ".join(it["technologies"]) if it.get("technologies") else ""
+            resps = "; ".join(it["responsibilities"]) if it.get("responsibilities") else ""
+            if resps and techs:
+                resps_guidance = f"Focus on {resps} and how you applied {techs}."
+            elif resps:
+                resps_guidance = f"Focus on {resps}."
+            elif techs:
+                resps_guidance = f"Specify your assigned tasks and how you applied {techs}."
+            else:
+                resps_guidance = "Specify your assigned tasks and the technical tools you used."
 
             # C1: Core Internship Contribution
             q1_text = f"During your internship at {org} ({dates}), what were your primary technical responsibilities and contributions?"
@@ -927,6 +935,10 @@ class InterviewQuestionGenerator:
             grounded_resp = build_grounded_internship_answers(it, "resp")
             if preferred_framework:
                 grounded_resp["recommended_framework"] = preferred_framework
+
+            ev_sources_c1 = [f"Internship Record: {org} ({dates})"]
+            if techs:
+                ev_sources_c1.append(f"Technologies: {techs}")
 
             questions.append({
                 "question_id": self._make_id(f"qc_resp_{idx}", q1_text),
@@ -958,11 +970,11 @@ class InterviewQuestionGenerator:
                 "important_concepts": grounded_resp["important_concepts"],
                 "interview_tips": grounded_resp["interview_tips"],
                 "missing_personal_details": grounded_resp["missing_personal_details"],
-                "evidence_sources": [f"Internship Record: {org} ({dates})", f"Technologies: {techs}"],
-                "answer_guidance": f"Describe your specific deliverables at {org}. Focus on {resps} and how you applied {techs}.",
+                "evidence_sources": ev_sources_c1,
+                "answer_guidance": f"Describe your specific deliverables at {org}. {resps_guidance}",
                 "expected_key_points": [
                     f"Team context and objective at {org}",
-                    f"Hands-on contributions using {techs}",
+                    f"Hands-on contributions" + (f" using {techs}" if techs else ""),
                     "Verified deliverables and team impact"
                 ],
                 "framework_template": format_answer_template(grounded_resp["recommended_framework"], notes1)
@@ -1017,7 +1029,10 @@ class InterviewQuestionGenerator:
             })
 
             # C3: Technical Problem Solving at Organization
-            q3_text = f"Can you walk me through a specific engineering problem you solved while working at {org} using {techs}?"
+            q3_text = (
+                f"Can you walk me through a specific engineering problem you solved while working at {org} using {techs}?" if techs
+                else f"Can you walk me through a specific engineering problem you solved while working at {org}?"
+            )
             fw3 = preferred_framework or "CAR"
             notes3 = ground_guidance_in_evidence(fw3, "internship", it)
             grounded_solve = build_grounded_internship_answers(it, "solve")
@@ -1506,37 +1521,40 @@ class InterviewQuestionGenerator:
         preferred_framework: Optional[str] = None,
         technical_topic: Optional[str] = None,
         priority_skills: Optional[List[str]] = None,
-        candidate_confirmations: Optional[Dict[str, bool]] = None
+        candidate_confirmations: Optional[Dict[str, bool]] = None,
+        mode: Optional[str] = None,
+        interview_mode: Optional[str] = None,
+        target_role: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         """
-        Generates, filters, ranks, and deduplicates questions across requested categories.
+        Generates, filters, ranks, and deduplicates questions across requested categories and modes.
         Guarantees balanced question distribution across Profile, Projects, Internships,
         Job Requirements, Technical Bank, and Behavioral Bank.
+        Supports interview modes: technical, behavioral, hr, mixed.
+        Supports difficulty tiers: beginner/easy, intermediate/medium, advanced/hard, all.
         """
+        active_mode = (interview_mode or mode or "").lower().strip()
         cat_upper = category.upper().strip() if category else "ALL"
         pool: List[Dict[str, Any]] = []
 
-        if cat_upper in ["ALL", "A", "CATEGORY_A", "RESUME"]:
-            qs_a = self.generate_category_a(preferred_framework)
-        else:
-            qs_a = []
+        # If a custom target_role is specified, update local target context
+        if target_role and target_role.strip():
+            self.evidence["job_title"] = target_role.strip()
+            self.evidence["has_target_role"] = True
 
-        if cat_upper in ["ALL", "B", "CATEGORY_B", "PROJECTS"]:
-            qs_b = self.generate_category_b(preferred_framework)
-        else:
-            qs_b = []
+        need_a = cat_upper in ["ALL", "A", "CATEGORY_A", "RESUME"] or active_mode in ["technical", "tech", "mixed"]
+        need_b = cat_upper in ["ALL", "B", "CATEGORY_B", "PROJECTS"] or active_mode in ["technical", "tech", "behavioral", "behavioural", "mixed"]
+        need_c = cat_upper in ["ALL", "C", "CATEGORY_C", "INTERNSHIPS"] or active_mode in ["behavioral", "behavioural", "mixed"]
+        need_d = cat_upper in ["ALL", "D", "CATEGORY_D", "JOB"] or active_mode in ["technical", "tech", "mixed"]
+        need_e = cat_upper in ["ALL", "E", "CATEGORY_E", "TECHNICAL"] or active_mode in ["technical", "tech", "mixed"]
+        need_f = cat_upper in ["ALL", "F", "CATEGORY_F", "HR", "BEHAVIORAL"] or active_mode in ["behavioral", "behavioural", "hr", "mixed"]
 
-        if cat_upper in ["ALL", "C", "CATEGORY_C", "INTERNSHIPS"]:
-            qs_c = self.generate_category_c(preferred_framework)
-        else:
-            qs_c = []
+        qs_a = self.generate_category_a(preferred_framework) if need_a else []
+        qs_b = self.generate_category_b(preferred_framework) if need_b else []
+        qs_c = self.generate_category_c(preferred_framework) if need_c else []
+        qs_d = self.generate_category_d(preferred_framework) if need_d else []
 
-        if cat_upper in ["ALL", "D", "CATEGORY_D", "JOB"]:
-            qs_d = self.generate_category_d(preferred_framework)
-        else:
-            qs_d = []
-
-        if cat_upper in ["ALL", "E", "CATEGORY_E", "TECHNICAL"]:
+        if need_e:
             tech_qs = self.generate_category_e(preferred_framework)
             if technical_topic and technical_topic != "All":
                 tech_qs = [q for q in tech_qs if q.get("topic") == technical_topic]
@@ -1544,10 +1562,7 @@ class InterviewQuestionGenerator:
         else:
             qs_e = []
 
-        if cat_upper in ["ALL", "F", "CATEGORY_F", "HR", "BEHAVIORAL"]:
-            qs_f = self.generate_category_f(preferred_framework)
-        else:
-            qs_f = []
+        qs_f = self.generate_category_f(preferred_framework) if need_f else []
 
         # If priority_skills provided, boost matching questions to front
         if priority_skills:
@@ -1559,7 +1574,15 @@ class InterviewQuestionGenerator:
                     )
                 )
 
-        if cat_upper == "ALL":
+        if active_mode in ["technical", "tech"]:
+            pool = qs_a + qs_b + qs_e + qs_d
+        elif active_mode in ["behavioral", "behavioural"]:
+            pool = qs_f + [q for q in qs_b if "challenge" in q.get("question_text", "").lower()] + [q for q in qs_c if "learn" in q.get("question_text", "").lower()]
+            if not pool:
+                pool = qs_f
+        elif active_mode in ["hr", "hr_behavioral"]:
+            pool = qs_f
+        elif cat_upper == "ALL":
             # Assemble balanced interleaved distribution:
             # 1-2 Profile, 2-3 Projects, 1-2 Internships, 2-3 Job/Gaps, 2-3 Tech, 2-3 HR
             interleaved: List[Dict[str, Any]] = []
@@ -1577,10 +1600,21 @@ class InterviewQuestionGenerator:
         else:
             pool = qs_a or qs_b or qs_c or qs_d or qs_e or qs_f
 
-        # Filter by difficulty
-        filtered = filter_by_difficulty(pool, target_difficulty=difficulty, max_count=None)
+        # Normalize difficulty string (Beginner -> Easy, Intermediate -> Medium, Advanced -> Hard)
+        diff_norm = difficulty.lower().strip() if difficulty else "all"
+        if diff_norm in ["beginner", "easy"]:
+            target_diff = "Easy"
+        elif diff_norm in ["intermediate", "medium"]:
+            target_diff = "Medium"
+        elif diff_norm in ["advanced", "hard"]:
+            target_diff = "Hard"
+        else:
+            target_diff = "All"
 
-        # Deduplicate by question text hash and sanitize visible text
+        # Filter by difficulty
+        filtered = filter_by_difficulty(pool, target_difficulty=target_diff, max_count=None)
+
+        # Deduplicate by question text hash, sanitize visible text, and guarantee required fields
         seen_texts = set()
         deduped = []
         for q in filtered:
@@ -1600,6 +1634,71 @@ class InterviewQuestionGenerator:
                 # Build fully completed framework answer demonstration
                 fw_id = q.get("recommended_framework") or q.get("recommended_answer_framework") or "STAR"
                 q["completed_framework_answer"] = build_completed_framework_demonstration(fw_id, q)
+
+                # Guarantee Phase 5 required fields
+                cat_letter = q.get("category", "A")
+
+                # Related Skill
+                if not q.get("related_skill"):
+                    if q.get("topic"):
+                        q["related_skill"] = q["topic"]
+                    elif cat_letter == "A":
+                        q["related_skill"] = (
+                            self.evidence.get("skills", ["Software Engineering"])[0]
+                            if self.evidence.get("skills") else "Technical Stack"
+                        )
+                    elif cat_letter == "B":
+                        techs = self.evidence.get("projects", [{}])[0].get("technologies", "System Architecture")
+                        if isinstance(techs, list):
+                            techs = ", ".join(techs)
+                        q["related_skill"] = techs if techs else "Project Development"
+                    elif cat_letter == "C":
+                        q["related_skill"] = "Professional Collaboration"
+                    elif cat_letter == "D":
+                        q["related_skill"] = (
+                            self.evidence.get("missing_skills", [self.evidence.get("job_title", "Target Role")])[0]
+                            if self.evidence.get("missing_skills") else self.evidence.get("job_title", "Target Role")
+                        )
+                    elif cat_letter == "E":
+                        q["related_skill"] = q.get("topic", "Computer Science Foundations")
+                    elif cat_letter == "F":
+                        q["related_skill"] = q.get("topic", "Behavioral Competency")
+                    else:
+                        q["related_skill"] = "Engineering Skills"
+
+                if isinstance(q.get("related_skill"), list):
+                    q["related_skill"] = ", ".join(str(s) for s in q["related_skill"])
+                elif not isinstance(q.get("related_skill"), str):
+                    q["related_skill"] = str(q.get("related_skill") or "Engineering Skills")
+
+                # Reason for asking
+                if not q.get("reason_for_asking"):
+                    skill_str = str(q.get("related_skill", "engineering skill"))
+                    if cat_letter == "A":
+                        q["reason_for_asking"] = f"Validates hands-on proficiency in demonstrated resume skill: {skill_str}."
+                    elif cat_letter == "B":
+                        ref = q.get("source_reference", "Extracted Project")
+                        q["reason_for_asking"] = f"Explores architectural choices, implementation depth, and debugging in {ref}."
+                    elif cat_letter == "C":
+                        ref = q.get("source_reference", "Internship Experience")
+                        q["reason_for_asking"] = f"Evaluates practical software engineering contributions and stakeholder teamwork in {ref}."
+                    elif cat_letter == "D":
+                        q["reason_for_asking"] = f"Assesses readiness for target role requirements and your plan to address {skill_str}."
+                    elif cat_letter == "E":
+                        q["reason_for_asking"] = f"Evaluates core technical knowledge and problem-solving principles in {skill_str}."
+                    elif cat_letter == "F":
+                        q["reason_for_asking"] = f"Assesses professional communication, conflict resolution, and behavioral teamwork in {skill_str}."
+                    else:
+                        q["reason_for_asking"] = f"Assesses interview readiness in {skill_str}."
+
+                # Expected evaluation criteria
+                crit = q.get("expected_key_points") or [
+                    "Direct answer addressing the question prompt",
+                    f"Structured explanation of {q.get('related_skill', 'technical concepts')}",
+                    "Evidence-backed examples without unverified claims"
+                ]
+                q["expected_answer_evaluation_criteria"] = crit
+                q["expected_key_points"] = crit
 
                 deduped.append(q)
 

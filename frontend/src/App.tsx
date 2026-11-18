@@ -10,6 +10,7 @@ import { CareerMentorPage } from './pages/CareerMentorPage';
 import { InterviewStudioPage } from './pages/InterviewStudioPage';
 import { InterviewPracticePage } from './pages/InterviewPracticePage';
 import { InterviewResultsPage } from './pages/InterviewResultsPage';
+import { VoiceInterviewPage } from './pages/VoiceInterviewPage';
 import { ModelPerformancePage } from './pages/ModelPerformancePage';
 import { DatasetExplorerPage } from './pages/DatasetExplorerPage';
 
@@ -26,6 +27,7 @@ export function App() {
             <Route path="/career-mentor" element={<CareerMentorPage />} />
             <Route path="/interview-studio" element={<InterviewStudioPage />} />
             <Route path="/interview-practice" element={<InterviewPracticePage />} />
+            <Route path="/interview-voice" element={<VoiceInterviewPage />} />
             <Route path="/interview-results" element={<InterviewResultsPage />} />
             <Route path="/model-performance" element={<ModelPerformancePage />} />
             <Route path="/datasets" element={<DatasetExplorerPage />} />
