@@ -92,6 +92,45 @@ def test_prod_01_real_startup_missing_and_insecure_secrets():
     assert proc_valid.returncode == 0, f"Production startup failed unexpectedly: {proc_valid.stderr}"
     assert "APP_STARTUP_SUCCESS" in proc_valid.stdout
 
+    # Case D: Configured non-empty SESSION_COOKIE_DOMAIN in production must fail closed
+    for broad_domain in [".resumematch.ai", "resumematch.ai", ".example.com"]:
+        env_domain = {**env_valid, "SESSION_COOKIE_DOMAIN": broad_domain}
+        proc_domain = subprocess.run(
+            [sys.executable, "-c", "import app"],
+            cwd=repo_root,
+            env=env_domain,
+            capture_output=True,
+            text=True
+        )
+        assert proc_domain.returncode != 0, f"Production startup must fail closed if SESSION_COOKIE_DOMAIN='{broad_domain}'"
+        assert "SESSION_COOKIE_DOMAIN must not be configured in production" in proc_domain.stderr
+
+    # Case E: Conflicting SESSION_COOKIE_SAMESITE override in production must fail closed
+    for conflicting_samesite in ["None", "Strict", "none", "invalid"]:
+        env_samesite = {**env_valid, "SESSION_COOKIE_SAMESITE": conflicting_samesite}
+        proc_samesite = subprocess.run(
+            [sys.executable, "-c", "import app"],
+            cwd=repo_root,
+            env=env_samesite,
+            capture_output=True,
+            text=True
+        )
+        assert proc_samesite.returncode != 0, f"Production startup must fail closed if SESSION_COOKIE_SAMESITE='{conflicting_samesite}'"
+        assert "SESSION_COOKIE_SAMESITE must be 'Lax' in production" in proc_samesite.stderr
+
+    # Case F: Explicit SESSION_COOKIE_SAMESITE=Lax or lax in production boots cleanly
+    for valid_samesite in ["Lax", "lax"]:
+        env_samesite_valid = {**env_valid, "SESSION_COOKIE_SAMESITE": valid_samesite}
+        proc_samesite_valid = subprocess.run(
+            [sys.executable, "-c", "import app; print('SAMESITE_LAX_OK')"],
+            cwd=repo_root,
+            env=env_samesite_valid,
+            capture_output=True,
+            text=True
+        )
+        assert proc_samesite_valid.returncode == 0, f"Startup with SESSION_COOKIE_SAMESITE='{valid_samesite}' failed: {proc_samesite_valid.stderr}"
+        assert "SAMESITE_LAX_OK" in proc_samesite_valid.stdout
+
 
 # =============================================================================
 # 2. Inspect Actual Production Set-Cookie Headers
@@ -189,6 +228,9 @@ def test_prod_03_complete_inventory_missing_invalid_valid_csrf():
             elif method == "DELETE":
                 res = unauth_client.delete(path)
             assert res.status_code == 403, f"{method} {path} accepted request without CSRF token (got {res.status_code})"
+            assert "X-Server-Received-Origin" not in res.headers, f"{method} {path} leaked X-Server-Received-Origin in default production mode"
+            assert "X-Server-Cookie-Present" not in res.headers, f"{method} {path} leaked X-Server-Cookie-Present in default production mode"
+            assert "X-Server-Session-Authenticated" not in res.headers, f"{method} {path} leaked X-Server-Session-Authenticated in default production mode"
 
         # 2. Invalid / forged CSRF token
         with app.test_client() as forged_client:
@@ -483,3 +525,43 @@ def test_prod_12_database_wal_mode_and_concurrency(tmp_path):
     assert retrieved is not None
     assert retrieved["target_role"] == "Staff ML Engineer"
     assert retrieved["owner_id"] == "owner-abc-789"
+
+
+# =============================================================================
+# 13. Diagnostic Audit Headers Strictly Disabled in Production
+# =============================================================================
+
+def test_prod_13_diagnostic_audit_headers_strictly_disabled_in_production():
+    """
+    Verifies that diagnostic response headers (X-Server-Received-Origin, X-Server-Cookie-Present,
+    X-Server-Session-Authenticated) CANNOT be enabled in production (RESUMEMATCH_ENV=production),
+    even if ENABLE_TEST_AUDIT_HEADERS=true is configured in the environment.
+    """
+    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    env_prod_audit = {
+        **os.environ,
+        "PYTHONPATH": repo_root,
+        "RESUMEMATCH_ENV": "production",
+        "ENABLE_TEST_AUDIT_HEADERS": "true",
+        "SECRET_KEY": "valid-secure-production-random-secret-key-48chars",
+        "FRONTEND_ORIGINS": "https://app.resumematch.ai",
+    }
+    script = """
+import app
+with app.app.test_client() as client:
+    res = client.post('/api/candidate/update-role', json={'target_role': 'Hacker Role'}, headers={'Origin': 'https://evil.resumematch.ai'})
+    assert res.status_code == 403, f'Expected 403, got {res.status_code}'
+    assert 'X-Server-Received-Origin' not in res.headers, 'Leaked X-Server-Received-Origin in production'
+    assert 'X-Server-Cookie-Present' not in res.headers, 'Leaked X-Server-Cookie-Present in production'
+    assert 'X-Server-Session-Authenticated' not in res.headers, 'Leaked X-Server-Session-Authenticated in production'
+    print('PROD_AUDIT_HEADERS_DISABLED_OK')
+"""
+    proc = subprocess.run(
+        [sys.executable, "-c", script],
+        cwd=repo_root,
+        env=env_prod_audit,
+        capture_output=True,
+        text=True
+    )
+    assert proc.returncode == 0, f"Production audit header test failed: {proc.stderr}\n{proc.stdout}"
+    assert "PROD_AUDIT_HEADERS_DISABLED_OK" in proc.stdout

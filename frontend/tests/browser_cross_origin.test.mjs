@@ -192,11 +192,12 @@ describe('Playwright Genuine Cross-Origin Browser Test Suite (HTTPS)', () => {
         frontendServer.listen(FRONTEND_PORT, 'localhost', resolve);
       });
 
-      // 2. Start Backend Flask HTTPS server on https://127.0.0.1:5443 with production cookie flags
+      // 2. Start Backend Flask HTTPS server on https://127.0.0.1:5443 in test mode with explicit secure cookie flag
       const env = {
         ...process.env,
         PORT: String(BACKEND_PORT),
-        RESUMEMATCH_ENV: 'production', // Activates SESSION_COOKIE_SECURE=True
+        RESUMEMATCH_ENV: 'testing', // Preserves test flexibility; production strictly enforces SameSite=Lax
+        SESSION_COOKIE_SECURE: 'true', // Cross-site SameSite=None requires Secure=True
         SESSION_COOKIE_SAMESITE: 'None', // Cross-site browser test requires SameSite=None
         SECRET_KEY: 'cross-origin-test-secret-key-phase6.6',
         FLASK_SSL_CERT: CERT_PATH,

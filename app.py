@@ -47,21 +47,37 @@ INSECURE_SECRET_KEYS = {
     ""
 }
 
+raw_cookie_domain = os.environ.get("SESSION_COOKIE_DOMAIN", "").strip()
+raw_same_site = os.environ.get("SESSION_COOKIE_SAMESITE", "").strip()
+
 if APP_ENV == "production":
     if not secret_key or secret_key.strip() in INSECURE_SECRET_KEYS or len(secret_key.strip()) < 16:
         raise RuntimeError("SECRET_KEY must be configured with a secure, random value for production deployments.")
+    if raw_cookie_domain:
+        raise RuntimeError(
+            f"SESSION_COOKIE_DOMAIN must not be configured in production (got '{raw_cookie_domain}'). "
+            "Host-only cookies (Domain=None) are strictly enforced in production to prevent unintended cookie sharing across subdomains."
+        )
+    if raw_same_site and raw_same_site.lower() != "lax":
+        raise RuntimeError(
+            f"SESSION_COOKIE_SAMESITE must be 'Lax' in production (got '{raw_same_site}'). "
+            "Conflicting SameSite overrides are not permitted in production deployments."
+        )
 
 app.config["SECRET_KEY"] = secret_key or "skillsync-dev-key-2026"
 app.config["MAX_CONTENT_LENGTH"] = int(os.environ.get("MAX_CONTENT_LENGTH", 16 * 1024 * 1024))
 app.config["MODEL_BACKEND"] = os.environ.get("RESUMEMATCH_MODEL_BACKEND", "production")
 app.config["SESSION_COOKIE_HTTPONLY"] = True
-app.config["SESSION_COOKIE_SECURE"] = APP_ENV == "production"
+app.config["SESSION_COOKIE_SECURE"] = (
+    APP_ENV == "production" or os.environ.get("SESSION_COOKIE_SECURE", "").lower() in ("true", "1")
+)
 
-# In production for the selected Option 1 architecture (app.resumematch.ai + api.resumematch.ai),
-# cookies are same-site. SESSION_COOKIE_SAMESITE defaults to "Lax" for strong security.
-# Allows environment override via SESSION_COOKIE_SAMESITE if needed (e.g. cross-site testing).
-app.config["SESSION_COOKIE_SAMESITE"] = os.environ.get("SESSION_COOKIE_SAMESITE", "Lax")
-app.config["SESSION_COOKIE_DOMAIN"] = os.environ.get("SESSION_COOKIE_DOMAIN") or None
+# In production for the selected Option 1 architecture, cookies are same-site.
+# SESSION_COOKIE_SAMESITE is strictly enforced to "Lax".
+# Development/testing environments permit overrides (e.g. "None" for cross-site test harnesses).
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax" if APP_ENV == "production" else (raw_same_site or "Lax")
+# Host-only cookie enforced in production; non-production allows explicit domain testing if desired
+app.config["SESSION_COOKIE_DOMAIN"] = None if APP_ENV == "production" else (raw_cookie_domain or None)
 
 # Vercel and Render are different origins. Credentialed API requests are limited
 # to explicitly configured frontend origins; no wildcard origin is permitted.
@@ -122,7 +138,14 @@ def _validate_csrf(data: Optional[Dict] = None):
     )
     session_csrf = session.get("csrf_token")
     if not session_csrf or not csrf_token or not validate_csrf_token(csrf_token):
-        return jsonify({"status": "error", "message": "CSRF token missing or invalid"}), 403
+        resp = jsonify({"status": "error", "message": "CSRF token missing or invalid"})
+        if APP_ENV != "production" and os.environ.get("ENABLE_TEST_AUDIT_HEADERS", "").lower() in ("true", "1"):
+            cookie_name = app.config.get("SESSION_COOKIE_NAME", "session")
+            has_session_cookie = bool(request.cookies.get(cookie_name))
+            resp.headers["X-Server-Received-Origin"] = request.headers.get("Origin") or ""
+            resp.headers["X-Server-Cookie-Present"] = "true" if has_session_cookie else "false"
+            resp.headers["X-Server-Session-Authenticated"] = "true" if bool(session_csrf) else "false"
+        return resp, 403
     return None
 
 # Backward compatibility alias

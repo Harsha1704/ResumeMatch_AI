@@ -3,14 +3,20 @@ services:
     name: resumematch-ai-api
     runtime: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn -w 2 -b 0.0.0.0:$PORT --timeout 120 app:app
+    # Verified live Render service start command (1 worker, 2 threads for memory stability on free tier):
+    startCommand: gunicorn --workers 1 --threads 2 --timeout 120 --bind 0.0.0.0:$PORT wsgi:app
     envVars:
       - key: RESUMEMATCH_ENV
         value: production
       - key: SECRET_KEY
         generateValue: true
+      # ALLOWED FRONTEND ORIGINS:
+      # - https://app.resumematch.ai (Target custom domain, verified in staged Step 5)
+      # - https://frontend-harsha1704s-projects.vercel.app (Verified production rollback origin)
+      # - https://frontend-orzkrjj8t-harsha1704s-projects.vercel.app (Verified production rollback origin)
+      # Retaining all three origins ensures Blueprint synchronization will not overwrite dashboard settings or break rollback origins.
       - key: FRONTEND_ORIGINS
-        value: https://resumematch-ai.vercel.app
+        value: https://app.resumematch.ai,https://frontend-harsha1704s-projects.vercel.app,https://frontend-orzkrjj8t-harsha1704s-projects.vercel.app
       - key: RESUMEMATCH_MODEL_BACKEND
         value: production
       - key: MAX_CONTENT_LENGTH

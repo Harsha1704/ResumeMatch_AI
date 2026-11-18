@@ -1,4 +1,4 @@
-# RESUMEMATCH AI — PHASE 7.2: PRODUCTION DEPLOYMENT & INFRASTRUCTURE ARCHITECTURE
+# RESUMEMATCH AI — PHASE 7.3: PRODUCTION DEPLOYMENT & INFRASTRUCTURE ARCHITECTURE
 
 **Target Repository**: `Harsha1704/ResumeMatch_AI`  
 **Working Branch**: `fix/resumematch-final-repair`  
@@ -19,7 +19,7 @@ ResumeMatch AI is structured as a decoupled web application comprising:
 
 To resolve the decoupling challenges between Vercel and Render (cross-origin cookies, CORS preflights, upload size limits, and browser tracking prevention), we evaluated two primary architectural options:
 - **Option 1 (Recommended)**: Custom Subdomains on Shared Apex Domain (`app.resumematch.ai` + `api.resumematch.ai`) with a host-only cookie for `api.resumematch.ai`.
-- **Option 2**: Vercel Reverse Proxy Rewriting to Render (`frontend.vercel.app/api/*` -> `onrender.com/api/*`).
+- **Option 2**: Vercel Reverse Proxy Rewriting to Render (`frontend.vercel.app/api/*` $\rightarrow$ `onrender.com/api/*`).
 
 ### Recommended Architecture Decision: **OPTION 1 (Shared Apex Subdomains with Host-Only Cookie)**
 
@@ -34,7 +34,7 @@ Option 1 is the recommended production architecture. Directing browser API calls
 | **Hosting Topology** | Frontend: `https://app.resumematch.ai` (Vercel)<br>Backend: `https://api.resumematch.ai` (Render) | Frontend: `https://frontend-harsha1704s-projects.vercel.app`<br>Backend: `https://resumematch-ai-api-atil.onrender.com` |
 | **Site Relationship** | **Same-Site** (Shares apex registrable domain `resumematch.ai`) | **Same-Origin** (From browser perspective, proxied through Vercel) |
 | **Cookie Architecture** | `SameSite=Lax`, `Secure=True`, `HttpOnly=True`.<br>**Host-only cookie** locked strictly to `api.resumematch.ai` (`SESSION_COOKIE_DOMAIN=None`). | Same-origin cookie handling. |
-| **Browser Compatibility** | **High compatibility tested and expected** across Chromium, Firefox, and WebKit (Safari). In a same-site setup, browsers transmit `SameSite=Lax` cookies on credentialed API requests, avoiding third-party cookie blocking under Apple ITP. Actual behavior in all client environments is expected rather than universally guaranteed. | Compatible across standard browsers. |
+| **Browser Compatibility** | **High compatibility tested and expected** across tested browser engines (Chromium 159.0, Firefox 159.0, and WebKit 27.2 WinCairo on Windows). In a same-site setup, browsers transmit `SameSite=Lax` cookies on credentialed API requests, avoiding third-party cookie blocking under Apple ITP. Findings are strictly limited to the tested browser versions and configurations and do not claim universal Safari or Firefox behavior. | Compatible across standard browsers. |
 | **Payload Upload Capacity** | **Full 16 MB streaming** directly to Render Gunicorn worker ([app.py#L43](file:///d:/skillsync1/app.py#L43)). | Per [authoritative Vercel documentation](https://vercel.com/docs/concepts/limits/overview#serverless-function-limits), Serverless Function invocations enforce a **4.5 MB maximum request body payload limit**. Uploads of 16 MB documents fail when handled through serverless proxies. |
 | **Inference Latency & Timeouts** | Render web services support persistent connections with Gunicorn timeout configured to **120 seconds** (`--timeout 120`). ML inference and cold starts run unhindered. | Per [Vercel Function documentation](https://vercel.com/docs/functions/runtimes#execution-duration), default function execution duration is capped at **10 seconds on Hobby** plans (15–60s on Pro). Long-running model inference risks HTTP 504 Gateway Timeouts. |
 | **CORS Overhead** | Explicit allowlist in Flask (`FRONTEND_ORIGINS`). Standard CORS preflight with browser caching (`Access-Control-Max-Age: 86400`). | Zero browser CORS overhead, but proxy header rewrites required. |
@@ -70,10 +70,10 @@ flowchart TD
 | **CNAME** | `api` | `resumematch-ai-api-atil.onrender.com` | Auto / 300 | Routes API traffic to Render |
 | **TXT / ALIAS** | `@` (Apex) | As directed by DNS provider | Auto | Domain apex verification |
 
-### 3.2 Cookie Domain Security: Host-Only Cookie Policy
+### 3.2 Cookie Domain Security: Enforced Host-Only Cookie Policy
 
-- **Recommended Production Policy**: **Host-Only Cookie** for `api.resumematch.ai`.
-- **Configuration**:
+- **Enforced Production Policy**: **Host-Only Cookie** for `api.resumematch.ai`.
+- **Configuration ([app.py#L51-L69](file:///d:/skillsync1/app.py#L51-L69))**:
   ```python
   SESSION_COOKIE_HTTPONLY = True
   SESSION_COOKIE_SECURE = True
@@ -81,63 +81,51 @@ flowchart TD
   SESSION_COOKIE_DOMAIN = None  # Host-only: strictly bound to api.resumematch.ai
   ```
 - **Security Rationale**:
-  Omitting the `Domain` attribute (`SESSION_COOKIE_DOMAIN=None`) ensures that the browser locks the cookie strictly to `api.resumematch.ai`. No other subdomain (e.g. `blog.resumematch.ai` or staging environments) can access or tamper with the session cookie.
-  Because `app.resumematch.ai` and `api.resumematch.ai` share the same registrable apex domain (`resumematch.ai`), browser requests with `credentials: 'include'` are **same-site**; browsers transmit `SameSite=Lax` cookies to `api.resumematch.ai` without cross-site third-party blocking.
+  Omitting the `Domain` attribute (`SESSION_COOKIE_DOMAIN=None`) ensures that the browser locks the cookie strictly to the receiving API origin. Sibling subdomains (such as `app.resumematch.ai`, staging sites, or user content domains) can never access or receive the session cookie.
+  Because `app.resumematch.ai` and `api.resumematch.ai` share the same registrable apex domain (`resumematch.ai`), browser requests with `credentials: 'include'` are classified by browsers as **same-site**; browsers transmit `SameSite=Lax` cookies to `api.resumematch.ai` without cross-site third-party blocking under WebKit/Safari ITP. The backend verifies the cryptographically signed session cookie against `SECRET_KEY` on each request without requiring cookie decryption (Flask default session cookies are cryptographically signed with HMAC-SHA256, not encrypted).
 
 ### 3.3 Active Render Service Configuration
 
-- **Actual Verified Deployed Start Command** (configured on Render service `srv-dbspslmi0phs73dqbptg`):
+- **Actual Verified Deployed Start Command** (configured on Render service `srv-dbspslmi0phs73dqbptg` and reconciled in [render.yaml](file:///d:/skillsync1/render.yaml)):
   ```bash
   gunicorn --workers 1 --threads 2 --timeout 120 --bind 0.0.0.0:$PORT wsgi:app
   ```
   *(1 worker with 2 threads prevents memory exhaustion on Render 512 MB free instances, while 120s timeout accommodates cold boots).*
-- **Active Environment Variables**:
-  ```bash
-  RESUMEMATCH_ENV=production
-  SECRET_KEY=<generate-strong-cryptographic-hex-secret-64chars>
-  FRONTEND_ORIGINS=https://app.resumematch.ai,https://frontend-harsha1704s-projects.vercel.app
-  SESSION_COOKIE_SAMESITE=Lax
-  # SESSION_COOKIE_DOMAIN is omitted (defaults to None / host-only)
-  MAX_CONTENT_LENGTH=16777216
-  PORT=10000
-  ```
+- **Environment Variables & Render Blueprint Synchronization**:
+  - `RESUMEMATCH_ENV`: `production` (promoted only after custom domains and routing are operational)
+  - `SECRET_KEY`: `<high-entropy-random-secret-64chars>`
+  - `FRONTEND_ORIGINS`:
+    - Value in `render.yaml` and Production Dashboard: `https://app.resumematch.ai,https://frontend-harsha1704s-projects.vercel.app,https://frontend-orzkrjj8t-harsha1704s-projects.vercel.app`
+    - Preserves both verified live Vercel rollback origins (`https://frontend-harsha1704s-projects.vercel.app` and `https://frontend-orzkrjj8t-harsha1704s-projects.vercel.app`) alongside the target custom domain `https://app.resumematch.ai`.
+    - **Blueprint Synchronization Semantics**: In Render, blueprint synchronizations can overwrite dashboard environment variables with values specified in `render.yaml`. Reconciling `render.yaml` to declare all three origins guarantees that dashboard changes (made in Step 5 before code deployment) will not be overwritten or regressed when the release commit is eventually deployed via Git/Blueprint in Step 9.
+  - `SESSION_COOKIE_SAMESITE`: `Lax` (enforced at startup; overrides rejected in production)
+  - `SESSION_COOKIE_DOMAIN`: Omitted / not set (app.py strictly enforces `None` in production)
 
-### 3.4 Active Vercel Frontend Configuration
+### 3.4 Four-Part Verification Boundary & Mandatory Deployment Ordering
 
-```bash
-# Vercel Project 'frontend' Environment Variables
-VITE_API_BASE_URL=https://api.resumematch.ai
-```
+1. **Simulated Same-Site Browser Tests (`.test` Domains)**: Proves RFC 6265bis same-site cookie transport, host-only scoping, CORS preflight correlation, and server-side unauthorized mutation rejection via local HTTPS and CONNECT proxy across tested browser engines. Does NOT indicate that `app.resumematch.ai` or `api.resumematch.ai` are already registered or live on the public Internet.
+2. **Actual DNS & TLS Verification**: Confirms public registrar CNAME routing and valid public CA TLS certificates.
+3. **Sequential Staged Deployment**:
+   - Vercel frontend is updated with `VITE_API_BASE_URL=https://api.resumematch.ai` and deployed to `app.resumematch.ai` FIRST.
+   - Render backend release commit (enforcing `SameSite=Lax` and host-only cookies in `RESUMEMATCH_ENV=production`) is pushed to `deploy/vercel-render-free` ONLY AFTER the frontend is verified live and operational on the custom domain.
+4. **Vercel Rebuild Requirement**: Changing `VITE_API_BASE_URL` requires an explicit Vercel **Redeploy** (or merging to `main`) to compile the new base URL into client static assets.
+5. **Live Acceptance Smoke Testing**: Verifies real-browser flows before and after promoting Render backend.
+6. **Optional Administrative Actions**: Maintenance on secondary project `resumematch_ai` or Vercel Deployment Protection are optional administrative choices requiring explicit owner authorization, not release blockers.
 
----
+### 3.5 Safe Rollback Architecture & Protocol Distinctions
 
-## 4. Dual-Branch Cloud Deployment Sequence
-
-Vercel tracks `main` while Render tracks `deploy/vercel-render-free`. To guarantee both services receive the identical approved release commit:
-
-1. **Step 1: Merge to `main`**:
-   - Merge `fix/resumematch-final-repair` into `main`.
-   - Vercel automatically deploys `main` to project `frontend`.
-2. **Step 2: Fast-Forward `deploy/vercel-render-free`**:
-   - Update branch `deploy/vercel-render-free` to match `main`:
-     ```bash
-     git checkout deploy/vercel-render-free
-     git merge main --ff-only
-     git push origin deploy/vercel-render-free
-     ```
-   - Render automatically deploys `deploy/vercel-render-free` to service `srv-dbspslmi0phs73dqbptg`.
-3. **Step 3: Commit SHA Audit**:
-   - Verify both dashboards display the exact same Git commit hash.
-
----
-
-## 5. Rollback Plan
-
-If custom DNS propagation encounters delays during rollout:
-
-1. **Emergency Fallback to Direct Provider URLs**:
-   - Update Vercel frontend environment variable: `VITE_API_BASE_URL=https://resumematch-ai-api-atil.onrender.com`.
-   - Ensure `FRONTEND_ORIGINS` includes `https://frontend-harsha1704s-projects.vercel.app` (already verified active).
-   - Redeploy frontend on Vercel.
-2. **Restoration**:
-   - Once DNS records for `app.resumematch.ai` and `api.resumematch.ai` propagate, restore `VITE_API_BASE_URL=https://api.resumematch.ai`.
+If rollback to the legacy cross-site topology becomes necessary:
+1. **Protocol Distinctions**:
+   - **CORS vs. Cookies**: Preserving `FRONTEND_ORIGINS` satisfies HTTP preflight checks, but **does NOT** permit cookie access or circumvent browser third-party cookie blocking.
+   - **CORS Response Blocking vs. Server-Side Mutation Rejection**: CORS is a client-side browser policy that prevents unauthorized JavaScript from reading responses. In contrast, server-side CSRF validation independently inspects requests and actively rejects unauthorized mutations (HTTP 403 Forbidden), guaranteeing that application state cannot be modified regardless of client CORS handling.
+   - **SameSite Compatibility**: The production backend enforces `SameSite=Lax`. Cross-site sub-resource requests drop `SameSite=Lax` cookies, breaking CSRF and sessions.
+   - **Browser Privacy Controls**: Safari/WebKit (ITP) and Firefox block third-party cookies on cross-site requests. **The legacy cross-site architecture is NOT a guaranteed Safari-compatible rollback**, as cross-site third-party cookie restrictions under WebKit ITP can strictly block session persistence on cross-site domains.
+2. **Effective Fallback Configuration (Commit 07b88a058f166f13491fa9050ba835d95fd0e8fd)**:
+   - Baseline code sets: `SESSION_COOKIE_SAMESITE = "None" if APP_ENV == "production" else "Lax"`, `SESSION_COOKIE_SECURE = True`, `SESSION_COOKIE_HTTPONLY = True`, `SESSION_COOKIE_DOMAIN = None`.
+   - **Environment Variables Do Not Revert with Git Commits**: Administrators must verify Render service environment variables (`RESUMEMATCH_ENV=production`, `FRONTEND_ORIGINS` containing verified Vercel URLs).
+3. **Mandatory Rollback Ordering**:
+   - **Step 1**: Freeze promotion and preserve working custom-domain state wherever possible.
+   - **Step 2**: Revert the Render backend to baseline commit `07b88a058f166f13491fa9050ba835d95fd0e8fd` on `deploy/vercel-render-free` FIRST and verify `/health` and `SameSite=None; Secure` cookie headers.
+   - **Step 3**: Only after backend rollback is healthy, revert `VITE_API_BASE_URL` on Vercel and redeploy the frontend.
+   - **Step 4**: Verify session initiation, CSRF, uploads, and mutations on the reverted deployment in Chromium, Firefox, and Safari.
+4. **Transition Outage Risk**: Because Vercel and Render deploy independently without distributed two-phase commit, any non-atomic switch between same-site and cross-site carries an inherent temporary window of session failure until both services complete deployment.
